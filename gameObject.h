@@ -43,6 +43,7 @@ typedef struct{
     struct{
         VkBuffer** uniformBuffers;
         VkDeviceMemory** uniformBuffersMemory;
+        VkDeviceSize* uniformSizes;
         uint32_t uniformCount;
         uint32_t texturesCount;
     } local;
@@ -50,6 +51,7 @@ typedef struct{
     GraphicItems gItems;
     aboutShader aShader;
     Shape shape;
+    vec2 offser;
 } GameObject;
 
 GameObject initGameObject();
@@ -57,6 +59,12 @@ GameObject initGameObject();
 VkVertexInputBindingDescription getBindingDescription();
 
 attrDescr getAttributeDescriptions();
+
+void addTexture(GameObject* go, const char* file);
+
+void addUniformObject(GameObject* go, VkDeviceSize size);
+
+void recreateDrawningParams(GameObject* go);
 
 void destroyGameObject(GameObject* go);
 

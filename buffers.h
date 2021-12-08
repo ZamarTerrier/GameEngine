@@ -16,7 +16,7 @@ void createVertexBuffer(void* arg);
 
 void createIndexBuffer(void* arg);
 
-void createUniformBuffers(void* arg, VkDeviceSize* bufferSize, VkDeviceSize count );
+void createUniformBuffers(void* arg);
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 

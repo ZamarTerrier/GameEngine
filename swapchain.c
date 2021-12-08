@@ -12,14 +12,14 @@ void querySwapChainSupport(VkPhysicalDevice device, SwapChainSupportDetails* det
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &details->sizeFormats, NULL);
 
     if (details->sizeFormats != 0) {
-        details->formats = (VkSurfaceFormatKHR* ) calloc(sizeof(VkSurfaceFormatKHR), details->sizeFormats);
+        details->formats = (VkSurfaceFormatKHR* ) calloc(details->sizeFormats, sizeof(VkSurfaceFormatKHR));
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &details->sizeFormats, details->formats);
     }
 
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &details->sizeModes, NULL);
 
     if (details->sizeModes != 0) {
-        details->presentModes = (VkPresentModeKHR*) calloc(sizeof(VkPresentModeKHR), details->sizeModes);
+        details->presentModes = (VkPresentModeKHR*) calloc(details->sizeModes, sizeof(VkPresentModeKHR));
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &details->sizeModes, details->presentModes);
     }
 
@@ -113,7 +113,7 @@ void createSwapChain() {
     }
 
     vkGetSwapchainImagesKHR(device, swapChain, &imagesCount, NULL);
-    swapChainImages = (VkImage *) calloc(sizeof(VkImage), imagesCount);
+    swapChainImages = (VkImage *) calloc(imagesCount, sizeof(VkImage));
     vkGetSwapchainImagesKHR(device, swapChain, &imagesCount, swapChainImages);
 
     swapChainImageFormat = surfaceFormat.format;

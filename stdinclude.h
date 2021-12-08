@@ -64,9 +64,14 @@ typedef struct {
 } attrDescr;
 
 typedef struct  {
-    mat4 model;
     vec2 pos;
 } UniformBufferObject;
+
+
+typedef struct  {
+    vec2 imgOffset;
+    vec2 imgScale;
+} ImgUniformParam;
 
 typedef struct{
     uint32_t* code;

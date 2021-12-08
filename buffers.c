@@ -3,7 +3,7 @@
 #include "gameObject.h"
 
 void createFramebuffers() {
-    swapChainFramebuffers = (VkFramebuffer*) calloc(sizeof(VkFramebuffer), imagesCount);
+    swapChainFramebuffers = (VkFramebuffer*) calloc(imagesCount, sizeof(VkFramebuffer));
 
     for (i=0;i<imagesCount;i++) {
         VkImageView attachments[] = {
@@ -42,7 +42,7 @@ void createCommandPool() {
 }
 
 void createCommandBuffers(){
-    commandBuffers = (VkCommandBuffer *) calloc(sizeof(VkCommandBuffer), imagesCount);
+    commandBuffers = (VkCommandBuffer *) calloc(imagesCount, sizeof(VkCommandBuffer));
 
 
     VkCommandBufferAllocateInfo allocInfo = {};
@@ -113,20 +113,20 @@ void createIndexBuffer(void* arg) {
     vkFreeMemory(device, stagingBufferMemory, NULL);
 }
 
-void createUniformBuffers(void* arg, VkDeviceSize* bufferSize, VkDeviceSize count ) {
+void createUniformBuffers(void* arg) {
 
     GameObject* go = (GameObject*)arg;
 
-    go->local.uniformBuffers = (VkBuffer**) calloc(sizeof(VkBuffer*), count);
-    go->local.uniformBuffersMemory = (VkDeviceMemory**) calloc(sizeof(VkDeviceMemory*), count);
+    go->local.uniformBuffers = (VkBuffer**) calloc(go->local.uniformCount, sizeof(VkBuffer*));
+    go->local.uniformBuffersMemory = (VkDeviceMemory**) calloc(go->local.uniformCount, sizeof(VkDeviceMemory*));
 
-    for(j=0;j < count;j++)
+    for(i=0;i < go->local.uniformCount;i++)
     {
-        go->local.uniformBuffers[j] = (VkBuffer*) calloc(sizeof(VkBuffer), imagesCount);
-        go->local.uniformBuffersMemory[j] = (VkDeviceMemory*) calloc(sizeof(VkDeviceMemory), imagesCount);;
+        go->local.uniformBuffers[i] = (VkBuffer*) calloc(imagesCount, sizeof(VkBuffer));
+        go->local.uniformBuffersMemory[i] = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
-        for (i = 0; i < imagesCount; i++) {
-            createBuffer(bufferSize[j], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->local.uniformBuffers[j][i], &go->local.uniformBuffersMemory[j][i]);
+        for (j = 0; j < imagesCount; j++) {
+            createBuffer(go->local.uniformSizes[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->local.uniformBuffers[i][j], &go->local.uniformBuffersMemory[i][j]);
         }
     }
 }

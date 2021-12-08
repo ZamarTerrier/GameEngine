@@ -64,12 +64,12 @@ void createDescriptorPool(void* arg, VkDescriptorType* descriptors, size_t count
     }
 }
 //Создаем сами дескрипторы
-void createDescriptorSets(void* arg, VkBuffer** uBuffer, VkDeviceSize* sizes) {
+void createDescriptorSets(void* arg) {
 
     GameObject* go = (GameObject *)arg;
 
     //Создаем идентичные друг другу сеты дескрипторов
-    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*) calloc(sizeof(VkDescriptorSetLayout), imagesCount);
+    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*) calloc(imagesCount, sizeof(VkDescriptorSetLayout));
     for(i=0; i < imagesCount;i++)
     {
         layouts[i] = go->gItems.descriptorSetLayout;
@@ -81,35 +81,36 @@ void createDescriptorSets(void* arg, VkBuffer** uBuffer, VkDeviceSize* sizes) {
     allocInfo.descriptorSetCount = imagesCount;
     allocInfo.pSetLayouts = layouts;
 
-    go->gItems.descriptorSets = (VkDescriptorSet*) calloc(sizeof(VkDescriptorSet), imagesCount);
+    go->gItems.descriptorSets = (VkDescriptorSet*) calloc(imagesCount, sizeof(VkDescriptorSet));
     if (vkAllocateDescriptorSets(device, &allocInfo, go->gItems.descriptorSets) != VK_SUCCESS) {
         printf("failed to allocate descriptor sets!");
         exit(1);
     }
 
-    VkWriteDescriptorSet* descriptorWrites = (VkWriteDescriptorSet *) calloc(sizeof(VkWriteDescriptorSet), 1 + go->local.texturesCount);
-    VkDescriptorImageInfo* imageInfos = (VkDescriptorImageInfo* ) calloc(sizeof(VkDescriptorImageInfo), go->local.texturesCount);
+    VkWriteDescriptorSet* descriptorWrites = (VkWriteDescriptorSet *) calloc(go->local.uniformCount + go->local.texturesCount, sizeof(VkWriteDescriptorSet));
+    VkDescriptorImageInfo* imageInfos = (VkDescriptorImageInfo* ) calloc(go->local.texturesCount, sizeof(VkDescriptorImageInfo));
+    VkDescriptorBufferInfo* bufferInfos = (VkDescriptorImageInfo* ) calloc(go->local.uniformCount, sizeof(VkDescriptorImageInfo));
 
     //-------------------------------------------------
     //Дескрипторы для всех изображений
     for (i = 0; i < imagesCount; i++) {
 
         //Дескриптор Юниформы для шейдера
-        VkDescriptorBufferInfo bufferInfo = {};
 
 
         for(j=0;j < go->local.uniformCount;j++)
         {
-            bufferInfo.buffer = uBuffer[j][i];//Массив с юнибаверами
-            bufferInfo.offset = 0;
-            bufferInfo.range = sizes[j];//рамер одного юниформ бафера
+            bufferInfos[j].buffer = go->local.uniformBuffers[j][i];//Массив юнибавера
+            bufferInfos[j].offset = 0;
+            bufferInfos[j].range = go->local.uniformSizes[j];//рамер юниформ бафера
+
             descriptorWrites[j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[j].dstSet = go->gItems.descriptorSets[i];
             descriptorWrites[j].dstBinding = j;
             descriptorWrites[j].dstArrayElement = 0;
             descriptorWrites[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             descriptorWrites[j].descriptorCount = 1;
-            descriptorWrites[j].pBufferInfo = &bufferInfo;
+            descriptorWrites[j].pBufferInfo = &bufferInfos[j];
         }
 
 
@@ -135,6 +136,7 @@ void createDescriptorSets(void* arg, VkBuffer** uBuffer, VkDeviceSize* sizes) {
     }
     //--------------------------------------
 
+    free(bufferInfos);
     free(imageInfos);
     free(descriptorWrites);
     free(layouts);

@@ -68,10 +68,10 @@ void recreateSwapChain() {
 }
 
 void createSyncObjects() {
-    imageAvailableSemaphores = (VkSemaphore *) calloc(sizeof(VkSemaphore), MAX_FRAMES_IN_FLIGHT);
-    renderFinishedSemaphores = (VkSemaphore *) calloc(sizeof(VkSemaphore), MAX_FRAMES_IN_FLIGHT);
-    inFlightFences = (VkFence *) calloc(sizeof(VkFence), MAX_FRAMES_IN_FLIGHT);
-    imagesInFlight = (VkFence *) calloc(sizeof(VkFence), imagesCount);
+    imageAvailableSemaphores = (VkSemaphore *) calloc(MAX_FRAMES_IN_FLIGHT, sizeof(VkSemaphore));
+    renderFinishedSemaphores = (VkSemaphore *) calloc(MAX_FRAMES_IN_FLIGHT, sizeof(VkSemaphore));
+    inFlightFences = (VkFence *) calloc(MAX_FRAMES_IN_FLIGHT, sizeof(VkFence));
+    imagesInFlight = (VkFence *) calloc(imagesCount, sizeof(VkFence));
 
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;

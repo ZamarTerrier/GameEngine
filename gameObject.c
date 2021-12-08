@@ -1,19 +1,29 @@
 #include "gameObject.h"
 
 #include "buffers.h"
+#include <math.h>
 
 GameObject initGameObject()
 {
     GameObject go;
 
-    go.local.uniformCount = 1;
-    go.local.texturesCount = 2;
-    go.textures = (Texture2D *) calloc(sizeof(Texture2D), go.local.texturesCount);
-    go.textures[0] = createTexture("J:/Projects/GameEngine/textures/texture.png");
-    go.textures[1] = createTexture("J:/Projects/GameEngine/textures/texture2.png");
+    go.pos.x = 0;
+    go.pos.y = 0;
+    go.offser.x = 0;
+    go.offser.y = 0;
 
-    go.aShader.vertShader = "J:/Projects/GameEngine/shaders/vert.spv";
-    go.aShader.fragShader = "J:/Projects/GameEngine/shaders/frag.spv";
+    go.local.uniformCount = 0;
+    go.local.texturesCount = 0;
+
+    addTexture(&go, "/home/ilia/Projects/Graphics/textures/texture.png");
+    addTexture(&go, "/home/ilia/Projects/Graphics/textures/texture2.png");
+    addUniformObject(&go, sizeof(UniformBufferObject));
+    addUniformObject(&go, sizeof(ImgUniformParam));
+
+    createUniformBuffers(&go);
+
+    go.aShader.vertShader = "/home/ilia/Projects/Graphics/shaders/vert.spv";
+    go.aShader.fragShader = "/home/ilia/Projects/Graphics/shaders/frag.spv";
     go.aShader.bindingDescription = getBindingDescription();
 
     attrDescr descr = getAttributeDescriptions();
@@ -27,7 +37,7 @@ GameObject initGameObject()
     go.shape.index.indexesSize = 6;
 
     uint32_t unionSize = go.local.texturesCount + go.local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(sizeof(VkDescriptorType), unionSize) ;
+    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize, sizeof(VkDescriptorType)) ;
 
     for(i=0;i < go.local.uniformCount;i++)
     {
@@ -39,18 +49,54 @@ GameObject initGameObject()
         types[i + go.local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     }
 
-    VkDeviceSize uniformSizes[] = {sizeof (UniformBufferObject)};
-
-    createUniformBuffers(&go, uniformSizes, 1);
     createDescriptorSetLayout(&go, types, unionSize);
     createDescriptorPool(&go, types, unionSize);
-    createDescriptorSets(&go, go.local.uniformBuffers, uniformSizes);
+    createDescriptorSets(&go);
     createGraphicsPipeline(&go);
 
     createVertexBuffer(&go);
     createIndexBuffer(&go);
 
+    free(types);
+
     return go;
+
+}
+
+void addTexture(GameObject* go, const char* file){
+
+    int temp = go->local.texturesCount;
+
+    go->local.texturesCount ++;
+
+    if(temp == 0)
+        go->textures = (Texture2D *) calloc( go->local.texturesCount, sizeof(Texture2D));
+    else
+        realloc(go->textures, sizeof(Texture2D) * go->local.texturesCount);
+
+    go->textures[temp] = createTexture(file);
+
+}
+
+void changeTexture(GameObject* go, int elem, const char* file){
+
+    destroyTexture(&go->textures[elem]);
+
+    go->textures[elem] = createTexture(file);
+
+}
+
+void addUniformObject(GameObject* go, VkDeviceSize size){
+
+    int temp = go->local.uniformCount;
+    go->local.uniformCount ++;
+
+    if(temp == 0)
+        go->local.uniformSizes = (VkDeviceSize *) calloc(go->local.uniformCount, sizeof(VkDeviceSize));
+    else
+        go->local.uniformSizes = (VkDeviceSize *) realloc(go->local.uniformSizes, go->local.uniformCount * sizeof(VkDeviceSize));
+
+    go->local.uniformSizes[temp] = size;
 
 }
 
@@ -62,7 +108,7 @@ void recreateDrawningParams(GameObject* go){
     vkDestroyDescriptorSetLayout(device, go->gItems.descriptorSetLayout, NULL);
 
     uint32_t unionSize = go->local.texturesCount + go->local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(sizeof(VkDescriptorType), unionSize) ;
+    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
 
     for(i=0;i < go->local.uniformCount;i++)
     {
@@ -77,7 +123,7 @@ void recreateDrawningParams(GameObject* go){
 
     createDescriptorSetLayout(go, types, unionSize);
     createDescriptorPool(go, types, unionSize);
-    createDescriptorSets(go, go->local.uniformBuffers, sizeof (UniformBufferObject));
+    createDescriptorSets(go);
     createGraphicsPipeline(go);
 }
 
@@ -93,7 +139,7 @@ VkVertexInputBindingDescription getBindingDescription() {
 }
 //Атрибуты вертекса
 attrDescr getAttributeDescriptions() {
-    VkVertexInputAttributeDescription* arr = (VkVertexInputAttributeDescription*) calloc(sizeof(VkVertexInputAttributeDescription), 3);
+    VkVertexInputAttributeDescription* arr = (VkVertexInputAttributeDescription*) calloc(3, sizeof(VkVertexInputAttributeDescription));
 
     arr[0].binding = 0;
     arr[0].location = 0;
@@ -163,15 +209,22 @@ void updateUniformBuffer(GameObject* go) {
     go->pos.x += 0.00001f;
 
     UniformBufferObject ubo = {};
-    ubo.model = mat4_f(
-                1.f,0,0,0,
-                0,1.f,0,0,
-                0,0,1.f,0,
-                0,0,0,1.f
-                       );
     ubo.pos = go->pos;
+
     void* data;
     vkMapMemory(device, go->local.uniformBuffersMemory[0][imageIndex], 0, sizeof(ubo), 0, &data);
         memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, go->local.uniformBuffersMemory[0][imageIndex]);
+
+    ImgUniformParam iup = {};
+    go->offser.x -= 0.0001f;
+    go->offser.y -= 0.0002f;
+    iup.imgOffset = go->offser;
+    iup.imgScale.x = cos(go->offser.x);
+    iup.imgScale.y = sin(go->offser.y);
+
+    void* data2;
+    vkMapMemory(device, go->local.uniformBuffersMemory[1][imageIndex], 0, sizeof(iup), 0, &data2);
+        memcpy(data2, &iup, sizeof(iup));
+    vkUnmapMemory(device, go->local.uniformBuffersMemory[1][imageIndex]);
 }

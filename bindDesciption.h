@@ -13,6 +13,6 @@ void createDescriptorSetLayout(void* arg, VkDescriptorType* descriptors, size_t 
 
 void createDescriptorPool(void* arg, VkDescriptorType* descriptors, size_t count);
 
-void createDescriptorSets(void* arg, VkBuffer** uBuffer, VkDeviceSize* sizes);
+void createDescriptorSets(void* arg);
 
 #endif // BINDDESCIPTION_H
