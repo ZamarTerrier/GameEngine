@@ -71,4 +71,6 @@ uint32_t extensionCount = 0;
 uint32_t imagesCount = 0;
 uint32_t glfwExtensionCount = 0;
 
+void* camObj;
+
 int i = 0, j = 0;

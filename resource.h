@@ -23,7 +23,6 @@ extern VkQueue presentQueue;
 
 extern VkSurfaceKHR surface;
 
-
 extern VkSwapchainKHR swapChain;
 extern VkImage* swapChainImages;
 extern VkImageView* swapChainImageViews;
@@ -52,14 +51,11 @@ extern VkDeviceMemory vertexBufferMemory;
 extern VkBuffer indexBuffer;
 extern VkDeviceMemory indexBufferMemory;
 
-
 extern VkBuffer* uniformBuffers;
 extern VkDeviceMemory* uniformBuffersMemory;
 
 extern const Vertex vertices[];
 extern const uint16_t indices[];
-
-extern vec2 pos;
 
 extern const char* validationLayers[];
 extern const char* deviceExtensions[];
@@ -68,6 +64,8 @@ extern uint32_t imageIndex;
 extern uint32_t extensionCount;
 extern uint32_t imagesCount;
 extern uint32_t glfwExtensionCount;
+
+extern void* camObj;
 
 extern int i, j;
 

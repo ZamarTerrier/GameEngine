@@ -63,11 +63,15 @@ typedef struct {
     uint32_t size;
 } attrDescr;
 
+typedef struct {
+    vec2 pos;
+    vec2 scale;
+} ViewUniformObject;
+
 typedef struct  {
     vec2 pos;
     vec2 scale;
 } UniformBufferObject;
-
 
 typedef struct  {
     vec2 imgOffset;

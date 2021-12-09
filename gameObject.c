@@ -1,6 +1,7 @@
 #include "gameObject.h"
 
 #include "buffers.h"
+#include "camera.h"
 #include <math.h>
 
 GameObject* initGameObject()
@@ -219,21 +220,41 @@ void gameObjectDraw(GameObject* go){
 
 void updateUniformBuffer(GameObject* go) {
 
+    Camera* cam = (Camera*) camObj;
+
+    ViewUniformObject vuo = {};
+    vuo.pos = cam->pos;
+    vuo.scale = cam->scale;
+
+    void* data;
+
+    vkMapMemory(device, go->local.uniformBuffersMemory[0][imageIndex], 0, sizeof(vuo), 0, &data);
+        memcpy(data, &vuo, sizeof(vuo));
+    vkUnmapMemory(device, go->local.uniformBuffersMemory[0][imageIndex]);
+
     UniformBufferObject ubo = {};
     ubo.pos = go->pos;
     ubo.scale = go->scale;
 
-    void* data;
-    vkMapMemory(device, go->local.uniformBuffersMemory[0][imageIndex], 0, sizeof(ubo), 0, &data);
+    vkMapMemory(device, go->local.uniformBuffersMemory[1][imageIndex], 0, sizeof(ubo), 0, &data);
         memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(device, go->local.uniformBuffersMemory[0][imageIndex]);
+    vkUnmapMemory(device, go->local.uniformBuffersMemory[1][imageIndex]);
 
     ImgUniformParam iup = {};
     iup.imgOffset = go->img.offset;
     iup.imgScale = go->img.scale;
 
-    void* data2;
-    vkMapMemory(device, go->local.uniformBuffersMemory[1][imageIndex], 0, sizeof(iup), 0, &data2);
-        memcpy(data2, &iup, sizeof(iup));
-    vkUnmapMemory(device, go->local.uniformBuffersMemory[1][imageIndex]);
+    vkMapMemory(device, go->local.uniformBuffersMemory[2][imageIndex], 0, sizeof(iup), 0, &data);
+        memcpy(data, &iup, sizeof(iup));
+    vkUnmapMemory(device, go->local.uniformBuffersMemory[2][imageIndex]);
+}
+
+void setScaleGameObject(GameObject* go, vec2 scale)
+{
+    go->scale = scale;
+}
+
+void setPosGameObject(GameObject* go, vec2 pos)
+{
+    go->pos = pos;
 }

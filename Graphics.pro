@@ -6,6 +6,7 @@ CONFIG -= qt
 SOURCES += \
         bindDescription.c \
         buffers.c \
+        camera.c \
         debuger.c \
         device.c \
         engine.c \
@@ -27,6 +28,7 @@ DISTFILES += \
 HEADERS += \
     bindDesciption.h \
     buffers.h \
+    camera.h \
     debuger.h \
     device.h \
     engine.h \

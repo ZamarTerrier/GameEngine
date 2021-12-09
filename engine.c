@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include "gameObject.h"
+#include "camera.h"
 
 typedef struct{
     GameObject* go;
@@ -24,6 +25,8 @@ void initVulkan(){
     createSyncObjects();
 
     objs.go = (GameObject *) calloc(0, sizeof(GameObject));
+
+    initCamera();
 
 }
 
@@ -245,6 +248,8 @@ void cleanUp(){
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     vkDestroyInstance(instance, NULL);
+
+    free(camObj);
 
     glfwDestroyWindow(window);
 
