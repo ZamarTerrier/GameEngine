@@ -65,6 +65,7 @@ typedef struct {
 
 typedef struct  {
     vec2 pos;
+    vec2 scale;
 } UniformBufferObject;
 
 

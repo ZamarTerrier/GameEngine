@@ -39,22 +39,26 @@ typedef struct{
 } Shape;
 
 typedef struct{
-    Texture2D* textures;
     struct{
         VkBuffer** uniformBuffers;
         VkDeviceMemory** uniformBuffersMemory;
         VkDeviceSize* uniformSizes;
         uint32_t uniformCount;
         uint32_t texturesCount;
+        Texture2D* textures;
     } local;
-    vec2 pos;
     GraphicItems gItems;
     aboutShader aShader;
     Shape shape;
-    vec2 offser;
+    vec2 pos;
+    vec2 scale;
+    struct{
+        vec2 offset;
+        vec2 scale;
+    }img;
 } GameObject;
 
-GameObject initGameObject();
+GameObject* initGameObject();
 
 VkVertexInputBindingDescription getBindingDescription();
 
@@ -65,6 +69,8 @@ void addTexture(GameObject* go, const char* file);
 void addUniformObject(GameObject* go, VkDeviceSize size);
 
 void recreateDrawningParams(GameObject* go);
+
+void createDrawningParams(GameObject* go);
 
 void destroyGameObject(GameObject* go);
 

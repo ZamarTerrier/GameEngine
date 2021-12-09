@@ -1,4 +1,4 @@
-TEMPLATE = app
+TEMPLATE = lib
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
@@ -10,7 +10,6 @@ SOURCES += \
         device.c \
         engine.c \
         gameObject.c \
-        main.c \
         pipeline.c \
         resource.c \
         swapchain.c \

@@ -14,7 +14,7 @@
 
 void initVulkan();
 
-void init();
+void initEngine();
 
 void cleanupSwapChain();
 
@@ -25,6 +25,8 @@ void createSyncObjects();
 void engineLoop();
 
 void drawFrame();
+
+void engDraw(void* go);
 
 void updateUniformBuffer();
 

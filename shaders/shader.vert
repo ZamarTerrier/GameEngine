@@ -2,6 +2,7 @@
 
 layout(binding = 0) uniform UniformBufferObject {
     vec2 pos;
+    vec2 scale;
 } ubo;
 
 layout(binding = 1) uniform ImgUniformParam {
@@ -21,7 +22,7 @@ layout(location = 3) out vec2 outScale;
 
 
 void main() {
-    gl_Position = vec4(ubo.pos + position, 0.0, 1.0);
+    gl_Position = vec4((ubo.pos + position) * ubo.scale, 0.0, 1.0);
     fragColor = color;
     fragTexCoord = inTexCoord;
     outOffset = iup.offset;

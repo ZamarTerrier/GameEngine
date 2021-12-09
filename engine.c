@@ -2,7 +2,12 @@
 
 #include "gameObject.h"
 
-GameObject go;
+typedef struct{
+    GameObject* go;
+    uint32_t count;
+} rndrObj;
+
+rndrObj objs;
 
 void initVulkan(){
     createInstance();
@@ -18,10 +23,11 @@ void initVulkan(){
     createCommandBuffers();
     createSyncObjects();
 
-    go = initGameObject();
+    objs.go = (GameObject *) calloc(0, sizeof(GameObject));
+
 }
 
-void init(){
+void initEngine(){
     initWindow();
     initVulkan();
 }
@@ -42,7 +48,6 @@ void cleanupSwapChain() {
 
     vkDestroySwapchainKHR(device, swapChain, NULL);
 
-    destroyGameObject(&go);
 }
 
 void recreateSwapChain() {
@@ -64,7 +69,6 @@ void recreateSwapChain() {
     createFramebuffers();
     createCommandBuffers();
 
-    go = initGameObject();
 }
 
 void createSyncObjects() {
@@ -95,6 +99,15 @@ void createSyncObjects() {
 
 void engineLoop(){
 
+    int temp = objs.count ;
+
+    while(temp> 0)
+    {
+        updateUniformBuffer(&objs.go[temp - 1]);
+
+        temp --;
+    }
+
     VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -104,8 +117,6 @@ void engineLoop(){
         printf("failed to acquire swap chain image!");
         exit(1);
     }
-
-    updateUniformBuffer(&go);
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
@@ -164,6 +175,7 @@ void engineLoop(){
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
+    objs.go = (GameObject *) realloc(0, sizeof(GameObject));
 }
 
 void drawFrame(){
@@ -189,7 +201,12 @@ void drawFrame(){
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    gameObjectDraw(&go);
+    while(objs.count > 0)
+    {
+        gameObjectDraw(&objs.go[objs.count - 1]);
+
+        objs.count --;
+    }
 
     vkCmdEndRenderPass(commandBuffers[imageIndex]);
 
@@ -198,6 +215,15 @@ void drawFrame(){
         exit(1);
     }
 
+}
+
+void engDraw(void* arg){
+
+    GameObject* go = (GameObject *)arg;
+
+    objs.count ++;
+    objs.go = (GameObject *) realloc(objs.go,objs.count * sizeof(GameObject));
+    objs.go[objs.count - 1] = *go;
 }
 
 void cleanUp(){

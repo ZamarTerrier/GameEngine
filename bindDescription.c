@@ -89,7 +89,7 @@ void createDescriptorSets(void* arg) {
 
     VkWriteDescriptorSet* descriptorWrites = (VkWriteDescriptorSet *) calloc(go->local.uniformCount + go->local.texturesCount, sizeof(VkWriteDescriptorSet));
     VkDescriptorImageInfo* imageInfos = (VkDescriptorImageInfo* ) calloc(go->local.texturesCount, sizeof(VkDescriptorImageInfo));
-    VkDescriptorBufferInfo* bufferInfos = (VkDescriptorImageInfo* ) calloc(go->local.uniformCount, sizeof(VkDescriptorImageInfo));
+    VkDescriptorBufferInfo* bufferInfos = (VkDescriptorImageInfo* ) calloc(go->local.uniformCount, sizeof(VkDescriptorBufferInfo));
 
     //-------------------------------------------------
     //Дескрипторы для всех изображений
@@ -118,8 +118,8 @@ void createDescriptorSets(void* arg) {
         for(j=0;j < go->local.texturesCount;j++)
         {
             imageInfos[j].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfos[j].imageView = go->textures[j].textureImageView;
-            imageInfos[j].sampler = go->textures[j].textureSampler;
+            imageInfos[j].imageView = go->local.textures[j].textureImageView;
+            imageInfos[j].sampler = go->local.textures[j].textureSampler;
 
             descriptorWrites[j + go->local.uniformCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[j + go->local.uniformCount].dstSet = go->gItems.descriptorSets[i];
