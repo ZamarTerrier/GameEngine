@@ -66,7 +66,8 @@ void initWindow(){
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 
-    framebufferResized = true;
+    if(framebufferwasResized)
+        framebufferResized = true;
 
 }
 

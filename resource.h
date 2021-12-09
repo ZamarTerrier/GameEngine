@@ -45,6 +45,7 @@ extern VkFence* imagesInFlight;
 extern size_t currentFrame;
 
 extern bool framebufferResized;
+extern bool framebufferwasResized;
 
 extern VkBuffer vertexBuffer;
 extern VkDeviceMemory vertexBufferMemory;

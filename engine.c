@@ -4,7 +4,7 @@
 #include "camera.h"
 
 typedef struct{
-    GameObject* go;
+    GameObject** go;
     uint32_t count;
 } rndrObj;
 
@@ -25,6 +25,7 @@ void initVulkan(){
     createSyncObjects();
 
     objs.go = (GameObject *) calloc(0, sizeof(GameObject));
+    objs.count = 0;
 
     initCamera();
 
@@ -42,6 +43,14 @@ void cleanupSwapChain() {
     }
 
     vkFreeCommandBuffers(device, commandPool, imagesCount, commandBuffers);
+
+    int temp = objs.count;
+
+    while(temp > 0)
+    {
+        cleanGameObject(objs.go[temp - 1]);
+        temp --;
+    }
 
     vkDestroyRenderPass(device, renderPass, NULL);
 
@@ -69,8 +78,18 @@ void recreateSwapChain() {
     createSwapChain();
     createImageViews();
     createRenderPass();
+    int temp = objs.count;
+
+    while(temp > 0)
+    {
+        createDrawningParams(objs.go[temp - 1]);
+        temp --;
+    }
+
     createFramebuffers();
     createCommandBuffers();
+
+    framebufferwasResized = true;
 
 }
 
@@ -102,23 +121,22 @@ void createSyncObjects() {
 
 void engineLoop(){
 
-    int temp = objs.count ;
-
-    while(temp> 0)
-    {
-        updateUniformBuffer(&objs.go[temp - 1]);
-
-        temp --;
-    }
-
     VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR && framebufferwasResized) {
         recreateSwapChain();
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         printf("failed to acquire swap chain image!");
         exit(1);
+    }
+
+    int temp = objs.count;
+
+    while(temp > 0)
+    {
+        updateUniformBuffer(objs.go[temp - 1]);
+        temp --;
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -168,8 +186,9 @@ void engineLoop(){
 
     //vkQueueWaitIdle(presentQueue);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || (framebufferResized && framebufferwasResized)) {
         framebufferResized = false;
+        framebufferwasResized = false;
         recreateSwapChain();
     } else if (result != VK_SUCCESS) {
         printf("failed to present swap chain image!");
@@ -179,6 +198,8 @@ void engineLoop(){
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
     objs.go = (GameObject *) realloc(0, sizeof(GameObject));
+    objs.count = 0;
+
 }
 
 void drawFrame(){
@@ -204,11 +225,13 @@ void drawFrame(){
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    while(objs.count > 0)
-    {
-        gameObjectDraw(&objs.go[objs.count - 1]);
+    int temp = objs.count;
 
-        objs.count --;
+    while(temp > 0)
+    {
+        gameObjectDraw(objs.go[temp - 1]);
+
+        temp --;
     }
 
     vkCmdEndRenderPass(commandBuffers[imageIndex]);
@@ -224,9 +247,15 @@ void engDraw(void* arg){
 
     GameObject* go = (GameObject *)arg;
 
+    for(i=0;i < objs.count;i++)
+    {
+        if(objs.go[i] == go)
+            return;
+    }
+
     objs.count ++;
-    objs.go = (GameObject *) realloc(objs.go,objs.count * sizeof(GameObject));
-    objs.go[objs.count - 1] = *go;
+    objs.go = (GameObject **) realloc(objs.go,objs.count * sizeof(GameObject*));
+    objs.go[objs.count - 1] = go;
 }
 
 void cleanUp(){

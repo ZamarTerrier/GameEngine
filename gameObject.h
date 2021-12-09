@@ -68,7 +68,7 @@ void addTexture(GameObject* go, const char* file);
 
 void addUniformObject(GameObject* go, VkDeviceSize size);
 
-void recreateDrawningParams(GameObject* go);
+void cleanGameObject(GameObject* go);
 
 void createDrawningParams(GameObject* go);
 

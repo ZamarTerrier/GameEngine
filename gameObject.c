@@ -78,43 +78,22 @@ void addUniformObject(GameObject* go, VkDeviceSize size){
 
 }
 
-void recreateDrawningParams(GameObject* go){
+void cleanGameObject(GameObject* go){
 
-    if(go->local.uniformBuffers[0] != NULL)
-    {
-        vkDestroyPipeline(device, go->gItems.graphicsPipeline, NULL);
-        vkDestroyPipelineLayout(device, go->gItems.pipelineLayout, NULL);
-        vkDestroyDescriptorPool(device, go->gItems.descriptorPool, NULL);
-        vkDestroyDescriptorSetLayout(device, go->gItems.descriptorSetLayout, NULL);
+    vkDestroyPipeline(device, go->gItems.graphicsPipeline, NULL);
+    vkDestroyPipelineLayout(device, go->gItems.pipelineLayout, NULL);
+    vkDestroyDescriptorPool(device, go->gItems.descriptorPool, NULL);
+    vkDestroyDescriptorSetLayout(device, go->gItems.descriptorSetLayout, NULL);
 
-        for (i = 0; i < go->local.uniformCount; i++) {
-            for (j = 0; j < imagesCount; j++) {
+
+    for (i = 0; i < go->local.uniformCount; i++) {
+        for (j = 0; j < imagesCount; j++) {
             vkDestroyBuffer(device, go->local.uniformBuffers[i][j], NULL);
             vkFreeMemory(device, go->local.uniformBuffersMemory[i][j], NULL);
-            }
         }
-
-        createUniformBuffers(go);
+        free(go->local.uniformBuffers[i]);
+        free(go->local.uniformBuffersMemory[i]);
     }
-
-    uint32_t unionSize = go->local.texturesCount + go->local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
-
-    for(i=0;i < go->local.uniformCount;i++)
-    {
-        types[i] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    }
-
-    for(i=0;i < go->local.texturesCount;i++)
-    {
-        types[i + go->local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    }
-
-
-    createDescriptorSetLayout(go, types, unionSize);
-    createDescriptorPool(go, types, unionSize);
-    createDescriptorSets(go);
-    createGraphicsPipeline(go);
 }
 
 void createDrawningParams(GameObject* go){
@@ -139,6 +118,8 @@ void createDrawningParams(GameObject* go){
     createDescriptorPool(go, types, unionSize);
     createDescriptorSets(go);
     createGraphicsPipeline(go);
+
+    free(types);
 }
 
 //Описание вертекса
@@ -183,7 +164,6 @@ void destroyGameObject(GameObject* go){
     vkDestroyDescriptorPool(device, go->gItems.descriptorPool, NULL);
     vkDestroyDescriptorSetLayout(device, go->gItems.descriptorSetLayout, NULL);
 
-
     vkDestroyBuffer(device, go->shape.index.indexBuffer, NULL);
     vkFreeMemory(device, go->shape.index.indexBufferMemory, NULL);
 
@@ -197,14 +177,17 @@ void destroyGameObject(GameObject* go){
 
     for (i = 0; i < go->local.uniformCount; i++) {
         for (j = 0; j < imagesCount; j++) {
-        vkDestroyBuffer(device, go->local.uniformBuffers[i][j], NULL);
-        vkFreeMemory(device, go->local.uniformBuffersMemory[i][j], NULL);
+            vkDestroyBuffer(device, go->local.uniformBuffers[i][j], NULL);
+            vkFreeMemory(device, go->local.uniformBuffersMemory[i][j], NULL);
         }
+        free(go->local.uniformBuffers[i]);
+        free(go->local.uniformBuffersMemory[i]);
     }
 
 }
 
 void gameObjectDraw(GameObject* go){
+
     vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->gItems.graphicsPipeline);
 
     VkBuffer vertexBuffers[] = {go->shape.vertex.vertexBuffer};
@@ -229,7 +212,7 @@ void updateUniformBuffer(GameObject* go) {
     void* data;
 
     vkMapMemory(device, go->local.uniformBuffersMemory[0][imageIndex], 0, sizeof(vuo), 0, &data);
-        memcpy(data, &vuo, sizeof(vuo));
+    memcpy(data, &vuo, sizeof(vuo));
     vkUnmapMemory(device, go->local.uniformBuffersMemory[0][imageIndex]);
 
     UniformBufferObject ubo = {};
@@ -237,7 +220,7 @@ void updateUniformBuffer(GameObject* go) {
     ubo.scale = go->scale;
 
     vkMapMemory(device, go->local.uniformBuffersMemory[1][imageIndex], 0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
+    memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, go->local.uniformBuffersMemory[1][imageIndex]);
 
     ImgUniformParam iup = {};
@@ -245,8 +228,9 @@ void updateUniformBuffer(GameObject* go) {
     iup.imgScale = go->img.scale;
 
     vkMapMemory(device, go->local.uniformBuffersMemory[2][imageIndex], 0, sizeof(iup), 0, &data);
-        memcpy(data, &iup, sizeof(iup));
+    memcpy(data, &iup, sizeof(iup));
     vkUnmapMemory(device, go->local.uniformBuffersMemory[2][imageIndex]);
+
 }
 
 void setScaleGameObject(GameObject* go, vec2 scale)
