@@ -124,7 +124,7 @@ void createImageViews() {
     swapChainImageViews = (VkImageView *) calloc(imagesCount, sizeof(VkImageView));
 
     for (size_t i = 0; i < imagesCount; i++) {
-        swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
+        swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
 }

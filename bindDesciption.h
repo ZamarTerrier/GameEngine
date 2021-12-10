@@ -9,10 +9,10 @@ VkVertexInputBindingDescription getBindingDescription();
 
 attrDescr getAttributeDescriptions();
 
-void createDescriptorSetLayout(void* arg, VkDescriptorType* descriptors, size_t count);
+void createDescriptorSetLayout(GraphicItems* gi, VkDescriptorType* descriptors, size_t count);
 
-void createDescriptorPool(void* arg, VkDescriptorType* descriptors, size_t count);
+void createDescriptorPool(GraphicItems* gi, VkDescriptorType* descriptors, size_t count);
 
-void createDescriptorSets(void* arg);
+void createDescriptorSets(GraphicItems* gi, localParam* params);
 
 #endif // BINDDESCIPTION_H

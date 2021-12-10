@@ -19,8 +19,9 @@ void initVulkan(){
     createSwapChain();
     createImageViews();
     createRenderPass();
-    createFramebuffers();
     createCommandPool();
+    createDepthResources();
+    createFramebuffers();
     createCommandBuffers();
     createSyncObjects();
 
@@ -37,6 +38,10 @@ void initEngine(){
 }
 
 void cleanupSwapChain() {
+
+    vkDestroyImageView(device, depthImageView, NULL);
+    vkDestroyImage(device, depthImage, NULL);
+    vkFreeMemory(device, depthImageMemory, NULL);
 
     for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyFramebuffer(device, swapChainFramebuffers[i], NULL);
@@ -85,11 +90,12 @@ void recreateSwapChain() {
     createSwapChain();
     createImageViews();
     createRenderPass();
+    createDepthResources();
     int temp = objs.count;
 
     while(temp > 0)
     {
-        createDrawningParams(objs.go[temp - 1]);
+        createDrawningParams(&objs.go[temp - 1]->gItems, &objs.go[temp - 1]->local);
         temp --;
     }
 
@@ -226,11 +232,26 @@ void drawFrame(){
     renderPassInfo.renderArea.offset.y = 0;
     renderPassInfo.renderArea.extent = swapChainExtent;
 
-    VkClearValue clearColor = {{{0.0f, 0.0f, 1.0f, 1.0f}}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+
+    VkClearValue* clearColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
+    clearColor->color.float32[0] = 0.0f;
+    clearColor->color.float32[1] = 0.0f;
+    clearColor->color.float32[2] = 1.0f;
+    clearColor->color.float32[3] = 1.0f;
+    VkClearValue* depthColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
+    depthColor->depthStencil.depth = 1.0f;
+    depthColor->depthStencil.stencil = 0;
+    VkClearValue clearValues[] = {
+        *clearColor,
+        *depthColor
+    };
+    renderPassInfo.clearValueCount = 2;
+    renderPassInfo.pClearValues = clearValues;
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    free(clearColor);
+    free(depthColor);
 
     int temp = objs.count;
 

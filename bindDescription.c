@@ -3,9 +3,7 @@
 #include "gameObject.h"
 
 //Создаем параметры дескриптора
-void createDescriptorSetLayout(void* arg, VkDescriptorType* descriptors, size_t count) {
-
-    GameObject* go = (GameObject *)arg;
+void createDescriptorSetLayout(GraphicItems* gi, VkDescriptorType* descriptors, size_t count) {
 
     VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding *) calloc(sizeof(VkDescriptorSetLayoutBinding), count);
 
@@ -35,15 +33,13 @@ void createDescriptorSetLayout(void* arg, VkDescriptorType* descriptors, size_t 
     layoutInfo.bindingCount = count;
     layoutInfo.pBindings = bindings;
 
-    if (vkCreateDescriptorSetLayout(device, &layoutInfo, NULL, &go->gItems.descriptorSetLayout) != VK_SUCCESS) {
+    if (vkCreateDescriptorSetLayout(device, &layoutInfo, NULL, &gi->descriptorSetLayout) != VK_SUCCESS) {
         printf("failed to create descriptor set layout!");
         exit(1);
     }
 }
 //Создаем пулл дескрипторов для шейдера
-void createDescriptorPool(void* arg, VkDescriptorType* descriptors, size_t count) {
-
-    GameObject* go = (GameObject *)arg;
+void createDescriptorPool(GraphicItems* gi, VkDescriptorType* descriptors, size_t count) {
 
     VkDescriptorPoolSize* poolSizes = (VkDescriptorPoolSize *) calloc(sizeof(VkDescriptorPoolSize), count);
     for(i=0;i < count; i++)
@@ -58,38 +54,36 @@ void createDescriptorPool(void* arg, VkDescriptorType* descriptors, size_t count
     poolInfo.pPoolSizes = poolSizes;
     poolInfo.maxSets = imagesCount;
 
-    if (vkCreateDescriptorPool(device, &poolInfo, NULL, &go->gItems.descriptorPool) != VK_SUCCESS) {
+    if (vkCreateDescriptorPool(device, &poolInfo, NULL, &gi->descriptorPool) != VK_SUCCESS) {
         printf("failed to create descriptor pool!");
         exit(1);
     }
 }
 //Создаем сами дескрипторы
-void createDescriptorSets(void* arg) {
-
-    GameObject* go = (GameObject *)arg;
+void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
     //Создаем идентичные друг другу сеты дескрипторов
     VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*) calloc(imagesCount, sizeof(VkDescriptorSetLayout));
     for(i=0; i < imagesCount;i++)
     {
-        layouts[i] = go->gItems.descriptorSetLayout;
+        layouts[i] = gi->descriptorSetLayout;
     }
 
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = go->gItems.descriptorPool;
+    allocInfo.descriptorPool = gi->descriptorPool;
     allocInfo.descriptorSetCount = imagesCount;
     allocInfo.pSetLayouts = layouts;
 
-    go->gItems.descriptorSets = (VkDescriptorSet*) calloc(imagesCount, sizeof(VkDescriptorSet));
-    if (vkAllocateDescriptorSets(device, &allocInfo, go->gItems.descriptorSets) != VK_SUCCESS) {
+    gi->descriptorSets = (VkDescriptorSet*) calloc(imagesCount, sizeof(VkDescriptorSet));
+    if (vkAllocateDescriptorSets(device, &allocInfo, gi->descriptorSets) != VK_SUCCESS) {
         printf("failed to allocate descriptor sets!");
         exit(1);
     }
 
-    VkWriteDescriptorSet* descriptorWrites = (VkWriteDescriptorSet *) calloc(go->local.uniformCount + go->local.texturesCount, sizeof(VkWriteDescriptorSet));
-    VkDescriptorImageInfo* imageInfos = (VkDescriptorImageInfo* ) calloc(go->local.texturesCount, sizeof(VkDescriptorImageInfo));
-    VkDescriptorBufferInfo* bufferInfos = (VkDescriptorImageInfo* ) calloc(go->local.uniformCount, sizeof(VkDescriptorBufferInfo));
+    VkWriteDescriptorSet* descriptorWrites = (VkWriteDescriptorSet *) calloc(params->uniformCount + params->texturesCount, sizeof(VkWriteDescriptorSet));
+    VkDescriptorImageInfo* imageInfos = (VkDescriptorImageInfo* ) calloc(params->texturesCount, sizeof(VkDescriptorImageInfo));
+    VkDescriptorBufferInfo* bufferInfos = (VkDescriptorImageInfo* ) calloc(params->uniformCount, sizeof(VkDescriptorBufferInfo));
 
     //-------------------------------------------------
     //Дескрипторы для всех изображений

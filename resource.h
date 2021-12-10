@@ -27,6 +27,10 @@ extern VkSwapchainKHR swapChain;
 extern VkImage* swapChainImages;
 extern VkImageView* swapChainImageViews;
 
+extern VkImage depthImage;
+extern VkDeviceMemory depthImageMemory;
+extern VkImageView depthImageView;
+
 extern VkFormat swapChainImageFormat;
 extern VkExtent2D swapChainExtent;
 

@@ -7,13 +7,14 @@ void createFramebuffers() {
 
     for (i=0;i<imagesCount;i++) {
         VkImageView attachments[] = {
-            swapChainImageViews[i]
+            swapChainImageViews[i],
+            depthImageView
         };
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.attachmentCount = 2;
         framebufferInfo.pAttachments = attachments;
         framebufferInfo.width = swapChainExtent.width;
         framebufferInfo.height = swapChainExtent.height;
@@ -58,31 +59,29 @@ void createCommandBuffers(){
 
 }
 
-void createVertexBuffer(void* arg) {
-
-    GameObject* go = (GameObject *)arg;
+void createVertexBuffer(vertexParam* vert) {
 
     //Выделение памяти
 
-    VkDeviceSize bufferSize = sizeof(Vertex) * go->shape.vertex.verticesSize;
+    VkDeviceSize bufferSize = sizeof(Vertex) * vert->verticesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &go->shape.vertex.vertexBuffer, &go->shape.vertex.vertexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
 
     //-------------
     //Перенос данных в буфер
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, go->shape.vertex.vertices, (size_t) bufferSize);
+        memcpy(data, vert->vertices, (size_t) bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     //-------------
 
-    copyBuffer(stagingBuffer, go->shape.vertex.vertexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, vert->vertexBuffer, bufferSize);
 
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
@@ -90,43 +89,39 @@ void createVertexBuffer(void* arg) {
 
 }
 
-void createIndexBuffer(void* arg) {
+void createIndexBuffer(indexParam* ind) {
 
-    GameObject* go = (GameObject *)arg;
-
-    VkDeviceSize bufferSize = sizeof(uint16_t) * go->shape.index.indexesSize;
+    VkDeviceSize bufferSize = sizeof(uint16_t) * ind->indexesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &go->shape.index.indexBuffer, &go->shape.index.indexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, go->shape.index.indices, (size_t) bufferSize);
+    memcpy(data, ind->indices, (size_t) bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
-    copyBuffer(stagingBuffer, go->shape.index.indexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, ind->indexBuffer, bufferSize);
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
     vkFreeMemory(device, stagingBufferMemory, NULL);
 }
 
-void createUniformBuffers(void* arg) {
+void createUniformBuffers(localParam* param) {
 
-    GameObject* go = (GameObject*)arg;
+    param->uniformBuffers = (VkBuffer**) calloc(param->uniformCount, sizeof(VkBuffer*));
+    param->uniformBuffersMemory = (VkDeviceMemory**) calloc(param->uniformCount, sizeof(VkDeviceMemory*));
 
-    go->local.uniformBuffers = (VkBuffer**) calloc(go->local.uniformCount, sizeof(VkBuffer*));
-    go->local.uniformBuffersMemory = (VkDeviceMemory**) calloc(go->local.uniformCount, sizeof(VkDeviceMemory*));
-
-    for(i=0;i < go->local.uniformCount;i++)
+    for(i=0;i < param->uniformCount;i++)
     {
-        go->local.uniformBuffers[i] = (VkBuffer*) calloc(imagesCount, sizeof(VkBuffer));
-        go->local.uniformBuffersMemory[i] = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
+        param->uniformBuffers[i] = (VkBuffer*) calloc(imagesCount, sizeof(VkBuffer));
+        param->uniformBuffersMemory[i] = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
         for (j = 0; j < imagesCount; j++) {
-            createBuffer(go->local.uniformSizes[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->local.uniformBuffers[i][j], &go->local.uniformBuffersMemory[i][j]);
+            createBuffer(param->uniformSizes[i], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &param->uniformBuffers[i][j], &param->uniformBuffersMemory[i][j]);
         }
     }
 }

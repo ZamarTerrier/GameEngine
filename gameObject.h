@@ -8,45 +8,7 @@
 #include "texture.h"
 
 typedef struct{
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorSet* descriptorSets;
-    VkPipeline graphicsPipeline;
-    VkPipelineLayout pipelineLayout;
-    VkDescriptorPool descriptorPool;
-} GraphicItems;
-
-typedef struct{
-    const char* vertShader;
-    const char* fragShader;
-    VkVertexInputBindingDescription bindingDescription;
-    VkVertexInputAttributeDescription* attr;
-    size_t countAttr;
-} aboutShader;
-
-typedef struct{
-    struct{
-        Vertex* vertices;
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
-        uint32_t verticesSize;
-    } vertex;
-    struct{
-        uint32_t* indices;
-        VkBuffer indexBuffer;
-        VkDeviceMemory indexBufferMemory;
-        uint32_t indexesSize;
-    } index;
-} Shape;
-
-typedef struct{
-    struct{
-        VkBuffer** uniformBuffers;
-        VkDeviceMemory** uniformBuffersMemory;
-        VkDeviceSize* uniformSizes;
-        uint32_t uniformCount;
-        uint32_t texturesCount;
-        Texture2D* textures;
-    } local;
+    localParam local;
     GraphicItems gItems;
     aboutShader aShader;
     Shape shape;
@@ -66,11 +28,11 @@ attrDescr getAttributeDescriptions();
 
 void addTexture(GameObject* go, const char* file);
 
-void addUniformObject(GameObject* go, VkDeviceSize size);
+void addUniformObject(localParam* param, VkDeviceSize size);
 
 void cleanGameObject(GameObject* go);
 
-void createDrawningParams(GameObject* go);
+void createDrawningParams( GraphicItems* gi, localParam* param);
 
 void destroyGameObject(GameObject* go);
 

@@ -24,6 +24,10 @@ VkSwapchainKHR swapChain;
 VkImage* swapChainImages;
 VkImageView* swapChainImageViews;
 
+VkImage depthImage;
+VkDeviceMemory depthImageMemory;
+VkImageView depthImageView;
+
 VkFormat swapChainImageFormat;
 VkExtent2D swapChainExtent;
 

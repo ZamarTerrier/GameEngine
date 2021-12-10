@@ -14,9 +14,19 @@ void createTextureImageView() ;
 
 void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* imageMemory);
 
-VkImageView createImageView(VkImage image, VkFormat format);
+VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 void createTextureSampler();
+
+void createDepthResources() ;
+
+bool hasStencilComponent(VkFormat format);
+
+VkFormat findDepthFormat();
+
+VkFormat findSupportedFormat(const VkFormat* candidates, size_t countCandidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
+void createDepthResources();
 
 void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 

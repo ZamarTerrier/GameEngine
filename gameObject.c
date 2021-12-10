@@ -38,7 +38,6 @@ GameObject* initGameObject()
     createIndexBuffer(go);
 
     return go;
-
 }
 
 void addTexture(GameObject* go, const char* file){
@@ -64,17 +63,17 @@ void changeTexture(GameObject* go, int elem, const char* file){
 
 }
 
-void addUniformObject(GameObject* go, VkDeviceSize size){
+void addUniformObject(localParam* param, VkDeviceSize size){
 
-    int temp = go->local.uniformCount;
-    go->local.uniformCount ++;
+    int temp = param->uniformCount;
+    param->uniformCount ++;
 
     if(temp == 0)
-        go->local.uniformSizes = (VkDeviceSize *) calloc(go->local.uniformCount, sizeof(VkDeviceSize));
+        param->uniformSizes = (VkDeviceSize *) calloc(param->uniformCount, sizeof(VkDeviceSize));
     else
-        go->local.uniformSizes = (VkDeviceSize *) realloc(go->local.uniformSizes, go->local.uniformCount * sizeof(VkDeviceSize));
+        param->uniformSizes = (VkDeviceSize *) realloc(param->uniformSizes, param->uniformCount * sizeof(VkDeviceSize));
 
-    go->local.uniformSizes[temp] = size;
+    param->uniformSizes[temp] = size;
 
 }
 
@@ -96,27 +95,27 @@ void cleanGameObject(GameObject* go){
     }
 }
 
-void createDrawningParams(GameObject* go){
+void createDrawningParams( GraphicItems* gi, localParam* param){
 
-    createUniformBuffers(go);
+    createUniformBuffers(param);
 
-    uint32_t unionSize = go->local.texturesCount + go->local.uniformCount;
+    uint32_t unionSize = param->texturesCount + param->uniformCount;
     VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
 
-    for(i=0;i < go->local.uniformCount;i++)
+    for(i=0;i < param->uniformCount;i++)
     {
         types[i] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     }
 
-    for(i=0;i < go->local.texturesCount;i++)
+    for(i=0;i < param->texturesCount;i++)
     {
-        types[i + go->local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        types[i + param->uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     }
 
 
-    createDescriptorSetLayout(go, types, unionSize);
-    createDescriptorPool(go, types, unionSize);
-    createDescriptorSets(go);
+    createDescriptorSetLayout(gi, types, unionSize);
+    createDescriptorPool(gi, types, unionSize);
+    createDescriptorSets(gi, param);
     createGraphicsPipeline(go);
 
     free(types);
@@ -236,7 +235,7 @@ void updateUniformBuffer(GameObject* go) {
 void setPosGameObject(GameObject* go, vec2 pos)
 {
     pos.x /= (viewSize.x * diffSize.x) * go->scale.x ;
-    pos.y /= (viewSize.y * diffSize.y) * go->scale.x;
+    pos.y /= (viewSize.y * diffSize.y) * go->scale.y;
 
     go->pos= pos;
 }
@@ -252,14 +251,14 @@ vec2 getPosGameObject(GameObject* go)
 void setScaleGameObject(GameObject* go, vec2 scale)
 {
     go->scale.x = scale.x / (viewSize.x * diffSize.x);
-    go->scale.y = scale.y / (viewSize.y * diffSize.x);;
+    go->scale.y = scale.y / (viewSize.y * diffSize.y);;
 }
 
 vec2 getScaleGameObject(GameObject* go)
 {
     vec2 size;
     size.x = go->scale.x * (viewSize.x * diffSize.x);
-    size.y = go->scale.x * (viewSize.y * diffSize.x);
+    size.y = go->scale.y * (viewSize.y * diffSize.y);
     return size;
 }
 

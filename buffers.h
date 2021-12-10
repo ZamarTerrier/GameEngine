@@ -12,11 +12,11 @@ void createCommandPool();
 
 void createCommandBuffers();
 
-void createVertexBuffer(void* arg);
+void createVertexBuffer(vertexParam* arg);
 
-void createIndexBuffer(void* arg);
+void createIndexBuffer(indexParam* arg);
 
-void createUniformBuffers(void* arg);
+void createUniformBuffers(localParam* arg);
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
