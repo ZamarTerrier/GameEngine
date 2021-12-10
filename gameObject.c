@@ -233,12 +233,40 @@ void updateUniformBuffer(GameObject* go) {
 
 }
 
-void setScaleGameObject(GameObject* go, vec2 scale)
-{
-    go->scale = scale;
-}
-
 void setPosGameObject(GameObject* go, vec2 pos)
 {
-    go->pos = pos;
+    pos.x /= (viewSize.x * diffSize.x) * go->scale.x ;
+    pos.y /= (viewSize.y * diffSize.y) * go->scale.x;
+
+    go->pos= pos;
+}
+
+vec2 getPosGameObject(GameObject* go)
+{
+    vec2 pos;
+    pos.x = go->pos.x * (viewSize.x * diffSize.x) * go->scale.x;
+    pos.y = go->pos.y * (viewSize.y * diffSize.y) * go->scale.y;
+    return pos;
+}
+
+void setScaleGameObject(GameObject* go, vec2 scale)
+{
+    go->scale.x = scale.x / (viewSize.x * diffSize.x);
+    go->scale.y = scale.y / (viewSize.y * diffSize.x);;
+}
+
+vec2 getScaleGameObject(GameObject* go)
+{
+    vec2 size;
+    size.x = go->scale.x * (viewSize.x * diffSize.x);
+    size.y = go->scale.x * (viewSize.y * diffSize.x);
+    return size;
+}
+
+vec2 getSizeGameObject(GameObject* go)
+{
+    vec2 size;
+    size.x = fabs((go->shape.vertex.vertices[1].pos.x - go->shape.vertex.vertices[3].pos.x) * (viewSize.x * diffSize.x)) * go->scale.x;
+    size.y = fabs((go->shape.vertex.vertices[1].pos.y - go->shape.vertex.vertices[3].pos.y) * (viewSize.y * diffSize.y)) * go->scale.y;
+    return size;
 }

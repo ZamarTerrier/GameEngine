@@ -71,6 +71,13 @@ void recreateSwapChain() {
         glfwWaitEvents();
     }
 
+    vec2 newScale;
+
+    newScale.x =  viewSize.x / WIDTH;
+    newScale.y =  viewSize.y / HEIGHT;
+
+    setViewScale(newScale);
+
     vkDeviceWaitIdle(device);
 
     cleanupSwapChain();

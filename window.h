@@ -17,4 +17,6 @@ void createInstance();
 
 void createSurface();
 
+vec2 getWindowSize();
+
 #endif

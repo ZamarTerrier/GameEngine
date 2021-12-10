@@ -80,8 +80,14 @@ void recreateDrawningParams(GameObject* go);
 
 void updateUniformBuffer(GameObject* go);
 
+void setPosGameObject(GameObject* go, vec2 pos);
+
+vec2 getPosGameObject(GameObject* go);
+
 void setScaleGameObject(GameObject* go, vec2 scale);
 
-void setPosGameObject(GameObject* go, vec2 pos);
+vec2 getScaleGameObject(GameObject* go);
+
+vec2 getSizeGameObject(GameObject* go);
 
 #endif // GAMEOBJECT_H

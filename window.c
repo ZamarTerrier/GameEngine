@@ -122,3 +122,13 @@ void createSurface() {
         exit(1);
     }
 }
+
+vec2 getWindowSize()
+{
+    vec2 size;
+
+    size.x = WIDTH * diffSize.x;
+    size.y = HEIGHT * diffSize.y;
+
+    return size;
+}

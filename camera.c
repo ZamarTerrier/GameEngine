@@ -19,3 +19,15 @@ void setViewPos(vec2 pos){
 
     cam->pos = pos;
 }
+
+vec2 getViewPos(){
+    Camera* cam = (Camera*)camObj;
+
+    return cam->pos;
+}
+
+void setViewScale(vec2 scale){
+    Camera* cam = (Camera*)camObj;
+
+    cam->scale = scale;
+}

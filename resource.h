@@ -68,6 +68,9 @@ extern uint32_t glfwExtensionCount;
 
 extern void* camObj;
 
+extern vec2 viewSize;
+extern vec2 diffSize;
+
 extern int i, j;
 
 #endif

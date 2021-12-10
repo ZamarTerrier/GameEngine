@@ -74,4 +74,7 @@ uint32_t glfwExtensionCount = 0;
 
 void* camObj;
 
+vec2 viewSize = { 800, 600 };
+vec2 diffSize = { 1.5f, 1.5f };
+
 int i = 0, j = 0;
