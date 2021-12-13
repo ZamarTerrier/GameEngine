@@ -28,6 +28,8 @@ void drawFrame();
 
 void engDraw(void* go);
 
+void engDrawText(void* arg);
+
 void updateUniformBuffer();
 
 void cleanUp();

@@ -56,6 +56,13 @@ const Vertex vertices[] = {
     {{0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {1.0f, 0.0f}},
 };
 
+const Vertex vertices2[] = {
+    {{-0.5f, -0.5f}, {0.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 1.0f}},
+    {{0.5f, 0.5f}, {1.0f, 1.0f}},
+    {{0.5f, -0.5f}, {1.0f, 0.0f}},
+};
+
 const uint16_t indices[] = {
     2, 1, 0, 0, 3, 2
 };
@@ -69,6 +76,25 @@ const char* validationLayers[] = {
 
 const char* deviceExtensions[] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
+VkVertexInputAttributeDescription attributeDescription[] = {
+
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(Vertex, pos) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(Vertex, color) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(Vertex, texCoord) }
 };
 
 uint32_t imageIndex;

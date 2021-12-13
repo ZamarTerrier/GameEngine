@@ -92,14 +92,14 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
         //Дескриптор Юниформы для шейдера
 
 
-        for(j=0;j < go->local.uniformCount;j++)
+        for(j=0;j < params->uniformCount;j++)
         {
-            bufferInfos[j].buffer = go->local.uniformBuffers[j][i];//Массив юнибавера
+            bufferInfos[j].buffer = params->uniformBuffers[j][i];//Массив юнибавера
             bufferInfos[j].offset = 0;
-            bufferInfos[j].range = go->local.uniformSizes[j];//рамер юниформ бафера
+            bufferInfos[j].range = params->uniformSizes[j];//рамер юниформ бафера
 
             descriptorWrites[j].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[j].dstSet = go->gItems.descriptorSets[i];
+            descriptorWrites[j].dstSet = gi->descriptorSets[i];
             descriptorWrites[j].dstBinding = j;
             descriptorWrites[j].dstArrayElement = 0;
             descriptorWrites[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -109,29 +109,33 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
 
         //Дескриптор Изображений для шейдера
-        for(j=0;j < go->local.texturesCount;j++)
+        for(j=0;j < params->texturesCount;j++)
         {
             imageInfos[j].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfos[j].imageView = go->local.textures[j].textureImageView;
-            imageInfos[j].sampler = go->local.textures[j].textureSampler;
+            imageInfos[j].imageView = params->textures[j].textureImageView;
+            imageInfos[j].sampler = params->textures[j].textureSampler;
 
-            descriptorWrites[j + go->local.uniformCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[j + go->local.uniformCount].dstSet = go->gItems.descriptorSets[i];
-            descriptorWrites[j + go->local.uniformCount].dstBinding = j + go->local.uniformCount;
-            descriptorWrites[j + go->local.uniformCount].dstArrayElement = 0;
-            descriptorWrites[j + go->local.uniformCount].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrites[j + go->local.uniformCount].descriptorCount = 1;
-            descriptorWrites[j + go->local.uniformCount].pImageInfo = &imageInfos[j];
+            descriptorWrites[j + params->uniformCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[j + params->uniformCount].dstSet = gi->descriptorSets[i];
+            descriptorWrites[j + params->uniformCount].dstBinding = j + params->uniformCount;
+            descriptorWrites[j + params->uniformCount].dstArrayElement = 0;
+            descriptorWrites[j + params->uniformCount].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrites[j + params->uniformCount].descriptorCount = 1;
+            descriptorWrites[j + params->uniformCount].pImageInfo = &imageInfos[j];
         }
         //--------------------------------------
 
-        vkUpdateDescriptorSets(device, go->local.uniformCount + go->local.texturesCount, descriptorWrites, 0, NULL);
+        vkUpdateDescriptorSets(device, params->uniformCount + params->texturesCount, descriptorWrites, 0, NULL);
 
     }
     //--------------------------------------
 
     free(bufferInfos);
+    bufferInfos = NULL;
     free(imageInfos);
+    imageInfos = NULL;
     free(descriptorWrites);
+    descriptorWrites = NULL;
     free(layouts);
+    layouts = NULL;
 }

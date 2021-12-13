@@ -2,6 +2,7 @@
 #define TOOLS_H
 
 #include "stdinclude.h"
+#include "graphicsItems.h"
 
 #include "resource.h"
 

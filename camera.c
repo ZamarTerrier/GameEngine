@@ -3,6 +3,8 @@
 
 void initCamera(){
 
+    free(camObj);
+    camObj = NULL;
     camObj = (Camera*) calloc(1, sizeof(Camera));
 
     Camera* cam = (Camera*)camObj;

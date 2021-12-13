@@ -60,10 +60,13 @@ extern VkBuffer* uniformBuffers;
 extern VkDeviceMemory* uniformBuffersMemory;
 
 extern const Vertex vertices[];
+extern const Vertex vertices2[];
 extern const uint16_t indices[];
 
 extern const char* validationLayers[];
 extern const char* deviceExtensions[];
+
+extern VkVertexInputAttributeDescription attributeDescription[];
 
 extern uint32_t imageIndex;
 extern uint32_t extensionCount;

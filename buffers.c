@@ -3,6 +3,8 @@
 #include "gameObject.h"
 
 void createFramebuffers() {
+    free(swapChainFramebuffers);
+    swapChainFramebuffers = NULL;
     swapChainFramebuffers = (VkFramebuffer*) calloc(imagesCount, sizeof(VkFramebuffer));
 
     for (i=0;i<imagesCount;i++) {
@@ -43,6 +45,8 @@ void createCommandPool() {
 }
 
 void createCommandBuffers(){
+    free(commandBuffers);
+    commandBuffers = NULL;
     commandBuffers = (VkCommandBuffer *) calloc(imagesCount, sizeof(VkCommandBuffer));
 
 
@@ -83,7 +87,6 @@ void createVertexBuffer(vertexParam* vert) {
 
     copyBuffer(stagingBuffer, vert->vertexBuffer, bufferSize);
 
-
     vkDestroyBuffer(device, stagingBuffer, NULL);
     vkFreeMemory(device, stagingBufferMemory, NULL);
 
@@ -111,8 +114,9 @@ void createIndexBuffer(indexParam* ind) {
 }
 
 void createUniformBuffers(localParam* param) {
-
+    param->uniformBuffers = NULL;
     param->uniformBuffers = (VkBuffer**) calloc(param->uniformCount, sizeof(VkBuffer*));
+    param->uniformBuffersMemory = NULL;
     param->uniformBuffersMemory = (VkDeviceMemory**) calloc(param->uniformCount, sizeof(VkDeviceMemory*));
 
     for(i=0;i < param->uniformCount;i++)

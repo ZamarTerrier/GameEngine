@@ -25,6 +25,10 @@ layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out vec2 outOffset;
 layout(location = 3) out vec2 outScale;
 
+out gl_PerVertex
+{
+    vec4 gl_Position;
+};
 
 void main() {
     gl_Position = vec4((vuo.pos + ubo.pos + position) * ubo.scale * vuo.scale, 0.0, 1.0);

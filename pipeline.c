@@ -1,14 +1,10 @@
 #include "pipeline.h"
 
-#include "gameObject.h"
-
-void createGraphicsPipeline(void* arg){
-
-    GameObject* go = (GameObject*)arg;
+void createGraphicsPipeline(GraphicsObject* graphObj){
 
     //Шейдеры
-    shader vertShaderCode = readFile(go->aShader.vertShader);
-    shader fragShaderCode = readFile(go->aShader.fragShader);
+    shader vertShaderCode = readFile(graphObj->aShader.vertShader);
+    shader fragShaderCode = readFile(graphObj->aShader.fragShader);
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -32,9 +28,9 @@ void createGraphicsPipeline(void* arg){
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.vertexAttributeDescriptionCount = go->aShader.countAttr;
-    vertexInputInfo.pVertexBindingDescriptions = &go->aShader.bindingDescription;
-    vertexInputInfo.pVertexAttributeDescriptions = go->aShader.attr;
+    vertexInputInfo.vertexAttributeDescriptionCount = graphObj->aShader.countAttr;
+    vertexInputInfo.pVertexBindingDescriptions = &graphObj->aShader.bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = graphObj->aShader.attr;
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -94,18 +90,18 @@ void createGraphicsPipeline(void* arg){
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1; // Optional
-    pipelineLayoutInfo.pSetLayouts = &go->gItems.descriptorSetLayout; // Optional
+    pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptorSetLayout; // Optional
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &go->gItems.pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout) != VK_SUCCESS) {
         printf("failed to create pipeline layout!");
         exit(1);
     }
 
     VkPipelineDepthStencilStateCreateInfo depthStencil = {};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = go->gItems.perspective;
-    depthStencil.depthWriteEnable = go->gItems.perspective;
+    depthStencil.depthTestEnable = graphObj->gItems.perspective;
+    depthStencil.depthWriteEnable = graphObj->gItems.perspective;
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f; // Optional
@@ -123,13 +119,13 @@ void createGraphicsPipeline(void* arg){
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.layout = go->gItems.pipelineLayout;
+    pipelineInfo.layout = graphObj->gItems.pipelineLayout;
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.pDepthStencilState = &depthStencil;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &go->gItems.graphicsPipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline) != VK_SUCCESS) {
         printf("failed to create graphics pipeline!");
         exit(1);
     }

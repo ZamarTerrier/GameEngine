@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include "gameObject.h"
+#include "textObject.h"
 #include "camera.h"
 
 typedef struct{
@@ -8,7 +9,14 @@ typedef struct{
     uint32_t count;
 } rndrObj;
 
+typedef struct{
+    TextObject** to;
+    uint32_t count;
+} textObjs;
+
 rndrObj objs;
+textObjs tObjs;
+
 
 void initVulkan(){
     createInstance();
@@ -95,7 +103,7 @@ void recreateSwapChain() {
 
     while(temp > 0)
     {
-        createDrawningParams(&objs.go[temp - 1]->gItems, &objs.go[temp - 1]->local);
+        createDrawningParams(&objs.go[temp - 1]->graphObj);
         temp --;
     }
 
@@ -149,6 +157,14 @@ void engineLoop(){
     while(temp > 0)
     {
         updateUniformBuffer(objs.go[temp - 1]);
+        temp --;
+    }
+
+    temp = tObjs.count;
+
+    while(temp > 0)
+    {
+        updateTextUniformBuffer(tObjs.to[temp - 1]);
         temp --;
     }
 
@@ -216,6 +232,7 @@ void engineLoop(){
 }
 
 void drawFrame(){
+
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -236,7 +253,7 @@ void drawFrame(){
     VkClearValue* clearColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
     clearColor->color.float32[0] = 0.0f;
     clearColor->color.float32[1] = 0.0f;
-    clearColor->color.float32[2] = 1.0f;
+    clearColor->color.float32[2] = 0.2f;
     clearColor->color.float32[3] = 1.0f;
     VkClearValue* depthColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
     depthColor->depthStencil.depth = 1.0f;
@@ -250,10 +267,15 @@ void drawFrame(){
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    free(clearColor);
-    free(depthColor);
+    int temp = tObjs.count;
 
-    int temp = objs.count;
+    while(temp > 0)
+    {
+        drawTextObject(tObjs.to[temp - 1]);
+        temp --;
+    }
+
+    temp = objs.count;
 
     while(temp > 0)
     {
@@ -262,12 +284,18 @@ void drawFrame(){
         temp --;
     }
 
+
     vkCmdEndRenderPass(commandBuffers[imageIndex]);
 
     if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
         printf("failed to record command buffer!");
         exit(1);
     }
+
+    free(clearColor);
+    clearColor = NULL;
+    free(depthColor);
+    depthColor = NULL;
 
 }
 
@@ -284,6 +312,21 @@ void engDraw(void* arg){
     objs.count ++;
     objs.go = (GameObject **) realloc(objs.go,objs.count * sizeof(GameObject*));
     objs.go[objs.count - 1] = go;
+}
+
+void engDrawText(void* arg){
+
+    TextObject* to = (TextObject *)arg;
+
+    for(i=0;i < tObjs.count;i++)
+    {
+        if(tObjs.to[i] == to)
+            return;
+    }
+
+    tObjs.count ++;
+    tObjs.to = (GameObject **) realloc(tObjs.to, tObjs.count * sizeof(GameObject*));
+    tObjs.to[tObjs.count - 1] = to;
 }
 
 void cleanUp(){

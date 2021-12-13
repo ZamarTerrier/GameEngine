@@ -3,32 +3,33 @@
 
 #include "stdinclude.h"
 
+#include "graphicsObject.h"
+#include "transform.h"
+
 #include "stb_font_consolas_24_latin1.inl"
 
-#include "gameObject.h"
-
 typedef struct{
-    localParam local;
     struct{
-    stb_fontchar* stbFontData;
-
-    uint32_t fontWidth;
-    uint32_t fontHeight;
-
-    unsigned char** font24pixels;
+        stb_fontchar stbFontData[STB_FONT_consolas_24_latin1_NUM_CHARS];
+        uint32_t fontWidth;
+        uint32_t fontHeight;
+        int numLetters;
     } font;
-    struct{
-        vec2 offset;
-        vec2 scale;
-    }img;
-    GraphicItems gItems;
-    aboutShader aShader;
-    Shape shape;
-    vec2 pos;
-    vec2 scale;
+    GraphicsObject graphObj;
+    Transform transform;
 } TextObject;
 
 
-TextObject* textInit();
+void textInit(TextObject* to);
+
+void preparePipeline(TextObject* to);
+
+void addText(const char* text, float x, float y, TextObject* to);
+
+void updateTextUniformBuffer(TextObject* to);
+
+void drawTextObject(TextObject* to);
+
+void destroyTextObject(TextObject* to);
 
 #endif // TEXTOBJECT_H

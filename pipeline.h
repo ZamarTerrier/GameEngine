@@ -3,11 +3,13 @@
 
 #include "stdinclude.h"
 
+#include "graphicsObject.h"
+
 #include "resource.h"
 #include "tools.h"
 #include "bindDesciption.h"
 
-void createGraphicsPipeline(void* arg);
+void createGraphicsPipeline(GraphicsObject* graphObj);
 
 void createRenderPass();
 
