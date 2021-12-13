@@ -97,3 +97,9 @@ void destroyGraphicsObject(GraphicsObject* graphObj){
     }
 
 }
+
+void SetShadersPath(GraphicsObject *graphObj, const char *vert, const char *frag)
+{
+    graphObj->aShader.vertShader = vert;
+    graphObj->aShader.fragShader = frag;
+}

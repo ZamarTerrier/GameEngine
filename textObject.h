@@ -20,7 +20,7 @@ typedef struct{
 } TextObject;
 
 
-void textInit(TextObject* to);
+void initTextObject(TextObject* to);
 
 void preparePipeline(TextObject* to);
 

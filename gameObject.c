@@ -12,9 +12,6 @@ void initGameObject(GameObject* go)
     go->graphObj.local.uniformCount = 0;
     go->graphObj.local.texturesCount = 0;
 
-    go->graphObj.aShader.vertShader = "/home/ilia/Projects/Graphics/shaders/vert.spv";
-    go->graphObj.aShader.fragShader = "/home/ilia/Projects/Graphics/shaders/frag.spv";
-
 }
 
 void addTexture(GameObject* go, const char* file){

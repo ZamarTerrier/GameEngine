@@ -13,7 +13,7 @@
 #define TEXTOVERLAY_MAX_CHAR_COUNT 2048
 
 
-void textInit(TextObject* to)
+void initTextObject(TextObject* to)
 {
 
     initTransform(&to->transform);
@@ -34,9 +34,6 @@ void textInit(TextObject* to)
     VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &to->graphObj.shape.vertex.vertexBuffer, &to->graphObj.shape.vertex.vertexBufferMemory);
-
-    to->graphObj.aShader.vertShader = "/home/ilia/Projects/Graphics/shaders/text/vert.spv";
-    to->graphObj.aShader.fragShader = "/home/ilia/Projects/Graphics/shaders/text/frag.spv";
 
     to->graphObj.aShader.bindingDescription = getBindingDescription();
 
@@ -68,8 +65,6 @@ void textInit(TextObject* to)
     createTextureSampler(&to->graphObj.local.textures[0]);
 
     to->graphObj.local.texturesCount = 1;
-
-    addText("Welkome to city 17!", 5.0f, 5.0f, to);
 
     createUniformBuffers(&to->graphObj.local);
 
