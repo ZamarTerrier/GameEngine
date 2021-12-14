@@ -26,6 +26,8 @@ void addTexture(GameObject* go, const char* file);
 
 void addUniformObject(localParam* param, VkDeviceSize size);
 
+void createDrawItemsGameObject(GameObject* go);
+
 void cleanGameObject(GameObject* go);
 
 void destroyGameObject(GameObject* go);

@@ -23,34 +23,6 @@ void initGraphicsObject(GraphicsObject* graphObj){
 
 }
 
-
-void createDrawningParams(GraphicsObject* graphObj){
-
-    createUniformBuffers(&graphObj->local);
-
-    uint32_t unionSize = graphObj->local.texturesCount + graphObj->local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
-
-    for(i=0;i < graphObj->local.uniformCount;i++)
-    {
-        types[i] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    }
-
-    for(i=0;i < graphObj->local.texturesCount;i++)
-    {
-        types[i + graphObj->local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    }
-
-
-    createDescriptorSetLayout(&graphObj->gItems, types, unionSize);
-    createDescriptorPool(&graphObj->gItems, types, unionSize);
-    createDescriptorSets(&graphObj->gItems, &graphObj->local);
-    createGraphicsPipeline(graphObj);
-
-    free(types);
-    types = NULL;
-}
-
 void cleanGraphicsObject(GraphicsObject *graphObj)
 {
 

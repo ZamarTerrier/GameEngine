@@ -14,6 +14,7 @@ typedef struct{
         uint32_t fontWidth;
         uint32_t fontHeight;
         int numLetters;
+        const char* fontpath;
     } font;
     GraphicsObject graphObj;
     Transform transform;
@@ -28,9 +29,15 @@ void addText(const char* text, TextObject* to);
 
 void addTextW(const wchar_t* text, TextObject* to);
 
+void SetFontPath(TextObject* to, const char* path);
+
 void updateTextUniformBuffer(TextObject* to);
 
 void drawTextObject(TextObject* to);
+
+void createDrawItemsTextObject(TextObject* to);
+
+void cleanTextObject(TextObject* to);
 
 void destroyTextObject(TextObject* to);
 

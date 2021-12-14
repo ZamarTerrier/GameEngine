@@ -65,6 +65,14 @@ void cleanupSwapChain() {
         temp --;
     }
 
+    temp = tObjs.count;
+
+    while(temp > 0)
+    {
+        cleanTextObject(tObjs.to[temp - 1]);
+        temp --;
+    }
+
     vkDestroyRenderPass(device, renderPass, NULL);
 
     for (size_t i = 0; i < imagesCount; i++) {
@@ -103,7 +111,15 @@ void recreateSwapChain() {
 
     while(temp > 0)
     {
-        createDrawningParams(&objs.go[temp - 1]->graphObj);
+        createDrawItemsGameObject(objs.go[temp - 1]);
+        temp --;
+    }
+
+    temp = tObjs.count;
+
+    while(temp > 0)
+    {
+        createDrawItemsTextObject(tObjs.to[temp - 1]);
         temp --;
     }
 

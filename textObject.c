@@ -34,20 +34,23 @@ void initTextObject(TextObject* to)
     to->graphObj.local.textures = NULL;
     to->graphObj.local.textures = (Texture2D *) calloc(1, sizeof(Texture2D));
 
+    //Загружаем шрифт и настраеваем его на работу
     to->font.fontWidth = 512;
     to->font.fontHeight = 512;
 
     unsigned char ttf_buffer[1<<20];
     unsigned char temp_bitmap[to->font.fontWidth * to->font.fontHeight];
 
-    fread(ttf_buffer, 1, 1<<20, fopen("/home/ilia/Projects/Test/fonts/ER Kurier KOI8-R Regular.ttf", "rb"));
+    fread(ttf_buffer, 1, 1<<20, fopen(to->font.fontpath, "rb"));
 
     stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
 
+    //--------------------
+    //Создаем буфер вершин для плоскости
     VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex) * 4;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &to->graphObj.shape.vertex.vertexBuffer, &to->graphObj.shape.vertex.vertexBufferMemory);
-
+    //-------------------
     //Создаем текстуру шрифта
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -76,30 +79,9 @@ void initTextObject(TextObject* to)
     createTextureSampler(&to->graphObj.local.textures[0]);
 
     to->graphObj.local.texturesCount = 1;
+    //----------------------------------
 
-    //Связываем дескрипторы, юнибаферы и создаем новый пайплайн
-
-    createUniformBuffers(&to->graphObj.local);
-
-    uint32_t unionSize = to->graphObj.local.texturesCount + to->graphObj.local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
-
-    for(i=0;i < to->graphObj.local.uniformCount;i++)
-    {
-        types[i] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    }
-
-    for(i=0;i < to->graphObj.local.texturesCount;i++)
-    {
-        types[i + to->graphObj.local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    }
-
-
-    createDescriptorSetLayout(&to->graphObj.gItems, types, unionSize);
-    createDescriptorPool(&to->graphObj.gItems, types, unionSize);
-    createDescriptorSets(&to->graphObj.gItems, &to->graphObj.local);
-    preparePipeline(to);
-
+    createDrawItemsTextObject(to);
 }
 
 void preparePipeline(TextObject* to)
@@ -240,6 +222,10 @@ void preparePipeline(TextObject* to)
     vkDestroyShaderModule(device, vertShaderModule, NULL);
 }
 
+void SetFontPath(TextObject* to, const char* path){
+    to->font.fontpath = path;
+}
+
 void updateTextUniformBuffer(TextObject* to) {
 
     Camera* cam = (Camera*) camObj;
@@ -371,10 +357,14 @@ void addTextW(const wchar_t* text, TextObject* to)
     int repl = 0;
     int tempChar = 0;
 
+    bool findLetter;
+
     // Generate a uv mapped quad per char in the new text
     for (i=0;i<len;i++)
     {
         tempChar = 0;
+
+        findLetter = false;
 
         if(text[i] > 1039 && text[i] < 1104)
         {
@@ -383,10 +373,15 @@ void addTextW(const wchar_t* text, TextObject* to)
                 if(fontIndexes[j].FindLetter == text[i])
                 {
                     tempChar = fontIndexes[j].IndexLetter;
+                    findLetter = true;
                     break;
                 }
             }
         }
+
+        if(!findLetter)
+            tempChar = text[i];
+
         stbtt_GetBakedQuad(cdata, 512,512, tempChar, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
 
         mapped->pos.x = (float)q.x0 * charW;
@@ -423,6 +418,35 @@ void addTextW(const wchar_t* text, TextObject* to)
 
     vkUnmapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory);
     mapped = NULL;
+}
+
+void createDrawItemsTextObject(TextObject* to)
+{
+    //Связываем дескрипторы, юнибаферы и создаем новый пайплайн
+
+    createUniformBuffers(&to->graphObj.local);
+
+    uint32_t unionSize = to->graphObj.local.texturesCount + to->graphObj.local.uniformCount;
+    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
+
+    for(i=0;i < to->graphObj.local.uniformCount;i++)
+    {
+        types[i] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    }
+
+    for(i=0;i < to->graphObj.local.texturesCount;i++)
+    {
+        types[i + to->graphObj.local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    }
+
+    createDescriptorSetLayout(&to->graphObj.gItems, types, unionSize);
+    createDescriptorPool(&to->graphObj.gItems, types, unionSize);
+    createDescriptorSets(&to->graphObj.gItems, &to->graphObj.local);
+    preparePipeline(to);
+}
+
+void cleanTextObject(TextObject* to){
+    cleanGraphicsObject(&to->graphObj);
 }
 
 void destroyTextObject(TextObject* to){

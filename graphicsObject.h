@@ -15,8 +15,6 @@ void initGraphicsObject(GraphicsObject* graphObj);
 
 void SetShadersPath(GraphicsObject* graphOb, const char* vert, const char* frag);
 
-void createDrawningParams(GraphicsObject* graphObj);
-
 void recreateDrawningParams(GraphicsObject* graphObj);
 
 void cleanGraphicsObject(GraphicsObject* graphObj);

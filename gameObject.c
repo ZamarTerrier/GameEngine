@@ -59,6 +59,33 @@ void addUniformObject(localParam* param, VkDeviceSize size){
 
 }
 
+void createDrawItemsGameObject(GameObject* go){
+
+    createUniformBuffers(&go->graphObj.local);
+
+    uint32_t unionSize = go->graphObj.local.texturesCount + go->graphObj.local.uniformCount;
+    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
+
+    for(i=0;i < go->graphObj.local.uniformCount;i++)
+    {
+        types[i] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    }
+
+    for(i=0;i < go->graphObj.local.texturesCount;i++)
+    {
+        types[i + go->graphObj.local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    }
+
+
+    createDescriptorSetLayout(&go->graphObj.gItems, types, unionSize);
+    createDescriptorPool(&go->graphObj.gItems, types, unionSize);
+    createDescriptorSets(&go->graphObj.gItems, &go->graphObj.local);
+    createGraphicsPipeline(&go->graphObj);
+
+    free(types);
+    types = NULL;
+}
+
 void cleanGameObject(GameObject* go){
     cleanGraphicsObject(&go->graphObj);
 }
