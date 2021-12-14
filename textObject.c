@@ -8,10 +8,15 @@
 
 #include "camera.h"
 
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "resource.h"
+
+#include "stb_truetype.h"
 
 #define TEXTOVERLAY_MAX_CHAR_COUNT 2048
 
+stbtt_bakedchar cdata[255]; // ASCII 32..126 is 95 glyphs
+stbtt_fontinfo font;
 
 void initTextObject(TextObject* to)
 {
@@ -24,36 +29,42 @@ void initTextObject(TextObject* to)
     to->graphObj.local.uniformSizes[1] = sizeof(UniformBufferObject);
     to->graphObj.local.uniformSizes[2] = sizeof(ImgUniformParam);
 
-    to->font.fontWidth = STB_FONT_consolas_24_latin1_BITMAP_WIDTH;
-    to->font.fontHeight = STB_FONT_consolas_24_latin1_BITMAP_WIDTH;
-
-    unsigned char font24pixels[to->font.fontWidth][to->font.fontHeight];
-
-    stb_font_consolas_24_latin1(to->font.stbFontData, font24pixels, to->font.fontHeight);
-
-    VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex);
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &to->graphObj.shape.vertex.vertexBuffer, &to->graphObj.shape.vertex.vertexBufferMemory);
-
     to->graphObj.aShader.bindingDescription = getBindingDescription();
 
     to->graphObj.local.textures = NULL;
     to->graphObj.local.textures = (Texture2D *) calloc(1, sizeof(Texture2D));
 
+    to->font.fontWidth = 512;
+    to->font.fontHeight = 512;
+
+    unsigned char ttf_buffer[1<<20];
+    unsigned char temp_bitmap[to->font.fontWidth * to->font.fontHeight];
+
+    fread(ttf_buffer, 1, 1<<20, fopen("/home/ilia/Projects/Test/fonts/ER Kurier KOI8-R Regular.ttf", "rb"));
+
+    stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
+
+    VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex) * 4;
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &to->graphObj.shape.vertex.vertexBuffer, &to->graphObj.shape.vertex.vertexBufferMemory);
+
+    //Создаем текстуру шрифта
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
+    stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, to->font.fontWidth,to->font.fontHeight, 0, 255, cdata); // no guarantee this fits!
+
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, &font24pixels[0][0], to->font.fontWidth * to->font.fontHeight);
+    memcpy(data, temp_bitmap, to->font.fontWidth * to->font.fontHeight);
     vkUnmapMemory(device, stagingBufferMemory);
 
     createImage(to->font.fontWidth, to->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &to->graphObj.local.textures[0].textureImage, &to->graphObj.local.textures[0].textureImageMemory);
 
     transitionImageLayout(to->graphObj.local.textures[0].textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        copyBufferToImage(stagingBuffer, to->graphObj.local.textures[0].textureImage, to->font.fontWidth, to->font.fontHeight);
+    copyBufferToImage(stagingBuffer, to->graphObj.local.textures[0].textureImage, to->font.fontWidth, to->font.fontHeight);
     transitionImageLayout(to->graphObj.local.textures[0].textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
@@ -65,6 +76,8 @@ void initTextObject(TextObject* to)
     createTextureSampler(&to->graphObj.local.textures[0]);
 
     to->graphObj.local.texturesCount = 1;
+
+    //Связываем дескрипторы, юнибаферы и создаем новый пайплайн
 
     createUniformBuffers(&to->graphObj.local);
 
@@ -149,8 +162,8 @@ void preparePipeline(TextObject* to)
     //Тест глубины
     VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
     depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencilState.depthTestEnable = VK_TRUE;
-    depthStencilState.depthWriteEnable = VK_TRUE;
+    depthStencilState.depthTestEnable = VK_FALSE;
+    depthStencilState.depthWriteEnable = VK_FALSE;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencilState.depthBoundsTestEnable = VK_FALSE;
     depthStencilState.minDepthBounds = 0.0f; // Optional
@@ -272,65 +285,140 @@ void drawTextObject(TextObject* to)
     }
 }
 
-void addText(const char* text, float x, float y, TextObject* to)
+void addText(const char* text, TextObject* to)
 {
 
     Vertex* mapped = NULL;
+    stbtt_aligned_quad q;
 
     vkMapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
     to->font.numLetters = 0;
-
-    const uint32_t firstChar = STB_FONT_consolas_24_latin1_FIRST_CHAR;
 
     const float charW = 1.5f / WIDTH;
     const float charH = 1.5f / HEIGHT;
 
     float fbW = (float)WIDTH;
     float fbH = (float)HEIGHT;
-    x = (x / fbW * 2.0f) - 1.0f;
-    y = (y / fbH * 2.0f) - 1.0f;
 
-    // Calculate text width
-    float textWidth = 0;
+    float x = 0.0f;
+    float y = 0.0f;
+
     int len = strlen(text);
-    for (i=0;i < len;i++)
-    {
-        stb_fontchar *charData = &to->font.stbFontData[(uint32_t)text[i] - firstChar];
-        textWidth += charData->advance * charW;
-    }
 
     // Generate a uv mapped quad per char in the new text
     for (i=0;i < len;i++)
     {
-        stb_fontchar *charData = &to->font.stbFontData[(uint32_t)text[i] - firstChar];
+        stbtt_GetBakedQuad(cdata, 512,512, *text, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
 
-        mapped->pos.x = (x + (float)charData->x0 * charW);
-        mapped->pos.y = (y + (float)charData->y0 * charH);
-        mapped->texCoord.x = charData->s0;
-        mapped->texCoord.y = charData->t0;
+        mapped->pos.x = (float)q.x0 * charW;
+        mapped->pos.y = (float)q.y0 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s0;
+        mapped->texCoord.y = q.t0;
         mapped++;
 
-        mapped->pos.x = (x + (float)charData->x1 * charW);
-        mapped->pos.y = (y + (float)charData->y0 * charH);
-        mapped->texCoord.x = charData->s1;
-        mapped->texCoord.y = charData->t0;
+        mapped->pos.x = (float)q.x1 * charW;
+        mapped->pos.y = (float)q.y0 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s1;
+        mapped->texCoord.y = q.t0;
         mapped++;
 
-        mapped->pos.x = (x + (float)charData->x0 * charW);
-        mapped->pos.y = (y + (float)charData->y1 * charH);
-        mapped->texCoord.x = charData->s0;
-        mapped->texCoord.y = charData->t1;
+        mapped->pos.x = (float)q.x0 * charW;
+        mapped->pos.y = (float)q.y1 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s0;
+        mapped->texCoord.y = q.t1;
         mapped++;
 
-        mapped->pos.x = (x + (float)charData->x1 * charW);
-        mapped->pos.y = (y + (float)charData->y1 * charH);
-        mapped->texCoord.x = charData->s1;
-        mapped->texCoord.y = charData->t1;
+        mapped->pos.x = (float)q.x1 * charW;
+        mapped->pos.y = (float)q.y1 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s1;
+        mapped->texCoord.y = q.t1;
         mapped++;
-
-        x += charData->advance * charW;
 
         to->font.numLetters++;
+
+        ++text;
+    }
+
+    vkUnmapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory);
+    mapped = NULL;
+}
+
+void addTextW(const wchar_t* text, TextObject* to)
+{
+
+    //русские буквы в пределах 1040-1103
+
+    Vertex* mapped = NULL;
+    stbtt_aligned_quad q;
+
+    vkMapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
+    to->font.numLetters = 0;
+
+    const float charW = 1.5f / WIDTH;
+    const float charH = 1.5f / HEIGHT;
+
+    float fbW = (float)WIDTH;
+    float fbH = (float)HEIGHT;
+
+    float x = 0.0f;
+    float y = 0.0f;
+
+    int len = wcslen(text);
+    int repl = 0;
+    int tempChar = 0;
+
+    // Generate a uv mapped quad per char in the new text
+    for (i=0;i<len;i++)
+    {
+        tempChar = 0;
+
+        if(text[i] > 1039 && text[i] < 1104)
+        {
+            for(j=0;j < 63;j++)
+            {
+                if(fontIndexes[j].FindLetter == text[i])
+                {
+                    tempChar = fontIndexes[j].IndexLetter;
+                    break;
+                }
+            }
+        }
+        stbtt_GetBakedQuad(cdata, 512,512, tempChar, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
+
+        mapped->pos.x = (float)q.x0 * charW;
+        mapped->pos.y = (float)q.y0 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s0;
+        mapped->texCoord.y = q.t0;
+        mapped++;
+
+        mapped->pos.x = (float)q.x1 * charW;
+        mapped->pos.y = (float)q.y0 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s1;
+        mapped->texCoord.y = q.t0;
+        mapped++;
+
+        mapped->pos.x = (float)q.x0 * charW;
+        mapped->pos.y = (float)q.y1 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s0;
+        mapped->texCoord.y = q.t1;
+        mapped++;
+
+        mapped->pos.x = (float)q.x1 * charW;
+        mapped->pos.y = (float)q.y1 * charH;
+        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->texCoord.x = q.s1;
+        mapped->texCoord.y = q.t1;
+        mapped++;
+
+        to->font.numLetters++;
+
     }
 
     vkUnmapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory);

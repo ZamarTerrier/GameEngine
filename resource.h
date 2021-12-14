@@ -68,6 +68,13 @@ extern const char* deviceExtensions[];
 
 extern VkVertexInputAttributeDescription attributeDescription[];
 
+typedef struct{
+    int FindLetter;
+    int IndexLetter;
+} FontIndexes;
+
+extern const FontIndexes fontIndexes[];
+
 extern uint32_t imageIndex;
 extern uint32_t extensionCount;
 extern uint32_t imagesCount;

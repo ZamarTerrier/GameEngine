@@ -6,11 +6,11 @@
 #include "graphicsObject.h"
 #include "transform.h"
 
-#include "stb_font_consolas_24_latin1.inl"
+#include <wchar.h> //"Широкие" многобайтовые символы и их ввод-вывод
+#include <wctype.h> //"Классификация" широких символов
 
 typedef struct{
     struct{
-        stb_fontchar stbFontData[STB_FONT_consolas_24_latin1_NUM_CHARS];
         uint32_t fontWidth;
         uint32_t fontHeight;
         int numLetters;
@@ -24,7 +24,9 @@ void initTextObject(TextObject* to);
 
 void preparePipeline(TextObject* to);
 
-void addText(const char* text, float x, float y, TextObject* to);
+void addText(const char* text, TextObject* to);
+
+void addTextW(const wchar_t* text, TextObject* to);
 
 void updateTextUniformBuffer(TextObject* to);
 

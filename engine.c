@@ -152,19 +152,21 @@ void engineLoop(){
         exit(1);
     }
 
-    int temp = objs.count;
-
-    while(temp > 0)
-    {
-        updateUniformBuffer(objs.go[temp - 1]);
-        temp --;
-    }
+    int temp;
 
     temp = tObjs.count;
 
     while(temp > 0)
     {
         updateTextUniformBuffer(tObjs.to[temp - 1]);
+        temp --;
+    }
+
+    temp = objs.count;
+
+    while(temp > 0)
+    {
+        updateUniformBuffer(objs.go[temp - 1]);
         temp --;
     }
 
@@ -267,13 +269,7 @@ void drawFrame(){
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    int temp = tObjs.count;
-
-    while(temp > 0)
-    {
-        drawTextObject(tObjs.to[temp - 1]);
-        temp --;
-    }
+    int temp;
 
     temp = objs.count;
 
@@ -284,6 +280,13 @@ void drawFrame(){
         temp --;
     }
 
+    temp = tObjs.count;
+
+    while(temp > 0)
+    {
+        drawTextObject(tObjs.to[temp - 1]);
+        temp --;
+    }
 
     vkCmdEndRenderPass(commandBuffers[imageIndex]);
 
