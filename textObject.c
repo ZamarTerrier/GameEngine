@@ -226,6 +226,10 @@ void SetFontPath(TextObject* to, const char* path){
     to->font.fontpath = path;
 }
 
+void SetTextColor(TextObject* to, vec3 color){
+    to->font.color = color;
+}
+
 void updateTextUniformBuffer(TextObject* to) {
 
     Camera* cam = (Camera*) camObj;
@@ -298,28 +302,28 @@ void addText(const char* text, TextObject* to)
 
         mapped->pos.x = (float)q.x0 * charW;
         mapped->pos.y = (float)q.y0 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t0;
         mapped++;
 
         mapped->pos.x = (float)q.x1 * charW;
         mapped->pos.y = (float)q.y0 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t0;
         mapped++;
 
         mapped->pos.x = (float)q.x0 * charW;
         mapped->pos.y = (float)q.y1 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t1;
         mapped++;
 
         mapped->pos.x = (float)q.x1 * charW;
         mapped->pos.y = (float)q.y1 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t1;
         mapped++;
@@ -386,28 +390,28 @@ void addTextW(const wchar_t* text, TextObject* to)
 
         mapped->pos.x = (float)q.x0 * charW;
         mapped->pos.y = (float)q.y0 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t0;
         mapped++;
 
         mapped->pos.x = (float)q.x1 * charW;
         mapped->pos.y = (float)q.y0 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t0;
         mapped++;
 
         mapped->pos.x = (float)q.x0 * charW;
         mapped->pos.y = (float)q.y1 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t1;
         mapped++;
 
         mapped->pos.x = (float)q.x1 * charW;
         mapped->pos.y = (float)q.y1 * charH;
-        mapped->color = (vec3){1.0f, 0.0f, 0.0f};
+        mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t1;
         mapped++;

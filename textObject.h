@@ -15,6 +15,7 @@ typedef struct{
         uint32_t fontHeight;
         int numLetters;
         const char* fontpath;
+        vec3 color;
     } font;
     GraphicsObject graphObj;
     Transform transform;
@@ -30,6 +31,8 @@ void addText(const char* text, TextObject* to);
 void addTextW(const wchar_t* text, TextObject* to);
 
 void SetFontPath(TextObject* to, const char* path);
+
+void SetTextColor(TextObject* to, vec3 color);
 
 void updateTextUniformBuffer(TextObject* to);
 
