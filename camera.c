@@ -1,5 +1,6 @@
 #include "camera.h"
 
+#include "resource.h"
 
 void initCamera(){
 
@@ -9,8 +10,8 @@ void initCamera(){
 
     Camera* cam = (Camera*)camObj;
 
-    cam->pos.x = 0;
-    cam->pos.y = 0;
+    cam->pos.x =(WIDTH / 2) / (WIDTH * 1.5);
+    cam->pos.y = (HEIGHT / 2) / (HEIGHT * 1.5);
     cam->scale.x = 1;
     cam->scale.y = 1;
 

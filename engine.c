@@ -247,6 +247,10 @@ void engineLoop(){
     objs.go = (GameObject *) realloc(0, sizeof(GameObject));
     objs.count = 0;
 
+
+    tObjs.to = (TextObject *) realloc(0, sizeof(TextObject));
+    tObjs.count = 0;
+
 }
 
 void drawFrame(){

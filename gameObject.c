@@ -105,6 +105,9 @@ void destroyGameObject(GameObject* go){
 
     destroyGraphicsObject(&go->graphObj);
 
+    free(go);
+    go = NULL;
+
 }
 
 void gameObjectDraw(GameObject* go){

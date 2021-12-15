@@ -15,7 +15,7 @@
 
 #define TEXTOVERLAY_MAX_CHAR_COUNT 2048
 
-stbtt_bakedchar cdata[255]; // ASCII 32..126 is 95 glyphs
+stbtt_bakedchar cdata[1103]; // ASCII 32..126 is 95 glyphs
 stbtt_fontinfo font;
 
 void initTextObject(TextObject* to)
@@ -41,7 +41,7 @@ void initTextObject(TextObject* to)
     unsigned char ttf_buffer[1<<20];
     unsigned char temp_bitmap[to->font.fontWidth * to->font.fontHeight];
 
-    fread(ttf_buffer, 1, 1<<20, fopen(to->font.fontpath, "rb"));
+    fread(ttf_buffer, 1, 1<<20, fopen(to->font.fontpath, "rw"));
 
     stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
 
@@ -57,7 +57,7 @@ void initTextObject(TextObject* to)
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
-    stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, to->font.fontWidth,to->font.fontHeight, 0, 255, cdata); // no guarantee this fits!
+    stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, to->font.fontWidth,to->font.fontHeight, 0, 1103, cdata); // no guarantee this fits!
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -358,35 +358,12 @@ void addTextW(const wchar_t* text, TextObject* to)
     float y = 0.0f;
 
     int len = wcslen(text);
-    int repl = 0;
-    int tempChar = 0;
-
-    bool findLetter;
 
     // Generate a uv mapped quad per char in the new text
     for (i=0;i<len;i++)
     {
-        tempChar = 0;
 
-        findLetter = false;
-
-        if(text[i] > 1039 && text[i] < 1104)
-        {
-            for(j=0;j < 63;j++)
-            {
-                if(fontIndexes[j].FindLetter == text[i])
-                {
-                    tempChar = fontIndexes[j].IndexLetter;
-                    findLetter = true;
-                    break;
-                }
-            }
-        }
-
-        if(!findLetter)
-            tempChar = text[i];
-
-        stbtt_GetBakedQuad(cdata, 512,512, tempChar, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
+        stbtt_GetBakedQuad(cdata, 512,512, text[i], &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
 
         mapped->pos.x = (float)q.x0 * charW;
         mapped->pos.y = (float)q.y0 * charH;
