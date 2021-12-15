@@ -41,7 +41,7 @@ void initTextObject(TextObject* to)
     unsigned char ttf_buffer[1<<20];
     unsigned char temp_bitmap[to->font.fontWidth * to->font.fontHeight];
 
-    fread(ttf_buffer, 1, 1<<20, fopen(to->font.fontpath, "rw"));
+    fread(ttf_buffer, 1, 1<<20, fopen(to->font.fontpath, "rb"));
 
     stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
 
