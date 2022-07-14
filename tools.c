@@ -1,5 +1,6 @@
 #include "tools.h"
 
+#include "math.h"
 
 VkCommandBuffer beginSingleTimeCommands() {
     VkCommandBufferAllocateInfo allocInfo = {};
@@ -122,6 +123,44 @@ VkShaderModule createShaderModule(shader shdr) {
     return shaderModule;
 }
 
+mat4 m4_rotation_matrix(mat4 matrix, vec3 degrees)
+{
+  degrees.x *= M_PI / 180;  // convert to radians
+  degrees.y *= M_PI / 180;
+  degrees.z *= M_PI / 180;
+
+  float sin_x = sin(degrees.x);
+  float cos_x = cos(degrees.x);
+  float sin_y = sin(degrees.y);
+  float cos_y = cos(degrees.y);
+  float sin_z = sin(degrees.z);
+  float cos_z = cos(degrees.z);
+
+  mat4 result;
+
+  result.m[0][0] = cos_z * cos_y;
+  result.m[1][0] = cos_z * sin_y * sin_x + sin_z * cos_x;
+  result.m[2][0] = -cos_z * sin_y * cos_x + sin_z * sin_x;
+  result.m[3][0] = 0;
+
+  result.m[0][1] = -sin_z * cos_y;
+  result.m[1][1] = -sin_z * sin_y * sin_x + cos_z * cos_x;
+  result.m[2][1] = sin_z * sin_y * cos_x + cos_z * sin_x;
+  result.m[3][1] = 0;
+
+  result.m[0][2] = sin_y;
+  result.m[1][2] = -cos_y * sin_x;
+  result.m[2][2] = cos_y * cos_x;
+  result.m[3][2] = 0;
+
+  result.m[0][3] = 0;
+  result.m[1][3] = 0;
+  result.m[2][3] = 0;
+  result.m[3][3] = 1;
+
+  return result;
+}
+
 mat4 m4_look_at(vec3 from, vec3 to, vec3 up) {
     vec3 z = v3_muls(v3_norm(v3_sub(to, from)), -1);
     vec3 x = v3_norm(v3_cross(up, z));
@@ -133,6 +172,41 @@ mat4 m4_look_at(vec3 from, vec3 to, vec3 up) {
         z.x, z.y, z.z, -v3_dot(from, z),
         0,   0,   0,    1
     );
+}
+
+mat4 m4_translate(mat4 mat, vec3 pos){
+
+    mat.m[3][0] += pos.x;
+    mat.m[3][1] += pos.y;
+    mat.m[3][2] += pos.z;
+
+    return mat;
+}
+
+mat4 m4_mult(mat4 m1, mat4 m2){
+    mat4 result;
+
+    result.m[0][0] = (m1.m[0][0] * m2.m[0][0]) + (m1.m[0][1] * m2.m[1][0]) + (m1.m[0][2] * m2.m[2][0]) + (m1.m[0][3] * m2.m[3][0]);
+    result.m[1][0] = (m1.m[0][0] * m2.m[0][1]) + (m1.m[0][1] * m2.m[1][1]) + (m1.m[0][2] * m2.m[2][1]) + (m1.m[0][3] * m2.m[3][1]);
+    result.m[2][0] = (m1.m[0][0] * m2.m[0][2]) + (m1.m[0][1] * m2.m[1][2]) + (m1.m[0][2] * m2.m[2][2]) + (m1.m[0][3] * m2.m[3][2]);
+    result.m[3][0] = (m1.m[0][0] * m2.m[0][3]) + (m1.m[0][1] * m2.m[1][3]) + (m1.m[0][2] * m2.m[2][3]) + (m1.m[0][3] * m2.m[3][3]);
+
+    result.m[0][0] = (m1.m[1][0] * m2.m[0][0]) + (m1.m[1][1] * m2.m[1][0]) + (m1.m[1][2] * m2.m[2][0]) + (m1.m[1][3] * m2.m[3][0]);
+    result.m[1][0] = (m1.m[1][0] * m2.m[0][1]) + (m1.m[1][1] * m2.m[1][1]) + (m1.m[1][2] * m2.m[2][1]) + (m1.m[1][3] * m2.m[3][1]);
+    result.m[2][0] = (m1.m[1][0] * m2.m[0][2]) + (m1.m[1][1] * m2.m[1][2]) + (m1.m[1][2] * m2.m[2][2]) + (m1.m[1][3] * m2.m[3][2]);
+    result.m[3][0] = (m1.m[1][0] * m2.m[0][3]) + (m1.m[1][1] * m2.m[1][3]) + (m1.m[1][2] * m2.m[2][3]) + (m1.m[1][3] * m2.m[3][3]);
+
+    result.m[0][0] = (m1.m[2][0] * m2.m[2][0]) + (m1.m[2][1] * m2.m[1][0]) + (m1.m[2][2] * m2.m[2][0]) + (m1.m[2][3] * m2.m[3][0]);
+    result.m[1][0] = (m1.m[2][0] * m2.m[0][1]) + (m1.m[2][1] * m2.m[1][1]) + (m1.m[2][2] * m2.m[2][1]) + (m1.m[2][3] * m2.m[3][1]);
+    result.m[2][0] = (m1.m[2][0] * m2.m[0][2]) + (m1.m[2][1] * m2.m[1][2]) + (m1.m[2][2] * m2.m[2][2]) + (m1.m[2][3] * m2.m[3][2]);
+    result.m[3][0] = (m1.m[2][0] * m2.m[0][3]) + (m1.m[2][1] * m2.m[1][3]) + (m1.m[2][2] * m2.m[2][3]) + (m1.m[2][3] * m2.m[3][3]);
+
+    result.m[0][0] = (m1.m[3][0] * m2.m[0][0]) + (m1.m[3][1] * m2.m[1][0]) + (m1.m[3][2] * m2.m[2][0]) + (m1.m[3][3] * m2.m[3][0]);
+    result.m[1][0] = (m1.m[3][0] * m2.m[0][1]) + (m1.m[3][1] * m2.m[1][1]) + (m1.m[3][2] * m2.m[2][1]) + (m1.m[3][3] * m2.m[3][1]);
+    result.m[2][0] = (m1.m[3][0] * m2.m[0][2]) + (m1.m[3][1] * m2.m[1][2]) + (m1.m[3][2] * m2.m[2][2]) + (m1.m[3][3] * m2.m[3][2]);
+    result.m[3][0] = (m1.m[3][0] * m2.m[0][3]) + (m1.m[3][1] * m2.m[1][3]) + (m1.m[3][2] * m2.m[2][3]) + (m1.m[3][3] * m2.m[3][3]);
+
+    return result;
 }
 
 
@@ -159,18 +233,36 @@ vec3 v3_cross(vec3 a, vec3 b)
    };
 }
 
-mat4 m4_perspective(float vertical_field_of_view_in_deg, float aspect_ratio, float near_view_distance, float far_view_distance) {
-    float fovy_in_rad = vertical_field_of_view_in_deg / 180 * M_PI;
-    float f = 1.0f / tanf(fovy_in_rad / 2.0f);
-    float ar = aspect_ratio;
-    float nd = near_view_distance, fd = far_view_distance;
+mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
 
-    return mat4_f(
-         f / ar,           0,                0,                0,
-         0,                f,                0,                0,
-         0,                0,               (fd+nd)/(nd-fd),  (2*fd*nd)/(nd-fd),
-         0,                0,               -1,                0
-    );
+{
+  float aspect_ratio = swapChainExtent.width / ((float) swapChainExtent.width);
+  float range = far_plane - near_plane;
+  float tan_half_fov = tanf(fov_degrees / 2.0 * (M_PI / 180));
+
+  mat4 matrix;
+
+  matrix.m[0][0] = 1.0f / (tan_half_fov * aspect_ratio) ;
+  matrix.m[0][1] = 0.0f;
+  matrix.m[0][2] = 0.0f;
+  matrix.m[0][3] = 0.0f;
+
+  matrix.m[1][0] = 0.0f;
+  matrix.m[1][1] = 1.0f / tan_half_fov;
+  matrix.m[1][2] = 0.0f;
+  matrix.m[1][3] = 0.0f;
+
+  matrix.m[2][0] = 0.0f;
+  matrix.m[2][1] = 0.0f;
+  matrix.m[2][2] = ( far_plane + near_plane) / (float) range;
+  matrix.m[2][3] = far_plane * near_plane / (float) range;
+
+  matrix.m[3][0] = 0.0f;
+  matrix.m[3][1] = 0.0f;
+  matrix.m[3][2] = -1.0f;
+  matrix.m[3][3] = 0.0f;
+
+  return matrix;
 }
 
 vec3 v3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }

@@ -10,6 +10,8 @@
 #include <wctype.h> //"Классификация" широких символов
 
 typedef struct{
+    GraphicsObject graphObj;
+    Transform2D transform;
     struct{
         uint32_t fontWidth;
         uint32_t fontHeight;
@@ -17,12 +19,10 @@ typedef struct{
         const char* fontpath;
         vec3 color;
     } font;
-    GraphicsObject graphObj;
-    Transform transform;
 } TextObject;
 
 
-void initTextObject(TextObject* to);
+void initTextObject(TextObject* to, const char* fontPath, const char* vertShader, const char* fragShader);
 
 void preparePipeline(TextObject* to);
 

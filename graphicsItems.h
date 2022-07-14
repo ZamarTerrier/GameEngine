@@ -25,10 +25,17 @@ typedef struct{
 } GraphicItems;
 
 typedef struct{
-    Vertex* vertices;
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     uint32_t verticesSize;
+    Vertex3D* vertices;
+} vertexParam3D;
+
+typedef struct{
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+    uint32_t verticesSize;
+    Vertex2D* vertices;
 } vertexParam;
 
 typedef struct{
@@ -47,9 +54,14 @@ typedef struct{
 } aboutShader;
 
 typedef struct{
-    vertexParam vertex;
     indexParam index;
+    vertexParam vertex;
 } Shape;
+
+typedef struct{
+    indexParam index;
+    vertexParam3D vertex;
+} Shape3D;
 
 typedef struct{
     VkBuffer** uniformBuffers;

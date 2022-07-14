@@ -59,14 +59,16 @@ extern VkDeviceMemory indexBufferMemory;
 extern VkBuffer* uniformBuffers;
 extern VkDeviceMemory* uniformBuffersMemory;
 
-extern const Vertex vertices[];
-extern const Vertex vertices2[];
-extern const uint16_t indices[];
+extern const Vertex2D planeVert[];
+extern const Vertex3D cubeVert[];
+extern const uint16_t cubeIndx[];
+extern const uint16_t planeIndx[];
 
 extern const char* validationLayers[];
 extern const char* deviceExtensions[];
 
-extern VkVertexInputAttributeDescription attributeDescription[];
+extern VkVertexInputAttributeDescription planeAttributeDescription[];
+extern VkVertexInputAttributeDescription cubeAttributeDescription[];
 
 typedef struct{
     int FindLetter;

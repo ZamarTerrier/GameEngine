@@ -1,13 +1,19 @@
 #include "engine.h"
 
 #include "gameObject.h"
+#include "gameObject3D.h"
 #include "textObject.h"
 #include "camera.h"
 
 typedef struct{
-    GameObject** go;
+    GameObject2D** go;
     uint32_t count;
 } rndrObj;
+
+typedef struct{
+    GameObject3D** go;
+    uint32_t count;
+} rndrObj3D;
 
 typedef struct{
     TextObject** to;
@@ -15,6 +21,7 @@ typedef struct{
 } textObjs;
 
 rndrObj objs;
+rndrObj objs3D;
 textObjs tObjs;
 
 
@@ -33,8 +40,9 @@ void initVulkan(){
     createCommandBuffers();
     createSyncObjects();
 
-    objs.go = (GameObject *) calloc(0, sizeof(GameObject));
-    objs.count = 0;
+    objs.go = (GameObject2D *) calloc(0, sizeof(GameObject2D));
+    objs3D.go = (GameObject3D *) calloc(0, sizeof(GameObject3D));
+    objs.count = objs3D.count = 0;
 
     initCamera();
 
@@ -62,6 +70,14 @@ void cleanupSwapChain() {
     while(temp > 0)
     {
         cleanGameObject(objs.go[temp - 1]);
+        temp --;
+    }
+
+    temp = objs3D.count;
+
+    while(temp > 0)
+    {
+        GameObject3DClean(objs3D.go[temp - 1]);
         temp --;
     }
 
@@ -97,7 +113,7 @@ void recreateSwapChain() {
     newScale.x =  viewSize.x / WIDTH;
     newScale.y =  viewSize.y / HEIGHT;
 
-    setViewScale(newScale);
+    setViewScale2D(newScale);
 
     vkDeviceWaitIdle(device);
 
@@ -107,20 +123,28 @@ void recreateSwapChain() {
     createImageViews();
     createRenderPass();
     createDepthResources();
-    int temp = objs.count;
+    int temp = 0;
 
-    while(temp > 0)
+    while(temp < objs3D.count)
     {
-        createDrawItemsGameObject(objs.go[temp - 1]);
-        temp --;
+        GameObject3DCreateDrawItems(objs3D.go[temp]);
+        temp ++;
     }
 
-    temp = tObjs.count;
+    temp = 0;
 
-    while(temp > 0)
+    while(temp < tObjs.count)
     {
-        createDrawItemsTextObject(tObjs.to[temp - 1]);
-        temp --;
+        createDrawItemsGameObject(objs.go[temp]);
+        temp ++;
+    }
+
+    temp = 0;
+
+    while(temp < objs.count)
+    {
+        createDrawItemsTextObject(tObjs.to[temp]);
+        temp ++;
     }
 
     createFramebuffers();
@@ -168,22 +192,28 @@ void engineLoop(){
         exit(1);
     }
 
-    int temp;
+    int temp = 0;
 
-    temp = tObjs.count;
-
-    while(temp > 0)
+    while(temp < objs3D.count)
     {
-        updateTextUniformBuffer(tObjs.to[temp - 1]);
-        temp --;
+        GameObject3DUpdateUniformBuffer(objs3D.go[temp]);
+        temp ++;
     }
 
-    temp = objs.count;
+    temp = 0;
 
-    while(temp > 0)
+    while(temp < objs.count)
     {
-        updateUniformBuffer(objs.go[temp - 1]);
-        temp --;
+        updateUniformBuffer(objs.go[temp]);
+        temp ++;
+    }
+
+    temp = 0;
+
+    while(temp < tObjs.count)
+    {
+        updateTextUniformBuffer(tObjs.to[temp]);
+        temp ++;
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -244,12 +274,11 @@ void engineLoop(){
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    objs.go = (GameObject *) realloc(0, sizeof(GameObject));
-    objs.count = 0;
-
-
+    objs.go = (GameObject2D *) realloc(0, sizeof(GameObject2D));
+    objs3D.go = (GameObject3D *) calloc(0, sizeof(GameObject3D));
     tObjs.to = (TextObject *) realloc(0, sizeof(TextObject));
-    tObjs.count = 0;
+
+    objs.count = tObjs.count = objs3D.count = 0;
 
 }
 
@@ -273,9 +302,9 @@ void drawFrame(){
 
 
     VkClearValue* clearColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
-    clearColor->color.float32[0] = 0.0f;
+    clearColor->color.float32[0] = 0.3f;
     clearColor->color.float32[1] = 0.0f;
-    clearColor->color.float32[2] = 0.2f;
+    clearColor->color.float32[2] = 0.1f;
     clearColor->color.float32[3] = 1.0f;
     VkClearValue* depthColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
     depthColor->depthStencil.depth = 1.0f;
@@ -289,23 +318,29 @@ void drawFrame(){
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    int temp;
-
-    temp = objs.count;
-
-    while(temp > 0)
+    int temp = 0;
+    while(temp < objs3D.count)
     {
-        gameObjectDraw(objs.go[temp - 1]);
+        GameObject3DDraw(objs3D.go[temp]);
 
-        temp --;
+        temp ++;
     }
 
-    temp = tObjs.count;
+    temp = 0;
 
-    while(temp > 0)
+    while(temp < tObjs.count){
+
+        gameObjectDraw(objs.go[temp]);
+
+        temp ++;
+    }
+
+    temp = 0;
+
+    while(temp < tObjs.count)
     {
-        drawTextObject(tObjs.to[temp - 1]);
-        temp --;
+        drawTextObject(tObjs.to[temp]);
+        temp ++;
     }
 
     vkCmdEndRenderPass(commandBuffers[imageIndex]);
@@ -324,7 +359,7 @@ void drawFrame(){
 
 void engDraw(void* arg){
 
-    GameObject* go = (GameObject *)arg;
+    GameObject2D* go = (GameObject2D *)arg;
 
     for(i=0;i < objs.count;i++)
     {
@@ -333,8 +368,23 @@ void engDraw(void* arg){
     }
 
     objs.count ++;
-    objs.go = (GameObject **) realloc(objs.go,objs.count * sizeof(GameObject*));
+    objs.go = (GameObject2D **) realloc(objs.go,objs.count * sizeof(GameObject2D*));
     objs.go[objs.count - 1] = go;
+}
+
+void engDraw3D(void* arg){
+
+    GameObject3D* go = (GameObject3D *)arg;
+
+    for(i=0;i < objs3D.count;i++)
+    {
+        if(objs3D.go[i] == go)
+            return;
+    }
+
+    objs3D.count ++;
+    objs3D.go = (GameObject3D **) realloc(objs3D.go,objs3D.count * sizeof(GameObject3D*));
+    objs3D.go[objs3D.count - 1] = go;
 }
 
 void engDrawText(void* arg){
@@ -348,7 +398,7 @@ void engDrawText(void* arg){
     }
 
     tObjs.count ++;
-    tObjs.to = (GameObject **) realloc(tObjs.to, tObjs.count * sizeof(GameObject*));
+    tObjs.to = (GameObject2D **) realloc(tObjs.to, tObjs.count * sizeof(GameObject2D*));
     tObjs.to[tObjs.count - 1] = to;
 }
 

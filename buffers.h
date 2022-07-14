@@ -12,6 +12,7 @@ void createCommandPool();
 
 void createCommandBuffers();
 
+void createVertexBuffer3D(vertexParam3D* vert);
 void createVertexBuffer(vertexParam* arg);
 
 void createIndexBuffer(indexParam* arg);

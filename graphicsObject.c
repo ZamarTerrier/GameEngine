@@ -6,19 +6,38 @@
 
 #include "resource.h"
 
+#include "gameObject3D.h"
+
 void initGraphicsObject(GraphicsObject* graphObj){
 
     graphObj->aShader.bindingDescription = getBindingDescription();
 
-    graphObj->aShader.attr = attributeDescription;
+    graphObj->aShader.attr = planeAttributeDescription;
     graphObj->aShader.countAttr = 3;
 
-    graphObj->shape.vertex.vertices = vertices;
+    graphObj->shape.vertex.vertices = planeVert;
     graphObj->shape.vertex.verticesSize = 4;
-    graphObj->shape.index.indices = indices;
+    graphObj->shape.index.indices = planeIndx;
     graphObj->shape.index.indexesSize = 6;
 
     createVertexBuffer(&graphObj->shape.vertex);
+    createIndexBuffer(&graphObj->shape.index);
+
+}
+
+void initGraphicsObject3D(GraphicsObject3D* graphObj){
+
+    graphObj->aShader.bindingDescription = GameObject3DGetBindingDescription();
+
+    graphObj->aShader.attr = cubeAttributeDescription;
+    graphObj->aShader.countAttr = 3;
+
+    graphObj->shape.vertex.vertices = cubeVert;
+    graphObj->shape.vertex.verticesSize = 8;
+    graphObj->shape.index.indices = cubeIndx;
+    graphObj->shape.index.indexesSize = 36;
+
+    createVertexBuffer3D(&graphObj->shape.vertex);
     createIndexBuffer(&graphObj->shape.index);
 
 }

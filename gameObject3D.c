@@ -1,20 +1,21 @@
-#include "gameObject.h"
+#include "gameObject3D.h"
 
-#include "buffers.h"
 #include "camera.h"
-#include <math.h>
 
-void initGameObject2D(GameObject2D* go)
-{
-    initTransform2D(&go->transform);
-    initGraphicsObject(&go->graphObj);
+#include "texture.h"
+
+float tiker = 0;
+
+void initGameObject3D(GameObject3D *go){
+
+    initTransform3D(&go->transform);
+    initGraphicsObject3D(&go->graphObj);
 
     go->graphObj.local.uniformCount = 0;
     go->graphObj.local.texturesCount = 0;
-
 }
 
-void addTexture(GameObject2D* go, const char* file){
+void GameObject3DAddTexture(GameObject3D* go, const char* file){
 
     int temp = go->graphObj.local.texturesCount;
 
@@ -33,7 +34,7 @@ void addTexture(GameObject2D* go, const char* file){
 
 }
 
-void changeTexture(GameObject2D* go, int elem, const char* file){
+void GameObject3DChangeTexture(GameObject3D* go, int elem, const char* file){
 
     destroyTexture(&go->graphObj.local.textures[elem]);
 
@@ -41,7 +42,7 @@ void changeTexture(GameObject2D* go, int elem, const char* file){
 
 }
 
-void addUniformObject(localParam* param, VkDeviceSize size){
+void GameObject3DAddUniformObject(localParam* param, VkDeviceSize size){
 
     int temp = param->uniformCount;
     param->uniformCount ++;
@@ -59,7 +60,7 @@ void addUniformObject(localParam* param, VkDeviceSize size){
 
 }
 
-void createDrawItemsGameObject(GameObject2D* go){
+void GameObject3DCreateDrawItems(GameObject3D* go){
 
     createUniformBuffers(&go->graphObj.local);
 
@@ -86,22 +87,22 @@ void createDrawItemsGameObject(GameObject2D* go){
     types = NULL;
 }
 
-void cleanGameObject(GameObject2D* go){
+void GameObject3DClean(GameObject3D* go){
     cleanGraphicsObject(&go->graphObj);
 }
 
 //Описание вертекса
-VkVertexInputBindingDescription getBindingDescription() {
+VkVertexInputBindingDescription GameObject3DGetBindingDescription() {
     VkVertexInputBindingDescription bindingDescription = {};
 
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex2D);
+    bindingDescription.stride = sizeof(Vertex3D);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     return bindingDescription;
 }
 
-void destroyGameObject(GameObject2D* go){
+void GameObject3DDestroy(GameObject3D* go){
 
     destroyGraphicsObject(&go->graphObj);
 
@@ -110,7 +111,7 @@ void destroyGameObject(GameObject2D* go){
 
 }
 
-void gameObjectDraw(GameObject2D* go){
+void GameObject3DDraw(GameObject3D* go){
 
     vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline);
 
@@ -125,47 +126,24 @@ void gameObjectDraw(GameObject2D* go){
     vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.index.indexesSize, 1, 0, 0, 0);
 }
 
-void updateUniformBuffer(GameObject2D* go) {
+void GameObject3DUpdateUniformBuffer(GameObject3D* go) {
 
     Camera* cam = (Camera*) camObj;
 
-    ViewBuffer2D vuo = {};
-    vuo.position.x = cam->position.x;
-    vuo.position.y = cam->position.y;
-    vuo.rotation.x = cam->rotation.x;
-    vuo.rotation.y = cam->rotation.y;
-    vuo.scale.x = cam->scale.x;
-    vuo.scale.y = cam->scale.y;
+    ModelBuffer3D ubo = {};
+    mat4 temp = mat4_f(1,0,0,0,
+                       0,1,0,0,
+                       0,0,1,0,
+                       0,0,0,1);
+
+    ubo.model = m4_translate(m4_rotation_matrix(temp, go->transform.rotation), go->transform.position);//,
+    ubo.view = temp;//m4_look_at((vec3){2.0f, 2.0f, 2.0f}, (vec3){1.0f, 1.0f, 1.0f}, (vec3){0.0f, 0.0f, 1.0f});
+    ubo.proj = m4_perspective(75.0f, 1, 100);
 
     void* data;
 
-    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex], 0, sizeof(vuo), 0, &data);
-    memcpy(data, &vuo, sizeof(vuo));
+    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex], 0, sizeof(ubo), 0, &data);
+    memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex]);
 
-    TransformBuffer2D ubo = {};
-    ubo.position = go->transform.position;
-    ubo.rotation = go->transform.rotation;
-    ubo.scale = go->transform.scale;
-
-    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[1][imageIndex], 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[1][imageIndex]);
-
-    ImgBuffer iup = {};
-    iup.imgOffset = go->transform.img.offset;
-    iup.imgScale = go->transform.img.scale;
-
-    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[2][imageIndex], 0, sizeof(iup), 0, &data);
-    memcpy(data, &iup, sizeof(iup));
-    vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[2][imageIndex]);
-
-}
-
-vec2 getSizeGameObject(GameObject2D* go)
-{
-    vec2 size;
-    size.x = fabs((go->graphObj.shape.vertex.vertices[1].position.x - go->graphObj.shape.vertex.vertices[3].position.x) * (viewSize.x * diffSize.x)) * go->transform.scale.x;
-    size.y = fabs((go->graphObj.shape.vertex.vertices[1].position.y - go->graphObj.shape.vertex.vertices[3].position.y) * (viewSize.y * diffSize.y)) * go->transform.scale.y;
-    return size;
 }

@@ -4,22 +4,42 @@
 #include "stdinclude.h"
 
 typedef struct{
-    vec2 pos;
+    vec2 position;
+    vec2 rotation;
     vec2 scale;
     struct{
         vec2 offset;
         vec2 scale;
     }img;
-} Transform;
+} Transform2D;
 
-void initTransform(Transform* transform);
+typedef struct{
+    vec3 position;
+    vec3 rotation;
+    vec3 scale;
+    struct{
+        vec2 offset;
+        vec2 scale;
+    }img;
+} Transform3D;
 
-void setPosTransform(Transform* transform, vec2 pos);
+struct GameObject2D;
+struct GameObject3D;
 
-vec2 getPosTransform(Transform* transform);
+void initTransform2D(Transform2D* transform);
+void initTransform3D(Transform3D* transform);
 
-void setScaleTransform(Transform* transform, vec2 scale);
+void setPosTransform2D(struct GameObject2D* go, vec2 pos);
+void setPosTransform3D(struct GameObject3D* go, vec3 pos);
+vec2 getPosTransform2D(struct GameObject2D* go);
+vec3 getPosTransform3D(struct GameObject3D* go);
 
-vec2 getScaleTransform(Transform* transform);
+void setOffsetTransform(struct GameObject2D* go, vec2 offset);
+vec2 getOffsetTransform(struct GameObject2D* go);
+
+void setScaleTransform2D(struct GameObject2D* go, vec2 scale);
+void setScaleTransform3D(struct GameObject3D* go, vec3 scale);
+vec2 getScaleTransform2D(struct GameObject2D* go);
+vec3 getScaleTransform3D(struct GameObject3D* go);
 
 #endif // TRANSFORM_H

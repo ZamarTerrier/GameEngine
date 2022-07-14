@@ -11,7 +11,15 @@ typedef struct{
     Shape shape;
 } GraphicsObject;
 
+typedef struct{
+    localParam local;
+    GraphicItems gItems;
+    aboutShader aShader;
+    Shape3D shape;
+} GraphicsObject3D;
+
 void initGraphicsObject(GraphicsObject* graphObj);
+void initGraphicsObject3D(GraphicsObject3D* graphObj);
 
 void SetShadersPath(GraphicsObject* graphOb, const char* vert, const char* frag);
 

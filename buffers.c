@@ -63,11 +63,40 @@ void createCommandBuffers(){
 
 }
 
+void createVertexBuffer3D(vertexParam3D* vert) {
+
+    //Выделение памяти
+
+    VkDeviceSize bufferSize = sizeof(Vertex3D) * vert->verticesSize;
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+
+    //-------------
+    //Перенос данных в буфер
+
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, vert->vertices, (size_t) bufferSize);
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    //-------------
+
+    copyBuffer(stagingBuffer, vert->vertexBuffer, bufferSize);
+
+    vkDestroyBuffer(device, stagingBuffer, NULL);
+    vkFreeMemory(device, stagingBufferMemory, NULL);
+
+}
+
 void createVertexBuffer(vertexParam* vert) {
 
     //Выделение памяти
 
-    VkDeviceSize bufferSize = sizeof(Vertex) * vert->verticesSize;
+    VkDeviceSize bufferSize = sizeof(Vertex2D) * vert->verticesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;

@@ -27,7 +27,7 @@ void engineLoop();
 void drawFrame();
 
 void engDraw(void* go);
-
+void engDraw3D(void* arg);
 void engDrawText(void* arg);
 
 void updateUniformBuffer();

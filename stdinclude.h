@@ -53,10 +53,16 @@ typedef struct{
 } mat4;
 
 typedef struct {
-    vec2 pos;
+    vec2 position;
     vec3 color;    
     vec2 texCoord;
-} Vertex;
+} Vertex2D;
+
+typedef struct {
+    vec3 position;
+    vec3 color;
+    vec2 texCoord;
+} Vertex3D;
 
 typedef struct {
     VkVertexInputAttributeDescription* inputDescription;
@@ -64,19 +70,38 @@ typedef struct {
 } attrDescr;
 
 typedef struct {
-    vec2 pos;
+    vec2 position;
+    vec2 rotation;
     vec2 scale;
-} ViewUniformObject;
+} ViewBuffer2D;
+
+typedef struct {
+    vec3 position;
+    vec3 rotation;
+    vec3 scale;
+} ViewBuffer3D;
 
 typedef struct  {
-    vec2 pos;
+    vec2 position;
+    vec2 rotation;
     vec2 scale;
-} UniformBufferObject;
+} TransformBuffer2D;
+
+typedef struct  {
+    vec3 position;
+    vec3 rotation;
+    vec3 scale;
+} TransformBuffer3D;
 
 typedef struct  {
     vec2 imgOffset;
     vec2 imgScale;
-} ImgUniformParam;
+} ImgBuffer;
 
+typedef struct{
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ModelBuffer3D;
 
 #endif

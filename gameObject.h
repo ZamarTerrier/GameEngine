@@ -13,29 +13,29 @@
 
 typedef struct{
     GraphicsObject graphObj;
-    Transform transform;
-} GameObject;
+    Transform2D transform;
+} GameObject2D;
 
-void initGameObject(GameObject* go);
+void initGameObject2D(GameObject2D* go);
 
 VkVertexInputBindingDescription getBindingDescription();
 
 attrDescr getAttributeDescriptions();
 
-void addTexture(GameObject* go, const char* file);
+void addTexture(GameObject2D* go, const char* file);
 
 void addUniformObject(localParam* param, VkDeviceSize size);
 
-void createDrawItemsGameObject(GameObject* go);
+void createDrawItemsGameObject(GameObject2D* go);
 
-void cleanGameObject(GameObject* go);
+void cleanGameObject(GameObject2D* go);
 
-void destroyGameObject(GameObject* go);
+void destroyGameObject(GameObject2D* go);
 
-void gameObjectDraw(GameObject* go);
+void gameObjectDraw(GameObject2D* go);
 
-void updateUniformBuffer(GameObject* go);
+void updateUniformBuffer(GameObject2D* go);
 
-vec2 getSizeGameObject(GameObject* go);
+vec2 getSizeGameObject(GameObject2D* go);
 
 #endif // GAMEOBJECT_H

@@ -18,16 +18,19 @@
 stbtt_bakedchar cdata[1103]; // ASCII 32..126 is 95 glyphs
 stbtt_fontinfo font;
 
-void initTextObject(TextObject* to)
+void initTextObject(TextObject* to, const char* fontPath, const char* vertShader, const char* fragShader)
 {
 
-    initTransform(&to->transform);
+    initTransform2D(&to->transform);
+
+    SetShadersPath(to, vertShader, fragShader);
+    SetFontPath(to, fontPath);
 
     to->graphObj.local.uniformCount = 3;
     to->graphObj.local.uniformSizes = (VkDeviceSize *) calloc(to->graphObj.local.uniformCount, sizeof(VkDeviceSize));
-    to->graphObj.local.uniformSizes[0] = sizeof(ViewUniformObject);
-    to->graphObj.local.uniformSizes[1] = sizeof(UniformBufferObject);
-    to->graphObj.local.uniformSizes[2] = sizeof(ImgUniformParam);
+    to->graphObj.local.uniformSizes[0] = sizeof(ViewBuffer3D);
+    to->graphObj.local.uniformSizes[1] = sizeof(TransformBuffer3D);
+    to->graphObj.local.uniformSizes[2] = sizeof(ImgBuffer);
 
     to->graphObj.aShader.bindingDescription = getBindingDescription();
 
@@ -47,7 +50,7 @@ void initTextObject(TextObject* to)
 
     //--------------------
     //Создаем буфер вершин для плоскости
-    VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex) * 4;
+    VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * 4;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &to->graphObj.shape.vertex.vertexBuffer, &to->graphObj.shape.vertex.vertexBufferMemory);
     //-------------------
@@ -186,7 +189,7 @@ void preparePipeline(TextObject* to)
     vertexInputState.vertexBindingDescriptionCount = 1;
     vertexInputState.pVertexBindingDescriptions = &to->graphObj.aShader.bindingDescription;
     vertexInputState.vertexAttributeDescriptionCount = 3;
-    vertexInputState.pVertexAttributeDescriptions = attributeDescription;
+    vertexInputState.pVertexAttributeDescriptions = planeAttributeDescription;
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -234,9 +237,13 @@ void updateTextUniformBuffer(TextObject* to) {
 
     Camera* cam = (Camera*) camObj;
 
-    ViewUniformObject vuo = {};
-    vuo.pos = cam->pos;
-    vuo.scale = cam->scale;
+    ViewBuffer2D vuo = {};
+    vuo.position.x = cam->position.x;
+    vuo.position.y = cam->position.y;
+    vuo.rotation.x = cam->rotation.x;
+    vuo.rotation.y = cam->rotation.y;
+    vuo.scale.x = cam->scale.x;
+    vuo.scale.y = cam->scale.y;
 
     void* data;
 
@@ -244,15 +251,16 @@ void updateTextUniformBuffer(TextObject* to) {
     memcpy(data, &vuo, sizeof(vuo));
     vkUnmapMemory(device, to->graphObj.local.uniformBuffersMemory[0][imageIndex]);
 
-    UniformBufferObject ubo = {};
-    ubo.pos = to->transform.pos;
+    TransformBuffer2D ubo = {};
+    ubo.position = to->transform.position;
+    ubo.rotation = to->transform.rotation;
     ubo.scale = to->transform.scale;
 
     vkMapMemory(device, to->graphObj.local.uniformBuffersMemory[1][imageIndex], 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, to->graphObj.local.uniformBuffersMemory[1][imageIndex]);
 
-    ImgUniformParam iup = {};
+    ImgBuffer iup = {};
     iup.imgOffset = to->transform.img.offset;
     iup.imgScale = to->transform.img.scale;
 
@@ -278,7 +286,7 @@ void drawTextObject(TextObject* to)
 void addText(const char* text, TextObject* to)
 {
 
-    Vertex* mapped = NULL;
+    Vertex2D* mapped = NULL;
     stbtt_aligned_quad q;
 
     vkMapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
@@ -300,29 +308,29 @@ void addText(const char* text, TextObject* to)
     {
         stbtt_GetBakedQuad(cdata, 512,512, *text, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
 
-        mapped->pos.x = (float)q.x0 * charW;
-        mapped->pos.y = (float)q.y0 * charH;
+        mapped->position.x = (float)q.x0 * charW;
+        mapped->position.y = (float)q.y0 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t0;
         mapped++;
 
-        mapped->pos.x = (float)q.x1 * charW;
-        mapped->pos.y = (float)q.y0 * charH;
+        mapped->position.x = (float)q.x1 * charW;
+        mapped->position.y = (float)q.y0 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t0;
         mapped++;
 
-        mapped->pos.x = (float)q.x0 * charW;
-        mapped->pos.y = (float)q.y1 * charH;
+        mapped->position.x = (float)q.x0 * charW;
+        mapped->position.y = (float)q.y1 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t1;
         mapped++;
 
-        mapped->pos.x = (float)q.x1 * charW;
-        mapped->pos.y = (float)q.y1 * charH;
+        mapped->position.x = (float)q.x1 * charW;
+        mapped->position.y = (float)q.y1 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t1;
@@ -342,7 +350,7 @@ void addTextW(const wchar_t* text, TextObject* to)
 
     //русские буквы в пределах 1040-1103
 
-    Vertex* mapped = NULL;
+    Vertex2D* mapped = NULL;
     stbtt_aligned_quad q;
 
     vkMapMemory(device, to->graphObj.shape.vertex.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
@@ -365,29 +373,29 @@ void addTextW(const wchar_t* text, TextObject* to)
 
         stbtt_GetBakedQuad(cdata, 512,512, text[i], &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
 
-        mapped->pos.x = (float)q.x0 * charW;
-        mapped->pos.y = (float)q.y0 * charH;
+        mapped->position.x = (float)q.x0 * charW;
+        mapped->position.y = (float)q.y0 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t0;
         mapped++;
 
-        mapped->pos.x = (float)q.x1 * charW;
-        mapped->pos.y = (float)q.y0 * charH;
+        mapped->position.x = (float)q.x1 * charW;
+        mapped->position.y = (float)q.y0 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t0;
         mapped++;
 
-        mapped->pos.x = (float)q.x0 * charW;
-        mapped->pos.y = (float)q.y1 * charH;
+        mapped->position.x = (float)q.x0 * charW;
+        mapped->position.y = (float)q.y1 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s0;
         mapped->texCoord.y = q.t1;
         mapped++;
 
-        mapped->pos.x = (float)q.x1 * charW;
-        mapped->pos.y = (float)q.y1 * charH;
+        mapped->position.x = (float)q.x1 * charW;
+        mapped->position.y = (float)q.y1 * charH;
         mapped->color = to->font.color;
         mapped->texCoord.x = q.s1;
         mapped->texCoord.y = q.t1;

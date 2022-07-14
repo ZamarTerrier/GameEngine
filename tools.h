@@ -18,7 +18,11 @@ shader readFile(const char* filename);
 
 VkShaderModule createShaderModule(shader shdr);
 
+mat4 m4_translate(mat4 mat, vec3 pos);
+mat4 m4_rotation_matrix(mat4 matrix, vec3 degrees);
 mat4 m4_look_at (vec3 from, vec3 to, vec3 up);
+
+mat4 m4_mult(mat4 m1, mat4 m2);
 
 vec3 v3_add   (vec3 a, vec3 b);
 vec3 v3_adds  (vec3 a, float s);
@@ -48,6 +52,6 @@ vec3 v3_proj(vec3 v, vec3 onto);
 
 vec3 v3_cross(vec3 a, vec3 b);
 
-mat4 m4_perspective(float vertical_field_of_view_in_deg, float aspect_ratio, float near_view_distance, float far_view_distance);
+mat4 m4_perspective(float vertical_field_of_view_in_deg, float near_view_distance, float far_view_distance);
 
 #endif // TOOLS_H

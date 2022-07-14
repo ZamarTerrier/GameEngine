@@ -49,21 +49,34 @@ size_t currentFrame = 0;
 bool framebufferResized = false;
 bool framebufferwasResized = true;
 
-const Vertex vertices[] = {
+const Vertex3D cubeVert[] = {
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {1.0f, 0.0f}},
+    {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+    {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{0.5f, -0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, {1.0f, 0.0f}},
+};
+
+const Vertex2D planeVert[] = {
     {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
     {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
     {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
     {{0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {1.0f, 0.0f}},
 };
 
-const Vertex vertices2[] = {
-    {{-0.5f, -0.5f}, {0.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 1.0f}},
-    {{0.5f, 0.5f}, {1.0f, 1.0f}},
-    {{0.5f, -0.5f}, {1.0f, 0.0f}},
+const uint16_t cubeIndx[] = {
+    2, 1, 0, 0, 3, 2,
+    5, 6, 7, 7, 4, 5,
+    1, 5, 4, 4, 0, 1,
+    6, 2, 3, 3, 7, 6,
+    5, 1, 2, 2, 6, 5,
+    3, 0, 4, 4, 7, 3
 };
 
-const uint16_t indices[] = {
+const uint16_t planeIndx[] = {
     2, 1, 0, 0, 3, 2
 };
 
@@ -77,23 +90,42 @@ const char* deviceExtensions[] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-VkVertexInputAttributeDescription attributeDescription[] = {
+VkVertexInputAttributeDescription planeAttributeDescription[] = {
 
     {
         .binding = 0,
         .location = 0,
         .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = offsetof(Vertex, pos) },
+        .offset = offsetof(Vertex2D, position) },
     {
         .binding = 0,
         .location = 1,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(Vertex, color) },
+        .offset = offsetof(Vertex2D, color) },
     {
         .binding = 0,
         .location = 2,
         .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = offsetof(Vertex, texCoord) }
+        .offset = offsetof(Vertex2D, texCoord) }
+};
+
+VkVertexInputAttributeDescription cubeAttributeDescription[] = {
+
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(Vertex3D, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(Vertex3D, color) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(Vertex3D, texCoord) }
 };
 
 const FontIndexes fontIndexes[] ={
