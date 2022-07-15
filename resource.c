@@ -1,10 +1,12 @@
 #include "resource.h"
 
 uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-uint32_t WIDTH = 800;
-uint32_t HEIGHT = 600;
+uint32_t WIDTH = 1024;
+uint32_t HEIGHT = 800;
 uint32_t VALIDSIZE = 1;
 uint32_t DEVEXTSIZE = 1;
+
+char app_name[256];
 
 bool enableValidationLayers = true;
 
@@ -68,12 +70,12 @@ const Vertex2D planeVert[] = {
 };
 
 const uint16_t cubeIndx[] = {
-    2, 1, 0, 0, 3, 2,
-    5, 6, 7, 7, 4, 5,
-    1, 5, 4, 4, 0, 1,
-    6, 2, 3, 3, 7, 6,
-    5, 1, 2, 2, 6, 5,
-    3, 0, 4, 4, 7, 3
+    0, 1, 2, 2, 3, 0,
+    7, 6, 5, 5, 4, 7,
+    4, 5, 1, 1, 0, 4,
+    3, 2, 6, 6, 7, 3,
+    2, 1, 5, 5, 6, 2,
+    4, 0, 3, 3, 7, 4
 };
 
 const uint16_t planeIndx[] = {

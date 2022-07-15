@@ -76,24 +76,24 @@ typedef struct {
 } ViewBuffer2D;
 
 typedef struct {
-    vec3 position;
-    vec3 rotation;
-    vec3 scale;
+    vec3 position __attribute__ ((aligned (16)));
+    vec3 rotation __attribute__ ((aligned (16)));
+    vec3 scale __attribute__ ((aligned (16)));
 } ViewBuffer3D;
 
-typedef struct  {
+typedef struct {
     vec2 position;
     vec2 rotation;
     vec2 scale;
 } TransformBuffer2D;
 
-typedef struct  {
-    vec3 position;
-    vec3 rotation;
-    vec3 scale;
+typedef struct {
+    vec3 position __attribute__ ((aligned (16)));
+    vec3 rotation __attribute__ ((aligned (16)));
+    vec3 scale __attribute__ ((aligned (16)));
 } TransformBuffer3D;
 
-typedef struct  {
+typedef struct {
     vec2 imgOffset;
     vec2 imgScale;
 } ImgBuffer;

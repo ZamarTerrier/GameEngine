@@ -22,6 +22,7 @@ mat4 m4_translate(mat4 mat, vec3 pos);
 mat4 m4_rotation_matrix(mat4 matrix, vec3 degrees);
 mat4 m4_look_at (vec3 from, vec3 to, vec3 up);
 
+mat4 m4_scale(mat4 mat, vec3 scale);
 mat4 m4_mult(mat4 m1, mat4 m2);
 
 vec3 v3_add   (vec3 a, vec3 b);

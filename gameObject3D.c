@@ -129,21 +129,39 @@ void GameObject3DDraw(GameObject3D* go){
 void GameObject3DUpdateUniformBuffer(GameObject3D* go) {
 
     Camera* cam = (Camera*) camObj;
+    void* data;
 
-    ModelBuffer3D ubo = {};
+    ViewBuffer3D vuo = {};
+    vuo.position = cam->position;
+    vuo.rotation = cam->rotation;
+    vuo.scale = cam->scale;
+
+    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex], 0, sizeof(ViewBuffer3D), 0, &data);
+    memcpy(data, &vuo, sizeof(ViewBuffer3D));
+    vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex]);
+
+    TransformBuffer3D tbo = {};
+    tbo.position = go->transform.position;
+    tbo.rotation = go->transform.rotation;
+    tbo.scale = go->transform.scale;
+
+    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[1][imageIndex], 0, sizeof(TransformBuffer3D), 0, &data);
+    memcpy(data, &tbo, sizeof(TransformBuffer3D));
+    vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[1][imageIndex]);
+
+    ModelBuffer3D mbo = {};
     mat4 temp = mat4_f(1,0,0,0,
-                       0,1,0,0,
+                       0,1.0f,0,0,
                        0,0,1,0,
                        0,0,0,1);
 
-    ubo.model = m4_translate(m4_rotation_matrix(temp, go->transform.rotation), go->transform.position);//,
-    ubo.view = temp;//m4_look_at((vec3){2.0f, 2.0f, 2.0f}, (vec3){1.0f, 1.0f, 1.0f}, (vec3){0.0f, 0.0f, 1.0f});
-    ubo.proj = m4_perspective(75.0f, 1, 100);
+    mbo.model = m4_translate(m4_rotation_matrix(m4_scale(temp, cam->scale), go->transform.rotation), go->transform.position);//,
+    mbo.view = temp;//m4_look_at((vec3){2.0f, 2.0f, 2.0f}, (vec3){1.0f, 1.0f, 1.0f}, (vec3){0.0f, 0.0f, 1.0f});
+    mbo.proj = m4_perspective(75.0f, 1, 100);
+    mbo.proj.m[1][1] *= -1;
 
-    void* data;
-
-    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex], 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex]);
+    vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[2][imageIndex], 0, sizeof(mbo), 0, &data);
+    memcpy(data, &mbo, sizeof(mbo));
+    vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[2][imageIndex]);
 
 }

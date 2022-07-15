@@ -1,5 +1,7 @@
 #include "engine.h"
 
+#include "string.h"
+
 #include "gameObject.h"
 #include "gameObject3D.h"
 #include "textObject.h"
@@ -48,7 +50,15 @@ void initVulkan(){
 
 }
 
-void initEngine(){
+void initEngine(int width, int height, const char* name){
+    strcpy(app_name, name);
+
+    WIDTH = width;
+    HEIGHT = height;
+
+    viewSize.x = WIDTH;
+    viewSize.y = HEIGHT;
+
     initWindow();
     initVulkan();
 }

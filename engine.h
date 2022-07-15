@@ -14,7 +14,7 @@
 
 void initVulkan();
 
-void initEngine();
+void initEngine(int width, int height, const char* name);
 
 void cleanupSwapChain();
 

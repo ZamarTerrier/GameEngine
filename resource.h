@@ -9,6 +9,8 @@ extern uint32_t HEIGHT;
 extern uint32_t VALIDSIZE;
 extern uint32_t DEVEXTSIZE;
 
+extern char app_name[256];
+
 extern bool enableValidationLayers;
 
 extern GLFWwindow* window;

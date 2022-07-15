@@ -128,6 +128,7 @@ void gameObjectDraw(GameObject2D* go){
 void updateUniformBuffer(GameObject2D* go) {
 
     Camera* cam = (Camera*) camObj;
+    void* data;
 
     ViewBuffer2D vuo = {};
     vuo.position.x = cam->position.x;
@@ -136,8 +137,6 @@ void updateUniformBuffer(GameObject2D* go) {
     vuo.rotation.y = cam->rotation.y;
     vuo.scale.x = cam->scale.x;
     vuo.scale.y = cam->scale.y;
-
-    void* data;
 
     vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex], 0, sizeof(vuo), 0, &data);
     memcpy(data, &vuo, sizeof(vuo));

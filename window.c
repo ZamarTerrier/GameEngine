@@ -57,7 +57,7 @@ void initWindow(){
     glfwWindowHint(GLFW_CLIENT_API,  GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan Test", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, app_name, NULL, NULL);
 
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
