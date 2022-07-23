@@ -61,8 +61,13 @@ extern VkDeviceMemory indexBufferMemory;
 extern VkBuffer* uniformBuffers;
 extern VkDeviceMemory* uniformBuffersMemory;
 
+extern const Vertex3D triVert[];
+extern const Vertex3D quadVert[];
 extern const Vertex2D planeVert[];
 extern const Vertex3D cubeVert[];
+
+extern const uint16_t triIndx[];
+extern const uint16_t quadIndx[];
 extern const uint16_t cubeIndx[];
 extern const uint16_t planeIndx[];
 
@@ -84,7 +89,8 @@ extern uint32_t extensionCount;
 extern uint32_t imagesCount;
 extern uint32_t glfwExtensionCount;
 
-extern void* camObj;
+extern void* cam2D;
+extern void* cam3D;
 
 extern vec2 viewSize;
 extern vec2 diffSize;

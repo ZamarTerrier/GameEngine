@@ -18,8 +18,11 @@ typedef struct{
 typedef struct{
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorSet* descriptorSets;
-    VkPipeline graphicsPipeline;
-    VkPipelineLayout pipelineLayout;
+    VkPipeline* graphicsPipeline;
+    VkPipelineLayout* pipelineLayout;
+    uint32_t pipelineCount;
+    void* settings;
+    uint32_t settingsCount;
     VkDescriptorPool descriptorPool;
     bool perspective;
 } GraphicItems;

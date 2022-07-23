@@ -2,9 +2,13 @@
 
 void createGraphicsPipeline(GraphicsObject* graphObj){
 
+    graphObj->gItems.pipelineCount ++;
+
+    PipelineSetting* settings = (PipelineSetting *)graphObj->gItems.settings;
+
     //Шейдеры
-    shader vertShaderCode = readFile(graphObj->aShader.vertShader);
-    shader fragShaderCode = readFile(graphObj->aShader.fragShader);
+    shader vertShaderCode = readFile(settings[graphObj->gItems.pipelineCount - 1].vertShader);
+    shader fragShaderCode = readFile(settings[graphObj->gItems.pipelineCount - 1].fragShader);
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -34,7 +38,7 @@ void createGraphicsPipeline(GraphicsObject* graphObj){
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.topology = settings[graphObj->gItems.pipelineCount - 1].topology;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
     //-----------------
     //Вьюпорт
@@ -63,7 +67,7 @@ void createGraphicsPipeline(GraphicsObject* graphObj){
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = settings[graphObj->gItems.pipelineCount - 1].poligonMode;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -93,7 +97,9 @@ void createGraphicsPipeline(GraphicsObject* graphObj){
     pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptorSetLayout; // Optional
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout) != VK_SUCCESS) {
+    graphObj->gItems.pipelineLayout = (VkPipelineLayout *)realloc(graphObj->gItems.pipelineLayout, graphObj->gItems.pipelineCount * sizeof(VkPipelineLayout));
+
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout[graphObj->gItems.pipelineCount - 1]) != VK_SUCCESS) {
         printf("failed to create pipeline layout!");
         exit(1);
     }
@@ -119,13 +125,15 @@ void createGraphicsPipeline(GraphicsObject* graphObj){
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.layout = graphObj->gItems.pipelineLayout;
+    pipelineInfo.layout = graphObj->gItems.pipelineLayout[graphObj->gItems.pipelineCount - 1];
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.pDepthStencilState = &depthStencil;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline) != VK_SUCCESS) {
+    graphObj->gItems.graphicsPipeline = (VkPipeline *)realloc(graphObj->gItems.graphicsPipeline, graphObj->gItems.pipelineCount * sizeof(VkPipeline));
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline[graphObj->gItems.pipelineCount - 1]) != VK_SUCCESS) {
         printf("failed to create graphics pipeline!");
         exit(1);
     }

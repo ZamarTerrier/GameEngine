@@ -58,13 +58,7 @@ void setPosTransform3D(struct GameObject3D* go, vec3 pos)
 
     GameObject3D *temp = (GameObject3D *)go;
 
-    pos.x /= (viewSize.x * diffSize.x) * (temp->transform.scale.x / 100);
-    pos.y /= (viewSize.y * diffSize.y) * (temp->transform.scale.y / 100);
-    pos.z /= (viewSize.y * diffSize.y) * (temp->transform.scale.z / 100);
-
-    temp->transform.position.x = pos.x;
-    temp->transform.position.y = pos.y;
-    temp->transform.position.z = pos.z;
+    temp->transform.position = pos;
 }
 
 vec2 getPosTransform2D(struct GameObject2D* go)
@@ -81,11 +75,7 @@ vec3 getPosTransform3D(struct GameObject3D* go)
 {
     GameObject3D *temp = (GameObject3D *)go;
 
-    vec3 pos;
-    pos.x = temp->transform.position.x * (viewSize.x * diffSize.x) * temp->transform.scale.x;
-    pos.y = temp->transform.position.y * (viewSize.y * diffSize.y) * temp->transform.scale.y;
-    pos.z = temp->transform.position.z * (viewSize.y * diffSize.y) * temp->transform.scale.z;
-    return pos;
+    return temp->transform.position;
 }
 
 void setOffsetTransform(struct GameObject2D* go, vec2 offset)
@@ -120,9 +110,8 @@ void setScaleTransform3D(struct GameObject3D* go, vec3 scale)
 {
 
     GameObject3D *temp = (GameObject3D *)go;
-    temp->transform.scale.x = scale.x / (viewSize.x * diffSize.x);
-    temp->transform.scale.y = scale.y / (viewSize.y * diffSize.y);
-    temp->transform.scale.z = scale.z / (viewSize.y * diffSize.y);
+
+    temp->transform.scale = scale;
 }
 
 vec2 getScaleTransform2D(struct GameObject2D* go)
@@ -138,9 +127,30 @@ vec2 getScaleTransform2D(struct GameObject2D* go)
 vec3 getScaleTransform3D(struct GameObject3D* go)
 {
     GameObject3D *temp = (GameObject3D *)go;
-    vec3 size;
-    size.x = temp->transform.scale.x * (viewSize.x * diffSize.x);
-    size.y = temp->transform.scale.y * (viewSize.y * diffSize.y);
-    size.z = temp->transform.scale.z * (viewSize.y * diffSize.y);
-    return size;
+
+    return temp->transform.scale;
+}
+
+void setRotateTransform3D(struct GameObject3D* go, vec3 rotate){
+
+    GameObject3D *temp = (GameObject3D *)go;
+
+    rotate.x = rotate.x > 360 ? 0 : rotate.x;
+    rotate.x = rotate.x < -360 ? 0 : rotate.x;
+
+    rotate.y = rotate.y > 360 ? 0 : rotate.y;
+    rotate.y = rotate.y < -360 ? 0 : rotate.y;
+
+    rotate.z = rotate.z > 360 ? 0 : rotate.z;
+    rotate.z = rotate.z < -360 ? 0 : rotate.z;
+
+    temp->transform.rotation = rotate;
+
+}
+
+vec3 getRotateTransform3D(struct GameObject3D* go){
+
+    GameObject3D *temp = (GameObject3D *)go;
+
+    return temp->transform.rotation;
 }

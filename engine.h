@@ -16,6 +16,14 @@ void initVulkan();
 
 void initEngine(int width, int height, const char* name);
 
+void EngineGetcursorPos(int *xpos, int *ypos);
+void EngineFixedCursorCenter();
+void EngineSetCursorPos(float xpos, float ypos);
+void EngineHideCursor(char state);
+int EngineGetKeyPress(int Key);
+void EngineSetKeyCallback(void *callback);
+void EngineSetcursorPoscallback(void * callback);
+
 void cleanupSwapChain();
 
 void recreateSwapChain();

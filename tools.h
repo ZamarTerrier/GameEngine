@@ -22,6 +22,7 @@ mat4 m4_translate(mat4 mat, vec3 pos);
 mat4 m4_rotation_matrix(mat4 matrix, vec3 degrees);
 mat4 m4_look_at (vec3 from, vec3 to, vec3 up);
 
+mat4 m4_scale_mat(vec3 scale);
 mat4 m4_scale(mat4 mat, vec3 scale);
 mat4 m4_mult(mat4 m1, mat4 m2);
 
@@ -54,5 +55,7 @@ vec3 v3_proj(vec3 v, vec3 onto);
 vec3 v3_cross(vec3 a, vec3 b);
 
 mat4 m4_perspective(float vertical_field_of_view_in_deg, float near_view_distance, float far_view_distance);
+
+char* add_string(char *s1, char *s2);
 
 #endif // TOOLS_H

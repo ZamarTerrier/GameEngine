@@ -51,6 +51,19 @@ size_t currentFrame = 0;
 bool framebufferResized = false;
 bool framebufferwasResized = true;
 
+const Vertex3D triVert[] = {
+    {{-0.5f, -0.5f, 0}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{-0.5f, 0.5f, 0}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+    {{0.5f, 0.5f, 0}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+};
+
+const Vertex3D quadVert[] = {
+    {{-0.5f, -0.5f, 0}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, 0.5f, 0}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+    {{0.5f, -0.5f, 0}, {0.5f, 0.5f, 0.5f}, {1.0f, 1.0f}},
+};
+
 const Vertex3D cubeVert[] = {
     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
     {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
@@ -76,6 +89,14 @@ const uint16_t cubeIndx[] = {
     3, 2, 6, 6, 7, 3,
     2, 1, 5, 5, 6, 2,
     4, 0, 3, 3, 7, 4
+};
+
+const uint16_t triIndx[] = {
+    0, 1, 2
+};
+
+const uint16_t quadIndx[] = {
+    0, 1, 2, 2, 3, 0
 };
 
 const uint16_t planeIndx[] = {
@@ -202,7 +223,8 @@ uint32_t extensionCount = 0;
 uint32_t imagesCount = 0;
 uint32_t glfwExtensionCount = 0;
 
-void* camObj;
+void* cam2D;
+void* cam3D;
 
 vec2 viewSize = { 800, 600 };
 vec2 diffSize = { 1.5f, 1.5f };

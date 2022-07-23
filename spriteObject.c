@@ -7,6 +7,8 @@ void initSpriteObject(GameObject2D *go, vec2 size, vec2 position, const char* te
 
     initGameObject2D(go);
 
+    GraphicsObject2DSetVertex(&go->graphObj, planeVert, 4, planeIndx, 6);
+
     SetShadersPath(&go->graphObj, vertShader, fragShader);
     addUniformObject(&go->graphObj.local, sizeof(ViewBuffer2D));
     addUniformObject(&go->graphObj.local, sizeof(TransformBuffer2D));

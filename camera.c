@@ -2,71 +2,84 @@
 
 #include "resource.h"
 
-void initCamera(){
+void Camera2DInit(Camera2D *cam){
 
-    free(camObj);
-    camObj = NULL;
-    camObj = (Camera*) calloc(1, sizeof(Camera));
+    cam->position.x = 0;
+    cam->position.y = 0;
 
-    Camera* cam = (Camera*)camObj;
+    cam->scale.x = 1;
+    cam->scale.y = 1;
 
-    cam->position.x =(WIDTH / 2) / (WIDTH * 1.5);
-    cam->position.y = (HEIGHT / 2) / (HEIGHT * 1.5);
-    cam->position.z = 0.0f;
+    memset(&cam->rotation, 0, sizeof(vec2));
+
+    setActiveCamera2D(cam);
+}
+
+void Camera3DInit(Camera3D *cam){
+
+    memset(&cam->position, 0, sizeof(vec3));
 
     cam->scale.x = 1;
     cam->scale.y = 1;
     cam->scale.z = 1;
 
+    memset(&cam->rotation, 0, sizeof(vec3));
 
-    cam->rotation.x = 0;
-    cam->rotation.y = 0;
+    setActiveCamera(cam);
+}
 
+void setActiveCamera(Camera3D *cam){
+    cam3D = cam;
+}
+
+void setActiveCamera2D(Camera2D *cam){
+    cam2D = cam;
+}
+
+void setViewRotation(vec3 rotation){
+    Camera3D* cam = (Camera3D*)cam3D;
+
+    cam->rotation = rotation;
+}
+
+vec3 getViewRotation(){
+    Camera3D* cam = (Camera3D*)cam3D;
+
+    return cam->rotation;
 }
 
 void setViewPos2D(vec2 pos){
-    Camera* cam = (Camera*)camObj;
-    vec3 tempVec;
-    tempVec.x = pos.x;
-    tempVec.y = pos.y;
-    tempVec.z = 0.0f;
-    cam->position = tempVec;
+    Camera2D* cam = (Camera2D*)cam2D;
+
+    cam->position = pos;
 }
 
 void setViewPos(vec3 pos){
-    Camera* cam = (Camera*)camObj;
+    Camera3D* cam = (Camera3D*)cam3D;
 
     cam->position = pos;
 }
 
 vec2 getViewPos2D(){
-    Camera* cam = (Camera*)camObj;
+    Camera2D* cam = (Camera2D*)cam2D;
 
-    vec2 tempVec;
-    tempVec.x = cam->position.x;
-    tempVec.y = cam->position.y;
-
-    return tempVec;
+    return cam->position;
 }
 
 vec3 getViewPos(){
-    Camera* cam = (Camera*)camObj;
+    Camera3D* cam = (Camera3D*)cam3D;
 
     return cam->position;
 }
 
 void setViewScale2D(vec2 scale){
-    Camera* cam = (Camera*)camObj;
+    Camera2D* cam = (Camera2D*)cam2D;
 
-    vec3 tempVec;
-    tempVec.x = scale.x;
-    tempVec.y = scale.y;
-    tempVec.z = 1;
-    cam->scale = tempVec;
+    cam->scale = scale;
 }
 
 void setViewScale(vec3 scale){
-    Camera* cam = (Camera*)camObj;
+    Camera3D* cam = (Camera3D*)cam3D;
 
     cam->scale = scale;
 }

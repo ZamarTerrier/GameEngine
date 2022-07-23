@@ -41,5 +41,7 @@ void setScaleTransform2D(struct GameObject2D* go, vec2 scale);
 void setScaleTransform3D(struct GameObject3D* go, vec3 scale);
 vec2 getScaleTransform2D(struct GameObject2D* go);
 vec3 getScaleTransform3D(struct GameObject3D* go);
+void setRotateTransform3D(struct GameObject3D* go, vec3 rotate);
+vec3 getRotateTransform3D(struct GameObject3D* go);
 
 #endif // TRANSFORM_H

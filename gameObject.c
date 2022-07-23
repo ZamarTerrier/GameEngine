@@ -59,12 +59,27 @@ void addUniformObject(localParam* param, VkDeviceSize size){
 
 }
 
+void addSettingPipeline(GameObject2D* go, PipelineSetting setting){
+    PipelineSetting* settings;
+
+    go->graphObj.gItems.settingsCount++;
+    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting));
+
+    settings = (PipelineSetting *) go->graphObj.gItems.settings;
+
+    memcpy(&settings[go->graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
+
+}
+
 void createDrawItemsGameObject(GameObject2D* go){
+
+    go->graphObj.gItems.graphicsPipeline = (VkPipeline *) calloc(0, sizeof(VkPipeline));
+    go->graphObj.gItems.pipelineLayout = (VkPipelineLayout *) calloc(0, sizeof(VkPipelineLayout));
 
     createUniformBuffers(&go->graphObj.local);
 
     uint32_t unionSize = go->graphObj.local.texturesCount + go->graphObj.local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
+    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize, sizeof(VkDescriptorType)) ;
 
     for(i=0;i < go->graphObj.local.uniformCount;i++)
     {
@@ -76,10 +91,24 @@ void createDrawItemsGameObject(GameObject2D* go){
         types[i + go->graphObj.local.uniformCount] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     }
 
-
     createDescriptorSetLayout(&go->graphObj.gItems, types, unionSize);
     createDescriptorPool(&go->graphObj.gItems, types, unionSize);
     createDescriptorSets(&go->graphObj.gItems, &go->graphObj.local);
+
+    PipelineSetting settings;
+
+    /*settings.poligonMode = VK_POLYGON_MODE_LINE;
+    settings.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    settings.vertShader = go->graphObj.aShader.vertShader;
+    settings.fragShader = "J:/Projects/Game/shaders/3DObject/line_frag.spv";
+    addSettingPipeline(go, settings);*/
+
+    settings.poligonMode = VK_POLYGON_MODE_FILL;
+    settings.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    settings.vertShader = go->graphObj.aShader.vertShader;
+    settings.fragShader = go->graphObj.aShader.fragShader;
+    addSettingPipeline(go, settings);
+
     createGraphicsPipeline(&go->graphObj);
 
     free(types);
@@ -112,31 +141,31 @@ void destroyGameObject(GameObject2D* go){
 
 void gameObjectDraw(GameObject2D* go){
 
-    vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline);
+    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-    VkBuffer vertexBuffers[] = {go->graphObj.shape.vertex.vertexBuffer};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+        VkBuffer vertexBuffers[] = {go->graphObj.shape.vertex.vertexBuffer};
+        VkDeviceSize offsets[] = {0};
 
-    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.index.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout, 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+        vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.index.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.index.indexesSize, 1, 0, 0, 0);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout[i], 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+
+        vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.index.indexesSize, 1, 0, 0, 0);
+    }
 }
 
 void updateUniformBuffer(GameObject2D* go) {
 
-    Camera* cam = (Camera*) camObj;
+    Camera2D* cam = (Camera2D*) cam2D;
     void* data;
 
     ViewBuffer2D vuo = {};
-    vuo.position.x = cam->position.x;
-    vuo.position.y = cam->position.y;
-    vuo.rotation.x = cam->rotation.x;
-    vuo.rotation.y = cam->rotation.y;
-    vuo.scale.x = cam->scale.x;
-    vuo.scale.y = cam->scale.y;
+    vuo.position = cam->position;
+    vuo.rotation = cam->rotation;
+    vuo.scale = cam->scale;
 
     vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[0][imageIndex], 0, sizeof(vuo), 0, &data);
     memcpy(data, &vuo, sizeof(vuo));

@@ -2,6 +2,7 @@
 
 #include "camera.h"
 
+#include "pipeline.h"
 #include "texture.h"
 
 float tiker = 0;
@@ -13,6 +14,8 @@ void initGameObject3D(GameObject3D *go){
 
     go->graphObj.local.uniformCount = 0;
     go->graphObj.local.texturesCount = 0;
+
+    go->graphObj.gItems.perspective = true;
 }
 
 void GameObject3DAddTexture(GameObject3D* go, const char* file){
@@ -62,10 +65,13 @@ void GameObject3DAddUniformObject(localParam* param, VkDeviceSize size){
 
 void GameObject3DCreateDrawItems(GameObject3D* go){
 
+    go->graphObj.gItems.graphicsPipeline = (VkPipeline *) calloc(0, sizeof(VkPipeline));
+    go->graphObj.gItems.pipelineLayout = (VkPipelineLayout *) calloc(0, sizeof(VkPipelineLayout));
+
     createUniformBuffers(&go->graphObj.local);
 
     uint32_t unionSize = go->graphObj.local.texturesCount + go->graphObj.local.uniformCount;
-    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize,sizeof(VkDescriptorType)) ;
+    VkDescriptorType* types = (VkDescriptorType *) calloc(unionSize, sizeof(VkDescriptorType)) ;
 
     for(i=0;i < go->graphObj.local.uniformCount;i++)
     {
@@ -81,7 +87,35 @@ void GameObject3DCreateDrawItems(GameObject3D* go){
     createDescriptorSetLayout(&go->graphObj.gItems, types, unionSize);
     createDescriptorPool(&go->graphObj.gItems, types, unionSize);
     createDescriptorSets(&go->graphObj.gItems, &go->graphObj.local);
+
+
+    PipelineSetting* settings;
+
+    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, 2 * sizeof(PipelineSetting));
+
+    settings = (PipelineSetting *) go->graphObj.gItems.settings;
+
+    /*
+    settings[0].poligonMode = VK_POLYGON_MODE_LINE;
+    settings[0].topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    settings[0].vertShader = go->graphObj.aShader.vertShader;
+    settings[0].fragShader = "J:/Projects/Game/shaders/3DObject/line_frag.spv";
+    createGraphicsPipeline(&go->graphObj);*/
+
+    settings[0].poligonMode = VK_POLYGON_MODE_FILL;
+    settings[0].topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    settings[0].vertShader = go->graphObj.aShader.vertShader;
+    settings[0].fragShader = go->graphObj.aShader.fragShader;
+    settings[0].drawType = 0;
     createGraphicsPipeline(&go->graphObj);
+
+    settings[1].poligonMode = VK_POLYGON_MODE_FILL;
+    settings[1].topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    settings[1].vertShader = "J:/Projects/Game/shaders/3DObject/outline_vert.spv";
+    settings[1].fragShader = "J:/Projects/Game/shaders/3DObject/outline_frag.spv";
+    settings[1].drawType = 1;
+    createGraphicsPipeline(&go->graphObj);
+
 
     free(types);
     types = NULL;
@@ -113,22 +147,37 @@ void GameObject3DDestroy(GameObject3D* go){
 
 void GameObject3DDraw(GameObject3D* go){
 
-    vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline);
+    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
 
-    VkBuffer vertexBuffers[] = {go->graphObj.shape.vertex.vertexBuffer};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.index.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        VkBuffer vertexBuffers[] = {go->graphObj.shape.vertex.vertexBuffer};
+        VkDeviceSize offsets[] = {0};
 
-    vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout, 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.index.indexesSize, 1, 0, 0, 0);
+        vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.index.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout[i], 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+
+        PipelineSetting* settings = (PipelineSetting *)go->graphObj.gItems.settings;
+
+        switch(settings[i].drawType){
+            case 0:
+                vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.index.indexesSize, 1, 0, 0, 0);
+                break;
+            case 1:
+                vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vertex.verticesSize, 1, 0, 0);
+                break;
+        }
+
+    }
+
 }
 
 void GameObject3DUpdateUniformBuffer(GameObject3D* go) {
 
-    Camera* cam = (Camera*) camObj;
+    Camera3D* cam = (Camera3D*) cam3D;
     void* data;
 
     ViewBuffer3D vuo = {};
@@ -150,14 +199,15 @@ void GameObject3DUpdateUniformBuffer(GameObject3D* go) {
     vkUnmapMemory(device, go->graphObj.local.uniformBuffersMemory[1][imageIndex]);
 
     ModelBuffer3D mbo = {};
-    mat4 temp = mat4_f(1,0,0,0,
-                       0,1.0f,0,0,
-                       0,0,1,0,
-                       0,0,0,1);
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+    mat4 edenMat = mat4_f(1,0,0,0,
+                          0,1,0,0,
+                          0,0,1,0,
+                          0,0,0,1);
 
-    mbo.model = m4_translate(m4_rotation_matrix(m4_scale(temp, cam->scale), go->transform.rotation), go->transform.position);//,
-    mbo.view = temp;//m4_look_at((vec3){2.0f, 2.0f, 2.0f}, (vec3){1.0f, 1.0f, 1.0f}, (vec3){0.0f, 0.0f, 1.0f});
-    mbo.proj = m4_perspective(75.0f, 1, 100);
+    mbo.model = m4_translate(m4_rotation_matrix(m4_scale_mat(go->transform.scale), go->transform.rotation), go->transform.position);
+    mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+    mbo.proj = m4_perspective(45.0f, 0.1f, 100.0f);
     mbo.proj.m[1][1] *= -1;
 
     vkMapMemory(device, go->graphObj.local.uniformBuffersMemory[2][imageIndex], 0, sizeof(mbo), 0, &data);

@@ -15,14 +15,26 @@ void initGraphicsObject(GraphicsObject* graphObj){
     graphObj->aShader.attr = planeAttributeDescription;
     graphObj->aShader.countAttr = 3;
 
-    graphObj->shape.vertex.vertices = planeVert;
-    graphObj->shape.vertex.verticesSize = 4;
-    graphObj->shape.index.indices = planeIndx;
-    graphObj->shape.index.indexesSize = 6;
+}
+
+void GraphicsObject2DSetVertex(GraphicsObject* graphObj, Vertex2D *vert, int vertCount, uint16_t *inx, int indxCount){
+
+    if(graphObj->shape.vertex.vertices != NULL)
+    {
+        vkDestroyBuffer(device, graphObj->shape.index.indexBuffer, NULL);
+        vkFreeMemory(device, graphObj->shape.index.indexBufferMemory, NULL);
+
+        vkDestroyBuffer(device, graphObj->shape.vertex.vertexBuffer, NULL);
+        vkFreeMemory(device, graphObj->shape.vertex.vertexBufferMemory, NULL);
+    }
+
+    graphObj->shape.vertex.vertices = vert;
+    graphObj->shape.vertex.verticesSize = vertCount;
+    graphObj->shape.index.indices = inx;
+    graphObj->shape.index.indexesSize = indxCount;
 
     createVertexBuffer(&graphObj->shape.vertex);
     createIndexBuffer(&graphObj->shape.index);
-
 }
 
 void initGraphicsObject3D(GraphicsObject3D* graphObj){
@@ -32,21 +44,47 @@ void initGraphicsObject3D(GraphicsObject3D* graphObj){
     graphObj->aShader.attr = cubeAttributeDescription;
     graphObj->aShader.countAttr = 3;
 
-    graphObj->shape.vertex.vertices = cubeVert;
-    graphObj->shape.vertex.verticesSize = 8;
-    graphObj->shape.index.indices = cubeIndx;
-    graphObj->shape.index.indexesSize = 36;
+}
+
+void GraphicsObject3DSetVertex(GraphicsObject3D* graphObj, Vertex3D *vert, int vertCount, uint16_t *inx, int indxCount){
+
+    if(graphObj->shape.vertex.vertices != NULL)
+    {
+
+        vkDestroyBuffer(device, graphObj->shape.index.indexBuffer, NULL);
+        vkFreeMemory(device, graphObj->shape.index.indexBufferMemory, NULL);
+
+        vkDestroyBuffer(device, graphObj->shape.vertex.vertexBuffer, NULL);
+        vkFreeMemory(device, graphObj->shape.vertex.vertexBufferMemory, NULL);
+
+    }
+
+    graphObj->shape.vertex.vertices = vert;
+    graphObj->shape.vertex.verticesSize = vertCount;
+    graphObj->shape.index.indices = inx;
+    graphObj->shape.index.indexesSize = indxCount;
 
     createVertexBuffer3D(&graphObj->shape.vertex);
     createIndexBuffer(&graphObj->shape.index);
+}
 
+void cleanPipelines(GraphicsObject *graphObj){
+
+    for(int i=0;i < graphObj->gItems.pipelineCount; i++){
+        vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline[i], NULL);
+        vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout[i], NULL);
+    }
+    \
+
+    graphObj->gItems.graphicsPipeline = (VkPipeline *)realloc(graphObj->gItems.graphicsPipeline,0);
+    graphObj->gItems.pipelineLayout = (VkPipeline *)realloc(graphObj->gItems.pipelineLayout,0);
+    graphObj->gItems.pipelineCount = 0;
 }
 
 void cleanGraphicsObject(GraphicsObject *graphObj)
 {
+    cleanPipelines(graphObj);
 
-    vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline, NULL);
-    vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout, NULL);
     vkDestroyDescriptorPool(device, graphObj->gItems.descriptorPool, NULL);
     vkDestroyDescriptorSetLayout(device, graphObj->gItems.descriptorSetLayout, NULL);
 
@@ -64,8 +102,11 @@ void cleanGraphicsObject(GraphicsObject *graphObj)
 
 void destroyGraphicsObject(GraphicsObject* graphObj){
 
-    vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline, NULL);
-    vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout, NULL);
+    for(int i=0;i < graphObj->gItems.pipelineCount; i++){
+        vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline[i], NULL);
+        vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout[i], NULL);
+    }
+
     vkDestroyDescriptorPool(device, graphObj->gItems.descriptorPool, NULL);
     vkDestroyDescriptorSetLayout(device, graphObj->gItems.descriptorSetLayout, NULL);
 

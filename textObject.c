@@ -197,7 +197,10 @@ void preparePipeline(TextObject* to)
     pipelineLayoutInfo.pSetLayouts = &to->graphObj.gItems.descriptorSetLayout; // Optional
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &to->graphObj.gItems.pipelineLayout) != VK_SUCCESS) {
+    to->graphObj.gItems.pipelineCount ++;
+    to->graphObj.gItems.pipelineLayout = (VkPipelineLayout *)realloc(to->graphObj.gItems.pipelineLayout, to->graphObj.gItems.pipelineCount * sizeof(VkPipelineLayout));
+
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &to->graphObj.gItems.pipelineLayout[to->graphObj.gItems.pipelineCount - 1]) != VK_SUCCESS) {
         printf("failed to create pipeline layout!");
         exit(1);
     }
@@ -212,13 +215,15 @@ void preparePipeline(TextObject* to)
     pipelineCreateInfo.pRasterizationState = &rasterizationState;
     pipelineCreateInfo.pMultisampleState = &multisampleState;
     pipelineCreateInfo.pColorBlendState = &colorBlendState;
-    pipelineCreateInfo.layout = to->graphObj.gItems.pipelineLayout;
+    pipelineCreateInfo.layout = to->graphObj.gItems.pipelineLayout[to->graphObj.gItems.pipelineCount - 1];
     pipelineCreateInfo.renderPass = renderPass;
     pipelineCreateInfo.subpass = 0;
     pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineCreateInfo.pDepthStencilState = &depthStencilState;
 
-    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &to->graphObj.gItems.graphicsPipeline);
+    to->graphObj.gItems.graphicsPipeline = (VkPipeline *)realloc(to->graphObj.gItems.graphicsPipeline, to->graphObj.gItems.pipelineCount * sizeof(VkPipeline));
+
+    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &to->graphObj.gItems.graphicsPipeline[to->graphObj.gItems.pipelineCount - 1]);
 
 
     vkDestroyShaderModule(device, fragShaderModule, NULL);
@@ -235,15 +240,12 @@ void SetTextColor(TextObject* to, vec3 color){
 
 void updateTextUniformBuffer(TextObject* to) {
 
-    Camera* cam = (Camera*) camObj;
+    Camera2D* cam = (Camera2D*) cam2D;
 
     ViewBuffer2D vuo = {};
-    vuo.position.x = cam->position.x;
-    vuo.position.y = cam->position.y;
-    vuo.rotation.x = cam->rotation.x;
-    vuo.rotation.y = cam->rotation.y;
-    vuo.scale.x = cam->scale.x;
-    vuo.scale.y = cam->scale.y;
+    vuo.position = cam->position;
+    vuo.rotation = cam->rotation;
+    vuo.scale = cam->scale;
 
     void* data;
 
@@ -272,14 +274,16 @@ void updateTextUniformBuffer(TextObject* to) {
 
 void drawTextObject(TextObject* to)
 {
-    vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->graphObj.gItems.graphicsPipeline);
-    vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->graphObj.gItems.pipelineLayout, 0, 1, &to->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+    for(int i=0; i < to->graphObj.gItems.pipelineCount; i++){
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->graphObj.gItems.graphicsPipeline[i]);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->graphObj.gItems.pipelineLayout[i], 0, 1, &to->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
 
-    VkDeviceSize offsets = 0;
-    vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &to->graphObj.shape.vertex.vertexBuffer, &offsets);
-    for (uint32_t j = 0; j < to->font.numLetters; j++)
-    {
-        vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+        VkDeviceSize offsets = 0;
+        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &to->graphObj.shape.vertex.vertexBuffer, &offsets);
+        for (uint32_t j = 0; j < to->font.numLetters; j++)
+        {
+            vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+        }
     }
 }
 
@@ -412,7 +416,6 @@ void addTextW(const wchar_t* text, TextObject* to)
 void createDrawItemsTextObject(TextObject* to)
 {
     //Связываем дескрипторы, юнибаферы и создаем новый пайплайн
-
     createUniformBuffers(&to->graphObj.local);
 
     uint32_t unionSize = to->graphObj.local.texturesCount + to->graphObj.local.uniformCount;

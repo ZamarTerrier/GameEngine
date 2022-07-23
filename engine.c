@@ -46,8 +46,6 @@ void initVulkan(){
     objs3D.go = (GameObject3D *) calloc(0, sizeof(GameObject3D));
     objs.count = objs3D.count = 0;
 
-    initCamera();
-
 }
 
 void initEngine(int width, int height, const char* name){
@@ -61,6 +59,50 @@ void initEngine(int width, int height, const char* name){
 
     initWindow();
     initVulkan();
+}
+
+void EngineGetcursorPos(int *xpos, int *ypos){
+    glfwGetCursorPos(window, xpos, ypos);
+}
+
+void EngineFixedCursorCenter(){
+
+    glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+
+}
+
+void EngineSetCursorPos(float xpos, float ypos){
+
+    glfwSetCursorPos(window, xpos, ypos);
+
+}
+
+void EngineHideCursor(char state){
+    switch(state){
+        case 0 :
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            break;
+        case 1 :
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            break;
+        case 2 :
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            break;
+    }
+}
+
+int EngineGetKeyPress(int Key){
+    int res = glfwGetKey(window, Key);
+
+    return res;
+}
+
+void EngineSetKeyCallback(void *callback){
+    glfwSetKeyCallback(window, callback);
+}
+
+void EngineSetcursorPoscallback(void * callback){
+    glfwSetCursorPosCallback(window, callback);
 }
 
 void cleanupSwapChain() {
@@ -137,6 +179,9 @@ void recreateSwapChain() {
 
     while(temp < objs3D.count)
     {
+
+        cleanPipelines(&objs3D.go[temp]->graphObj);
+
         GameObject3DCreateDrawItems(objs3D.go[temp]);
         temp ++;
     }
@@ -145,7 +190,10 @@ void recreateSwapChain() {
 
     while(temp < tObjs.count)
     {
-        createDrawItemsGameObject(objs.go[temp]);
+
+        cleanPipelines(&tObjs.to[temp]->graphObj);
+
+        createDrawItemsTextObject(tObjs.to[temp]);
         temp ++;
     }
 
@@ -153,7 +201,10 @@ void recreateSwapChain() {
 
     while(temp < objs.count)
     {
-        createDrawItemsTextObject(tObjs.to[temp]);
+
+        cleanPipelines(&objs.go[temp]->graphObj);
+
+        createDrawItemsGameObject(objs.go[temp]);
         temp ++;
     }
 
@@ -431,8 +482,6 @@ void cleanUp(){
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     vkDestroyInstance(instance, NULL);
-
-    free(camObj);
 
     glfwDestroyWindow(window);
 

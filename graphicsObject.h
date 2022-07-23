@@ -21,10 +21,14 @@ typedef struct{
 void initGraphicsObject(GraphicsObject* graphObj);
 void initGraphicsObject3D(GraphicsObject3D* graphObj);
 
+void GraphicsObject2DSetVertex(GraphicsObject* graphObj, Vertex2D *vert, int vertCount, uint16_t *inx, int indxCount);
+void GraphicsObject3DSetVertex(GraphicsObject3D* graphObj, Vertex3D *vert, int vertCount, uint16_t *inx, int indxCount);
+
 void SetShadersPath(GraphicsObject* graphOb, const char* vert, const char* frag);
 
 void recreateDrawningParams(GraphicsObject* graphObj);
 
+void cleanPipelines(GraphicsObject *graphObj);
 void cleanGraphicsObject(GraphicsObject* graphObj);
 
 void destroyGraphicsObject(GraphicsObject* graphObj);

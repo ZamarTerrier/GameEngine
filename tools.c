@@ -1,11 +1,14 @@
 #include "tools.h"
 
-#include "math.h"
+#include <math.h>
+#include <string.h>
 
 mat4 edenMat= {1, 0, 0, 0,
                0, 1, 0, 0,
                0, 0, 1, 0,
                0, 0, 0, 1};
+
+const double epsilon = 2.718281828182818281828;
 
 VkCommandBuffer beginSingleTimeCommands() {
     VkCommandBufferAllocateInfo allocInfo = {};
@@ -214,6 +217,19 @@ mat4 m4_mult(mat4 m1, mat4 m2){
     return result;
 }
 
+mat4 m4_scale_mat(vec3 scale){
+
+    mat4 scale_mat;
+
+    scale_mat = edenMat;
+
+    scale_mat.m[0][0] = scale.x;
+    scale_mat.m[1][1] = scale.y;
+    scale_mat.m[2][2] = scale.z;
+
+    return scale_mat;
+}
+
 mat4 m4_scale(mat4 mat, vec3 scale){
     mat4 scale_mat;
 
@@ -250,15 +266,17 @@ vec3 v3_cross(vec3 a, vec3 b)
        a.z * b.x - a.x * b.z,
        a.x * b.y - a.y * b.x
    };
+
 }
 
 mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
 
 {
+
   float aspect_ratio = ((float)swapChainExtent.width) / ((float) swapChainExtent.height);
-  float aspect_ratio2 = ((float)swapChainExtent.height) / ((float) swapChainExtent.width);
-  float range = far_plane - near_plane;
-  float tan_half_fov = tanf(fov_degrees / 2.0 * (M_PI / 180));
+
+  float range = far_plane  - near_plane;
+  float tan_half_fov = tanf((fov_degrees * (M_PI / 180)) / 2.0);
 
   mat4 matrix;
 
@@ -274,19 +292,18 @@ mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
 
   matrix.m[2][0] = 0.0f;
   matrix.m[2][1] = 0.0f;
-  matrix.m[2][2] = (far_plane + near_plane) / (float) range;
-  matrix.m[2][3] = (2 * far_plane * near_plane / (float) range);
+  matrix.m[2][2] = far_plane / (float) range;
+  matrix.m[2][3] = 1.0f;
 
   matrix.m[3][0] = 0.0f;
   matrix.m[3][1] = 0.0f;
-  matrix.m[3][2] = -1.0f;
+  matrix.m[3][2] = -(far_plane * near_plane) / (float) range;
   matrix.m[3][3] = 0.0f;
 
   return matrix;
 }
 
 vec3 v3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
-
 vec3 v3_adds  (vec3 a, float s) { return (vec3){ a.x + s,   a.y + s,   a.z + s   }; }
 vec3 v3_sub   (vec3 a, vec3 b) { return (vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
 vec3 v3_subs  (vec3 a, float s) { return (vec3){ a.x - s,   a.y - s,   a.z - s   }; }
@@ -305,4 +322,18 @@ mat4 mat4_f(float m00, float m10, float m20, float m30, float m01, float m11, fl
         .m[0][2] = m02, .m[1][2] = m12, .m[2][2] = m22, .m[3][2] = m32,
         .m[0][3] = m03, .m[1][3] = m13, .m[2][3] = m23, .m[3][3] = m33
     };
+}
+
+char* add_string(char *s1, char *s2){
+    int len = strlen(s1);
+    int len2 = strlen(s2);
+
+    char* text = (char *)calloc(len + len2, sizeof(char));
+
+    memcpy(text, s1, len);
+    memcpy(text + len, s2, len2);
+
+    memset(text + len + len2, 0, 1);
+
+    return text;
 }
