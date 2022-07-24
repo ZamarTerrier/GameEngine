@@ -49,7 +49,7 @@ bool isDeviceSuitable(VkPhysicalDevice device) {
     VkPhysicalDeviceFeatures supportedFeatures;
     vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-    return isComplete(indices) && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    return isComplete(indices) && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy && supportedFeatures.fillModeNonSolid;
 
 }
 

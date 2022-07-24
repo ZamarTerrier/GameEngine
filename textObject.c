@@ -50,7 +50,7 @@ void initTextObject(TextObject* to, const char* fontPath, const char* vertShader
 
     //--------------------
     //Создаем буфер вершин для плоскости
-    VkDeviceSize bufferSize = TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * 4;
+    VkDeviceSize bufferSize = to->font.fontWidth * to->font.fontHeight; //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &to->graphObj.shape.vertex.vertexBuffer, &to->graphObj.shape.vertex.vertexBufferMemory);
     //-------------------

@@ -112,20 +112,20 @@ void GameObject3DCreateDrawItems(GameObject3D* go){
     GameObject3DAddSettingPipeline(go, setting);
     createGraphicsPipeline(&go->graphObj);
 
-    setting.poligonMode = VK_POLYGON_MODE_LINE;
+    setting.poligonMode = VK_POLYGON_MODE_FILL;
     setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-    setting.vertShader = go->graphObj.aShader.vertShader;
+    setting.vertShader = "J:/Projects/Game/shaders/3DObject/line_vert.spv";
     setting.fragShader = "J:/Projects/Game/shaders/3DObject/line_frag.spv";
     GameObject3DAddSettingPipeline(go, setting);
     createGraphicsPipeline(&go->graphObj);
 
-    setting.poligonMode = VK_POLYGON_MODE_FILL;
+    /*setting.poligonMode = VK_POLYGON_MODE_FILL;
     setting.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
     setting.vertShader = "J:/Projects/Game/shaders/3DObject/outline_vert.spv";
     setting.fragShader = "J:/Projects/Game/shaders/3DObject/outline_frag.spv";
     setting.drawType = 1;
     GameObject3DAddSettingPipeline(go, setting);
-    createGraphicsPipeline(&go->graphObj);
+    createGraphicsPipeline(&go->graphObj);*/
 
 
     free(types);

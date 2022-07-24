@@ -19,7 +19,7 @@ Texture2D createTexture(const char* file){
 void createTextureImage(const char* file, Texture2D *texture) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
+    VkDeviceSize imageSize = texWidth * texHeight * sizeof(float);
 
     if (!pixels) {
         printf("failed to load texture image!");
