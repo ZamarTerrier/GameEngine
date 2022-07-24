@@ -389,7 +389,7 @@ void drawFrame(){
 
     temp = 0;
 
-    while(temp < tObjs.count){
+    while(temp < objs.count){
 
         gameObjectDraw(objs.go[temp]);
 

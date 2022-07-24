@@ -63,6 +63,19 @@ void GameObject3DAddUniformObject(localParam* param, VkDeviceSize size){
 
 }
 
+void GameObject3DAddSettingPipeline(GameObject3D* go, PipelineSetting setting){
+    PipelineSetting* settings;
+
+    go->graphObj.gItems.settingsCount++;
+    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting));
+
+    settings = (PipelineSetting *) go->graphObj.gItems.settings;
+
+    memcpy(&settings[go->graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
+
+}
+
+
 void GameObject3DCreateDrawItems(GameObject3D* go){
 
     go->graphObj.gItems.graphicsPipeline = (VkPipeline *) calloc(0, sizeof(VkPipeline));
@@ -89,31 +102,29 @@ void GameObject3DCreateDrawItems(GameObject3D* go){
     createDescriptorSets(&go->graphObj.gItems, &go->graphObj.local);
 
 
-    PipelineSetting* settings;
+    PipelineSetting setting;
 
-    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, 2 * sizeof(PipelineSetting));
-
-    settings = (PipelineSetting *) go->graphObj.gItems.settings;
-
-    /*
-    settings[0].poligonMode = VK_POLYGON_MODE_LINE;
-    settings[0].topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-    settings[0].vertShader = go->graphObj.aShader.vertShader;
-    settings[0].fragShader = "J:/Projects/Game/shaders/3DObject/line_frag.spv";
-    createGraphicsPipeline(&go->graphObj);*/
-
-    settings[0].poligonMode = VK_POLYGON_MODE_FILL;
-    settings[0].topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    settings[0].vertShader = go->graphObj.aShader.vertShader;
-    settings[0].fragShader = go->graphObj.aShader.fragShader;
-    settings[0].drawType = 0;
+    setting.poligonMode = VK_POLYGON_MODE_FILL;
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    setting.vertShader = go->graphObj.aShader.vertShader;
+    setting.fragShader = go->graphObj.aShader.fragShader;
+    setting.drawType = 0;
+    GameObject3DAddSettingPipeline(go, setting);
     createGraphicsPipeline(&go->graphObj);
 
-    settings[1].poligonMode = VK_POLYGON_MODE_FILL;
-    settings[1].topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-    settings[1].vertShader = "J:/Projects/Game/shaders/3DObject/outline_vert.spv";
-    settings[1].fragShader = "J:/Projects/Game/shaders/3DObject/outline_frag.spv";
-    settings[1].drawType = 1;
+    setting.poligonMode = VK_POLYGON_MODE_LINE;
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    setting.vertShader = go->graphObj.aShader.vertShader;
+    setting.fragShader = "J:/Projects/Game/shaders/3DObject/line_frag.spv";
+    GameObject3DAddSettingPipeline(go, setting);
+    createGraphicsPipeline(&go->graphObj);
+
+    setting.poligonMode = VK_POLYGON_MODE_FILL;
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    setting.vertShader = "J:/Projects/Game/shaders/3DObject/outline_vert.spv";
+    setting.fragShader = "J:/Projects/Game/shaders/3DObject/outline_frag.spv";
+    setting.drawType = 1;
+    GameObject3DAddSettingPipeline(go, setting);
     createGraphicsPipeline(&go->graphObj);
 
 

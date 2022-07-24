@@ -101,7 +101,8 @@ void createDrawItemsGameObject(GameObject2D* go){
     settings.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     settings.vertShader = go->graphObj.aShader.vertShader;
     settings.fragShader = "J:/Projects/Game/shaders/3DObject/line_frag.spv";
-    addSettingPipeline(go, settings);*/
+    addSettingPipeline(go, settings);
+    createGraphicsPipeline(&go->graphObj);*/
 
     settings.poligonMode = VK_POLYGON_MODE_FILL;
     settings.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
