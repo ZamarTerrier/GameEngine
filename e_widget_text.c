@@ -195,10 +195,10 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_gui_widget_text_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_text_vert_spv_size);
-        setting.fragShader = &_binary_shaders_gui_widget_text_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_text_frag_spv_size);
+        setting.vertShader = &_binary_shaders_text_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
+        setting.fragShader = &_binary_shaders_text_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
         setting.fromFile = 0;
     }
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;

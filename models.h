@@ -18,6 +18,9 @@ typedef struct{
 } ModelObject3D;
 
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam);
+void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam);
+
+void DestroyFBXModel(ModelObject3D *model);
 void DestroyOBJModel(ModelObject3D *model);
 
 #endif // MODELS_H

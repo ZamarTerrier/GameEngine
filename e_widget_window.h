@@ -23,6 +23,7 @@ typedef struct{
 
 void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam, vec2 position);
 void WindowWidgetShow(EWidgetWindow *ww);
+void WindowWidgetHide(EWidgetWindow *ww);
 void WindowWidgetUpdate(EWidgetWindow *ww);
 void WindowWidgetDraw(EWidgetWindow *ww);
 

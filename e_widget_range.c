@@ -63,6 +63,7 @@ void RangeWidgetInit(EWidgetRange *range, vec2 size, int min, int max, EWidget *
     range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
     Transform2DSetScale(&range->line, sizeLine);
     Transform2DSetPosition(&range->line, posLine);
+    range->line.active = false;
 
     range->widget.color = (vec4){0.7, 0.7, 0.7, 0.0};
     Transform2DSetScale(&range->widget, size);

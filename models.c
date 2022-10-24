@@ -10,20 +10,7 @@
 #include "texture.h"
 #include "pipeline.h"
 
-typedef struct{
-    vec3 *vertices;
-    int num_vertices;
-    vec2 *uvs;
-    int num_uvs;
-    vec3 *normals;
-    int num_normals;
-    uint32_t *vertexIndices;
-    int num_vertex_indices;
-    uint32_t *uvIndices;
-    int num_uv_indices;
-    uint32_t *normalIndices;
-    int num_normal_indices;
-} TempStruct;
+#include "ufbx.h"
 
 static void CalcNormal(float N[3], float v0[3], float v1[3], float v2[3]) {
   float v10[3];
@@ -250,6 +237,36 @@ static void get_file_data(void* ctx, const char* filename, const int is_mtl,
   (*len) = data_len;
 }
 
+void DefaultModelInit(ModelObject3D * mo, DrawParam dParam){
+
+    addUniformObject(&mo->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    addUniformObject(&mo->go.graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    if(strlen(dParam.filePath) != 0)
+        addTexture(&mo->go.graphObj.local, dParam.filePath);
+
+    GameObject3DCreateDrawItems(mo);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&mo->go.graphObj, &setting);
+
+    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    {
+        setting.vertShader = &_binary_shaders_model_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
+        setting.fragShader = &_binary_shaders_model_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
+        setting.fromFile = 0;
+    }
+    else
+        GraphicsObjectSetShadersPath(&mo->go.graphObj, dParam.vertShader, dParam.fragShader);
+
+    GameObject3DAddSettingPipeline(&mo->go, setting);
+
+    PipelineCreateGraphics(&mo->go.graphObj);
+}
+
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
     int vSize = 0, iSize = 0;
@@ -272,35 +289,94 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
     GraphicsObject3DSetVertex(&mo->go.graphObj, verts, vSize, indxs, iSize);
 
-    GraphicsObjectSetShadersPath(&mo->go.graphObj, dParam.vertShader, dParam.fragShader);
+    DefaultModelInit(mo, dParam);
+}
 
-    addUniformObject(&mo->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    addUniformObject(&mo->go.graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam)
+{
+    int vSize = 0, iSize = 0;
 
-    if(strlen(dParam.filePath) != 0)
-        addTexture(&mo->go.graphObj.local, dParam.filePath);
+    GameObject3DInit(&mo->go);
 
-    GameObject3DCreateDrawItems(mo);
+    ufbx_error error; // Optional, pass NULL if you don't care about errors
 
-    PipelineSetting setting;
+    ufbx_scene *scene = ufbx_load_file(filepath, NULL, &error);
 
-    PipelineSettingSetDefault(&mo->go.graphObj, &setting);
-
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_model_model_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_model_model_vert_spv_size);
-        setting.fragShader = &_binary_shaders_model_model_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_model_model_frag_spv_size);
-        setting.fromFile = 0;
+    if (!scene) {
+        fprintf(stderr, "Failed to load: %s\n", error.description.data);
+        exit(1);
     }
 
-    GameObject3DAddSettingPipeline(&mo->go, setting);
+    // Use and inspect `scene`, it's just plain data!
 
-    PipelineCreateGraphics(&mo->go.graphObj);
+    // Geometry is always stored in a consistent indexed format:
+    ufbx_node *cube = ufbx_find_node(scene, "Bike");
+    ufbx_mesh *mesh = cube->mesh;
+
+    size_t num_tri_indices = mesh->max_face_triangles * 3;
+    uint32_t *tri_indices = calloc(num_tri_indices, sizeof(uint32_t));
+
+    for (size_t face_ix = 0; face_ix < mesh->num_faces; face_ix++) {
+        ufbx_face face = mesh->faces.data[face_ix];
+        size_t num_tris = ufbx_triangulate_face(tri_indices, num_tri_indices, mesh, face);
+
+        for (size_t vertex_ix = 0; vertex_ix < num_tris * 3; vertex_ix++) {
+            vSize++;
+        }
+    }
+
+   iSize = vSize;
+
+   Vertex3D *verts = (Vertex3D *) calloc(vSize, sizeof(Vertex3D));
+   uint32_t *indxs = (uint32_t *) calloc(iSize, sizeof(uint32_t));
+
+    int iter = 0;
+
+    for (size_t face_ix = 0; face_ix < mesh->num_faces; face_ix++) {
+        ufbx_face face = mesh->faces.data[face_ix];
+        size_t num_tris = ufbx_triangulate_face(tri_indices, num_tri_indices, mesh, face);
+
+        ufbx_vec2 default_uv = { 0 };
+
+        // Iterate through every vertex of every triangle in the triangulated result
+        for (size_t vi = 0; vi < num_tris * 3; vi++) {
+            uint32_t ix = tri_indices[vi];
+            Vertex3D *vert = &verts[iter];
+
+            ufbx_vec3 pos = ufbx_get_vertex_vec3(&mesh->vertex_position, ix);
+            ufbx_vec3 normal = ufbx_get_vertex_vec3(&mesh->vertex_normal, ix);
+            ufbx_vec2 uv = mesh->vertex_uv.exists ? ufbx_get_vertex_vec2(&mesh->vertex_uv, ix) : default_uv;
+
+            vert->position = (vec3){pos.x, pos.y, pos.z};
+            vert->normal = (vec3){normal.x, normal.y, normal.z};
+            vert->texCoord = (vec2){uv.x, 1.0f - uv.y};
+            vert->color = (vec3){0.1, 0.1, 0.1};
+
+            // The skinning vertex stream is pre-calculated above so we just need to
+            // copy the right one by the vertex index.
+            /*if (skin) {
+                skin_vertices[num_indices] = mesh_skin_vertices[mesh->vertex_indices.data[ix]];
+            }*/
+
+            indxs[iter] = iter;
+            iter++;
+       }
+
+    }
+
+    GraphicsObject3DSetVertex(&mo->go.graphObj, verts, vSize, indxs, iSize);
+
+    DefaultModelInit(mo, dParam);
 }
 
 void DestroyOBJModel(ModelObject3D *model){
+    tinyobj_attrib_free(&model->attrib);
+    tinyobj_shapes_free(model->shapes,  model->num_shapes);
+    tinyobj_materials_free(model->materials, model->num_materials);
+    GameObject3DDestroy(&model->go);
+}
+
+void DestroyFBXModel(ModelObject3D *model){
     tinyobj_attrib_free(&model->attrib);
     tinyobj_shapes_free(model->shapes,  model->num_shapes);
     tinyobj_materials_free(model->materials, model->num_materials);

@@ -106,12 +106,26 @@ extern int indConeCount, vertConeCount;
 
 extern char *rootDirPath;
 
-extern char _binary_shaders_model_model_frag_spv_end;
-extern int _binary_shaders_model_model_frag_spv_size;
-extern char _binary_shaders_model_model_frag_spv_start;
-extern char _binary_shaders_model_model_vert_spv_end;
-extern int _binary_shaders_model_model_vert_spv_size;
-extern char _binary_shaders_model_model_vert_spv_start;
+extern char _binary_shaders_model_frag_spv_end;
+extern int _binary_shaders_model_frag_spv_size;
+extern char _binary_shaders_model_frag_spv_start;
+extern char _binary_shaders_model_vert_spv_end;
+extern int _binary_shaders_model_vert_spv_size;
+extern char _binary_shaders_model_vert_spv_start;
+
+extern char _binary_shaders_text_frag_spv_end;
+extern int _binary_shaders_text_frag_spv_size;
+extern char _binary_shaders_text_frag_spv_start;
+extern char _binary_shaders_text_vert_spv_end;
+extern int _binary_shaders_text_vert_spv_size;
+extern char _binary_shaders_text_vert_spv_start;
+
+extern char _binary_shaders_sprite_frag_spv_end;
+extern int _binary_shaders_sprite_frag_spv_size;
+extern char _binary_shaders_sprite_frag_spv_start;
+extern char _binary_shaders_sprite_vert_spv_end;
+extern int _binary_shaders_sprite_vert_spv_size;
+extern char _binary_shaders_sprite_vert_spv_start;
 
 extern char _binary_shaders_gui_widget_frag_spv_end;
 extern int _binary_shaders_gui_widget_frag_spv_size;
@@ -119,13 +133,6 @@ extern char _binary_shaders_gui_widget_frag_spv_start;
 extern char _binary_shaders_gui_widget_vert_spv_end;
 extern int _binary_shaders_gui_widget_vert_spv_size;
 extern char _binary_shaders_gui_widget_vert_spv_start;
-
-extern char _binary_shaders_gui_widget_text_frag_spv_end;
-extern int _binary_shaders_gui_widget_text_frag_spv_size;
-extern char _binary_shaders_gui_widget_text_frag_spv_start;
-extern char _binary_shaders_gui_widget_text_vert_spv_end;
-extern int _binary_shaders_gui_widget_text_vert_spv_size;
-extern char _binary_shaders_gui_widget_text_vert_spv_start;
 
 extern char _binary_shaders_gui_widget_window_frag_spv_end;
 extern int _binary_shaders_gui_widget_window_frag_spv_size;

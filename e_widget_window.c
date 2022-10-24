@@ -68,14 +68,14 @@ void WindowWidgetMove(EWidget* widget, void* entry, void* args)
 
 }
 
-void WindowWidgetClose(EWidget* widget, void* entry, void *arg){
+void WindowWidgetCloseButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
 
     window->show = false;
 }
 
-void WindowWidgetResize(EWidget* widget, void* entry, void *arg){
+void WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
 
@@ -102,7 +102,7 @@ void WindowWidgetResize(EWidget* widget, void* entry, void *arg){
 
 }
 
-void WindowWidgetHide(EWidget* widget, void* entry, void *arg){
+void WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
 
@@ -277,9 +277,9 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam
     WidgetConnect(&ww->top, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetPress, NULL);
     WidgetConnect(&ww->top, GUI_TRIGGER_MOUSE_MOVE, WindowWidgetMove, ww);
 
-    WidgetConnect(&ww->close, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetClose, ww);
-    WidgetConnect(&ww->resize, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetResize, ww);
-    WidgetConnect(&ww->hide, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetHide, ww);
+    WidgetConnect(&ww->close, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetCloseButton, ww);
+    WidgetConnect(&ww->resize, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetResizeButton, ww);
+    WidgetConnect(&ww->hide, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetHideButton, ww);
 
     ww->show = true;
     ww->wasHide = false;
@@ -288,6 +288,10 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam
 
 void WindowWidgetShow(EWidgetWindow *ww){
     ww->show = true;
+}
+
+void WindowWidgetHide(EWidgetWindow *ww){
+    ww->show = false;
 }
 
 void WindowWidgetUpdate(EWidgetWindow *ww){

@@ -112,10 +112,10 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_model_model_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_model_model_vert_spv_size);
-        setting.fragShader = &_binary_shaders_model_model_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_model_model_frag_spv_size);
+        setting.vertShader = &_binary_shaders_model_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
+        setting.fragShader = &_binary_shaders_model_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
         setting.fromFile = 0;
     }
 
