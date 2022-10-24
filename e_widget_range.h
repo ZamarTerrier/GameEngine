@@ -7,10 +7,11 @@
 typedef struct{
     EWidget widget;
     EWidget range;
+    EWidget line;
     float min;
     float max;
 } EWidgetRange;
 
-void RangeWidgetInit(EWidgetRange *range, int min, int max, EWidget *parent);
+void RangeWidgetInit(EWidgetRange *range, vec2 size, int min, int max, EWidget *parent);
 
 #endif // E_WIDGET_RANGE_H

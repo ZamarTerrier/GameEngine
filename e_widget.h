@@ -51,12 +51,12 @@ typedef struct ChildStack{
 typedef struct EWidget{
     GameObject2D go;
     vec2 offset;
-    vec3 color;
+    vec4 color;
     vec2 position;
     vec2 scale;
     struct EWidget* parent;
     struct ChildStack* child;
-    bool in, was_in, out, was_out;
+    bool in, was_in, out, was_out, active;
     CallbackStack callbacks;
 } EWidget;
 
@@ -69,7 +69,7 @@ typedef struct{
     vec2 offset;
     vec2 position;
     vec2 size;
-    vec3 color __attribute__ ((aligned (16)));
+    vec4 color __attribute__ ((aligned (16)));
 } GUIBuffer;
 
 typedef struct{

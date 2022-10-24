@@ -206,7 +206,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
     GameObject2DAddSettingPipeline(wt, setting);
 
 
-    wt->widget.color = (vec3){0.4, 0.1, 0.1};
+    wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
     wt->widget.offset.x = 0;
     wt->widget.offset.y = 0;
@@ -219,6 +219,11 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     PipelineCreateGraphics(&wt->widget.go.graphObj);
 
+}
+
+void TextWidgetSetColor(EWidgetText* wt, vec3 color)
+{
+    TextDataSetTextColor(&wt->tData, color);
 }
 
 void TextWidgetSetText(EWidgetText* wt, const char* text)

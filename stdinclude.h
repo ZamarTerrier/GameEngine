@@ -43,7 +43,7 @@ typedef struct{
     float x;
     float y;
     float z;
-    float t;
+    float w;
 } vec4;
 
 typedef struct{

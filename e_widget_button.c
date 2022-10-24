@@ -1,21 +1,27 @@
 #include "e_widget_button.h"
 
 void ButtonWidgetPress(EWidget *widget, void* entry, void *arg){
-    widget->color = (vec3){0.3, 0.3, 0.3};
+    EWidgetButton *button = (EWidgetButton *)widget;
+
+    button->widget.color = (vec4){ button->selfColor.x - 0.1f, button->selfColor.y - 0.1f, button->selfColor.z - 0.1f, button->selfColor.w };
 }
 
 void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
-    widget->color = (vec3){0.7, 0.7, 0.7};
+
+    EWidgetButton *button = (EWidgetButton *)widget;
+
+    button->widget.color = button->selfColor;
 
     WidgetConfirmTrigger(widget, GUI_TRIGGER_BUTTON_PRESS, NULL);
 }
 
-void ButtonWidgetInit(EWidgetButton *button, char *text, EWidget *parent){
+void ButtonWidgetInit(EWidgetButton *button, char *text, vec4 color, EWidget *parent){
 
     DrawParam dParam = {};
 
     WidgetInit(button, dParam, parent);
-    button->widget.color = (vec3){0.7f, 0.7f, 0.7f};
+
+    button->selfColor = button->widget.color = color;
 
     TextWidgetInit(&button->text, 9, dParam, &button->widget);
     TextWidgetSetText(&button->text, text);

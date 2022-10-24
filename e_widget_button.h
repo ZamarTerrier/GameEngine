@@ -9,9 +9,10 @@
 typedef struct{
     EWidget widget;
     EWidgetText text;
+    vec4 selfColor;
 } EWidgetButton;
 
-void ButtonWidgetInit(EWidgetButton *button, char *text, EWidget *parent);
+void ButtonWidgetInit(EWidgetButton *button, char *text, vec4 color, EWidget *parent);
 void ButtonWidgetSetText(EWidgetButton *button, char *text);
 
 #endif // E_WIDGET_BUTTON_H

@@ -14,6 +14,7 @@ typedef struct{
 } EWidgetText;
 
 void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* parent);
+void TextWidgetSetColor(EWidgetText* wt, vec3 color);
 void TextWidgetSetText(EWidgetText* wt, const char* text);
 
 #endif // E_WIDGET_TEXT_H

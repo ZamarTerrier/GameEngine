@@ -4,6 +4,8 @@
 #include "stdinclude.h"
 
 #include "e_widget.h"
+#include "e_widget_text.h"
+
 
 typedef struct{
     EWidget widget;
@@ -11,9 +13,16 @@ typedef struct{
     EWidget hide;
     EWidget resize;
     EWidget close;
+    EWidgetText name;
+    bool show;
+    bool wasResize;
+    bool wasHide;
+    vec2 lastSize;
+    vec2 lastPos;
 }EWidgetWindow;
 
-void WindowWidgetInit(EWidgetWindow *ww, DrawParam dParam, vec2 size, vec2 position);
+void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam, vec2 position);
+void WindowWidgetShow(EWidgetWindow *ww);
 void WindowWidgetUpdate(EWidgetWindow *ww);
 void WindowWidgetDraw(EWidgetWindow *ww);
 

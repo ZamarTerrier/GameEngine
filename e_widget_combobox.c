@@ -45,12 +45,12 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
     DrawParam param = {};
 
     WidgetInit(&combobox->widget, param, parent);
-    ButtonWidgetInit(&combobox->button, "", &combobox->widget);
+    ButtonWidgetInit(&combobox->button, "", (vec4){ 0.4, 0.4, 0.4, 1.0}, &combobox->widget);
     vec2 size = {60, 20};
     Transform2DSetScale(&combobox->widget, size);
     Transform2DSetScale(&combobox->button, size);
 
-    ListWidgetInit(&combobox->list, &combobox->widget);
+    ListWidgetInit(&combobox->list, 60, 20, &combobox->widget);
     WidgetConnect(&combobox->button, GUI_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  NULL);
 
     vec2 position = {0, 40};

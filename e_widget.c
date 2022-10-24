@@ -147,7 +147,7 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
 
     GameObject2DAddSettingPipeline(&ew->go, setting);
 
-    ew->color = (vec3){0.4, 0.1, 0.1};
+    ew->color = (vec4){0.4, 0.1, 0.1, 1.0};
 
     ew->offset.x = 0;
     ew->offset.y = 0;
@@ -159,6 +159,8 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
     ew->callbacks.stack = (CallbackStruct *) calloc(0, sizeof(CallbackStruct));
 
     PipelineCreateGraphics(&ew->go.graphObj);
+
+    ew->active = true;
 }
 
 void WidgetConnect(EWidget* widget, int trigger, void* callback, void* args){
@@ -182,6 +184,9 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
 
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
+
+    if(!widget->active)
+        return NULL;
 
     double xpos, ypos;
     glfwGetCursorPos(e_window, &xpos, &ypos);
@@ -225,7 +230,6 @@ void WidgetEventsPipe(EWidget* widget)
 
     if(sellected != NULL)
     {
-
         sellected->in = true;
 
         if(sellected->was_out && !sellected->was_in)
@@ -263,9 +267,6 @@ void WidgetEventsPipe(EWidget* widget)
 
         sellected->was_out = sellected->out;
         sellected->was_in = sellected->in;
-    }else
-    {
-        current_entry = NULL;
     }
 
     int state = glfwGetMouseButton(e_window, GLFW_MOUSE_BUTTON_LEFT);

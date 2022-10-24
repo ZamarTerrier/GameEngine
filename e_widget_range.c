@@ -40,7 +40,7 @@ void RangeWidgetMove(EWidget* widget, void* entry, void* args){
         te.x = 0;
 
     if(te.x > size.x)
-        te.x = range->max;
+        te.x = size.x;
 
     float diff =  len / size.x;
 
@@ -51,23 +51,29 @@ void RangeWidgetMove(EWidget* widget, void* entry, void* args){
     WidgetConfirmTrigger(range, GUI_TRIGGER_RANGE_CHANGE, &val);
 }
 
-void RangeWidgetInit(EWidgetRange *range, int min, int max, EWidget *parent){
+void RangeWidgetInit(EWidgetRange *range, vec2 size, int min, int max, EWidget *parent){
 
     DrawParam param = {};
     WidgetInit(&range->widget, param, parent);
+    WidgetInit(&range->line, param, &range->widget);
     WidgetInit(&range->range, param, &range->widget);
 
-    vec2 wSize = {50, 20};
-    range->widget.color = (vec3){0.7, 0.7, 0.7};
-    Transform2DSetScale(&range->widget, wSize);
+    vec2 sizeLine = {size.x, 2};
+    vec2 posLine = {0, size.y - 4};
+    range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
+    Transform2DSetScale(&range->line, sizeLine);
+    Transform2DSetPosition(&range->line, posLine);
+
+    range->widget.color = (vec4){0.7, 0.7, 0.7, 0.0};
+    Transform2DSetScale(&range->widget, size);
 
     range->min = min;
     range->max = max;
 
-    vec2 size = {10, 20};
-    vec2 pos = {0, wSize.y - (size.y)};
-    range->range.color = (vec3){0.3, 0, 0};
-    Transform2DSetScale(&range->range, size);
+    vec2 sizeVol = {10, size.y};
+    vec2 pos = {0, size.y - (sizeVol.y)};
+    range->range.color = (vec4){0.3, 0, 0, 1.0};
+    Transform2DSetScale(&range->range, sizeVol);
     Transform2DSetPosition(&range->range, pos);
 
     WidgetConnect(&range->range, GUI_TRIGGER_MOUSE_PRESS, RangeWidgetPress, NULL);

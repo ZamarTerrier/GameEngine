@@ -222,7 +222,7 @@ void TextImageSetText(const char* text, GameObject2D* go, TextData *tData){
         if(*tempI == '\n')
         {
             x = 0;
-            y += (mulY * 20000);
+            y += (mulY * HEIGHT * 20);
             ++tempI;
             continue;
         }
