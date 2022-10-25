@@ -229,6 +229,32 @@ mat4 m4_translate(mat4 mat, vec3 pos){
     return mat;
 }
 
+mat4 m4_add(mat4 m1, mat4 m2){
+    mat4 result;
+
+    result.m[0][0] = m1.m[0][0] + m2.m[0][0];
+    result.m[1][0] = m1.m[1][0] + m2.m[1][0];
+    result.m[2][0] = m1.m[2][0] + m2.m[2][0];
+    result.m[3][0] = m1.m[3][0] + m2.m[3][0];
+
+    result.m[0][1] = m1.m[0][1] + m2.m[0][1];
+    result.m[1][1] = m1.m[1][1] + m2.m[1][1];
+    result.m[2][1] = m1.m[2][1] + m2.m[2][1];
+    result.m[3][1] = m1.m[3][1] + m2.m[3][1];
+
+    result.m[0][2] = m1.m[0][2] + m2.m[0][2];
+    result.m[1][2] = m1.m[1][2] + m2.m[1][2];
+    result.m[2][2] = m1.m[2][2] + m2.m[2][2];
+    result.m[3][2] = m1.m[3][2] + m2.m[3][2];
+
+    result.m[0][3] = m1.m[0][3] + m2.m[0][3];
+    result.m[1][3] = m1.m[1][3] + m2.m[1][3];
+    result.m[2][3] = m1.m[2][3] + m2.m[2][3];
+    result.m[3][3] = m1.m[3][3] + m2.m[3][3];
+
+    return result;
+}
+
 mat4 m4_mult(mat4 m1, mat4 m2){
     mat4 result;
 
@@ -348,6 +374,8 @@ mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
   return matrix;
 }
 
+float lerp(float a, float b, float t) { return a*(1.0f-t) + b*t; }
+
 float v3_maxs(vec3 a){ return max(max(a.x, a.y), a.z); }
 float v3_mins(vec3 a){ return min(min(a.x, a.y), a.z); }
 
@@ -375,6 +403,33 @@ vec3 v3_divs  (vec3 a, float s) { return (vec3){ a.x / s,   a.y / s,   a.z / s  
 float  v3_length(vec3 v) { return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z); }
 float  v3_distance(vec3 v1, vec3 v2) { return sqrt(pow((v1.x - v2.x), 2) + pow((v1.y - v2.y), 2) + pow((v1.z - v2.z), 2)); }
 float  v3_dot   (vec3 a, vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+bool v3_equal(vec3 a, vec3 b) { return (a.x == b.x) & (a.y == b.y) & (a.z == b.z); }
+vec3 v3_lerp(vec3 a, vec3 b, float t) { return (vec3){lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t)}; }
+
+vec4  v4_add(vec4 a, vec4 b) { return (vec4){a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w}; }
+vec4  v4_sub(vec4 a, vec4 b) { return (vec4){a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w}; }
+vec4  v4_mad(vec4 a, vec4 b, float c) { return (vec4){a.x + b.x * c, a.y + b.y * c, a.z + b.z * c, a.w + b.w * c}; }
+vec4  v4_div(vec4 a, float b) { float v = 1.0f / b; return (vec4){a.x * v, a.y * v, a.z * v, a.w * v}; }
+vec4  v4_neg(vec4 a) { return (vec4){-a.x, -a.y, -a.z, -a.w}; }
+vec4  v4_inverse(vec4 a) { return v4_div((vec4){-a.x, -a.y, -a.z, a.w}, (a.x*a.x + a.y*a.y + a.z*a.z + a.w*a.w)); }
+vec4  v4_inverse_normalized(vec4 a) { return (vec4){-a.x, -a.y, -a.z, a.w}; }
+float v4_dot(vec4 a, vec4 b) { return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w; }
+float v4_length(vec4 a) { return sqrtf(a.x*a.x + a.y*a.y + a.z*a.z + a.w*a.w); }
+vec4  v4_normalize(vec4 a) { float v = v4_length(a); v = v > 0 ? 1.0f / v : 0.0f; return (vec4){a.x * v, a.y * v, a.z * v, a.w * v}; }
+bool v4_equal(vec4 a, vec4 b) { return (a.x == b.x) & (a.y == b.y) & (a.z == b.z) & (a.w == b.w); }
+
+vec4 v4_lerp(vec4 a, vec4 b, float t){
+
+    vec4 r;
+    float t_ = 1 - t;
+    r.x = t_*a.x + t*b.x;
+    r.y = t_*a.y + t*b.y;
+    r.z = t_*a.z + t*b.z;
+    r.w = t_*a.w + t*b.w;
+    v4_normalize(r);
+    return r;
+}
+
 
 vec3 m4_v3_mult(mat4 m, vec3 v) {
     vec3 ret;

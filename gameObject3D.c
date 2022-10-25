@@ -117,11 +117,11 @@ void GameObject3DAddSettingPipeline(GameObject3D* go, PipelineSetting setting){
 
 }
 
-void GameObject3DCreateDrawItems(GameObject3D* go){
+void GameObject3DCreateDrawItems(GraphicsObject* graphObj){
 
-    createDescriptorSetLayout(&go->graphObj.gItems, go->graphObj.local.descriptors, go->graphObj.local.descrCount);
-    createDescriptorPool(&go->graphObj.gItems, go->graphObj.local.descriptors, go->graphObj.local.descrCount);
-    createDescriptorSets(&go->graphObj.gItems, &go->graphObj.local);
+    createDescriptorSetLayout(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
+    createDescriptorPool(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
+    createDescriptorSets(&graphObj->gItems, &graphObj->local);
 
 }
 

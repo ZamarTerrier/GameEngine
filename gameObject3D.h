@@ -11,10 +11,16 @@ typedef struct{
     Transform3D transform;
 } GameObject3D;
 
+void GameObject3DDefaultUpdate(GameObject3D* go);
+void GameObject3DDefaultDraw(GameObject3D* go);
+void GameObject3DClean(GameObject3D* go);
+void GameObject3DRecreate(GameObject3D* go);
+void GameObject3DDestroy(GameObject3D* go);
+
 void GameObject3DInit(GameObject3D *go);
 
 void GameObject3DAddSettingPipeline(GameObject3D* go, PipelineSetting setting);
-void GameObject3DCreateDrawItems(GameObject3D* go);
+void GameObject3DCreateDrawItems(GraphicsObject* go);
 
 //Описание вертекса
 VkVertexInputBindingDescription GameObject3DGetBindingDescription();

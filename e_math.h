@@ -25,6 +25,7 @@ mat4 m4_look_at (vec3 from, vec3 to, vec3 up);
 
 mat4 m4_scale_mat(vec3 scale);
 mat4 m4_scale(mat4 mat, vec3 scale);
+mat4 m4_add(mat4 m1, mat4 m2);
 mat4 m4_mult(mat4 m1, mat4 m2);
 
 vec2 v2_add(vec2 a, vec2 b);
@@ -57,6 +58,22 @@ float  v3_dot   (vec3 a, vec3 b);
 vec3 v3_proj  (vec3 v, vec3 onto);
 vec3 v3_cross (vec3 a, vec3 b);
 float  v3_angle_between(vec3 a, vec3 b);
+bool v3_equal(vec3 a, vec3 b);
+vec3 v3_lerp(vec3 a, vec3 b, float t) ;
+
+vec4  v4_add(vec4 a, vec4 b) ;
+vec4  v4_sub(vec4 a, vec4 b) ;
+vec4  v4_mad(vec4 a, vec4 b, float c);
+vec4  v4_div(vec4 a, float b);
+vec4  v4_neg(vec4 a) ;
+vec4  v4_inverse(vec4 a) ;
+vec4  v4_inverse_normalized(vec4 a);
+float v4_dot(vec4 a, vec4 b);
+float v4_length(vec4 a);
+vec4  v4_normalize(vec4 a);
+bool v4_equal(vec4 a, vec4 b) ;
+vec4 v4_lerp(vec4 a, vec4 b, float t);
+
 
 vec3 m4_v3_mult(mat4 m, vec3 v);
 

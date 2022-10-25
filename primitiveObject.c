@@ -104,7 +104,7 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
     if(strlen(dParam.filePath) != 0)
         addTexture(&go->graphObj.local, dParam.filePath);
 
-    GameObject3DCreateDrawItems(go);
+    GameObject3DCreateDrawItems(&go->graphObj);
 
     PipelineSetting setting;
 

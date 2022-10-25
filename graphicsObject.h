@@ -24,9 +24,9 @@ void GraphicsObject2DInit(GraphicsObject* graphObj);
 void GraphicsObject3DInit(GraphicsObject3D* graphObj);
 
 void GraphicsObject2DSetVertex(GraphicsObject* graphObj, Vertex2D *vert, int vertCount, uint32_t *inx, int indxCount);
-
 void GraphicsObject3DSetVertex(GraphicsObject3D* graphObj, Vertex3D *vert, int vertCount, uint32_t *inx, int indxCount);
 
+void GraphicsObjectCreateDrawItems(GraphicsObject3D* graphObj);
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj);
 void GraphicsObjectClean(GraphicsObject* graphObj);
 void GraphicsObjectDestroy(GraphicsObject* graphObj);

@@ -28,7 +28,6 @@ float dot_grad(int hash, float xf);
 float dot_grad2(int hash, float xf, float yf);
 
 vec3 perp(const vec3 v);
-float lerp(float a, float b, float t);
 
 float fade(float t);
 

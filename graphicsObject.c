@@ -49,6 +49,14 @@ void GraphicsObject3DSetVertex(GraphicsObject3D* graphObj, Vertex3D *vert, int v
     graphObj->shape.rebuild = true;
 }
 
+void GraphicsObjectCreateDrawItems(GraphicsObject3D* graphObj){
+
+    createDescriptorSetLayout(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
+    createDescriptorPool(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
+    createDescriptorSets(&graphObj->gItems, &graphObj->local);
+
+}
+
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj){
 
     for(int i=0;i < graphObj->gItems.pipelineCount; i++){

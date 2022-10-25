@@ -1099,7 +1099,7 @@ vec3 perp(const vec3 v) {
     return v3_cross(v, cardinalAxis);
 }
 
-float lerp(float a, float b, float t) {
+float lerp_noise(float a, float b, float t) {
     return a + t * (b - a);
 }
 
@@ -1126,7 +1126,7 @@ float noise1D( float x){
     int const h1 = p[xi + 1];
 
     // Linearly interpolate between dot products of each gradient with its distance to the input location
-    return lerp(dot_grad(h0, xf0), dot_grad(h1, xf1), u);
+    return lerp_noise(dot_grad(h0, xf0), dot_grad(h1, xf1), u);
 }
 
 float noise2D(float x, float y)
@@ -1156,9 +1156,9 @@ float noise2D(float x, float y)
     int const h11 = p[p[xi + 1] + yi + 1];
 
     // Linearly interpolate between dot products of each gradient with its distance to the input location
-    float const x1 = lerp(dot_grad2(h00, xf0, yf0), dot_grad2(h10, xf1, yf0), u);
-    float const x2 = lerp(dot_grad2(h01, xf0, yf1), dot_grad2(h11, xf1, yf1), u);
-    return lerp(x1, x2, v);
+    float const x1 = lerp_noise(dot_grad2(h00, xf0, yf0), dot_grad2(h10, xf1, yf0), u);
+    float const x2 = lerp_noise(dot_grad2(h01, xf0, yf1), dot_grad2(h11, xf1, yf1), u);
+    return lerp_noise(x1, x2, v);
 }
 
 float sinWithRange(float value, float minV, float range){
