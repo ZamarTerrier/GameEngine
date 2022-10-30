@@ -18,12 +18,23 @@
 
 #include "e_math.h"
 
+#include "tinyobj_loader.h"
 #include "ufbx.h"
+
+typedef struct{
+    tinyobj_attrib_t attrib;
+    tinyobj_shape_t* shapes;
+    tinyobj_material_t* materials;
+    uint64_t num_shapes;
+    uint64_t num_materials;
+    char* warn;
+    char* err;
+} OBJStruct;
 
 size_t clamp_sz(size_t a, size_t min_a, size_t max_a) { return min(max(a, min_a), max_a); }
 
 mat4 ufbx_to_mat4(ufbx_matrix m) {
-    return mat4_f(
+    return mat4_rowsf(
         (float)m.m00, (float)m.m01, (float)m.m02, (float)m.m03,
         (float)m.m10, (float)m.m11, (float)m.m12, (float)m.m13,
         (float)m.m20, (float)m.m21, (float)m.m22, (float)m.m23,
@@ -59,15 +70,18 @@ static void CalcNormal(float N[3], float v0[3], float v1[3], float v2[3]) {
 
 void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
 
+
+    OBJStruct *obj = mo->obj;
+
     tinyobj_material_t* materials = NULL;
     size_t face_offset = 0;
 
-    for(int i=0; i < mo->obj->attrib.num_face_num_verts;i++){
+    for(int i=0; i < obj->attrib.num_face_num_verts;i++){
 
-        assert(mo->obj->attrib.face_num_verts[i] % 3 ==
+        assert(obj->attrib.face_num_verts[i] % 3 ==
                0); /* assume all triangle faces. */
 
-        for (int f = 0; f < (size_t)mo->obj->attrib.face_num_verts[i] / 3; f++) {
+        for (int f = 0; f < (size_t)obj->attrib.face_num_verts[i] / 3; f++) {
               size_t k;
               float v[3][3];
               float n[3][3];
@@ -75,9 +89,9 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
               float uv[3][2];
               float len2;
 
-              tinyobj_vertex_index_t idx0 = mo->obj->attrib.faces[face_offset + 3 * f + 0];
-              tinyobj_vertex_index_t idx1 = mo->obj->attrib.faces[face_offset + 3 * f + 1];
-              tinyobj_vertex_index_t idx2 = mo->obj->attrib.faces[face_offset + 3 * f + 2];
+              tinyobj_vertex_index_t idx0 = obj->attrib.faces[face_offset + 3 * f + 0];
+              tinyobj_vertex_index_t idx1 = obj->attrib.faces[face_offset + 3 * f + 1];
+              tinyobj_vertex_index_t idx2 = obj->attrib.faces[face_offset + 3 * f + 2];
 
               for (k = 0; k < 3; k++) {
                 int f0 = idx0.v_idx;
@@ -87,9 +101,9 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
                 assert(f1 >= 0);
                 assert(f2 >= 0);
 
-                v[0][k] = mo->obj->attrib.vertices[3 * (size_t)f0 + k];
-                v[1][k] = mo->obj->attrib.vertices[3 * (size_t)f1 + k];
-                v[2][k] = mo->obj->attrib.vertices[3 * (size_t)f2 + k];
+                v[0][k] = obj->attrib.vertices[3 * (size_t)f0 + k];
+                v[1][k] = obj->attrib.vertices[3 * (size_t)f1 + k];
+                v[2][k] = obj->attrib.vertices[3 * (size_t)f2 + k];
               }
 
               {
@@ -100,32 +114,32 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
               assert(f1 >= 0);
               assert(f2 >= 0);
 
-              assert(f0 < mo->obj->attrib.num_texcoords);
-              assert(f1 < mo->obj->attrib.num_texcoords);
-              assert(f2 < mo->obj->attrib.num_texcoords);
+              assert(f0 < obj->attrib.num_texcoords);
+              assert(f1 < obj->attrib.num_texcoords);
+              assert(f2 < obj->attrib.num_texcoords);
 
-              uv[0][0] = mo->obj->attrib.texcoords[2 * (size_t)f0 + 0];
-              uv[1][0] = mo->obj->attrib.texcoords[2 * (size_t)f1 + 0];
-              uv[2][0] = mo->obj->attrib.texcoords[2 * (size_t)f2 + 0];
+              uv[0][0] = obj->attrib.texcoords[2 * (size_t)f0 + 0];
+              uv[1][0] = obj->attrib.texcoords[2 * (size_t)f1 + 0];
+              uv[2][0] = obj->attrib.texcoords[2 * (size_t)f2 + 0];
 
-              uv[0][1] = 1.0f - mo->obj->attrib.texcoords[2 * (size_t)f0 + 1];
-              uv[1][1] = 1.0f - mo->obj->attrib.texcoords[2 * (size_t)f1 + 1];
-              uv[2][1] = 1.0f - mo->obj->attrib.texcoords[2 * (size_t)f2 + 1];
+              uv[0][1] = 1.0f - obj->attrib.texcoords[2 * (size_t)f0 + 1];
+              uv[1][1] = 1.0f - obj->attrib.texcoords[2 * (size_t)f1 + 1];
+              uv[2][1] = 1.0f - obj->attrib.texcoords[2 * (size_t)f2 + 1];
               }
 
 
-              if (mo->obj->attrib.num_normals > 0) {
+              if (obj->attrib.num_normals > 0) {
                 int f0 = idx0.vn_idx;
                 int f1 = idx1.vn_idx;
                 int f2 = idx2.vn_idx;
                 if (f0 >= 0 && f1 >= 0 && f2 >= 0) {
-                  assert(f0 < (int)mo->obj->attrib.num_normals);
-                  assert(f1 < (int)mo->obj->attrib.num_normals);
-                  assert(f2 < (int)mo->obj->attrib.num_normals);
+                  assert(f0 < (int)obj->attrib.num_normals);
+                  assert(f1 < (int)obj->attrib.num_normals);
+                  assert(f2 < (int)obj->attrib.num_normals);
                   for (k = 0; k < 3; k++) {
-                    n[0][k] = mo->obj->attrib.normals[3 * (size_t)f0 + k];
-                    n[1][k] = mo->obj->attrib.normals[3 * (size_t)f1 + k];
-                    n[2][k] = mo->obj->attrib.normals[3 * (size_t)f2 + k];
+                    n[0][k] = obj->attrib.normals[3 * (size_t)f0 + k];
+                    n[1][k] = obj->attrib.normals[3 * (size_t)f1 + k];
+                    n[2][k] = obj->attrib.normals[3 * (size_t)f2 + k];
                   }
                 } else { /* normal index is not defined for this face */
                   /* compute geometric normal */
@@ -158,8 +172,8 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
                 vertexs[3 * i + k].normal.y = n[k][1];
                 vertexs[3 * i + k].normal.z = n[k][2];
 
-                if (mo->obj->attrib.material_ids[i] >= 0) {
-                  int matidx = mo->obj->attrib.material_ids[i];
+                if (obj->attrib.material_ids[i] >= 0) {
+                  int matidx = obj->attrib.material_ids[i];
                   vertexs[3 * i + k].color.x = materials[matidx].diffuse[0];
                   vertexs[3 * i + k].color.y = materials[matidx].diffuse[1];
                   vertexs[3 * i + k].color.z = materials[matidx].diffuse[2];
@@ -200,7 +214,7 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
                 }*/
               }
         }
-        face_offset += (size_t)mo->obj->attrib.face_num_verts[i];
+        face_offset += (size_t)obj->attrib.face_num_verts[i];
     }
 
     return;
@@ -256,7 +270,53 @@ static void get_file_data(void* ctx, const char* filename, const int is_mtl,
   (*len) = data_len;
 }
 
-void ModelFBXDefaultDraw(ModelObject3D* mo){
+void update_animation(ModelObject3D *vs, engine_anim *va, float time)
+{
+    float frame_time = (time - va->time_begin) * va->framerate;
+    size_t f0 = min((size_t)frame_time + 0, va->num_frames - 1);
+    size_t f1 = min((size_t)frame_time + 1, va->num_frames - 1);
+    float t = min(frame_time - (float)f0, 1.0f);
+
+    for (size_t i = 0; i < vs->fbx->num_nodes; i++) {
+        engine_node *vn = &vs->fbx->nodes[i];
+        engine_node_anim *vna = &va->nodes[i];
+
+        vec3 p1 = {-vna->pos[f0].x, vna->pos[f0].z, -vna->pos[f0].y};
+        vec3 p2 = {-vna->pos[f1].x, vna->pos[f1].z, -vna->pos[f1].y};
+
+        vec4 rot = vna->rot ? v4_lerp(vna->rot[f0], vna->rot[f1], t) : vna->const_rot;
+        vec3 pos = vna->pos ? v3_lerp(p1, p2, t) : vna->const_pos;
+        vec3 scale = vna->scale ? v3_lerp(vna->scale[f0], vna->scale[f1], t) : vna->const_scale;
+
+        vn->node_to_parent = m4_translate(m4_mult(m4_scale_mat(scale), m4_rotation_matrix((vec3){rot.x, rot.y,rot.z})), pos);
+    }
+
+    for (size_t i = 0; i < vs->fbx->num_blend_channels; i++) {
+        engine_blend_channel *vbc = &vs->fbx->blend_channels[i];
+        engine_blend_channel_anim *vbca = &va->blend_channels[i];
+
+        vbc->weight = vbca->weight ? lerp(vbca->weight[f0], vbca->weight[f1], t) : vbca->const_weight;
+    }
+}
+
+void update_hierarchy(ModelObject3D* mo)
+{
+    for (size_t i = 0; i < mo->fbx->num_nodes; i++) {
+         engine_node *vn = &mo->fbx->nodes[i];
+
+        // ufbx stores nodes in order where parent nodes always precede child nodes so we can
+        // evaluate the transform hierarchy with a flat loop.
+        if (vn->parent_index >= 0) {
+            vn->node_to_world = m4_mult(mo->fbx->nodes[vn->parent_index].node_to_world, vn->node_to_parent);
+        } else {
+            vn->node_to_world = vn->node_to_parent;
+        }
+        vn->geometry_to_world = m4_mult(vn->node_to_world, vn->geometry_to_node);
+        //vn->normal_to_world = um_mat_transpose(um_mat_inverse(vn->geometry_to_world));
+    }
+}
+
+void ModelDefaultDraw(ModelObject3D* mo){
 
     for(int i=0; i < mo->num_models;i++)
     {
@@ -290,54 +350,7 @@ void ModelFBXDefaultDraw(ModelObject3D* mo){
     }
 }
 
-void update_animation(ModelObject3D *vs, engine_anim *va, float time)
-{
-    float frame_time = (time - va->time_begin) * va->framerate;
-    size_t f0 = min((size_t)frame_time + 0, va->num_frames - 1);
-    size_t f1 = min((size_t)frame_time + 1, va->num_frames - 1);
-    float t = min(frame_time - (float)f0, 1.0f);
-
-    for (size_t i = 0; i < vs->fbx->num_nodes; i++) {
-        engine_node *vn = &vs->fbx->nodes[i];
-        engine_node_anim *vna = &va->nodes[i];
-
-        vec3 p1 = {-vna->pos[f0].x, vna->pos[f0].z, -vna->pos[f0].y};
-        vec3 p2 = {-vna->pos[f1].x, vna->pos[f1].z, -vna->pos[f1].y};
-
-        vec4 rot = vna->rot ? v4_lerp(vna->rot[f0], vna->rot[f1], t) : vna->const_rot;
-        vec3 pos = vna->pos ? v3_lerp(p1, p2, t) : vna->const_pos;
-        vec3 scale = vna->scale ? v3_lerp(vna->scale[f0], vna->scale[f1], t) : vna->const_scale;
-
-        vn->node_to_parent = m4_translate(m4_mult(m4_scale_mat(scale), m4_rotation_matrix((vec3){rot.x, rot.y,rot.z})), pos);
-    }
-
-    for (size_t i = 0; i < vs->fbx->num_blend_channels; i++) {
-        engine_blend_channel *vbc = &vs->fbx->blend_channels[i];
-        engine_blend_channel_anim *vbca = &va->blend_channels[i];
-
-        vbc->weight = vbca->weight ? lerp(vbca->weight[f0], vbca->weight[f1], t) : vbca->const_weight;
-    }
-}
-
-
-void update_hierarchy(ModelObject3D* mo)
-{
-    for (size_t i = 0; i < mo->fbx->num_nodes; i++) {
-         engine_node *vn = &mo->fbx->nodes[i];
-
-        // ufbx stores nodes in order where parent nodes always precede child nodes so we can
-        // evaluate the transform hierarchy with a flat loop.
-        if (vn->parent_index >= 0) {
-            vn->node_to_world = m4_mult(mo->fbx->nodes[vn->parent_index].node_to_world, vn->node_to_parent);
-        } else {
-            vn->node_to_world = vn->node_to_parent;
-        }
-        vn->geometry_to_world = m4_mult(vn->node_to_world, vn->geometry_to_node);
-        //vn->normal_to_world = um_mat_transpose(um_mat_inverse(vn->geometry_to_world));
-    }
-}
-
-void ModelFBXDefaultUpdate(ModelObject3D* mo){
+void ModelDefaultUpdate(ModelObject3D* mo){
 
     engine_anim *anim = mo->fbx->num_animations > 0 ? &mo->fbx->animations[0] : NULL;
 
@@ -361,21 +374,13 @@ void ModelFBXDefaultUpdate(ModelObject3D* mo){
 
         ModelBuffer3D mbo = {};
         vec3 cameraUp = {0.0f,1.0f, 0.0f};
-        mat4 edenMat = mat4_f(1,0,0,0,
+        mat4 edenMat = mat4_rowsf(1,0,0,0,
                                                 0,1,0,0,
                                                 0,0,1,0,
                                                 0,0,0,1);
 
-        int node_id = mo->fbx->meshes[i].instance_node_indices[0];
+        mo->models[i].transform.model = m4_translate(m4_mult(m4_scale_mat(mo->models[i].transform.scale), m4_rotation_matrix(mo->models[i].transform.rotation)), mo->models[i].transform.position);
 
-        if(node_id){
-
-            mat4 rotation_matrix = m4_m4_rotation_matrix(mo->fbx->nodes[node_id].geometry_to_world, mo->models[i].transform.rotation);
-
-            mo->models[i].transform.model = m4_translate(m4_mult(m4_scale_mat(mo->models[i].transform.scale), rotation_matrix), mo->models[i].transform.position);
-        }else{
-            mo->models[i].transform.model = m4_translate(m4_mult(m4_scale_mat(mo->models[i].transform.scale), m4_rotation_matrix(mo->models[i].transform.rotation)), mo->models[i].transform.position);
-        }
         mbo.model = mo->models[i].transform.model;
         mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
         mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
@@ -402,7 +407,7 @@ void ModelFBXDefaultUpdate(ModelObject3D* mo){
     }
 }
 
-void ModelFBXClean(ModelObject3D* mo){
+void ModelClean(ModelObject3D* mo){
 
     for(int i=0; i < mo->num_models;i++)
     {
@@ -410,7 +415,7 @@ void ModelFBXClean(ModelObject3D* mo){
     }
 }
 
-void ModelFBXRecreate(ModelObject3D* mo){
+void ModelRecreate(ModelObject3D* mo){
 
     for(int i=0; i < mo->num_models;i++)
     {
@@ -434,7 +439,7 @@ void ModelFBXRecreate(ModelObject3D* mo){
     }
 }
 
-void ModelFBXDestroy(ModelObject3D* mo){
+void ModelDestroy(ModelObject3D* mo){
 
     for(int i=0; i < mo->num_models;i++)
     {
@@ -485,20 +490,31 @@ void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
     PipelineCreateGraphics(&model->graphObj);
 }
 
+void DestroyOBJModel(ModelObject3D *model){
+    OBJStruct *obj = model->obj;
+
+    tinyobj_attrib_free(&obj->attrib);
+    tinyobj_shapes_free(obj->shapes,  obj->num_shapes);
+    tinyobj_materials_free(obj->materials, obj->num_materials);
+    GraphicsObjectDestroy(&model->models[0].graphObj);
+}
+
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
-    GameObjectSetUpdateFunc(mo, (void *)ModelFBXDefaultUpdate);
-    GameObjectSetDrawFunc(mo, (void *)ModelFBXDefaultDraw);
-    GameObjectSetCleanFunc(mo, (void *)ModelFBXClean);
-    GameObjectSetRecreateFunc(mo, (void *)ModelFBXRecreate);
-    GameObjectSetDestroyFunc(mo, (void *)ModelFBXDestroy);
+    GameObjectSetUpdateFunc(mo, (void *)ModelDefaultUpdate);
+    GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
+    GameObjectSetCleanFunc(mo, (void *)ModelClean);
+    GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
+    GameObjectSetDestroyFunc(mo, (void *)DestroyOBJModel);
 
     mo->obj = (OBJStruct *) calloc(1, sizeof(OBJStruct));
     mo->num_models = 1;
 
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
 
-    tinyobj_parse_obj(&mo->obj->attrib, &mo->obj->shapes, &mo->obj->num_materials, &mo->obj->materials, &mo->obj->num_materials, filepath, (void *)get_file_data, NULL, flags);
+    OBJStruct *obj = mo->obj;
+
+    tinyobj_parse_obj(&obj->attrib, &obj->shapes, &obj->num_materials, &obj->materials, &obj->num_materials, filepath, (void *)get_file_data, NULL, flags);
 
     mo->models = calloc(1, sizeof(ModelStruct));
 
@@ -509,13 +525,13 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
     mo->models->graphObj.gItems.perspective = true;
 
-    mo->models->graphObj.shape.vParam.vertices = (Vertex3D *) calloc(mo->obj->attrib.num_face_num_verts * 3, sizeof(Vertex3D));
-    mo->models->graphObj.shape.iParam.indices = (uint32_t *) calloc(mo->obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
+    mo->models->graphObj.shape.vParam.vertices = (Vertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(Vertex3D));
+    mo->models->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
 
     ParseSomeStruct(mo, mo->models[0].graphObj.shape.vParam.vertices );
 
-    mo->models->graphObj.shape.vParam.verticesSize = mo->obj->attrib.num_face_num_verts * 3;
-    mo->models->graphObj.shape.iParam.indexesSize = mo->obj->attrib.num_face_num_verts * 3;
+    mo->models->graphObj.shape.vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
+    mo->models->graphObj.shape.iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
 
     for(int i=0; i < mo->models->graphObj.shape.iParam.indexesSize;i++)
         mo->models->graphObj.shape.iParam.indices[i] = i;
@@ -561,17 +577,6 @@ void read_mesh(engine_mesh *vBuffer, ufbx_mesh *mesh)
     //skin_vertex *skin_vertices = calloc(max_triangles * 3, sizeof(skin_vertex));
     //skin_vertex *mesh_skin_vertices = calloc(mesh->num_vertices, sizeof(skin_vertex));
     vBuffer->indices = (uint32_t *) calloc( vBuffer->num_indices, sizeof(uint32_t));
-
-    // In FBX files a single mesh can be instanced by multiple nodes. ufbx handles the connection
-    // in two ways: (1) `ufbx_node.mesh/light/camera/etc` contains pointer to the data "attribute"
-    // that node uses and (2) each element that can be connected to a node contains a list of
-    // `ufbx_node*` instances eg. `ufbx_mesh.instances`.
-    vBuffer->num_instances = mesh->instances.count;
-    vBuffer->instance_node_indices = calloc(mesh->instances.count, sizeof(int32_t));
-
-    for (size_t i = 0; i < mesh->instances.count; i++) {
-        vBuffer->instance_node_indices[i] = (int32_t)mesh->instances.data[i]->typed_id;
-    }
 
     size_t num_bones = 0;
     ufbx_skin_deformer *skin = NULL;
@@ -795,13 +800,29 @@ void read_scene(ModelObject3D *mo, ufbx_scene *scene)
     }
 }
 
+void DestroyFBXModel(ModelObject3D *mo){
+
+    for(int i=0; i < mo->fbx->num_meshes;i++)
+    {
+        free(mo->fbx->meshes[i].verts);
+        free(mo->fbx->meshes[i].indices);
+
+        GraphicsObjectDestroy(&mo->models[i].graphObj);
+    }
+
+    free(mo->fbx->meshes);
+
+    free(mo->fbx);
+
+}
+
 void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam)
 {
-    GameObjectSetUpdateFunc(mo, (void *)ModelFBXDefaultUpdate);
-    GameObjectSetDrawFunc(mo, (void *)ModelFBXDefaultDraw);
-    GameObjectSetCleanFunc(mo, (void *)ModelFBXClean);
-    GameObjectSetRecreateFunc(mo, (void *)ModelFBXRecreate);
-    GameObjectSetDestroyFunc(mo, (void *)ModelFBXDestroy);
+    GameObjectSetUpdateFunc(mo, (void *)ModelDefaultUpdate);
+    GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
+    GameObjectSetCleanFunc(mo, (void *)ModelClean);
+    GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
+    GameObjectSetDestroyFunc(mo, (void *)DestroyFBXModel);
 
     int vSize = 0, iSize = 0;
 
@@ -844,27 +865,4 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam)
         ModelDefaultInit(&mo->models[i], dParam);
 
     }
-}
-
-void DestroyOBJModel(ModelObject3D *model){
-    tinyobj_attrib_free(&model->obj->attrib);
-    tinyobj_shapes_free(model->obj->shapes,  model->obj->num_shapes);
-    tinyobj_materials_free(model->obj->materials, model->obj->num_materials);
-    GraphicsObjectDestroy(&model->models[0].graphObj);
-}
-
-void DestroyFBXModel(ModelObject3D *mo){
-
-    for(int i=0; i < mo->fbx->num_meshes;i++)
-    {
-        free(mo->fbx->meshes[i].verts);
-        free(mo->fbx->meshes[i].indices);
-
-        GraphicsObjectDestroy(&mo->models[i].graphObj);
-    }
-
-    free(mo->fbx->meshes);
-
-    free(mo->fbx);
-
 }

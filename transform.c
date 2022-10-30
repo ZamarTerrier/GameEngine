@@ -69,6 +69,12 @@ void Transform2DReposition(struct GameObject2D* go)
     temp->transform.position.y =  temp->transform.positionOrig.y / (HEIGHT);
 }
 
+void Transform3DSetPositionT(Transform3D* transform, vec3 pos)
+{
+
+    transform->position = pos;
+}
+
 void Transform3DSetPosition(struct GameObject3D* go, vec3 pos)
 {
 
@@ -137,6 +143,12 @@ void Transform2DRescale(struct GameObject2D* go)
     temp->transform.scale.y =  temp->transform.scaleOrig.y / (HEIGHT);
 }
 
+void Transform3DSetScaleT(Transform3D* transform, vec3 scale)
+{
+
+    transform->scale = scale;
+}
+
 void Transform3DSetScale(struct GameObject3D* go, vec3 scale)
 {
 
@@ -160,6 +172,12 @@ vec3 Transform3DGetScale(struct GameObject3D* go)
 {
     GameObject3D *temp = (GameObject3D *)go;
     return temp->transform.scale;
+}
+
+void Transform3DSetRotateT(Transform3D* transform, vec3 rotate)
+{
+
+    transform->rotation = rotate;
 }
 
 void Transform3DSetRotate(struct GameObject3D* go, vec3 rotate){

@@ -1186,3 +1186,21 @@ void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2){
     memset(out + len + len2, 0, 1);
 
 }
+
+bool ToolsCmpStrings(char *in, char *s1){
+
+    char *cursor = in;
+
+    int len = strlen(s1) - 1, iter = 0;;
+
+    while(*cursor == s1[iter] && iter!=len)
+    {
+        cursor++;
+        iter++;
+    }
+
+    if(iter == len)
+        return true;
+
+    return false;
+}

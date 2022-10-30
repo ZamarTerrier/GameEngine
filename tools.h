@@ -38,5 +38,6 @@ float sinWithRange(float value, float minV, float range);
 float cosWithRange(float value, float minV, float range);
 
 void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2);
+bool ToolsCmpStrings(char *in, char *s1);
 
 #endif // TOOLS_H

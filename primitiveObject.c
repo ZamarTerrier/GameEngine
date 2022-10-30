@@ -19,7 +19,7 @@ void SkyBoxUpdate(GameObject3D* go) {
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
-    mat4 edenMat = mat4_f(1,0,0,0,
+    mat4 edenMat = mat4_rowsf(1,0,0,0,
                           0,1,0,0,
                           0,0,1,0,
                           0,0,0,1);
