@@ -1,5 +1,7 @@
 #include "glTFLoader.h"
 
+#include <stdlib.h>
+
 #include "models.h"
 
 #include "camera.h"
@@ -88,25 +90,21 @@ mat4 getFullTransform(cgltf_node *node){
 }
 
 
-void readKeyframeValuesV3(anim_keyframe_struct *keyframes, cgltf_animation_channel *chanel)
+void readKeyframeValuesV3(engine_gltf_anim_keyframe *keyframes, cgltf_animation_channel *chanel)
 {
-    vec3 temp;
-    vec3 *fdata = chanel->sampler->input->buffer_view->data + chanel->sampler->input->buffer_view->offset;
+    vec3 *fdata = chanel->sampler->output->buffer_view->buffer->data + chanel->sampler->output->buffer_view->offset;
     for (size_t i = 0; i < chanel->sampler->output->count; i++)
-    {
-        temp = fdata[i];
-        keyframes[i].vector3 = fdata[i];
-    }
+      keyframes[i].vector3 = fdata[i];
 }
 
-void readKeyframeValuesV4(anim_keyframe_struct *keyframes, cgltf_animation_channel *chanel)
+void readKeyframeValuesV4(engine_gltf_anim_keyframe *keyframes, cgltf_animation_channel *chanel)
 {
-    vec4 *fdata = chanel->sampler->input->buffer_view->data + chanel->sampler->input->buffer_view->offset;
+    vec4 *fdata = chanel->sampler->output->buffer_view->buffer->data + chanel->sampler->output->buffer_view->offset;
     for (size_t i = 0; i < chanel->sampler->output->count; i++)
         keyframes[i].vector4 = fdata[i];
 }
 
-void readKeyframeValues(anim_channel *a_channel, cgltf_animation_channel *chanel)
+void readKeyframeValues(engine_gltf_anim_channel *a_channel, cgltf_animation_channel *chanel)
 {
     if(chanel->sampler->output->type == cgltf_type_vec3)
     {
@@ -119,35 +117,32 @@ void readKeyframeValues(anim_channel *a_channel, cgltf_animation_channel *chanel
     }
 }
 
-void readKeyframeTimes(anim_channel *a_channel, cgltf_animation_channel *chanel)
+void readKeyframeTimes(engine_gltf_anim_channel *a_channel, cgltf_animation_channel *chanel)
 {
 
-    float *fdata = chanel->sampler->input->buffer_view->data + chanel->sampler->input->buffer_view->offset;
+    float *fdata = chanel->sampler->input->buffer_view->buffer->data + chanel->sampler->input->buffer_view->offset;
     for (size_t i = 0; i < chanel->sampler->input->count; i++)
+    {
         a_channel->keyframes[i].time = fdata[i];
+
+        if(a_channel->min_time > fdata[i])
+          a_channel->min_time = fdata[i];
+
+        if(a_channel->max_time < fdata[i])
+          a_channel->max_time = fdata[i];
+    }
 }
 
-vec3 getValueV3(anim_channel *channel, int curr_key,float time)
+vec3 getValueV3(engine_gltf_anim_channel *channel, float time)
 {
     if(channel->num_keyframes <= 0)
         return (vec3){0,0,0};
 
-
-    if(curr_key == 0)
+    if (time <= channel->keyframes[0].time)
         return channel->keyframes[0].vector3;
 
-    if(curr_key == channel->num_keyframes - 1)
-        return channel->keyframes[0].vector3;
-
-    anim_keyframe_struct * now = &channel->keyframes[curr_key + 0];
-    anim_keyframe_struct * next = &channel->keyframes[curr_key + 1];
-    anim_keyframe_struct * before = &channel->keyframes[curr_key + 2];
-
-
-    if (time <= channel->keyframes[curr_key + 1].time)
-        return channel->keyframes[curr_key + 1].vector3;
-    if (time >= channel->keyframes[curr_key - 1].time)
-        return channel->keyframes[curr_key - 1].vector3;
+    if (time >= channel->keyframes[channel->num_keyframes - 1].time)
+        return channel->keyframes[channel->num_keyframes - 1].vector3;
 
     size_t toFrameIndex = 0;
     for (size_t i = 0; i < channel->num_keyframes; ++i) {
@@ -159,34 +154,29 @@ vec3 getValueV3(anim_channel *channel, int curr_key,float time)
 
     if(toFrameIndex > 0)
     {
-        anim_keyframe_struct fromFrame = channel->keyframes[toFrameIndex - 1];
-        anim_keyframe_struct toFrame = channel->keyframes[toFrameIndex];
+        engine_gltf_anim_keyframe fromFrame = channel->keyframes[toFrameIndex - 1];
+        engine_gltf_anim_keyframe toFrame = channel->keyframes[toFrameIndex];
         vec3 val1 = channel->keyframes[toFrameIndex - 1].vector3;
         vec3 val2 = channel->keyframes[toFrameIndex].vector3;
         // time <= toFrame.time, time > fromFrame.time
         uint32_t alpha = (time - fromFrame.time) / (toFrame.time - fromFrame.time);
 
-        return v3_lerp(val1, val2, alpha);
+        return v3_slerp(val1, val2, alpha);
     }
 
     return (vec3){0,0,0};
 }
 
-vec4 getValueV4(anim_channel *channel, int curr_key,float time)
+vec4 getValueV4(engine_gltf_anim_channel *channel, float time)
 {
     if(channel->num_keyframes <= 0)
-        return;
+      return (vec4){0,0,0,0};
 
-    if(curr_key == 0)
-        return channel->keyframes[curr_key].vector4;
-
-    if(curr_key == channel->num_keyframes - 1)
+    if (time <= channel->keyframes[0].time)
         return channel->keyframes[0].vector4;
 
-    if (time <= channel->keyframes[curr_key + 1].time)
-        return channel->keyframes[curr_key + 1].vector4;
-    if (time >= channel->keyframes[curr_key - 1].time)
-        return channel->keyframes[curr_key - 1].vector4;
+    if (time >= channel->keyframes[channel->num_keyframes - 1].time)
+        return channel->keyframes[channel->num_keyframes - 1].vector4;
 
     size_t toFrameIndex = 0;
     for (size_t i = 0; i < channel->num_keyframes; ++i) {
@@ -198,8 +188,8 @@ vec4 getValueV4(anim_channel *channel, int curr_key,float time)
 
     if(toFrameIndex > 0)
     {
-        anim_keyframe_struct fromFrame = channel->keyframes[toFrameIndex - 1];
-        anim_keyframe_struct toFrame = channel->keyframes[toFrameIndex];
+        engine_gltf_anim_keyframe fromFrame = channel->keyframes[toFrameIndex - 1];
+        engine_gltf_anim_keyframe toFrame = channel->keyframes[toFrameIndex];
         vec4 val1 = channel->keyframes[toFrameIndex - 1].vector4;
         vec4 val2 = channel->keyframes[toFrameIndex].vector4;
         // time <= toFrame.time, time > fromFrame.time
@@ -211,7 +201,7 @@ vec4 getValueV4(anim_channel *channel, int curr_key,float time)
     return (vec4){0,0,0,0};
 }
 
-float getDuration(anim_channel *channels, uint32_t num_channels)
+float getDuration(engine_gltf_anim_channel *channels, uint32_t num_channels)
 {
     if(!frameCurr)
         return 0;
@@ -226,74 +216,20 @@ float getDuration(anim_channel *channels, uint32_t num_channels)
     return dur;
 }
 
-void update_frame(anim_array * animation, glTFStruct *glTF, uint32_t node_id, float time)
-{
-
-    float duration = getDuration(animation->channels, animation->num_channels);
-
-    float wrappedTime = fmod(time, duration);
-
-    for(int i=0;i< animation->num_channels;i++)
-    {
-        anim_channel *channel = &animation->channels[i];
-        if(channel->node_id == node_id)
-        {
-                gltf_node *node = NULL;
-
-                for(int j=0;j < glTF->num_nodes; j++)
-                    if(glTF->nodes[j].id_node == node_id)
-                        node = &glTF->nodes[j];
-
-                if(node == NULL)
-                    continue;
-
-                vec3 vector3;
-                vec4 vector4;
-                mat4 transform;
-
-                if(frameCurr >= channel->num_keyframes)
-                    frameCurr = 0;
-
-                switch(channel->type)
-                {
-                    case cgltf_animation_path_type_translation:
-                        vector3 = getValueV3(channel, frameCurr, wrappedTime);
-                        transform = m4_translate_mat(vector3);
-                        node->global_matrix.m[3][0] = vector3.x;//mat4_mult_transform(node->global_matrix, transform);
-                        node->global_matrix.m[3][1] = vector3.y;
-                        node->global_matrix.m[3][2] = vector3.z;
-                        break;
-                    /*case cgltf_animation_path_type_rotation:
-                        vector4 = getValueV4(channel, frameCurr, time);
-                        transform = m4_rotation_quaternion(vector4);
-                        node->global_matrix = mat4_mult_transform(node->global_matrix, transform);
-                        break;
-                    case cgltf_animation_path_type_scale:
-                        vector3 = getValueV3(channel, frameCurr, time);
-                        transform = m4_translate_mat(vector3);
-                        node->global_matrix = mat4_mult_transform(node->global_matrix, transform);
-                        break;*/
-                }
-        }
-    }
-
-    frameCurr++;
-}
-
 void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
-    glTF->num_nodes = model->nodes_count;
-    glTF->nodes = calloc(glTF->num_nodes, sizeof(gltf_node));
-
     glTF->num_anims = model->animations_count;
-    glTF->animations = calloc(model->animations_count, sizeof(anim_array));
+    glTF->animations = calloc(model->animations_count, sizeof(engine_gltf_anim));
+
+    float start_time =0;
+    float end_time = 0;
 
     for(int i=0;i < glTF->num_anims;i++ )
     {
         cgltf_animation* anim_gltf = &model->animations[i];
-        anim_array *animation = &glTF->animations[i];
+        engine_gltf_anim *animation = &glTF->animations[i];
 
-        animation->channels = calloc( anim_gltf->channels_count, sizeof(anim_channel));
+        animation->channels = calloc( anim_gltf->channels_count, sizeof(engine_gltf_anim_channel));
         animation->num_channels = anim_gltf->channels_count;
 
         for(int j=0; j < anim_gltf->channels_count; j++)
@@ -301,9 +237,9 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
             cgltf_animation_channel *channel = &anim_gltf->channels[j];
             cgltf_animation_sampler *sampler = channel->sampler;
 
-            anim_channel *a_channel = &animation->channels[j];
+            engine_gltf_anim_channel *a_channel = &animation->channels[j];
 
-            a_channel->keyframes = calloc(sampler->output->count, sizeof(anim_keyframe_struct));
+            a_channel->keyframes = calloc(sampler->output->count, sizeof(engine_gltf_anim_keyframe));
             a_channel->num_keyframes = sampler->output->count;
 
             readKeyframeTimes(a_channel, channel);
@@ -312,19 +248,36 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
         }
     }
 
+    glTF->num_nodes = model->nodes_count;
+    glTF->nodes = calloc(glTF->num_nodes, sizeof(engine_gltf_node));
+
     int iter = 0;
+
     for(int i = 0; i < model->nodes_count; i++)
     {
         cgltf_node *node = &model->nodes[i];
+        engine_gltf_node *g_node = &glTF->nodes[i];
 
-        glTF->nodes[i].id_node = i;
+        g_node->id_node = i;
+        g_node->id_parent = -1;
+
+        int len = strlen(node->name);
+
+        g_node->name = calloc(len, sizeof(char));
+        memcpy(g_node->name, node->name, len);
+
+        for(int j=0; j < model->nodes_count;j++)
+        {
+          if(node->parent == &model->nodes[j])
+            g_node->id_parent = j;
+        }
 
         if(node->mesh != NULL)
         {
-            glTF->nodes[i].mesh = calloc(1, sizeof(engine_mesh));
-            glTF->nodes[i].isModel = true;
+            g_node->mesh = calloc(1, sizeof(engine_mesh));
+            g_node->isModel = true;
             cgltf_mesh* mesh = node->mesh;
-            engine_mesh *g_mesh = glTF->nodes[i].mesh;
+            engine_mesh *g_mesh = g_node->mesh;
 
             if (mesh->primitives_count > 1) {
                 continue;
@@ -385,81 +338,170 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                 g_mesh->indices[j] = ind_point[j];
             }
 
-
-            for(int j=0;j < model->animations_count;j++ )
-            {
-                cgltf_animation* anim = &model->animations[j];
-
-                for(int k=0; k < anim->channels_count; k++)
-                {
-                    cgltf_animation_channel *channel = &anim->channels[k];
-                    if(channel->target_node == node)
-                    {
-                        glTF->animations[j].channels[k].node_id = i;
-                    }
-                }
-            }
-
-            glTF->nodes[i].local_matrix = getLocalTransform(node);
-            glTF->nodes[i].global_matrix = getFullTransform(node);
-
             iter++;
         }
         else
-            glTF->nodes[i].isModel = false;
+            g_node->isModel = false;
+
+        for(int j=0;j < model->animations_count;j++ )
+        {
+            cgltf_animation* anim = &model->animations[j];
+
+            for(int k=0; k < anim->channels_count; k++)
+            {
+                cgltf_animation_channel *channel = &anim->channels[k];
+                if(channel->target_node == node)
+                {
+                    glTF->animations[j].channels[k].node_id = i;
+                }
+            }
+        }
+
+
+        g_node->local_matrix = getLocalTransform(node);
+        g_node->global_matrix = getFullTransform(node);
     }
 
     glTF->num_meshes = iter;
 
 }
 
+void update_frame(ModelObject3D *mo, engine_gltf_anim * animation)
+{
+
+  glTFStruct *glTF = mo->obj;
+
+  for(int i=0; i < glTF->num_nodes;i++)
+  {
+    engine_gltf_node * node = &glTF->nodes[i];
+
+      for(int j=0;j< animation->num_channels;j++)
+      {
+          engine_gltf_anim_channel *channel = &animation->channels[j];
+
+          if(channel->node_id == node->id_node)
+          {
+              float duration = channel->keyframes[channel->num_keyframes - 1].time;
+
+              float wrappedTime = fmod(glTF->anim_time, duration);
+
+              vec3 vector3;
+              vec4 vector4;
+
+              switch(channel->type)
+              {
+                case cgltf_animation_path_type_translation:
+                    vector3 = getValueV3(channel, wrappedTime);
+                    node->local_matrix = m4_translate_mat(node->local_matrix, vector3);
+                    break;
+                case cgltf_animation_path_type_rotation:
+                    vector4 = getValueV4(channel, wrappedTime);
+                    node->local_matrix = m4_rotation_mat_quternion(node->local_matrix, vector4);
+                    break;
+                case cgltf_animation_path_type_scale:
+                    /*vector3 = getValueV3(channel, frameCurr, time);
+                    transform = m4_translate_mat(vector3);
+                    node->global_matrix = mat4_mult_transform(node->global_matrix, transform);*/
+                    break;
+                default:
+                    break;
+              }
+          }
+      }
+  }
+}
+
+void update_hierarhy(ModelObject3D *mo)
+{
+  glTFStruct *glTF = mo->obj;
+
+  for(int i=0; i < glTF->num_nodes;i++)
+  {
+    engine_gltf_node * node = &glTF->nodes[i];
+
+    mat4 mat = node->local_matrix;
+
+    if(node->id_parent != -1)
+    {
+      engine_gltf_node *parent = &glTF->nodes[node->id_parent];
+
+      while (parent)
+      {
+          mat4 pm = parent->local_matrix;
+
+          mat = mat4_mult_transform(mat, pm);
+
+          if(parent->id_parent != -1)
+            parent = &glTF->nodes[parent->id_parent];
+          else
+            parent = NULL;
+      }
+    }
+
+    node->global_matrix = mat;
+  }
+
+}
+
+void Load3DglTFNextFrame(void *ptr, float time)
+{
+  ModelObject3D *mo = ptr;
+
+  glTFStruct *glTF = mo->obj;
+
+  engine_gltf_anim *anim = glTF->animations > 0 ? &glTF->animations[0] : NULL;
+
+  if (anim) {
+    glTF->anim_time += time;
+
+    update_frame(mo, anim);
+
+    update_hierarhy(ptr);
+  }
+
+
+}
+
 void DefaultglTFUpdate(ModelObject3D *mo)
 {
-    for(int i=0; i < mo->num_models;i++)
-    {
-        anim_array *anim = mo->glTF->animations > 0 ? &mo->glTF->animations[0] : NULL;
+  glTFStruct *glTF = mo->obj;
 
-        if (anim) {
-            mo->glTF->anim_time += 0.001f;
+  for(int i=0; i < mo->num_models;i++)
+  {
+    if(mo->models[i].graphObj.local.descriptors == NULL)
+        return;
 
-            update_frame(anim, mo->glTF, mo->models[i].id_node, mo->glTF->anim_time);
-        }
+    Camera3D* cam = (Camera3D*) cam3D;
+    void* data;
 
+    ModelBuffer3D mbo = {};
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
 
-        if(mo->models[i].graphObj.local.descriptors == NULL)
-            return;
+    mo->models[i].transform.model = glTF->nodes[mo->models[i].id_node].global_matrix;
 
-        Camera3D* cam = (Camera3D*) cam3D;
-        void* data;
+    mbo.model =  mo->models[i].transform.model;
+    mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+    mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+    mbo.proj.m[1][1] *= -1;
 
-        ModelBuffer3D mbo = {};
-        vec3 cameraUp = {0.0f,1.0f, 0.0f};
+    vkMapMemory(device, mo->models[i].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    memcpy(data, &mbo, sizeof(mbo));
+    vkUnmapMemory(device, mo->models[i].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
-        mo->models[i].transform.model = mo->glTF->nodes[mo->models[i].id_node].global_matrix;
+    LightBuffer3D lbo = {};
+    lbo.lights[0].position.x = 0;
+    lbo.lights[0].position.y = 0;
+    lbo.lights[0].position.z = 9.5f;
+    lbo.lights[0].color.x = 0.0f;
+    lbo.lights[0].color.y = 0.0f;
+    lbo.lights[0].color.z = 0.0f;
 
-        mbo.model =  mo->models[i].transform.model;
-        mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-        mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
-        mbo.proj.m[1][1] *= -1;
+    lbo.size = 0;
 
-        vkMapMemory(device, mo->models[i].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-        memcpy(data, &mbo, sizeof(mbo));
-        vkUnmapMemory(device, mo->models[i].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
-
-        LightBuffer3D lbo = {};
-        lbo.lights[0].position.x = 0;
-        lbo.lights[0].position.y = 0;
-        lbo.lights[0].position.z = 9.5f;
-        lbo.lights[0].color.x = 0.0f;
-        lbo.lights[0].color.y = 0.0f;
-        lbo.lights[0].color.z = 0.0f;
-
-        lbo.size = 0;
-
-        vkMapMemory(device, mo->models[i].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
-        memcpy(data, &lbo, sizeof(lbo));
-        vkUnmapMemory(device, mo->models[i].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
-    }
+    vkMapMemory(device, mo->models[i].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+    memcpy(data, &lbo, sizeof(lbo));
+    vkUnmapMemory(device, mo->models[i].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+  }
 }
 
 void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
@@ -472,7 +514,9 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
     GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
     GameObjectSetDestroyFunc(mo, (void *)ModelDestroy);
 
-    mo->glTF = (glTFStruct *) calloc(1, sizeof(glTFStruct));
+    mo->obj = calloc(1, sizeof(glTFStruct));
+
+    glTFStruct *glTF = mo->obj;
 
     cgltf_options options = {0};
     cgltf_data* data = NULL;
@@ -483,16 +527,20 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
 
         if (result == cgltf_result_success)
         {
-            SetupMeshState(mo->glTF, data);
+            SetupMeshState(glTF, data);
 
-            mo->models = (ModelStruct *) calloc(mo->glTF->num_meshes, sizeof(ModelStruct));
-            mo->num_models = mo->glTF->num_meshes;
+            mo->models = (ModelStruct *) calloc(glTF->num_meshes, sizeof(ModelStruct));
+            mo->num_models = glTF->num_meshes;
 
             int iter = 0;
-            for(int i=0; i < mo->glTF->num_nodes;i++)
+
+            void *stbi_point = NULL;
+
+
+            for(int i=0; i < glTF->num_nodes;i++)
             {
 
-                gltf_node *node = &mo->glTF->nodes[i];
+                engine_gltf_node *node = &glTF->nodes[i];
 
                 if(node->isModel)
                 {
@@ -515,7 +563,7 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
                     }
 
 
-                    ModelDefaultInit(&mo->models[iter], dParam);
+                    stbi_point = ModelDefaultInit(&mo->models[iter], dParam, stbi_point);
                     iter++;
                 }
 

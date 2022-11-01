@@ -7,7 +7,7 @@ void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer* descriptors, size
 
     VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding *) calloc(count, sizeof(VkDescriptorSetLayoutBinding));
 
-    for(i=0;i<count;i++)
+    for(int i=0;i<count;i++)
     {
         bindings[i].binding = i;
         bindings[i].descriptorType = descriptors[i].descrType;
@@ -30,7 +30,7 @@ void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer* descriptors, size
 void createDescriptorPool(GraphicItems* gi, ShaderBuffer* descriptors, size_t count) {
 
     VkDescriptorPoolSize* poolSizes = (VkDescriptorPoolSize *) calloc(count, sizeof(VkDescriptorPoolSize));
-    for(i=0;i < count; i++)
+    for(int i=0;i < count; i++)
     {
         poolSizes[i].type = descriptors[i].descrType;
         poolSizes[i].descriptorCount = imagesCount;
@@ -52,7 +52,7 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
     //Создаем идентичные друг другу сеты дескрипторов
     VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*) calloc(imagesCount, sizeof(VkDescriptorSetLayout));
-    for(i=0; i < imagesCount;i++)
+    for(int i=0; i < imagesCount;i++)
     {
         layouts[i] = gi->descriptorSetLayout;
     }
@@ -73,7 +73,7 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
     int sUniforms = 0, sImages = 0;
 
-    for(j=0;j < params->descrCount;j++)
+    for(int j=0;j < params->descrCount;j++)
     {
 
         if(params->descriptors[j].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -87,11 +87,11 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
     //-------------------------------------------------
     //Дескрипторы для всех изображений
-    for (i = 0; i < imagesCount; i++) {
+    for (int i = 0; i < imagesCount; i++) {
 
         int unisize = 0, textsize = 0;
 
-        for(j=0;j < params->descrCount;j++)
+        for(int j=0;j < params->descrCount;j++)
         {
             if(params->descriptors[j].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
                 //Дескриптор Юнибафферов

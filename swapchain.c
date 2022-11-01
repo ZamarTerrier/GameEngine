@@ -1,10 +1,5 @@
 #include "swapchain.h"
 
-double clamp(double x, double upper, double lower)
-{
-    return MIN(upper, MAX(x, lower));
-}
-
 void querySwapChainSupport(VkPhysicalDevice device, SwapChainSupportDetails* details) {
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details->capabilities);
@@ -27,7 +22,7 @@ void querySwapChainSupport(VkPhysicalDevice device, SwapChainSupportDetails* det
 
 VkSurfaceFormatKHR chooseSwapSurfaceFormat(const VkSurfaceFormatKHR* availableFormats, uint32_t sizeFormats) {
 
-    for (i=0; i < sizeFormats;i++) {
+    for (int i=0; i < sizeFormats;i++) {
         if (availableFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB && availableFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormats[i];
         }
@@ -38,7 +33,7 @@ VkSurfaceFormatKHR chooseSwapSurfaceFormat(const VkSurfaceFormatKHR* availableFo
 
 VkPresentModeKHR chooseSwapPresentMode(const VkPresentModeKHR* availablePresentModes, uint32_t sizeModes) {
 
-    for (i=0; i < sizeModes;i++) {
+    for (int i=0; i < sizeModes;i++) {
         if (availablePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
             return availablePresentModes[i];
         }

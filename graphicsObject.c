@@ -1,3 +1,4 @@
+
 #include "graphicsObject.h"
 
 #include "bindDesciption.h"
@@ -80,7 +81,7 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
     vkDestroyDescriptorSetLayout(device, graphObj->gItems.descriptorSetLayout, NULL);
 
 
-    for(i=0;i< graphObj->local.descrCount;i++)
+    for(int i=0;i< graphObj->local.descrCount;i++)
     {
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             destroyTexture(graphObj->local.descriptors[i].texture);
@@ -88,7 +89,7 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
             graphObj->local.descriptors[i].texture = NULL;
         }
         else{
-            for (j = 0; j < imagesCount; j++) {
+            for (int j = 0; j < imagesCount; j++) {
                 vkDestroyBuffer(device, graphObj->local.descriptors[i].uniform->uniformBuffers[j], NULL);
                 vkFreeMemory(device, graphObj->local.descriptors[i].uniform->uniformBuffersMemory[j], NULL);
             }
@@ -117,7 +118,7 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
     vkFreeMemory(device, graphObj->shape.vParam.vertexBufferMemory, NULL);
     //free(graphObj->shape.vParam.vertices);
 
-    for(i=0;i< graphObj->local.descrCount;i++)
+    for(int i=0;i< graphObj->local.descrCount;i++)
     {
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             destroyTexture(graphObj->local.descriptors[i].texture);
@@ -125,7 +126,7 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
             graphObj->local.descriptors[i].texture = NULL;
         }
         else{
-            for (j = 0; j < imagesCount; j++) {
+            for (int j = 0; j < imagesCount; j++) {
                 vkDestroyBuffer(device, graphObj->local.descriptors[i].uniform->uniformBuffers[j], NULL);
                 vkFreeMemory(device, graphObj->local.descriptors[i].uniform->uniformBuffersMemory[j], NULL);
             }

@@ -99,9 +99,9 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     GraphicsObjectSetShadersPath(&img->widget.go.graphObj, dParam.vertShader, dParam.fragShader);
 
-    addUniformObject(&img->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
-    addTexture(&img->widget.go.graphObj.local, dParam.filePath);
+    ImageAddTexture(&img->widget.go.graphObj.local, dParam.filePath, NULL);
 
     GameObject2DCreateDrawItems(img);
 

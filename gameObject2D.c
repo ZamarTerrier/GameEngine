@@ -115,7 +115,7 @@ void GameObject2DRecreate(GameObject2D* go){
         settings[i].viewport.width = WIDTH;
     }
 
-    recreateUniformBuffers(&go->graphObj.local);
+    BuffersRecreateUniform(&go->graphObj.local);
     GameObject2DCreateDrawItems(go);
     PipelineCreateGraphics(&go->graphObj);
     Transform2DReposition(go);

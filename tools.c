@@ -89,7 +89,7 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
 
 
 
-    for (i=0; i < queueFamilyCount; i++){
+    for (int i=0; i < queueFamilyCount; i++){
 
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphicsFamily = i;

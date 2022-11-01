@@ -21,10 +21,10 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
     GraphicsObject2DSetVertex(&so->go.graphObj, verts, 4, planeIndx, 6);
 
     GraphicsObjectSetShadersPath(&so->go.graphObj, sParam.vertShader, sParam.fragShader);
-    addUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
     if(strlen(sParam.texturePath) != 0)
-        addTexture(&so->go.graphObj.local, sParam.texturePath);
+        ImageAddTexture(&so->go.graphObj.local, sParam.texturePath, NULL);
 
     GameObject2DCreateDrawItems(so);
 

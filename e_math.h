@@ -8,6 +8,10 @@
 
 extern mat4 edenMat;
 
+float lerp(float a, float b, float t);
+
+float clamp(float a, float d1, float d2);
+
 mat3 rotateX(float theta);
 // Rotation matrix around the Y axis.
 mat3 rotateY(float theta);
@@ -51,7 +55,8 @@ vec3 v3_proj  (vec3 v, vec3 onto);
 vec3 v3_cross (vec3 a, vec3 b);
 float  v3_angle_between(vec3 a, vec3 b);
 bool v3_equal(vec3 a, vec3 b);
-vec3 v3_lerp(vec3 a, vec3 b, float t) ;
+vec3 v3_lerp(vec3 a, vec3 b, float t);
+vec3 v3_slerp(vec3 start, vec3 end, float percent);
 
 vec4  v4_add(vec4 a, vec4 b) ;
 vec4  v4_sub(vec4 a, vec4 b) ;
@@ -74,9 +79,11 @@ vec3 m4_v3_mult(mat4 m, vec3 v);
 mat4 mat4_mult_transform(mat4 m1, mat4 m2);
 mat4 m4_transform_quaternion(vec3 translation, vec3 scale, vec4 rotation);
 mat4 m4_transform(vec3 pos, vec3 scale, vec3 axis);
-mat4 m4_translate_mat(vec3 pos);
-mat4 m4_translate(mat4 mat, vec3 pos);
+mat4 m4_translate(vec3 pos);
+mat4 m4_translate_mat_add(mat4 mat, vec3 pos);
+mat4 m4_translate_mat(mat4 mat, vec3 pos);
 mat4 m4_m4_rotation_matrix(mat4 mat, vec3 degrees);
+mat4 m4_rotation_mat_quternion(mat4 m1, vec4 quaternion);
 mat4 m4_rotation_matrix(vec3 degrees);
 mat4 m4_rotation_quaternion(vec4 quaternion);
 mat4 m4_look_at (vec3 from, vec3 to, vec3 up);

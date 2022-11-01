@@ -1,3 +1,4 @@
+
 #ifndef E_DIRECT_H
 #define E_DIRECT_H
 

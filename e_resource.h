@@ -98,8 +98,6 @@ extern void *current_entry;
 extern vec2 viewSize;
 extern vec2 diffSize;
 
-extern int i, j;
-
 extern int indSphereCount, vertSphereCount;
 extern int indPlaneCount, vertPlaneCount;
 extern int indConeCount, vertConeCount;

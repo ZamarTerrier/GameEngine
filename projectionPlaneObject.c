@@ -35,7 +35,7 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GraphicsObjectSetShadersPath(&go->graphObj, dParam.vertShader, dParam.fragShader);
 
-    addUniformObject(&go->graphObj.local, sizeof(ProjDataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&go->graphObj.local, sizeof(ProjDataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     GameObject2DCreateDrawItems(go);
 

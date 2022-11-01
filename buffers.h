@@ -25,7 +25,7 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
 
 void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-void addUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType type, VkShaderStageFlags flags);
-void recreateUniformBuffers(localParam* param);
+void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType type, VkShaderStageFlags flags);
+void BuffersRecreateUniform(localParam* param);
 
 #endif // BUFFERS_H

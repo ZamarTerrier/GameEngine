@@ -10,8 +10,6 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-double clamp(double x, double upper, double lower);
-
 void querySwapChainSupport(VkPhysicalDevice device, SwapChainSupportDetails* details) ;
 
 VkSurfaceFormatKHR chooseSwapSurfaceFormat(const VkSurfaceFormatKHR* availableFormats, uint32_t sizeFormats);

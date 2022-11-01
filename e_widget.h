@@ -82,6 +82,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent);
 void WidgetInit(EWidget *ew, DrawParam dParam, EWidget *parent);
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
 void WidgetConnect(EWidget *widget, int trigger, void* callback, void *args);
+void WidgetRecreate(EWidget *widget);
 void WidgetEventsPipe(EWidget *widget);
 void WidgetDraw(EWidget *widget);
 void WidgetDestroy(EWidget * widget);
