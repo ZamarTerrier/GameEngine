@@ -7,7 +7,7 @@ void createFramebuffers() {
     swapChainFramebuffers = NULL;
     swapChainFramebuffers = (VkFramebuffer*) calloc(imagesCount, sizeof(VkFramebuffer));
 
-    for (i=0;i<imagesCount;i++) {
+    for (int i=0;i<imagesCount;i++) {
         VkImageView attachments[] = {
             swapChainImageViews[i],
             depthImageView
@@ -147,7 +147,7 @@ void createUniformBuffer(UniformStruct* uniform, int size) {
     uniform->uniformBuffers = (VkBuffer*) calloc(imagesCount, sizeof(VkBuffer));
     uniform->uniformBuffersMemory = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
-    for (i = 0; i < imagesCount; i++) {
+    for (int i = 0; i < imagesCount; i++) {
         createBuffer(uniform->size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i]);
     }
 }
@@ -208,7 +208,7 @@ void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     endSingleTimeCommands(commandBuffer);
 }
 
-void addUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType type, VkShaderStageFlags flags){
+void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType type, VkShaderStageFlags flags){
 
     param->descrCount ++;
 
@@ -225,12 +225,11 @@ void addUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType typ
 
 }
 
-void recreateUniformBuffers(localParam* param){
+void BuffersRecreateUniform(localParam* param){
     for(int i=0;i < param->descrCount;i++){
         if(param->descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             char *path = param->descriptors[i].path;
-            param->descriptors[i].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-            Texture2D tempTexture = createTexture(param->descriptors[i].path);
+            Texture2D tempTexture = createTexture(param->descriptors[i].path, &param->descriptors[i].texture->stbi_info);
             memcpy(param->descriptors[i].texture, &tempTexture, sizeof(Texture2D)) ;
         }
         else

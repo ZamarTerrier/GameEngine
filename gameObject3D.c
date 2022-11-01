@@ -3,6 +3,7 @@
 #include "camera.h"
 
 #include "pipeline.h"
+#include "buffers.h"
 #include "texture.h"
 
 #include "e_math.h"
@@ -19,12 +20,8 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
-    mat4 edenMat = mat4_rowsf(1,0,0,0,
-                          0,1,0,0,
-                          0,0,1,0,
-                          0,0,0,1);
 
-    go->transform.model = m4_translate(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
+    go->transform.model = m4_translate_mat(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
 
     mbo.model = go->transform.model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
@@ -145,8 +142,8 @@ void GameObject3DRecreate(GameObject3D* go){
         settings[i].viewport.width = WIDTH;
     }
 
-    recreateUniformBuffers(&go->graphObj.local);
-    GameObject3DCreateDrawItems(go);
+    BuffersRecreateUniform(&go->graphObj.local);
+    GameObject3DCreateDrawItems(&go->graphObj);
     PipelineCreateGraphics(&go->graphObj);
 }
 

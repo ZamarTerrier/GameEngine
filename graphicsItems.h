@@ -13,6 +13,7 @@ typedef struct{
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
+    void *stbi_info;
 } Texture2D;
 
 typedef struct{

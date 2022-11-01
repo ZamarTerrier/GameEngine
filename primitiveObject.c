@@ -19,12 +19,8 @@ void SkyBoxUpdate(GameObject3D* go) {
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
-    mat4 edenMat = mat4_rowsf(1,0,0,0,
-                          0,1,0,0,
-                          0,0,1,0,
-                          0,0,0,1);
 
-    go->transform.model = m4_translate(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
+    go->transform.model = m4_translate_mat_add(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
 
     mbo.model = go->transform.model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
@@ -93,16 +89,16 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
 
     go->graphObj.local.descrCount = 0;
 
-    addUniformObject(&go->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&go->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
     if(type != ENGINE_PRIMITIVE3D_SKYBOX)
-        addUniformObject(&go->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+        BuffersAddUniformObject(&go->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
     else
-        addUniformObject(&go->graphObj.local, sizeof(SomeData_e), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+        BuffersAddUniformObject(&go->graphObj.local, sizeof(SomeData_e), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
     if(strlen(dParam.filePath) != 0)
-        addTexture(&go->graphObj.local, dParam.filePath);
+        ImageAddTexture(&go->graphObj.local, dParam.filePath, NULL);
 
     GameObject3DCreateDrawItems(&go->graphObj);
 

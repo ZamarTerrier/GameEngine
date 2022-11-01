@@ -127,8 +127,8 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
 
     GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam.vertShader, dParam.fragShader);
 
-    addUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-    addUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     GameObject2DCreateDrawItems(&ew->go);
 
@@ -184,6 +184,8 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
 
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
+
+    GameObjectUpdate(widget);
 
     if(!widget->active)
         return NULL;
@@ -284,7 +286,7 @@ void WidgetEventsPipe(EWidget* widget)
 
 void WidgetDraw(EWidget * widget){
     ChildStack *child = widget->child;
-    engDraw(widget);
+    GameObjectDraw(widget);
     while(child != NULL)
     {
         WidgetDraw(child->node);

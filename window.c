@@ -9,11 +9,11 @@ bool checkValidationLayerSupport(){
 
     bool layerFound;
 
-    for(i=0; i < VALIDSIZE; i++)
+    for(int i=0; i < VALIDSIZE; i++)
     {
         layerFound = false;
 
-        for(j=0; j < layerCount; j++)
+        for(int j=0; j < layerCount; j++)
         {
             if(strcmp(validationLayers[i], availableLayers[j].layerName) == 0)
             {

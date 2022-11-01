@@ -238,10 +238,10 @@ void createSyncObjects() {
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for(i=0;i < imagesCount; i++)
+    for(int i=0;i < imagesCount; i++)
         imagesInFlight[i] = VK_NULL_HANDLE;
 
-    for (i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         if (vkCreateSemaphore(device, &semaphoreInfo, NULL, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
                 vkCreateSemaphore(device, &semaphoreInfo, NULL, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
                 vkCreateFence(device, &fenceInfo, NULL, &inFlightFences[i]) != VK_SUCCESS) {
@@ -265,7 +265,7 @@ void engineLoop(){
         exit(1);
     }
 
-    for(i=0;i < objs.count;i++){
+    for(int i=0;i < objs.count;i++){
         GameObjectUpdate(objs.go[i]);
     }
 
@@ -401,7 +401,7 @@ void engDraw(void* arg){
     if(go->UpdatePoint == NULL)
         perror("False point!\n");
 
-    for(i=0;i < objs.count;i++)
+    for(int i=0;i < objs.count;i++)
     {
         if(objs.go[i] == go)
             return;

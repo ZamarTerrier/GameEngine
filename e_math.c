@@ -1,11 +1,22 @@
 #include "e_math.h"
 
+#include "math.h"
+
 #include "e_resource.h"
 
 mat4 edenMat= {1, 0, 0, 0,
                0, 1, 0, 0,
                0, 0, 1, 0,
                0, 0, 0, 1};
+
+float lerp(float a, float b, float t) { return a*(1.0f-t) + b*t; }
+
+float clamp(float a, float d1, float d2){
+
+  float res = min(max(a, d1), d2);
+
+  return res;
+}
 
 mat3 rotateX(float theta) {
     theta *= M_PI / 180;  // convert to radians
@@ -167,10 +178,10 @@ vec3 v3_cross(vec3 a, vec3 b)
 
 }
 
-float lerp(float a, float b, float t) { return a*(1.0f-t) + b*t; }
-
 float v3_maxs(vec3 a){ return max(max(a.x, a.y), a.z); }
 float v3_mins(vec3 a){ return min(min(a.x, a.y), a.z); }
+
+
 
 vec3 v3_min(vec3 a, vec3 b){ return (vec3){ min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)}; }
 vec3 v3_max(vec3 a, vec3 b){ return (vec3){ max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) }; }
@@ -199,6 +210,22 @@ float  v3_dot   (vec3 a, vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
 bool v3_equal(vec3 a, vec3 b) { return (a.x == b.x) & (a.y == b.y) & (a.z == b.z); }
 vec3 v3_lerp(vec3 a, vec3 b, float t) { return (vec3){lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t)}; }
 
+vec3 v3_slerp(vec3 start, vec3 end, float percent)
+{
+  float dot = v3_dot(start, end);
+
+  float result = clamp(dot, -1, 1);
+
+  float theta = acos(result)*percent;
+
+  vec3 RelativeVec = v3_sub(end, v3_muls(start, dot));
+
+  RelativeVec = v3_norm(RelativeVec);
+  // Orthonormal basis
+  // The final result.
+  return v3_add(v3_muls(start, cos(theta)), v3_muls(RelativeVec, sin(theta)));
+}
+
 vec4  v4_add(vec4 a, vec4 b) { return (vec4){a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w}; }
 vec4  v4_sub(vec4 a, vec4 b) { return (vec4){a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w}; }
 vec4  v4_mul  (vec4 a, vec4 b) { return (vec4){ a.x * a.x,   a.y * a.y,   a.z * a.z,   a.w * a.w  }; }
@@ -221,7 +248,7 @@ vec4 v4_lerp(vec4 a, vec4 b, float t){
     r.y = t_*a.y + t*b.y;
     r.z = t_*a.z + t*b.z;
     r.w = t_*a.w + t*b.w;
-    v4_normalize(r);
+    r = v4_normalize(r);
     return r;
 }
 
@@ -391,6 +418,21 @@ mat4 m4_m4_rotation_matrix(mat4 mat, vec3 degrees)
   return mat;
 }
 
+mat4 m4_rotation_mat_quternion(mat4 m1, vec4 quaternion)
+{
+    vec4 q = quaternion;
+    float xx = q.x*q.x, xy = q.x*q.y, xz = q.x*q.z, xw = q.x*q.w;
+    float yy = q.y*q.y, yz = q.y*q.z, yw = q.y*q.w;
+    float zz = q.z*q.z, zw = q.z*q.w;
+    float sx = 2.0f * 1, sy = 2.0f * 1, sz = 2.0f * 1;
+    return mat4_rowsf(
+        sx * (- yy - zz + 0.5f), sy * (- zw + xy), sz * (+ xz + yw), m1.m[3][0],
+        sx * (+ xy + zw), sy * (- xx - zz + 0.5f), sz * (- xw + yz), m1.m[3][1],
+        sx * (- yw + xz), sy * (+ xw + yz), sz * (- xx - yy + 0.5f), m1.m[3][2],
+        m1.m[0][3], m1.m[1][3], m1.m[2][3], 1
+    );
+}
+
 mat4 m4_look_at(vec3 from, vec3 to, vec3 up) {
     vec3 z = v3_muls(v3_norm(v3_sub(to, from)), -1);
     vec3 x = v3_norm(v3_cross(up, z));
@@ -404,9 +446,9 @@ mat4 m4_look_at(vec3 from, vec3 to, vec3 up) {
     );
 }
 
-mat4 m4_translate_mat(vec3 pos){
+mat4 m4_translate(vec3 pos){
 
-    mat4 mat;
+    mat4 mat = edenMat;
 
     mat.m[3][0] += pos.x;
     mat.m[3][1] += pos.y;
@@ -415,7 +457,16 @@ mat4 m4_translate_mat(vec3 pos){
     return mat;
 }
 
-mat4 m4_translate(mat4 mat, vec3 pos){
+mat4 m4_translate_mat(mat4 mat, vec3 pos){
+
+    mat.m[3][0] = pos.x;
+    mat.m[3][1] = pos.y;
+    mat.m[3][2] = pos.z;
+
+    return mat;
+}
+
+mat4 m4_translate_mat_add(mat4 mat, vec3 pos){
 
     mat.m[3][0] += pos.x;
     mat.m[3][1] += pos.y;

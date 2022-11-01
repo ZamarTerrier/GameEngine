@@ -9,38 +9,47 @@ typedef struct{
     float time;
     vec3 vector3;
     vec4 vector4;
-} anim_keyframe_struct;
+} engine_gltf_anim_keyframe;
 
 typedef struct{
-    anim_keyframe_struct *keyframes;
+    engine_gltf_anim_keyframe *keyframes;
     uint32_t node_id;
+    float min_time;
+    float max_time;
     char type;
     int num_keyframes;
-} anim_channel;
+} engine_gltf_anim_channel;
 
 typedef struct{
-    anim_channel *channels;
+    engine_gltf_anim_channel *channels;
     int num_channels;
     int curr_key;
-} anim_array;
+} engine_gltf_anim;
 
 typedef struct{
+    char *name;
     int id_node;
+    int id_parent;
     engine_mesh *mesh;
     char isModel;
-    mat4 local_matrix;
     mat4 global_matrix;
-} gltf_node;
+    mat4 local_matrix;
+} engine_gltf_node;
 
 typedef struct{
-    anim_array *animations;
-    uint32_t num_anims;
     float anim_time;
-    gltf_node *nodes;
+
+    engine_gltf_anim *animations;
+    uint32_t num_anims;
+
+
+    engine_gltf_node *nodes;
     uint32_t num_nodes;
+
     uint32_t num_meshes;
 } glTFStruct;
 
+void Load3DglTFNextFrame(void *ptr, float time);
 void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam);
 
 #endif // GLTFLOADER_H

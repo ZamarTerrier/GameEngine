@@ -2535,11 +2535,13 @@ static cgltf_float cgltf_json_to_float(jsmntok_t const* tok, const uint8_t* json
 	strncpy(tmp, (const char*)json_chunk + tok->start, size);
 	tmp[size] = 0;
 
+#ifdef _WIN_BUILD_
     for(int i=0; i < size;i++)
     {
         if(tmp[i] == '.')
             tmp[i] = ',';
     }
+#endif
 
 	return (cgltf_float)CGLTF_ATOF(tmp);
 }

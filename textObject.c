@@ -217,7 +217,7 @@ void TextImageSetText(const char* text, GameObject2D* go, TextData *tData){
     char *tempI = tData->text;
 
     // Generate a uv mapped quad per char in the new text
-    for (i=0;i < len;i++)
+    for (int i=0;i < len;i++)
     {
         if(*tempI == '\n')
         {
@@ -292,7 +292,7 @@ void TextImageSetTextW(const wchar_t* text, GameObject2D* go, TextData *tData){
 
 
     // Generate a uv mapped quad per char in the new text
-    for (i=0;i<len;i++)
+    for (int i=0;i<len;i++)
     {
         if(tData->wText[i] == '\n')
         {
@@ -387,7 +387,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath, const ch
 
     //----------------------------------
 
-    addUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
     TextObjectAddTexture(to);
 

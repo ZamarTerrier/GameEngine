@@ -4,11 +4,11 @@
 
 #include "stb_image.h"
 
-Texture2D createTexture(const char* file){
+Texture2D createTexture(const char* file, void* stbi_info){
 
     Texture2D texture;
 
-    createTextureImage(file, &texture);
+    texture.stbi_info = TextureImageCreate(file, &texture, stbi_info);
     createTextureImageView(&texture);
     createTextureSampler(&texture);
 
@@ -16,10 +16,24 @@ Texture2D createTexture(const char* file){
 
 }
 
-void createTextureImage(const char* file, Texture2D *texture) {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * sizeof(float);
+STBIStruct *TextureImageCreate(const char* file, Texture2D *texture, STBIStruct *stbi_point) {
+
+    STBIStruct *stbi_info = calloc(1, sizeof(STBIStruct));
+
+    if(stbi_point != NULL)
+    {
+        memcpy(stbi_info, stbi_point, sizeof(STBIStruct));
+        stbi_info->link = true;
+    }else
+    {
+        stbi_info->pixels = stbi_load(file, &stbi_info->texWidth, &stbi_info->texHeight, &stbi_info->texChannels, STBI_rgb_alpha);
+        stbi_info->link = false;
+    }
+
+
+    stbi_uc *pixels = stbi_info->pixels;
+
+    VkDeviceSize imageSize = stbi_info->texWidth * stbi_info->texHeight * sizeof(float);
 
     if (!pixels) {
         printf("failed to load texture image!");
@@ -36,24 +50,21 @@ void createTextureImage(const char* file, Texture2D *texture) {
     memcpy(data, pixels, imageSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
-    stbi_image_free(pixels);
-
-    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
+    createImage( stbi_info->texWidth, stbi_info->texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
 
     transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingBuffer, texture->textureImage, texWidth, texHeight);
+    copyBufferToImage(stagingBuffer, texture->textureImage, stbi_info->texWidth, stbi_info->texHeight);
     transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
     vkFreeMemory(device, stagingBufferMemory, NULL);
 
+    return stbi_info;
 }
 
 void createTextureImageView(Texture2D *texture) {
-
     texture->textureImageView = createImageView(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
-
 }
 
 void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* imageMemory) {
@@ -165,7 +176,7 @@ VkFormat findDepthFormat() {
 
 VkFormat findSupportedFormat(const VkFormat* candidates, size_t countCandidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
 
-    for (i=0;i < countCandidates;i++) {
+    for (int i=0;i < countCandidates;i++) {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(physicalDevice, candidates[i], &props);
 
@@ -290,14 +301,14 @@ void copyImage(VkCommandBuffer cmdBuffer, VkImage srcImageId, VkImage dstImageId
 
 }
 
-void addTexture(localParam *local, const char* file){
+void* ImageAddTexture(localParam *local, const char* file, void *stbi_info){
 
     local->descrCount ++;
 
     local->descriptors = (ShaderBuffer *) realloc(local->descriptors, local->descrCount * sizeof(ShaderBuffer));
 
     local->descriptors[local->descrCount - 1].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-    Texture2D tempTexture = createTexture(file);
+    Texture2D tempTexture = createTexture(file, stbi_info);
     memcpy(local->descriptors[local->descrCount - 1].texture, &tempTexture, sizeof(Texture2D)) ;
     local->descriptors[local->descrCount - 1].descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     local->descriptors[local->descrCount - 1].size = 1;
@@ -306,15 +317,16 @@ void addTexture(localParam *local, const char* file){
     int len = strlen( file );
 
     memset(local->descriptors[local->descrCount - 1].path, 0, 256);
-   memcpy(local->descriptors[local->descrCount - 1].path, file, len);
+    memcpy(local->descriptors[local->descrCount - 1].path, file, len);
 
+    return tempTexture.stbi_info;
 }
 
 
 void changeTexture(localParam *local, int elem, const char* file){
 
     destroyTexture(local->descriptors[elem].texture);
-    Texture2D tempTexture = createTexture(file);
+    Texture2D tempTexture = createTexture(file, NULL);
     memcpy(local->descriptors[elem].texture, &tempTexture, sizeof(Texture2D)) ;
 
     memset(local->descriptors[local->descrCount - 1].path, 0, 256);

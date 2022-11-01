@@ -62,12 +62,8 @@ void UpdateParticles(GameObject3D* go){
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
-    mat4 edenMat = mat4_rowsf(1,0,0,0,
-                          0,1,0,0,
-                          0,0,1,0,
-                          0,0,0,1);
 
-    mbo.model = m4_translate(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
+    mbo.model = m4_translate_mat_add(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
     mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
     mbo.proj.m[1][1] *= -1;
@@ -150,11 +146,11 @@ void InitParticle3D(GameObject3D* particle, vec3 position, const char* texturePa
     partVert = (Vertex3D*) calloc(partCount, sizeof(Vertex3D));
     particles = (Particle*) calloc(partCount, sizeof(Particle));
 
-    addUniformObject(&particle->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    addUniformObject(&particle->graphObj.local, sizeof(DataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&particle->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&particle->graphObj.local, sizeof(DataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
-    addTexture(&particle->graphObj.local, texturePath);
+    ImageAddTexture(&particle->graphObj.local, texturePath, NULL);
     GameObject3DCreateDrawItems(particle);
 
     PipelineSetting setting;

@@ -9,9 +9,9 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
 
     const char** requiredExtensions = (const char**) calloc(DEVEXTSIZE, sizeof(char*));
 
-    for(i=0;i<extensionCount;i++)
+    for(int i=0;i<extensionCount;i++)
     {
-        for(j=0;j<DEVEXTSIZE;j++)
+        for(int j=0;j<DEVEXTSIZE;j++)
         {
             if(strcmp(deviceExtensions[j], availableExtensions[i].extensionName) == 0)
             {
@@ -23,7 +23,7 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
 
     bool empty = true;
 
-    for(i=0;i<DEVEXTSIZE;i++)
+    for(int i=0;i<DEVEXTSIZE;i++)
     {
         if(requiredExtensions[i] != NULL)
             empty = false;
@@ -67,7 +67,7 @@ void pickPhysicalDevice() {
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
 
     VkPhysicalDevice tDevice;
-    for (i=0; i < deviceCount; i++){
+    for (int i=0; i < deviceCount; i++){
         tDevice = devices[i];
         bool temp = isDeviceSuitable(tDevice);
         if (temp) {
@@ -97,7 +97,7 @@ void createLogicalDevice() {
     uniqueQueueFamilies[1] = indices.presentFamily;
 
     float queuePriority = 1.0f;
-    for (i=0;i<2;i++) {
+    for (int i=0;i<2;i++) {
         VkDeviceQueueCreateInfo queueCreateInfo = {};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = uniqueQueueFamilies[i];
