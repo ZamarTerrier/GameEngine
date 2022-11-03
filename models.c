@@ -73,8 +73,7 @@ void ModelDefaultUpdate(ModelObject3D* mo){
             ModelBuffer3D mbo = {};
             vec3 cameraUp = {0.0f,1.0f, 0.0f};
 
-            mat4 *mat = mo->obj + (i * mo->obj_size);
-            mo->nodes[i].model = mat[0];
+            mo->nodes[i].model = m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation);
 
             mbo.model = mo->nodes[i].model;
             mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
@@ -94,13 +93,6 @@ void ModelDefaultUpdate(ModelObject3D* mo){
             vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
             LightBuffer3D lbo = {};
-            lbo.lights[0].position.x = 0;
-            lbo.lights[0].position.y = 0;
-            lbo.lights[0].position.z = 9.5f;
-            lbo.lights[0].color.x = 0.0f;
-            lbo.lights[0].color.y = 0.0f;
-            lbo.lights[0].color.z = 0.0f;
-
             lbo.size = 0;
 
             vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);

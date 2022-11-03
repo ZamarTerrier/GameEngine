@@ -143,16 +143,20 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
                 vertexs[3 * i + k].normal.y = n[k][1];
                 vertexs[3 * i + k].normal.z = n[k][2];
 
-                if (obj->attrib.material_ids[i] >= 0) {
+                /*if (obj->attrib.material_ids[i] >= 0) {
                   int matidx = obj->attrib.material_ids[i];
                   vertexs[3 * i + k].color.x = materials[matidx].diffuse[0];
                   vertexs[3 * i + k].color.y = materials[matidx].diffuse[1];
                   vertexs[3 * i + k].color.z = materials[matidx].diffuse[2];
                 }else {
-                    /*vertexs[3 * i + k].color.x = n[k][0];
+                    vertexs[3 * i + k].color.x = n[k][0];
                     vertexs[3 * i + k].color.y = n[k][1];
-                    vertexs[3 * i + k].color.z = n[k][2];*/
-                }
+                    vertexs[3 * i + k].color.z = n[k][2];
+                }*/
+
+                vertexs[3 * i + k].color.x = 1.0f;
+                vertexs[3 * i + k].color.y = 1.0f;
+                vertexs[3 * i + k].color.z = 1.0f;
 
                 /**/
 
