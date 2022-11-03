@@ -29,7 +29,7 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GameObject2DInit(go);
 
-    GraphicsObject2DSetVertex(&go->graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&go->graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(go, (void *)ProjectionPlaneUpdate);
 
@@ -45,10 +45,10 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_model_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
-        setting.fragShader = &_binary_shaders_model_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
+        setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
+        setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
         setting.fromFile = 0;
     }
 

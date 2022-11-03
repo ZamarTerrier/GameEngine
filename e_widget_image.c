@@ -93,7 +93,7 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     GameObject2DInit(img);
 
-    GraphicsObject2DSetVertex(&img->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&img->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(img, (void *)ImageWidgetUpdateUniformBufferDefault);
 

@@ -35,25 +35,6 @@ void QuatToAngleAxis(vec4 q, float *outAngleDegrees, vec3 *axis) {
   axis->z = q.z / denom;
 }
 
-size_t ComponentTypeByteSize(int type) {
-  switch (type) {
-    case cgltf_component_type_r_8u:
-    case cgltf_component_type_r_8:
-      return sizeof(char);
-    case cgltf_component_type_r_16u:
-    case cgltf_component_type_r_16:
-      return sizeof(short);
-    case cgltf_component_type_r_32u:
-      return sizeof(int);
-    case cgltf_component_type_r_32f:
-      return sizeof(float);
-    case cgltf_component_type_max_enum:
-      return sizeof(double);
-    default:
-      return 0;
-  }
-}
-
 mat4 getLocalTransform(cgltf_node *node){
 
     cgltf_float matrix[16];
@@ -69,7 +50,6 @@ mat4 getLocalTransform(cgltf_node *node){
 
     return mat;
 }
-
 
 mat4 getFullTransform(cgltf_node *node){
 
@@ -88,7 +68,6 @@ mat4 getFullTransform(cgltf_node *node){
 
     return mat;
 }
-
 
 void readKeyframeValuesV3(engine_gltf_anim_keyframe *keyframes, cgltf_animation_channel *chanel)
 {
@@ -152,19 +131,14 @@ vec3 getValueV3(engine_gltf_anim_channel *channel, float time)
         }
     }
 
-    if(toFrameIndex > 0)
-    {
-        engine_gltf_anim_keyframe fromFrame = channel->keyframes[toFrameIndex - 1];
-        engine_gltf_anim_keyframe toFrame = channel->keyframes[toFrameIndex];
-        vec3 val1 = channel->keyframes[toFrameIndex - 1].vector3;
-        vec3 val2 = channel->keyframes[toFrameIndex].vector3;
-        // time <= toFrame.time, time > fromFrame.time
-        uint32_t alpha = (time - fromFrame.time) / (toFrame.time - fromFrame.time);
+    engine_gltf_anim_keyframe fromFrame = channel->keyframes[toFrameIndex - 1];
+    engine_gltf_anim_keyframe toFrame = channel->keyframes[toFrameIndex];
+    vec3 val1 = channel->keyframes[toFrameIndex - 1].vector3;
+    vec3 val2 = channel->keyframes[toFrameIndex].vector3;
+    // time <= toFrame.time, time > fromFrame.time
+    uint32_t alpha = (time - fromFrame.time) / (toFrame.time - fromFrame.time);
 
-        return v3_slerp(val1, val2, alpha);
-    }
-
-    return (vec3){0,0,0};
+    return v3_slerp(val1, val2, alpha);
 }
 
 vec4 getValueV4(engine_gltf_anim_channel *channel, float time)
@@ -186,43 +160,20 @@ vec4 getValueV4(engine_gltf_anim_channel *channel, float time)
         }
     }
 
-    if(toFrameIndex > 0)
-    {
-        engine_gltf_anim_keyframe fromFrame = channel->keyframes[toFrameIndex - 1];
-        engine_gltf_anim_keyframe toFrame = channel->keyframes[toFrameIndex];
-        vec4 val1 = channel->keyframes[toFrameIndex - 1].vector4;
-        vec4 val2 = channel->keyframes[toFrameIndex].vector4;
-        // time <= toFrame.time, time > fromFrame.time
-        uint32_t alpha = (time - fromFrame.time) / (toFrame.time - fromFrame.time);
+    engine_gltf_anim_keyframe fromFrame = channel->keyframes[toFrameIndex - 1];
+    engine_gltf_anim_keyframe toFrame = channel->keyframes[toFrameIndex];
+    vec4 val1 = channel->keyframes[toFrameIndex - 1].vector4;
+    vec4 val2 = channel->keyframes[toFrameIndex].vector4;
+    // time <= toFrame.time, time > fromFrame.time
+    uint32_t alpha = (time - fromFrame.time) / (toFrame.time - fromFrame.time);
 
-        return v4_lerp(val1, val2, alpha);
-    }
-
-    return (vec4){0,0,0,0};
-}
-
-float getDuration(engine_gltf_anim_channel *channels, uint32_t num_channels)
-{
-    if(!frameCurr)
-        return 0;
-
-    float dur = 0;
-    for (int i=0;i < num_channels;i++) {
-        float channelDur = channels[i].keyframes[frameCurr - 1].time;
-        if (channelDur > dur)
-            dur = channelDur;
-    }
-
-    return dur;
+    return v4_lerp(val1, val2, alpha);
 }
 
 void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
     glTF->num_anims = model->animations_count;
     glTF->animations = calloc(model->animations_count, sizeof(engine_gltf_anim));
-
-    float start_time =0;
-    float end_time = 0;
 
     for(int i=0;i < glTF->num_anims;i++ )
     {
@@ -263,8 +214,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
         int len = strlen(node->name);
 
-        g_node->name = calloc(len, sizeof(char));
-        memcpy(g_node->name, node->name, len);
+        memcpy(g_node->name, node->name, len >= 256 ? 256 : len);
 
         for(int j=0; j < model->nodes_count;j++)
         {
@@ -274,68 +224,93 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
         if(node->mesh != NULL)
         {
-            g_node->mesh = calloc(1, sizeof(engine_mesh));
             g_node->isModel = true;
+
             cgltf_mesh* mesh = node->mesh;
-            engine_mesh *g_mesh = g_node->mesh;
 
-            if (mesh->primitives_count > 1) {
-                continue;
-            }
+            g_node->mesh = calloc(mesh->primitives_count, sizeof(engine_model_mesh *));
+            g_node->num_mesh = mesh->primitives_count;
 
-            cgltf_primitive *primitive = &mesh->primitives[0];
-
-            g_mesh->num_indices = primitive->indices->count;
-            g_mesh->indices = (uint32_t *)calloc(g_mesh->num_indices, sizeof(uint32_t));
-
-            g_mesh->num_verts = primitive->attributes[0].data->count;
-            g_mesh->verts = (Vertex3D *)calloc(g_mesh->num_verts, sizeof(Vertex3D));
-
-            for(int j=0; j < primitive->attributes_count; j++)
+            for(int j=0;j < mesh->primitives_count;j++)
             {
-                cgltf_attribute *attribute = &primitive->attributes[j];
+                g_node->mesh[j] = calloc(1, sizeof(engine_model_mesh));
 
-                vec3 temp;
+                engine_model_mesh *g_mesh = g_node->mesh[j];
 
-                vec2* v2_point;
-                vec3* v3_point;
+                if(mesh->primitives[j].type != cgltf_primitive_type_triangles)
+                  continue;
 
-                v3_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
-                v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
+                cgltf_primitive *primitive = &mesh->primitives[j];
+
+                g_mesh->num_indices = primitive->indices->count;
+                g_mesh->indices = (uint32_t *)calloc(g_mesh->num_indices, sizeof(uint32_t));
+
+                g_mesh->num_verts = primitive->attributes[0].data->count;
+                g_mesh->verts = (ModelVertex3D *)calloc(g_mesh->num_verts, sizeof(ModelVertex3D));
 
                 for(int v=0;v < g_mesh->num_verts; v++)
                 {
                     g_mesh->verts[v].color = (vec3){1,1,1};
+                    g_mesh->verts[v].weight = (vec4){1,1,1,1};
                 }
 
-                for(int v=0;v < g_mesh->num_verts; v++)
+                for(int k=0; k < primitive->attributes_count; k++)
                 {
-                    switch(attribute->type)
+                    cgltf_attribute *attribute = &primitive->attributes[k];
+
+                    vec2* v2_point;
+                    vec3* v3_point;
+                    vec4* v4_point;
+                    vec4_u8 *v4_u8_point;
+
+                    v4_u8_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
+                    v4_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
+                    v3_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
+                    v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
+
+                    vec4_u8 temp_vec4u8;
+                    vec4 temp_vec4;
+
+                    for(int v=0;v < g_mesh->num_verts; v++)
                     {
-                        case cgltf_attribute_type_position:
-                            temp = v3_point[v];
-                            g_mesh->verts[v].position = v3_point[v];
-                            break;
-                        case cgltf_attribute_type_normal:
-                            g_mesh->verts[v].normal = v3_point[v];
-                            break;
-                        case cgltf_attribute_type_texcoord:
-                            g_mesh->verts[v].texCoord = v2_point[v];
-                            break;
-                        case cgltf_attribute_type_color:
-                            g_mesh->verts[v].color = v3_point[v];
-                            break;
-                        default:
-                            break;
+                        switch(attribute->type)
+                        {
+                            case cgltf_attribute_type_position:
+                                g_mesh->verts[v].position = v3_point[v];
+                                break;
+                            case cgltf_attribute_type_normal:
+                                g_mesh->verts[v].normal = v3_point[v];
+                                break;
+                            case cgltf_attribute_type_texcoord:
+                                g_mesh->verts[v].texCoord = v2_point[v];
+                                break;
+                            case cgltf_attribute_type_color:
+                                g_mesh->verts[v].color = v3_point[v];
+                                break;
+                            case cgltf_attribute_type_joints:
+                                temp_vec4u8 = v4_u8_point[v];
+                                g_mesh->verts[v].joints.x = v4_u8_point[v].x;
+                                g_mesh->verts[v].joints.y = v4_u8_point[v].y;
+                                g_mesh->verts[v].joints.z = v4_u8_point[v].z;
+                                g_mesh->verts[v].joints.w = v4_u8_point[v].w;
+                                temp_vec4 = g_mesh->verts[v].joints;
+                                break;
+                            case cgltf_attribute_type_weights:
+                                temp_vec4 = v4_point[v];
+                                g_mesh->verts[v].weight = v4_point[v];
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
-            }
 
-            uint16_t * ind_point = primitive->indices->buffer_view->buffer->data + primitive->indices->buffer_view->offset;
+                uint16_t * ind_point = primitive->indices->buffer_view->buffer->data + primitive->indices->buffer_view->offset;
 
-            for(int j=0; j < g_mesh->num_indices; j++)
-            {
-                g_mesh->indices[j] = ind_point[j];
+                for(int j=0; j < g_mesh->num_indices; j++)
+                {
+                    g_mesh->indices[j] = ind_point[j];
+                }
             }
 
             iter++;
@@ -357,9 +332,47 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
             }
         }
 
+        if(node->skin != NULL)
+        {
+            glTF->num_join_mats = node->skin->joints_count;
+            glTF->joint_mats = calloc(glTF->num_join_mats, sizeof(join_mat_struct));
+
+            cgltf_accessor *accessor = node->skin->inverse_bind_matrices;
+
+            mat4 *mat_point = accessor->buffer_view->offset + accessor->buffer_view->buffer->data;
+
+            for(int j=0;j < glTF->num_join_mats;j++)
+            {
+
+                join_mat_struct *j_mat = &glTF->joint_mats[j];
+
+                j_mat->inv_mat = mat_point[j]; /*mat4_colmnsf( mat_point[j].m[0], mat_point[j].m[1], mat_point[j].m[2], mat_point[j].m[3],
+                                                     mat_point[j].m[4], mat_point[j].m[5], mat_point[j].m[6], mat_point[j].m[7],
+                                                     mat_point[j].m[8], mat_point[j].m[9], mat_point[j].m[10], mat_point[j].m[11],
+                                                     mat_point[j].m[12], mat_point[j].m[13], mat_point[j].m[14], mat_point[j].m[15]);*/
+                for(int k=0;k < glTF->num_nodes;k++)
+                {
+                    if(node->skin->joints[j] == &model->nodes[k])
+                    {
+                        j_mat->id_node = k;
+                        break;
+                    }
+                }
+
+            }
+        }
 
         g_node->local_matrix = getLocalTransform(node);
         g_node->global_matrix = getFullTransform(node);
+
+    }
+
+
+    for(int j=0;j < glTF->num_join_mats;j++)
+    {
+        join_mat_struct *j_mat = &glTF->joint_mats[j];
+        engine_gltf_node *node = &glTF->nodes[j_mat->id_node];
+        j_mat->join_mat = mat4_mult_transform(j_mat->inv_mat, node->global_matrix);
     }
 
     glTF->num_meshes = iter;
@@ -441,6 +454,13 @@ void update_hierarhy(ModelObject3D *mo)
     node->global_matrix = mat;
   }
 
+  for(int j=0;j < glTF->num_join_mats;j++)
+  {
+      join_mat_struct *j_mat = &glTF->joint_mats[j];
+      engine_gltf_node *node = &glTF->nodes[j_mat->id_node];
+      j_mat->join_mat = mat4_mult_transform(j_mat->inv_mat, node->global_matrix);
+  }
+
 }
 
 void Load3DglTFNextFrame(void *ptr, float time)
@@ -459,118 +479,140 @@ void Load3DglTFNextFrame(void *ptr, float time)
     update_hierarhy(ptr);
   }
 
-
 }
 
 void DefaultglTFUpdate(ModelObject3D *mo)
 {
   glTFStruct *glTF = mo->obj;
 
-  for(int i=0; i < mo->num_models;i++)
+  for(int i=0; i < mo->num_draw_nodes;i++)
   {
-    if(mo->models[i].graphObj.local.descriptors == NULL)
-        return;
+      for(int j=0;j < mo->nodes[i].num_models;j++)
+      {
+          if(mo->nodes[i].models[j].graphObj.local.descriptors == NULL)
+              return;
 
-    Camera3D* cam = (Camera3D*) cam3D;
-    void* data;
+          Camera3D* cam = (Camera3D*) cam3D;
+          void* data;
 
-    ModelBuffer3D mbo = {};
-    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+          ModelBuffer3D mbo = {};
+          vec3 cameraUp = {0.0f,1.0f, 0.0f};
 
-    mo->models[i].transform.model = glTF->nodes[mo->models[i].id_node].global_matrix;
+          engine_gltf_node *node = &glTF->nodes[mo->nodes[i].id_node];
 
-    mbo.model =  mo->models[i].transform.model;
-    mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
-    mbo.proj.m[1][1] *= -1;
+          mo->nodes[i].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
-    vkMapMemory(device, mo->models[i].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-    memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device, mo->models[i].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+          mbo.model = mo->nodes[i].model;
+          mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+          mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+          mbo.proj.m[1][1] *= -1;
 
-    LightBuffer3D lbo = {};
-    lbo.lights[0].position.x = 0;
-    lbo.lights[0].position.y = 0;
-    lbo.lights[0].position.z = 9.5f;
-    lbo.lights[0].color.x = 0.0f;
-    lbo.lights[0].color.y = 0.0f;
-    lbo.lights[0].color.z = 0.0f;
+          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+          memcpy(data, &mbo, sizeof(mbo));
+          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
-    lbo.size = 0;
+          InvMatrixsBuffer imb = {};
 
-    vkMapMemory(device, mo->models[i].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
-    memcpy(data, &lbo, sizeof(lbo));
-    vkUnmapMemory(device, mo->models[i].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+          for(int k=0;k < glTF->num_join_mats;k++)
+            imb.mats[k] = glTF->joint_mats[k].join_mat;
+
+          imb.size = glTF->num_join_mats;
+
+
+          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
+          memcpy(data, &imb, sizeof(InvMatrixsBuffer));
+          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+
+          LightBuffer3D lbo = {};
+          lbo.size = 0;
+
+          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(LightBuffer3D), 0, &data);
+          memcpy(data, &lbo, sizeof(LightBuffer3D));
+          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
+      }
+
   }
 }
 
 void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
 
-    ModelObject3D *mo = ptr;
+  ModelObject3D *mo = (ModelObject3D *)ptr;
 
-    GameObjectSetUpdateFunc(mo, (void *)DefaultglTFUpdate);
-    GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
-    GameObjectSetCleanFunc(mo, (void *)ModelClean);
-    GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
-    GameObjectSetDestroyFunc(mo, (void *)ModelDestroy);
+  Transform3DInit(&mo->transform);
 
-    mo->obj = calloc(1, sizeof(glTFStruct));
+  GameObjectSetUpdateFunc(mo, (void *)DefaultglTFUpdate);
+  GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
+  GameObjectSetCleanFunc(mo, (void *)ModelClean);
+  GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
+  GameObjectSetDestroyFunc(mo, (void *)ModelDestroy);
 
-    glTFStruct *glTF = mo->obj;
+  mo->obj = calloc(1, sizeof(glTFStruct));
 
-    cgltf_options options = {0};
-    cgltf_data* data = NULL;
-    cgltf_result result = cgltf_parse_file(&options, ascii, &data);
-    if (result == cgltf_result_success)
-    {
-        result = cgltf_load_buffers(&options, data, binary);
+  glTFStruct *glTF = mo->obj;
 
-        if (result == cgltf_result_success)
-        {
-            SetupMeshState(glTF, data);
+  cgltf_options options = {0};
+  cgltf_data* data = NULL;
+  cgltf_result result = cgltf_parse_file(&options, ascii, &data);
+  if (result == cgltf_result_success)
+  {
+      result = cgltf_load_buffers(&options, data, binary);
 
-            mo->models = (ModelStruct *) calloc(glTF->num_meshes, sizeof(ModelStruct));
-            mo->num_models = glTF->num_meshes;
+      if (result == cgltf_result_success)
+      {
+          SetupMeshState(glTF, data);
 
-            int iter = 0;
+          mo->nodes = (ModelNode *) calloc(glTF->num_meshes, sizeof(ModelNode));
+          mo->num_draw_nodes = glTF->num_meshes;
 
-            void *stbi_point = NULL;
+          int iter = 0;
 
+          void *stbi_point = NULL;
 
-            for(int i=0; i < glTF->num_nodes;i++)
-            {
+          for(int i=0; i < glTF->num_nodes;i++)
+          {
 
-                engine_gltf_node *node = &glTF->nodes[i];
+              engine_gltf_node *node = &glTF->nodes[i];
 
-                if(node->isModel)
-                {
-                    mo->models[iter].id_node = node->id_node;
-                    mo->models[iter].graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
-
-                    Transform3DInit(&mo->models[iter].transform);
-                    GraphicsObject3DInit(&mo->models[iter].graphObj);
-
-                    mo->models[iter].graphObj.gItems.perspective = true;
-
-                    GraphicsObject3DSetVertex(&mo->models[iter].graphObj, node->mesh->verts, node->mesh->num_verts, node->mesh->indices, node->mesh->num_indices);
-
-                    if(node->mesh->num_verts > 0){
-                        createVertexBuffer3D(&mo->models[iter].graphObj.shape.vParam);
-                    }
-
-                    if(node->mesh->num_indices > 0){
-                        createIndexBuffer(&mo->models[iter].graphObj.shape.iParam);
-                    }
+              if(node->isModel)
+              {
+                  mo->nodes[iter].id_node = node->id_node;
 
 
-                    stbi_point = ModelDefaultInit(&mo->models[iter], dParam, stbi_point);
-                    iter++;
-                }
+                  mo->nodes[iter].models = calloc(node->num_mesh, sizeof(ModelStruct));
+                  mo->nodes[iter].num_models = node->num_mesh;
 
-            }
-        }
+                  for(int j=0;j < node->num_mesh;j++)
+                  {
+                      ModelStruct *model = &mo->nodes[iter].models[j];
 
-        /* TODO make awesome stuff */
-        cgltf_free(data);
-    }
+                      model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+
+                      GraphicsObjectModel3DInit(&model->graphObj);
+
+                      model->graphObj.gItems.perspective = true;
+
+                      GraphicsObjectSetVertex(&model->graphObj, node->mesh[j]->verts, node->mesh[j]->num_verts, node->mesh[j]->indices, node->mesh[j]->num_indices);
+
+                      if(node->mesh[j]->num_verts > 0){
+                          BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(ModelVertex3D));
+                      }
+
+                      if(node->mesh[j]->num_indices > 0){
+                          BuffersCreateIndex(&model->graphObj.shape.iParam);
+                      }
+
+
+                      stbi_point = ModelDefaultInit(model, dParam, stbi_point);
+                  }
+
+                  iter++;
+              }
+
+          }
+      }
+
+      /* TODO make awesome stuff */
+      cgltf_free(data);
+  }
+
 }

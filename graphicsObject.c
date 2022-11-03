@@ -9,6 +9,7 @@
 
 #include "gameObject2D.h"
 #include "gameObject3D.h"
+#include "models.h"
 
 void GraphicsObject2DInit(GraphicsObject* graphObj){
 
@@ -20,7 +21,7 @@ void GraphicsObject2DInit(GraphicsObject* graphObj){
     graphObj->shape.rebuild = true;
 }
 
-void GraphicsObject3DInit(GraphicsObject3D* graphObj){
+void GraphicsObject3DInit(GraphicsObject* graphObj){
 
     graphObj->aShader.bindingDescription = GameObject3DGetBindingDescription();
 
@@ -30,27 +31,26 @@ void GraphicsObject3DInit(GraphicsObject3D* graphObj){
     graphObj->shape.rebuild = true;
 }
 
-void GraphicsObject2DSetVertex(GraphicsObject* graphObj, Vertex2D *vert, int vertCount, uint32_t *inx, int indxCount){
+void GraphicsObjectModel3DInit(GraphicsObject* graphObj){
+
+    graphObj->aShader.bindingDescription = ModelObject3DGetBindingDescription();
+
+    graphObj->aShader.attr = modelAttributeDescription;
+    graphObj->aShader.countAttr = 6;
+
+    graphObj->shape.rebuild = true;
+}
+
+void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount){
 
     graphObj->shape.vParam.vertices = vert;
     graphObj->shape.vParam.verticesSize = vertCount;
     graphObj->shape.iParam.indices = inx;
     graphObj->shape.iParam.indexesSize = indxCount;
     graphObj->shape.rebuild = true;
-
 }
 
-
-void GraphicsObject3DSetVertex(GraphicsObject3D* graphObj, Vertex3D *vert, int vertCount, uint32_t *inx, int indxCount){
-
-    graphObj->shape.vParam.vertices = vert;
-    graphObj->shape.vParam.verticesSize = vertCount;
-    graphObj->shape.iParam.indices = inx;
-    graphObj->shape.iParam.indexesSize = indxCount;
-    graphObj->shape.rebuild = true;
-}
-
-void GraphicsObjectCreateDrawItems(GraphicsObject3D* graphObj){
+void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
 
     createDescriptorSetLayout(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
     createDescriptorPool(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);

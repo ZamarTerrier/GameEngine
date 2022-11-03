@@ -12,6 +12,7 @@
 #include <math.h>
 
 #define MAX_LINE_CHAR 256
+#define MAX_BONES 64
 
 typedef enum { false, true} bool;
 
@@ -47,6 +48,13 @@ typedef struct{
 } vec4;
 
 typedef struct{
+    uint8_t x;
+    uint8_t y;
+    uint8_t z;
+    uint8_t w;
+} vec4_u8;
+
+typedef struct{
     float m[2][2];
 } mat2;
 
@@ -57,6 +65,10 @@ typedef struct{
 typedef struct{
     float m[4][4];
 } mat4;
+
+typedef struct{
+    float m[16];
+} mat4_p;
 
 typedef struct{
     vec3 p[3];
@@ -74,6 +86,15 @@ typedef struct {
     vec3 color;
     vec2 texCoord;
 } Vertex3D;
+
+typedef struct {
+    vec3 position;
+    vec3 normal;
+    vec3 color;
+    vec2 texCoord;
+    vec4 joints;
+    vec4 weight;
+} ModelVertex3D;
 
 typedef struct {
     VkVertexInputAttributeDescription* inputDescription;
@@ -123,8 +144,14 @@ typedef struct {
     vec3 position __attribute__ ((aligned (16)));
     vec3 color __attribute__ ((aligned (16)));
 }Light;
+
 typedef struct{
-    Light lights[256] __attribute__ ((aligned (16)));
+    mat4 mats[MAX_BONES];
+    int size __attribute__ ((aligned (16)));
+} InvMatrixsBuffer;
+
+typedef struct{
+    Light lights[16] __attribute__ ((aligned (16)));
     int size __attribute__ ((aligned (16)));
 } LightBuffer3D;
 

@@ -56,7 +56,7 @@ typedef struct{
     engine_fbx_node *nodes;
     uint32_t num_nodes;
 
-    engine_mesh *meshes;
+    engine_model_mesh *meshes;
     uint32_t num_meshes;
 
     engine_fbx_anim *animations;

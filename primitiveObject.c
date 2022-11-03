@@ -53,13 +53,13 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
     switch(type)
     {
         case ENGINE_PRIMITIVE3D_LINE :
-            GraphicsObject3DSetVertex(&go->graphObj, lineVert, 2, NULL, 0);
+            GraphicsObjectSetVertex(&go->graphObj, lineVert, 2, NULL, 0);
             break;
         case ENGINE_PRIMITIVE3D_TRIANGLE :
-            GraphicsObject3DSetVertex(&go->graphObj, triVert, 3, triIndx, 3);
+            GraphicsObjectSetVertex(&go->graphObj, triVert, 3, triIndx, 3);
             break;
         case ENGINE_PRIMITIVE3D_QUAD :
-            GraphicsObject3DSetVertex(&go->graphObj, quadVert, 4, quadIndx, 6);
+            GraphicsObjectSetVertex(&go->graphObj, quadVert, 4, quadIndx, 6);
             break;
         case ENGINE_PRIMITIVE3D_PLANE :
             InitPlane3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
@@ -108,10 +108,10 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_model_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
-        setting.fragShader = &_binary_shaders_model_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
+        setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
+        setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
         setting.fromFile = 0;
     }
 

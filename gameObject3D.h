@@ -7,7 +7,7 @@
 
 typedef struct{
     GameObject self;
-    GraphicsObject3D graphObj;
+    GraphicsObject graphObj;
     Transform3D transform;
 } GameObject3D;
 

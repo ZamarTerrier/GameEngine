@@ -12,21 +12,13 @@ typedef struct{
     Shape shape;
 } GraphicsObject;
 
-typedef struct{
-    localParam local;
-    GraphicItems gItems;
-    aboutShader aShader;
-    bool lock;
-    Shape3D shape;
-} GraphicsObject3D;
-
 void GraphicsObject2DInit(GraphicsObject* graphObj);
-void GraphicsObject3DInit(GraphicsObject3D* graphObj);
+void GraphicsObject3DInit(GraphicsObject* graphObj);
+void GraphicsObjectModel3DInit(GraphicsObject* graphObj);
 
-void GraphicsObject2DSetVertex(GraphicsObject* graphObj, Vertex2D *vert, int vertCount, uint32_t *inx, int indxCount);
-void GraphicsObject3DSetVertex(GraphicsObject3D* graphObj, Vertex3D *vert, int vertCount, uint32_t *inx, int indxCount);
+void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount);
 
-void GraphicsObjectCreateDrawItems(GraphicsObject3D* graphObj);
+void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj);
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj);
 void GraphicsObjectClean(GraphicsObject* graphObj);
 void GraphicsObjectDestroy(GraphicsObject* graphObj);

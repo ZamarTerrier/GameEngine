@@ -150,6 +150,39 @@ VkVertexInputAttributeDescription cubeAttributeDescription[] = {
         .offset = offsetof(Vertex3D, texCoord) }
 };
 
+VkVertexInputAttributeDescription modelAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(ModelVertex3D, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(ModelVertex3D, normal) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(ModelVertex3D, color) },
+    {
+        .binding = 0,
+        .location = 3,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(ModelVertex3D, texCoord) },
+    {
+        .binding = 0,
+        .location = 4,
+        .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+        .offset = offsetof(ModelVertex3D, joints) },
+    {
+        .binding = 0,
+        .location = 5,
+        .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+        .offset = offsetof(ModelVertex3D, weight) }
+};
+
 const FontIndexes fontIndexes[] ={
     { 1040, 225 },//А
     { 1041, 226 },//Б

@@ -107,12 +107,22 @@ OBJECTS += bin/shaders/gui/widget_frag.o \
     bin/shaders/text/vert.o \
     bin/shaders/sprite/frag.o \
     bin/shaders/sprite/vert.o \
+    bin/shaders/3d_object/frag.o \
+    bin/shaders/3d_object/vert.o \
 
-DEFINES += CGLTF_IMPLEMENTATION STB_IMAGE_IMPLEMENTATION MATH_IMPLEMENTATION TINYOBJ_LOADER_C_IMPLEMENTATION
-
-LIBS += -lglfw -lvulkan -ldl -lpthread -lX11
+DEFINES += CGLTF_IMPLEMENTATION STB_IMAGE_IMPLEMENTATION MATH_IMPLEMENTATION TINYOBJ_LOADER_C_IMPLEMENTATION _WIN_BUILD_
 
 unix:!macx: LIBS += -L$$PWD/../cglm/build/ -lcglm
 
 INCLUDEPATH += $$PWD/../cglm/include
 DEPENDPATH += $$PWD/../cglm/include
+
+unix|win32: LIBS += -L$$PWD/../glfw-3.3.5.bin.WIN64/lib-mingw-w64/ -lglfw3dll
+
+INCLUDEPATH += $$PWD/../glfw-3.3.5.bin.WIN64/include
+DEPENDPATH += $$PWD/../glfw-3.3.5.bin.WIN64/include
+
+unix|win32: LIBS += -LD:/VulkanSDK/1.2.198.0/Lib/ -lvulkan-1
+
+INCLUDEPATH += D:/VulkanSDK/1.2.198.0/Include
+DEPENDPATH += D:/VulkanSDK/1.2.198.0/Include

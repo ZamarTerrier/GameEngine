@@ -2,7 +2,7 @@
 
 #include "gameObject2D.h"
 
-void createFramebuffers() {
+void BuffersCreateFramebuffers() {
     free(swapChainFramebuffers);
     swapChainFramebuffers = NULL;
     swapChainFramebuffers = (VkFramebuffer*) calloc(imagesCount, sizeof(VkFramebuffer));
@@ -29,7 +29,7 @@ void createFramebuffers() {
     }
 }
 
-void createCommandPool() {
+void BuffersCreateCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
     VkCommandPoolCreateInfo poolInfo = {};
@@ -44,7 +44,7 @@ void createCommandPool() {
 
 }
 
-void createCommandBuffers(){
+void BuffersCreateCommand(){
     free(commandBuffers);
     commandBuffers = NULL;
     commandBuffers = (VkCommandBuffer *) calloc(imagesCount, sizeof(VkCommandBuffer));
@@ -63,17 +63,17 @@ void createCommandBuffers(){
 
 }
 
-void createVertexBuffer3D(vertexParam3D* vert) {
+void BufferCreateVertex(vertexParam* vert, uint32_t size) {
 
     //Выделение памяти
 
-    VkDeviceSize bufferSize = sizeof(Vertex3D) * vert->verticesSize;
+    VkDeviceSize bufferSize = size * vert->verticesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
 
     //-------------
     //Перенос данных в буфер
@@ -85,70 +85,41 @@ void createVertexBuffer3D(vertexParam3D* vert) {
 
     //-------------
 
-    copyBuffer(stagingBuffer, vert->vertexBuffer, bufferSize);
+    BuffersCopy(stagingBuffer, vert->vertexBuffer, bufferSize);
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
     vkFreeMemory(device, stagingBufferMemory, NULL);
 
 }
 
-void createVertexBuffer2D(vertexParam* vert) {
-
-    //Выделение памяти
-
-    VkDeviceSize bufferSize = sizeof(Vertex2D) * vert->verticesSize;
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
-
-    //-------------
-    //Перенос данных в буфер
-
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, vert->vertices, (size_t) bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
-
-    //-------------
-
-    copyBuffer(stagingBuffer, vert->vertexBuffer, bufferSize);
-
-    vkDestroyBuffer(device, stagingBuffer, NULL);
-    vkFreeMemory(device, stagingBufferMemory, NULL);
-
-}
-
-void createIndexBuffer(indexParam* ind) {
+void BuffersCreateIndex(indexParam* ind) {
 
     VkDeviceSize bufferSize = sizeof(uint32_t) * ind->indexesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, ind->indices, (size_t) bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
-    copyBuffer(stagingBuffer, ind->indexBuffer, bufferSize);
+    BuffersCopy(stagingBuffer, ind->indexBuffer, bufferSize);
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
     vkFreeMemory(device, stagingBufferMemory, NULL);
 }
 
-void createUniformBuffer(UniformStruct* uniform, int size) {
+void BuffersCreateUniform(UniformStruct* uniform, int size) {
 
     uniform->uniformBuffers = (VkBuffer*) calloc(imagesCount, sizeof(VkBuffer));
     uniform->uniformBuffersMemory = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
     for (int i = 0; i < imagesCount; i++) {
-        createBuffer(uniform->size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i]);
+        BuffersCreate(uniform->size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i]);
     }
 }
 
@@ -168,7 +139,7 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 
 }
 
-void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory) {
+void BuffersCreate(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory) {
     VkBufferCreateInfo bufferInfo = {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -196,7 +167,7 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
     vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
 }
 
-void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+void BuffersCopy(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
     VkBufferCopy copyRegion = {};
@@ -221,7 +192,7 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
     param->descriptors[param->descrCount - 1].stageflag = flags;
     param->descriptors[param->descrCount - 1].buffsize = size;
 
-    createUniformBuffer(param->descriptors[param->descrCount - 1].uniform, param->descrCount);
+    BuffersCreateUniform(param->descriptors[param->descrCount - 1].uniform, param->descrCount);
 
 }
 
@@ -237,7 +208,7 @@ void BuffersRecreateUniform(localParam* param){
             int sizer = param->descriptors[i].buffsize;
             param->descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
             param->descriptors[i].uniform->size = sizer;
-            createUniformBuffer(param->descriptors[i].uniform, i);
+            BuffersCreateUniform(param->descriptors[i].uniform, i);
         }
     }
 }

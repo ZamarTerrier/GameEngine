@@ -32,14 +32,7 @@ typedef struct{
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     uint32_t verticesSize;
-    Vertex3D* vertices;
-} vertexParam3D;
-
-typedef struct{
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    uint32_t verticesSize;
-    Vertex2D* vertices;
+    void* vertices;
 } vertexParam;
 
 typedef struct{
@@ -68,14 +61,6 @@ typedef struct{
     triangeParam tParam;
     bool rebuild;
 } Shape;
-
-typedef struct{
-    indexParam iParam;
-    vertexParam3D vParam;
-    triangeParam tParam;
-    bool rebuild;
-} Shape3D;
-
 
 typedef struct{
     VkBuffer* uniformBuffers;

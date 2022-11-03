@@ -247,54 +247,60 @@ void DestroyOBJModel(ModelObject3D *mo){
     tinyobj_attrib_free(&obj->attrib);
     tinyobj_shapes_free(obj->shapes,  obj->num_shapes);
     tinyobj_materials_free(obj->materials, obj->num_materials);
-    GraphicsObjectDestroy(&mo->models[0].graphObj);
+    GraphicsObjectDestroy(&mo->nodes[0].models[0].graphObj);
 }
 
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
-    GameObjectSetUpdateFunc(mo, (void *)ModelDefaultUpdate);
-    GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
-    GameObjectSetCleanFunc(mo, (void *)ModelClean);
-    GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
-    GameObjectSetDestroyFunc(mo, (void *)DestroyOBJModel);
+  Transform3DInit(&mo->transform);
 
-    mo->obj = (OBJStruct *) calloc(1, sizeof(OBJStruct));
-    mo->num_models = 1;
+  GameObjectSetUpdateFunc(mo, (void *)ModelDefaultUpdate);
+  GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
+  GameObjectSetCleanFunc(mo, (void *)ModelClean);
+  GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
+  GameObjectSetDestroyFunc(mo, (void *)DestroyOBJModel);
 
-    OBJStruct *obj = mo->obj;
+  mo->obj = (OBJStruct *) calloc(1, sizeof(OBJStruct));
 
-    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-    tinyobj_parse_obj(&obj->attrib, &obj->shapes, &obj->num_materials, &obj->materials, &obj->num_materials, filepath, (void *)get_file_data, NULL, flags);
+  OBJStruct *obj = mo->obj;
 
-    mo->models = calloc(1, sizeof(ModelStruct));
+  unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
+  tinyobj_parse_obj(&obj->attrib, &obj->shapes, &obj->num_materials, &obj->materials, &obj->num_materials, filepath, (void *)get_file_data, NULL, flags);
 
-    mo->models->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+  mo->nodes = calloc(1, sizeof(ModelNode));
+  mo->num_draw_nodes = 1;
 
-    Transform3DInit(&mo->models->transform);
-    GraphicsObject3DInit(&mo->models->graphObj);
+  mo->nodes[0].models = calloc(1, sizeof(ModelStruct));
+  mo->nodes[0].num_models = 1;
 
-    mo->models->graphObj.gItems.perspective = true;
+  ModelStruct *model = &mo->nodes[0].models[0];
 
-    mo->models->graphObj.shape.vParam.vertices = (Vertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(Vertex3D));
-    mo->models->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
+  model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
-    ParseSomeStruct(mo, mo->models[0].graphObj.shape.vParam.vertices );
+  GraphicsObject3DInit(&model->graphObj);
 
-    mo->models->graphObj.shape.vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
-    mo->models->graphObj.shape.iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
+  model->graphObj.gItems.perspective = true;
 
-    for(int i=0; i < mo->models->graphObj.shape.iParam.indexesSize;i++)
-        mo->models->graphObj.shape.iParam.indices[i] = i;
+  model->graphObj.shape.vParam.vertices = (Vertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(Vertex3D));
+  model->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
 
-    if(mo->models->graphObj.shape.vParam.verticesSize > 0){
-        createVertexBuffer3D(&mo->models->graphObj.shape.vParam);
-    }
+  ParseSomeStruct(mo, model->graphObj.shape.vParam.vertices );
 
-    if(mo->models->graphObj.shape.iParam.indexesSize > 0){
-        createIndexBuffer(&mo->models->graphObj.shape.iParam);
-    }
+  model->graphObj.shape.vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
+  model->graphObj.shape.iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
 
-    ModelDefaultInit(mo->models, dParam, NULL);
+  for(int i=0; i < model->graphObj.shape.iParam.indexesSize;i++)
+      model->graphObj.shape.iParam.indices[i] = i;
+
+  if(model->graphObj.shape.vParam.verticesSize > 0){
+      BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(Vertex3D));
+  }
+
+  if(model->graphObj.shape.iParam.indexesSize > 0){
+      BuffersCreateIndex(&model->graphObj.shape.iParam);
+  }
+
+  ModelDefaultInit(model, dParam, NULL);
 }
 
 

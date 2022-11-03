@@ -55,10 +55,10 @@ void initVulkan(){
     createSwapChain();
     createImageViews();
     PipelineCreateRenderPass();
-    createCommandPool();
+    BuffersCreateCommandPool();
     createDepthResources();
-    createFramebuffers();
-    createCommandBuffers();
+    BuffersCreateFramebuffers();
+    BuffersCreateCommand();
     createSyncObjects();
 
     objs.go = (GameObject **) calloc(0, sizeof(GameObject*));
@@ -218,8 +218,8 @@ void recreateSwapChain() {
         temp ++;
     }
 
-    createFramebuffers();
-    createCommandBuffers();
+    BuffersCreateFramebuffers();
+    BuffersCreateCommand();
 
     framebufferwasResized = true;
 
