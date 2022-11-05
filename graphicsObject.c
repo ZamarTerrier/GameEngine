@@ -85,8 +85,6 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
     {
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             destroyTexture(graphObj->local.descriptors[i].texture);
-            free(graphObj->local.descriptors[i].texture);
-            graphObj->local.descriptors[i].texture = NULL;
         }
         else{
             for (int j = 0; j < imagesCount; j++) {
@@ -120,18 +118,30 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
     for(int i=0;i< graphObj->local.descrCount;i++)
     {
-        if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            destroyTexture(graphObj->local.descriptors[i].texture);
-            free(graphObj->local.descriptors[i].texture);
-            graphObj->local.descriptors[i].texture = NULL;
+        ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
+        if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+            destroyTexture(descriptor->texture);
+            free(descriptor->texture);
+            descriptor->texture = NULL;
+
+//            if(descriptor->image != NULL)
+//            {
+//                if(descriptor->image->path != NULL)
+//                    free(descriptor->image->path);
+
+//                if(descriptor->image->pixels != NULL)
+//                    free(descriptor->image->pixels);
+
+//                free(descriptor->image);
+//            }
         }
         else{
             for (int j = 0; j < imagesCount; j++) {
-                vkDestroyBuffer(device, graphObj->local.descriptors[i].uniform->uniformBuffers[j], NULL);
-                vkFreeMemory(device, graphObj->local.descriptors[i].uniform->uniformBuffersMemory[j], NULL);
+                vkDestroyBuffer(device, descriptor->uniform->uniformBuffers[j], NULL);
+                vkFreeMemory(device, descriptor->uniform->uniformBuffersMemory[j], NULL);
             }
-            free(graphObj->local.descriptors[i].uniform);
-            graphObj->local.descriptors[i].uniform = NULL;
+            free(descriptor->uniform);
+            descriptor->uniform = NULL;
         }
     }
 

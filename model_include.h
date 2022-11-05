@@ -17,14 +17,16 @@ typedef struct skin_vertex {
 } skin_vertex;
 
 typedef struct{
-  ModelVertex3D *verts;
-  uint32_t num_verts;
+    ModelVertex3D *verts;
+    uint32_t num_verts;
 
-  uint32_t* indices;
-  uint32_t num_indices;
+    uint32_t* indices;
+    uint32_t num_indices;
 
-  int32_t *instance_node_indices;
-  size_t num_instances;
+    int32_t *instance_node_indices;
+    size_t num_instances;
+
+    ImageStruct *image;
 } engine_model_mesh;
 
 #endif // MODEL_INCLUDE_H

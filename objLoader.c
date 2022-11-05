@@ -40,7 +40,7 @@ static void CalcNormal(float N[3], float v0[3], float v1[3], float v2[3]) {
   }
 }
 
-void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
+void ParseSomeStruct(ModelObject3D *mo, ModelVertex3D *vertexs){
 
     tinyobj_material_t* materials = NULL;
     size_t face_offset = 0;
@@ -251,7 +251,11 @@ void DestroyOBJModel(ModelObject3D *mo){
     tinyobj_attrib_free(&obj->attrib);
     tinyobj_shapes_free(obj->shapes,  obj->num_shapes);
     tinyobj_materials_free(obj->materials, obj->num_materials);
+    free(mo->obj);
+
     GraphicsObjectDestroy(&mo->nodes[0].models[0].graphObj);
+    free(mo->nodes[0].models);
+    free(mo->nodes);
 }
 
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
@@ -281,11 +285,11 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
   model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
-  GraphicsObject3DInit(&model->graphObj);
+  GraphicsObjectModel3DInit(&model->graphObj);
 
   model->graphObj.gItems.perspective = true;
 
-  model->graphObj.shape.vParam.vertices = (Vertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(Vertex3D));
+  model->graphObj.shape.vParam.vertices = (ModelVertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(ModelVertex3D));
   model->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
 
   ParseSomeStruct(mo, model->graphObj.shape.vParam.vertices );
@@ -297,14 +301,14 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
       model->graphObj.shape.iParam.indices[i] = i;
 
   if(model->graphObj.shape.vParam.verticesSize > 0){
-      BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(Vertex3D));
+      BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(ModelVertex3D));
   }
 
   if(model->graphObj.shape.iParam.indexesSize > 0){
-      BuffersCreateIndex(&model->graphObj.shape.iParam);
+      BuffersCreateIndex(&model->graphObj.shape.iParam, sizeof(uint32_t));
   }
 
-  ModelDefaultInit(model, dParam, NULL);
+  ModelDefaultInit(model, dParam);
 }
 
 

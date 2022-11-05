@@ -119,16 +119,16 @@ void ModelRecreate(ModelObject3D* mo){
         {
             PipelineSetting *settings = (PipelineSetting *)mo->nodes[i].models[j].graphObj.gItems.settings;
 
-            for(int i=0; i < mo->nodes[i].models[j].graphObj.gItems.settingsCount;i++)
+            for(int m=0; m < mo->nodes[i].models[j].graphObj.gItems.settingsCount;m++)
             {
-                settings[i].scissor.offset.x = 0;
-                settings[i].scissor.offset.y = 0;
-                settings[i].scissor.extent.height = HEIGHT;
-                settings[i].scissor.extent.width = WIDTH;
-                settings[i].viewport.x = 0;
-                settings[i].viewport.y = 0;
-                settings[i].viewport.height = HEIGHT;
-                settings[i].viewport.width = WIDTH;
+                settings[m].scissor.offset.x = 0;
+                settings[m].scissor.offset.y = 0;
+                settings[m].scissor.extent.height = HEIGHT;
+                settings[m].scissor.extent.width = WIDTH;
+                settings[m].viewport.x = 0;
+                settings[m].viewport.y = 0;
+                settings[m].viewport.height = HEIGHT;
+                settings[m].viewport.width = WIDTH;
             }
 
             BuffersRecreateUniform(&mo->nodes[i].models[j].graphObj.local);
@@ -159,16 +159,13 @@ void ModelAddSettingPipeline(ModelStruct* model, PipelineSetting setting){
     memcpy(&settings[model->graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
 }
 
-void* ModelDefaultInit(ModelStruct *model, DrawParam dParam, void* stbi_point){
+void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
 
     BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    void *stbi_info = NULL;
-
-    if(strlen(dParam.filePath) != 0)
-        stbi_info = ImageAddTexture(&model->graphObj.local, dParam.filePath, stbi_point);
+    ImageAddTexture(&model->graphObj.local, model->image);
 
     GameObject3DCreateDrawItems(&model->graphObj);
 
@@ -193,5 +190,4 @@ void* ModelDefaultInit(ModelStruct *model, DrawParam dParam, void* stbi_point){
 
     PipelineCreateGraphics(&model->graphObj);
 
-    return stbi_info;
 }

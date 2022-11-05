@@ -263,8 +263,7 @@ void *current_entry = NULL;
 vec2 viewSize = { 800, 600 };
 vec2 diffSize = { 1.0f, 1.0f };
 
-int indSphereCount = 0, vertSphereCount = 0;
-int indPlaneCount = 0, vertPlaneCount = 0;
-int indConeCount = 0, vertConeCount = 0;
-
 char *rootDirPath;
+
+ImageStruct *e_images;
+int e_num_images = 0;

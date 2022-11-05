@@ -107,18 +107,17 @@ void read_mesh(engine_model_mesh *vBuffer, ufbx_mesh *mesh)
     size_t max_parts = 0;
     size_t max_triangles = 0;
 
-    for (size_t pi = 0; pi < mesh->materials.count; pi++) {
-        ufbx_mesh_material *mesh_mat = &mesh->materials.data[pi];
-        if (mesh_mat->num_triangles == 0) continue;
-        max_parts += 1;
-        max_triangles = max(max_triangles, mesh_mat->num_triangles);
+    size_t num_tri_indices = mesh->max_face_triangles * 3;
+    uint32_t *tri_indices = calloc(num_tri_indices, sizeof(uint32_t));
+
+    for (size_t face_ix = 0; face_ix < mesh->num_faces; face_ix++) {
+        ufbx_face face = mesh->faces.data[face_ix];
+        max_triangles += ufbx_triangulate_face(tri_indices, num_tri_indices, mesh, face);
     }
 
     vBuffer->num_indices =  vBuffer->num_verts = max_triangles * 3;
 
-    size_t num_tri_indices = mesh->max_face_triangles * 3;
-    uint32_t *tri_indices = calloc(num_tri_indices, sizeof(uint32_t));
-    vBuffer->verts = (Vertex3D *) calloc(  vBuffer->num_verts, sizeof(Vertex3D));
+    vBuffer->verts = (ModelVertex3D *) calloc(  vBuffer->num_verts, sizeof(ModelVertex3D));
     //skin_vertex *skin_vertices = calloc(max_triangles * 3, sizeof(skin_vertex));
     //skin_vertex *mesh_skin_vertices = calloc(mesh->num_vertices, sizeof(skin_vertex));
     vBuffer->indices = (uint32_t *) calloc( vBuffer->num_indices, sizeof(uint32_t));
@@ -146,7 +145,8 @@ void read_mesh(engine_model_mesh *vBuffer, ufbx_mesh *mesh)
         // Iterate through every vertex of every triangle in the triangulated result
         for (size_t vi = 0; vi < num_tris * 3; vi++) {
             uint32_t ix = tri_indices[vi];
-            Vertex3D *vert = &vBuffer->verts[iter];
+            ModelVertex3D *vert = &vBuffer->verts[iter];
+            uint32_t *indx = vBuffer->indices;
 
             ufbx_vec3 pos = ufbx_get_vertex_vec3(&mesh->vertex_position, ix);
             ufbx_vec3 normal = ufbx_get_vertex_vec3(&mesh->vertex_normal, ix);
@@ -163,7 +163,7 @@ void read_mesh(engine_model_mesh *vBuffer, ufbx_mesh *mesh)
                 skin_vertices[iter] = mesh_skin_vertices[mesh->vertex_indices.data[ix]];
             }*/
 
-            vBuffer->indices[iter] = iter;
+            indx[iter] = iter;
             iter++;
        }
 
@@ -321,7 +321,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
           mo->nodes[i].model = fbx->nodes[node_id].geometry_to_world;//
 
-          mbo.model =  mo->nodes[i].model;
+          mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
           mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
           mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
           mbo.proj.m[1][1] *= -1;
@@ -329,6 +329,13 @@ void DefaultFBXUpdate(ModelObject3D *mo)
           vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
           memcpy(data, &mbo, sizeof(mbo));
           vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+
+          InvMatrixsBuffer imb = {};
+          memset(&imb, 0, sizeof(InvMatrixsBuffer));
+
+          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
+          memcpy(data, &imb, sizeof(InvMatrixsBuffer));
+          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
           LightBuffer3D lbo = {};
           lbo.lights[0].position.x = 0;
@@ -340,9 +347,9 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
           lbo.size = 0;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
           memcpy(data, &lbo, sizeof(lbo));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
       }
   }
 }
@@ -396,35 +403,36 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam)
 
   FBXStruct *fbx = mo->obj;
 
-  /*mo->nodes = (ModelNode *) calloc(fbx->num_meshes, sizeof(ModelNode));
-  mo->num_models = fbx->num_meshes;
+  mo->nodes = (ModelNode *) calloc(fbx->num_meshes, sizeof(ModelNode));
+  mo->num_draw_nodes = fbx->num_meshes;
 
-  void * stbi_point = NULL;
-
-  if(mo->num_models > 0)
+  if(mo->num_draw_nodes > 0)
   {
 
       for(int i=0; i < fbx->num_meshes;i++)
       {
 
-          mo->models[i].graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+          mo->nodes[i].models = calloc(1, sizeof(ModelStruct));
+          mo->nodes[i].num_models = 1;
 
-          GraphicsObject3DInit(&mo->models[i].graphObj);
+          mo->nodes[i].models->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
-          mo->models[i].graphObj.gItems.perspective = true;
+          GraphicsObjectModel3DInit(&mo->nodes[i].models->graphObj);
 
-          GraphicsObject3DSetVertex(&mo->models[i].graphObj, fbx->meshes[i].verts, fbx->meshes[i].num_verts, fbx->meshes[i].indices, fbx->meshes[i].num_indices);
+          mo->nodes[i].models->graphObj.gItems.perspective = true;
+
+          GraphicsObjectSetVertex(&mo->nodes[i].models->graphObj, fbx->meshes[i].verts, fbx->meshes[i].num_verts, fbx->meshes[i].indices, fbx->meshes[i].num_indices);
 
           if(fbx->meshes[i].num_verts > 0){
-              createVertexBuffer3D(&mo->models[i].graphObj.shape.vParam);
+              BufferCreateVertex(&mo->nodes[i].models->graphObj.shape.vParam, sizeof(ModelVertex3D));
           }
 
           if(fbx->meshes[i].num_indices > 0){
-              createIndexBuffer(&mo->models[i].graphObj.shape.iParam);
+              BuffersCreateIndex(&mo->nodes[i].models->graphObj.shape.iParam, sizeof(uint32_t));
           }
 
-          stbi_point =  ModelDefaultInit(&mo->models[i], dParam, stbi_point != NULL ? stbi_point : NULL);
+          ModelDefaultInit(mo->nodes[i].models, dParam);
 
       }
-  }*/
+  }
 }

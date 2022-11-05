@@ -14,7 +14,7 @@ void BuffersCreateCommand();
 
 void BufferCreateVertex(vertexParam* vert, uint32_t size);
 
-void BuffersCreateIndex(indexParam* arg);
+void BuffersCreateIndex(indexParam* arg, uint32_t type_size);
 
 void BuffersCreateUniform(UniformStruct* uniform, int size);
 

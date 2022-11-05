@@ -10,7 +10,8 @@
 #include "transform.h"
 
 typedef struct{
-    GraphicsObject graphObj;
+    GraphicsObject graphObj;    
+    ImageStruct *image;
 } ModelStruct;
 
 typedef struct{
@@ -41,6 +42,6 @@ void ModelClean(ModelObject3D* mo);
 void ModelRecreate(ModelObject3D* mo);
 void ModelDestroy(ModelObject3D* mo);
 
-void* ModelDefaultInit(ModelStruct *model, DrawParam dParam, void* stbi_point);
+void ModelDefaultInit(ModelStruct *model, DrawParam dParam);
 
 #endif // MODELS_H

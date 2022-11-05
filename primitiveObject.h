@@ -16,6 +16,7 @@ enum PrimitiveObjectType{
     ENGINE_PRIMITIVE3D_CONE,
     ENGINE_PRIMITIVE3D_CYLINDER,
     ENGINE_PRIMITIVE3D_SKYBOX,
+    ENGINE_PRIMITIVE3D_TERRAIN,
 };
 
 typedef struct{
@@ -37,6 +38,12 @@ typedef struct{
     int sectorCount;
     int stackCount;
 } PlaneParam;
+
+typedef struct{
+    int rows;
+    int colmns;
+    int cell_step;
+} TerrainParam;
 
 typedef struct{
     float height;

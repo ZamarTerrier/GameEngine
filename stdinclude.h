@@ -17,6 +17,16 @@
 typedef enum { false, true} bool;
 
 typedef struct{
+    char *path;
+    char *buffer;
+    int size;
+    int texWidth;
+    int texHeight;
+    int texChannels;
+    void *pixels;
+} ImageStruct;
+
+typedef struct{
     uint32_t graphicsFamily;
     uint32_t presentFamily;
 } QueueFamilyIndices;

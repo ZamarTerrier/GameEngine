@@ -436,4 +436,15 @@ void cleanUp(){
 
     glfwTerminate();
 
+    if(e_num_images > 0)
+    {
+        for(int i=0; i < e_num_images;i++)
+        {
+            free(e_images->path);
+            free(e_images->pixels);
+        }
+
+        free(e_images);
+    }
+
 }

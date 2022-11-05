@@ -13,7 +13,6 @@ typedef struct{
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
-    void *stbi_info;
 } Texture2D;
 
 typedef struct{
@@ -75,7 +74,7 @@ typedef struct{
     VkShaderStageFlags stageflag;
     uint32_t size;
     VkDeviceSize buffsize;
-    char path[256];
+    ImageStruct *image;
 } ShaderBuffer;
 
 typedef struct{

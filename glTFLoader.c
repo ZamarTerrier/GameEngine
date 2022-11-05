@@ -242,11 +242,40 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
                 cgltf_primitive *primitive = &mesh->primitives[j];
 
+                if(primitive->material != NULL)
+                {
+                    cgltf_texture *texture = primitive->material->pbr_metallic_roughness.base_color_texture.texture;
+
+                    if(texture != NULL)
+                    {
+                        cgltf_image *image = texture->image;
+
+                        g_mesh->image = calloc(1, sizeof(ImageStruct));
+
+                        if(image->uri != NULL)
+                        {
+                            int size = strlen(glTF->path) + strlen(image->uri);
+                            g_mesh->image->path = calloc( size, sizeof(char));
+                            ToolsAddStrings(g_mesh->image->path, size, glTF->path, image->uri);
+                            g_mesh->image->size = 0;
+                            //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
+
+                        }
+                        else if(image->buffer_view->buffer != NULL)
+                        {
+                            g_mesh->image->buffer = calloc(image->buffer_view->size, sizeof(char));
+                            memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data, image->buffer_view->size);
+                            g_mesh->image->size = image->buffer_view->size;
+                        }
+                    }
+                }
+
                 g_mesh->num_indices = primitive->indices->count;
                 g_mesh->indices = (uint32_t *)calloc(g_mesh->num_indices, sizeof(uint32_t));
 
-                g_mesh->num_verts = primitive->attributes[0].data->count;
+                g_mesh->num_verts = primitive->attributes->data->count;
                 g_mesh->verts = (ModelVertex3D *)calloc(g_mesh->num_verts, sizeof(ModelVertex3D));
+
 
                 for(int v=0;v < g_mesh->num_verts; v++)
                 {
@@ -268,9 +297,6 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     v3_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
                     v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
 
-                    vec4_u8 temp_vec4u8;
-                    vec4 temp_vec4;
-
                     for(int v=0;v < g_mesh->num_verts; v++)
                     {
                         switch(attribute->type)
@@ -282,21 +308,22 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                                 g_mesh->verts[v].normal = v3_point[v];
                                 break;
                             case cgltf_attribute_type_texcoord:
-                                g_mesh->verts[v].texCoord = v2_point[v];
+                                if(g_mesh->verts[v].texCoord.x == 0 && g_mesh->verts[v].texCoord.y ==0)
+                                {
+                                    g_mesh->verts[v].texCoord.x = v2_point[v].x;
+                                    g_mesh->verts[v].texCoord.y = v2_point[v].y;
+                                }
                                 break;
                             case cgltf_attribute_type_color:
-                                g_mesh->verts[v].color = v3_point[v];
+                                //g_mesh->verts[v].color = v3_point[v];
                                 break;
                             case cgltf_attribute_type_joints:
-                                temp_vec4u8 = v4_u8_point[v];
                                 g_mesh->verts[v].joints.x = v4_u8_point[v].x;
                                 g_mesh->verts[v].joints.y = v4_u8_point[v].y;
                                 g_mesh->verts[v].joints.z = v4_u8_point[v].z;
                                 g_mesh->verts[v].joints.w = v4_u8_point[v].w;
-                                temp_vec4 = g_mesh->verts[v].joints;
                                 break;
                             case cgltf_attribute_type_weights:
-                                temp_vec4 = v4_point[v];
                                 g_mesh->verts[v].weight = v4_point[v];
                                 break;
                             default:
@@ -305,11 +332,34 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     }
                 }
 
-                uint16_t * ind_point = primitive->indices->buffer_view->buffer->data + primitive->indices->buffer_view->offset;
-
-                for(int j=0; j < g_mesh->num_indices; j++)
+                if(primitive->indices->component_type == cgltf_component_type_r_8u)
                 {
-                    g_mesh->indices[j] = ind_point[j];
+                    uint8_t *ind_point = primitive->indices->buffer_view->buffer->data + primitive->indices->buffer_view->offset;
+
+                    for(int ind=0; ind < g_mesh->num_indices; ind++)
+                    {
+                        g_mesh->indices[ind] = ind_point[ind];
+                    }
+
+                }
+                else if(primitive->indices->component_type == cgltf_component_type_r_16u)
+                {
+                    uint16_t *ind_point = primitive->indices->buffer_view->buffer->data + primitive->indices->buffer_view->offset;
+
+                    for(int ind=0; ind < g_mesh->num_indices; ind++)
+                    {
+                        g_mesh->indices[ind] = ind_point[ind];
+                    }
+
+                }
+                else
+                {
+                    uint32_t *ind_point = primitive->indices->buffer_view->buffer->data + primitive->indices->buffer_view->offset;
+
+                    for(int ind=0; ind < g_mesh->num_indices; ind++)
+                    {
+                        g_mesh->indices[ind] = ind_point[ind];
+                    }
                 }
             }
 
@@ -346,10 +396,8 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
                 join_mat_struct *j_mat = &glTF->joint_mats[j];
 
-                j_mat->inv_mat = mat_point[j]; /*mat4_colmnsf( mat_point[j].m[0], mat_point[j].m[1], mat_point[j].m[2], mat_point[j].m[3],
-                                                     mat_point[j].m[4], mat_point[j].m[5], mat_point[j].m[6], mat_point[j].m[7],
-                                                     mat_point[j].m[8], mat_point[j].m[9], mat_point[j].m[10], mat_point[j].m[11],
-                                                     mat_point[j].m[12], mat_point[j].m[13], mat_point[j].m[14], mat_point[j].m[15]);*/
+                j_mat->inv_mat = mat_point[j];
+
                 for(int k=0;k < glTF->num_nodes;k++)
                 {
                     if(node->skin->joints[j] == &model->nodes[k])
@@ -361,12 +409,9 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
             }
         }
-
         g_node->local_matrix = getLocalTransform(node);
         g_node->global_matrix = getFullTransform(node);
-
     }
-
 
     for(int j=0;j < glTF->num_join_mats;j++)
     {
@@ -518,7 +563,6 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           imb.size = glTF->num_join_mats;
 
-
           vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
           memcpy(data, &imb, sizeof(InvMatrixsBuffer));
           vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
@@ -534,7 +578,47 @@ void DefaultglTFUpdate(ModelObject3D *mo)
   }
 }
 
-void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
+void ModelglTFDestroy(ModelObject3D* mo){
+
+    glTFStruct *glTF = mo->obj;
+
+    for(int i=0; i < mo->num_draw_nodes;i++)
+    {
+        for(int j=0;j < mo->nodes[i].num_models;j++)
+        {
+            GraphicsObjectDestroy(&mo->nodes[i].models[j].graphObj);
+        }
+
+        free(mo->nodes[i].models);
+    }
+
+    for(int i=0; i < glTF->num_anims;i++)
+    {
+        for(int j=0;j < glTF->animations[i].num_channels;j++)
+        {
+            free(glTF->animations[i].channels[j].keyframes);
+        }
+        free(glTF->animations[i].channels);
+    }
+
+    for(int i=0; i < glTF->num_nodes;i++)
+    {
+        for(int j=0;j < glTF->nodes[i].num_mesh;j++)
+        {
+            free(glTF->nodes[i].mesh[j]->instance_node_indices);
+            free(glTF->nodes[i].mesh[j]);
+        }
+        free(glTF->nodes[i].mesh);
+    }
+
+    free(glTF->nodes);
+    free(glTF->joint_mats);
+    free(glTF->animations);
+    free(glTF);
+    free(mo->nodes);
+}
+
+void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam dParam){
 
   ModelObject3D *mo = (ModelObject3D *)ptr;
 
@@ -544,11 +628,36 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
   GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
   GameObjectSetCleanFunc(mo, (void *)ModelClean);
   GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
-  GameObjectSetDestroyFunc(mo, (void *)ModelDestroy);
+  GameObjectSetDestroyFunc(mo, (void *)ModelglTFDestroy);
 
   mo->obj = calloc(1, sizeof(glTFStruct));
 
   glTFStruct *glTF = mo->obj;
+
+  glTF->path = path;
+
+  char *some_file[256];
+  ToolsAddStrings(some_file, 256, path, name);
+
+  char *ascii[256];
+  char *binary[256];
+
+  switch (type) {
+      case 0://(models)
+          ToolsAddStrings(ascii, 256, some_file, ".gltf");
+          ToolsAddStrings(binary, 256, some_file, ".bin");
+          break;
+      case 1://(buffers, models)
+          ToolsAddStrings(ascii, 256, some_file, ".gltf");
+          ToolsAddStrings(binary, 256, some_file, ".gltf");
+          break;
+      case 2://(textures, buffers, models)
+          ToolsAddStrings(ascii, 256, some_file, ".glb");
+          ToolsAddStrings(binary, 256, some_file, ".glb");
+          break;
+      default:
+          break;
+  }
 
   cgltf_options options = {0};
   cgltf_data* data = NULL;
@@ -566,8 +675,6 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
 
           int iter = 0;
 
-          void *stbi_point = NULL;
-
           for(int i=0; i < glTF->num_nodes;i++)
           {
 
@@ -584,6 +691,18 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
                   for(int j=0;j < node->num_mesh;j++)
                   {
                       ModelStruct *model = &mo->nodes[iter].models[j];
+                      engine_model_mesh *mesh = node->mesh[j];
+
+                      model->image = mesh->image;
+
+                      if(model->image == NULL)
+                      {
+                          model->image = calloc(1, sizeof(ImageStruct));
+                          int len = strlen(dParam.filePath);
+                          model->image->path = calloc(len, sizeof(char));
+                          memcpy(model->image->path, dParam.filePath, len);
+                          model->image->path[len] = '\0';
+                      }
 
                       model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
@@ -591,18 +710,17 @@ void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam){
 
                       model->graphObj.gItems.perspective = true;
 
-                      GraphicsObjectSetVertex(&model->graphObj, node->mesh[j]->verts, node->mesh[j]->num_verts, node->mesh[j]->indices, node->mesh[j]->num_indices);
+                      GraphicsObjectSetVertex(&model->graphObj, mesh->verts, mesh->num_verts, mesh->indices, mesh->num_indices);
 
-                      if(node->mesh[j]->num_verts > 0){
+                      if(mesh->num_verts > 0){
                           BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(ModelVertex3D));
                       }
 
-                      if(node->mesh[j]->num_indices > 0){
-                          BuffersCreateIndex(&model->graphObj.shape.iParam);
+                      if(mesh->num_indices > 0){
+                          BuffersCreateIndex(&model->graphObj.shape.iParam, sizeof(uint32_t));
                       }
 
-
-                      stbi_point = ModelDefaultInit(model, dParam, stbi_point);
+                      ModelDefaultInit(model, dParam);
                   }
 
                   iter++;

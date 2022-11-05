@@ -101,7 +101,24 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
-    ImageAddTexture(&img->widget.go.graphObj.local, dParam.filePath, NULL);
+    img->widget.go.image = calloc(1, sizeof(ImageStruct));
+
+    if(strlen(dParam.filePath) != 0)
+    {
+        int len = strlen(dParam.filePath);
+        img->widget.go.image->path = calloc(len, sizeof(char));
+        memcpy(img->widget.go.image->path, dParam.filePath, len);
+        img->widget.go.image->path[len] = '\0';
+        //img->widget.go.image->buffer = ToolsLoadImageFromFile(&img->widget.go.image->size, dParam.filePath);
+    }
+    else
+    {
+        img->widget.go.image->buffer = _binary_textures_default_error_png_start;
+        img->widget.go.image->size = _binary_textures_default_error_png_size;
+    }
+
+
+    ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
 
     GameObject2DCreateDrawItems(img);
 

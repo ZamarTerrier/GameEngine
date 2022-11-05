@@ -100,11 +100,10 @@ extern void *current_entry;
 extern vec2 viewSize;
 extern vec2 diffSize;
 
-extern int indSphereCount, vertSphereCount;
-extern int indPlaneCount, vertPlaneCount;
-extern int indConeCount, vertConeCount;
-
 extern char *rootDirPath;
+
+extern ImageStruct *e_images;
+extern int e_num_images;
 
 extern char _binary_shaders_model_frag_spv_end;
 extern int _binary_shaders_model_frag_spv_size;
@@ -155,4 +154,9 @@ extern char _binary_fonts_fantazer_normal_ttf_start;
 extern char _binary_fonts_arial_ttf_end;
 extern int _binary_fonts_arial_ttf_size;
 extern char _binary_fonts_arial_ttf_start;
+
+extern char _binary_textures_default_error_png_end;
+extern int _binary_textures_default_error_png_size;
+extern char _binary_textures_default_error_png_start;
+
 #endif

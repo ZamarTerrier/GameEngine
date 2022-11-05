@@ -95,7 +95,8 @@ HEADERS += \
     ufbx.h \
     window.h
 
-OBJECTS += bin/shaders/gui/widget_frag.o \
+OBJECTS += \
+    bin/shaders/gui/widget_frag.o \
     bin/shaders/gui/widget_vert.o \
     bin/shaders/gui/widget_window_frag.o \
     bin/shaders/gui/widget_window_vert.o \
@@ -109,6 +110,7 @@ OBJECTS += bin/shaders/gui/widget_frag.o \
     bin/shaders/sprite/vert.o \
     bin/shaders/3d_object/frag.o \
     bin/shaders/3d_object/vert.o \
+    bin/textures/default/error.o \
 
 DEFINES += CGLTF_IMPLEMENTATION STB_IMAGE_IMPLEMENTATION MATH_IMPLEMENTATION TINYOBJ_LOADER_C_IMPLEMENTATION _WIN_BUILD_
 

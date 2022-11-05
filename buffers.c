@@ -92,9 +92,9 @@ void BufferCreateVertex(vertexParam* vert, uint32_t size) {
 
 }
 
-void BuffersCreateIndex(indexParam* ind) {
+void BuffersCreateIndex(indexParam* ind, uint32_t type_size) {
 
-    VkDeviceSize bufferSize = sizeof(uint32_t) * ind->indexesSize;
+    VkDeviceSize bufferSize = type_size * ind->indexesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -199,8 +199,14 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
 void BuffersRecreateUniform(localParam* param){
     for(int i=0;i < param->descrCount;i++){
         if(param->descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            char *path = param->descriptors[i].path;
-            Texture2D tempTexture = createTexture(param->descriptors[i].path, &param->descriptors[i].texture->stbi_info);
+            ShaderBuffer *descriptor = &param->descriptors[i];
+            Texture2D tempTexture;
+
+            if(descriptor->image->size > 0)
+                tempTexture = createTexture(descriptor->image->buffer, descriptor->image->size, 0);
+            else
+                tempTexture = createTexture(descriptor->image->path, 0, 1);
+
             memcpy(param->descriptors[i].texture, &tempTexture, sizeof(Texture2D)) ;
         }
         else

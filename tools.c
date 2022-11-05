@@ -179,7 +179,7 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
             pos.z = 0.5 * j;
 
             verts[vIter].position = pos;
-            verts[vIter].color = (vec3){1.0f / stackCount * i, 0.0f, 1.0f / sectorCount * j};
+            verts[vIter].color = (vec3){1.0f, 1.0f, 1.0f};
             verts[vIter].normal = (vec3){0,1,0};
 
 
@@ -198,6 +198,72 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
         k1 = i * (sectorCount + 1);     // beginning of current stack
         k2 = k1 +  sectorCount + 1 ;      // beginning of next stack
         for(j=0; j < sectorCount; ++j, ++k1, ++k2){
+
+            iParam->indices[it] = k1 + 1;
+            iParam->indices[it + 1] = k2;
+            iParam->indices[it + 2] = k1;
+            it +=3;
+
+            iParam->indices[it] = k1 + 1;
+            iParam->indices[it + 1] = k2 + 1;
+            iParam->indices[it + 2] = k2;
+
+            it +=3;
+
+
+        }
+    }
+}
+
+void InitTerrain3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns, int cell_step){
+
+    if(rows < 4)
+        rows = 4;
+
+    if(colmns < 4)
+        colmns = 4;
+
+    vec3 pos = {0 , 0, 0};
+    vec3 col = {0.3 , 0.1, 0.11};
+
+    int i, j;
+
+    vParam->verticesSize = ((rows + 1) * (colmns + 1)) * 2;
+
+    vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
+
+    int vIter = 0;
+
+    Vertex3D *verts = vParam->vertices;
+
+    for(i=0; i <= rows;i++){
+        for(j=0; j <= colmns;j++){
+
+            vIter = i * colmns + (i > 0 ? j + i : j);
+
+            pos.x = 0.5 * i;
+            pos.z = 0.5 * j;
+
+            verts[vIter].position = pos;
+            verts[vIter].color = (vec3){1.0f, 1.0f, 1.0f};
+            verts[vIter].normal = (vec3){0,1,0};
+
+
+            verts[vIter].texCoord = (vec2){(float)i / (colmns / cell_step), (float)j / (rows / cell_step)};
+
+        }
+    }
+
+    iParam->indexesSize = (rows * rows) * 2 * 6 + 6;
+
+    iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
+
+    int k1, k2, it = 0, tt = 0;
+
+    for(i=0; i < rows;i++){
+        k1 = i * (rows + 1);     // beginning of current stack
+        k2 = k1 +  rows + 1 ;      // beginning of next stack
+        for(j=0; j < rows; ++j, ++k1, ++k2){
 
             iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
@@ -1209,4 +1275,34 @@ bool ToolsCmpStrings(char *in, char *s1){
         return true;
 
     return false;
+}
+
+void* ToolsLoadImageFromFile(size_t* len, char *filepath)
+{
+    FILE* fd;
+    int size;
+
+    fd = fopen(filepath, "r");
+    if (fd == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+
+
+    fseek(fd, 0L, SEEK_END);
+    size = ftell(fd);
+
+    char *buff = (char *)calloc(size, sizeof(char));
+
+    fseek(fd, 0L, SEEK_SET);
+
+    fread(buff, sizeof(char), size, fd);
+
+    fflush(fd);
+
+    fclose(fd);
+
+    *len = size;
+
+    return buff;
 }

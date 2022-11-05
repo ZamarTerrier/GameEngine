@@ -65,7 +65,7 @@ void GameObject3DDefaultDraw(GameObject3D* go){
         }
 
         if(go->graphObj.shape.iParam.indexesSize > 0){
-            BuffersCreateIndex(&go->graphObj.shape.iParam);
+            BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
         }
 
         go->graphObj.shape.rebuild = false;
