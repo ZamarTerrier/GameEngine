@@ -155,8 +155,4 @@ extern char _binary_fonts_arial_ttf_end;
 extern int _binary_fonts_arial_ttf_size;
 extern char _binary_fonts_arial_ttf_start;
 
-extern char _binary_textures_default_error_png_end;
-extern int _binary_textures_default_error_png_size;
-extern char _binary_textures_default_error_png_start;
-
 #endif

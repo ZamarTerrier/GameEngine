@@ -29,14 +29,10 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
     {
         so->go.image->path = sParam.texturePath;
         so->go.image->buffer = ToolsLoadImageFromFile(&so->go.image->size, sParam.texturePath);
-    }
-    else
-    {
-        so->go.image->buffer = _binary_textures_default_error_png_start;
-        so->go.image->size = _binary_textures_default_error_png_size;
+
+        ImageAddTexture(&so->go.graphObj.local, so->go.image);
     }
 
-    ImageAddTexture(&so->go.graphObj.local, so->go.image);
 
     GameObject2DCreateDrawItems(so);
 

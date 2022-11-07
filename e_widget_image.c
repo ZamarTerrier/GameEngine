@@ -110,15 +110,9 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
         memcpy(img->widget.go.image->path, dParam.filePath, len);
         img->widget.go.image->path[len] = '\0';
         //img->widget.go.image->buffer = ToolsLoadImageFromFile(&img->widget.go.image->size, dParam.filePath);
-    }
-    else
-    {
-        img->widget.go.image->buffer = _binary_textures_default_error_png_start;
-        img->widget.go.image->size = _binary_textures_default_error_png_size;
+        ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
     }
 
-
-    ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
 
     GameObject2DCreateDrawItems(img);
 

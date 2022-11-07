@@ -49,7 +49,7 @@ void TextureImageCreate(const char* source, int size, Texture2D *texture, bool f
             e_images = realloc(e_images, e_num_images * sizeof(ImageStruct));
 
             int len = strlen(source);
-            e_images[e_num_images - 1].path = calloc(len, sizeof(char));
+            e_images[e_num_images - 1].path = calloc(len + 1, sizeof(char));
             memcpy(e_images[e_num_images - 1].path, source, len);
             e_images[e_num_images - 1].path[len] = '\0';
             e_images[e_num_images - 1].texWidth = texWidth;

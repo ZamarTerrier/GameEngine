@@ -972,6 +972,8 @@ int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int 
             t = (float)i / sectorCount;
 
             verts[vIter].texCoord = (vec2){s, t};
+
+            verts[vIter].color = (vec3){1,1,1};
         }
     }
 

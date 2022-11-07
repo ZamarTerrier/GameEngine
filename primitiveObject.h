@@ -1,6 +1,8 @@
 #ifndef PRIMITIVEOBJECT_H
 #define PRIMITIVEOBJECT_H
 
+#include "stdinclude.h"
+
 #include "gameObject3D.h"
 
 enum PrimitiveObjectType{
@@ -51,6 +53,6 @@ typedef struct{
     int stackCount;
 } ConeParam;
 
-void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam dParam, char type, void *params);
+void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *params);
 
 #endif // PRIMITIVEOBJECT_H
