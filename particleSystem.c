@@ -155,14 +155,10 @@ void InitParticle3D(GameObject3D* particle, vec3 position, const char* texturePa
     {
         particle->image->path = texturePath;
         particle->image->buffer = ToolsLoadImageFromFile(&particle->image->size, texturePath);
-    }
-    else
-    {
-        particle->image->buffer = _binary_textures_default_error_png_start;
-        particle->image->size = _binary_textures_default_error_png_size;
+
+        ImageAddTexture(&particle->graphObj.local, particle->image);
     }
 
-    ImageAddTexture(&particle->graphObj.local, particle->image);
 
     GameObject3DCreateDrawItems(particle);
 

@@ -255,7 +255,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         if(image->uri != NULL)
                         {
                             int size = strlen(glTF->path) + strlen(image->uri);
-                            g_mesh->image->path = calloc( size, sizeof(char));
+                            g_mesh->image->path = calloc( size + 1, sizeof(char));
                             ToolsAddStrings(g_mesh->image->path, size, glTF->path, image->uri);
                             g_mesh->image->size = 0;
                             //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
@@ -512,6 +512,9 @@ void Load3DglTFNextFrame(void *ptr, float time)
 {
   ModelObject3D *mo = ptr;
 
+  if(mo->obj == NULL)
+      return;
+
   glTFStruct *glTF = mo->obj;
 
   engine_gltf_anim *anim = glTF->animations > 0 ? &glTF->animations[0] : NULL;
@@ -699,7 +702,7 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
                       {
                           model->image = calloc(1, sizeof(ImageStruct));
                           int len = strlen(dParam.filePath);
-                          model->image->path = calloc(len, sizeof(char));
+                          model->image->path = calloc(len + 1, sizeof(char));
                           memcpy(model->image->path, dParam.filePath, len);
                           model->image->path[len] = '\0';
                       }

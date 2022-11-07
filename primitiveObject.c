@@ -41,7 +41,7 @@ void SkyBoxUpdate(GameObject3D* go) {
 
 }
 
-void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam dParam, char type, void *params){
+void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *params){
 
     GameObject3DInit(go);
 
@@ -82,7 +82,7 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
             break;
         case ENGINE_PRIMITIVE3D_SKYBOX:
             SphereGenerator3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
-            GameObjectSetUpdateFunc(go, (void *)SkyBoxUpdate);
+            break;
         case ENGINE_PRIMITIVE3D_TERRAIN:
             InitTerrain3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, tParam->rows, tParam->colmns, tParam->cell_step);
             break;
@@ -93,29 +93,19 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
     go->graphObj.local.descrCount = 0;
 
     BuffersAddUniformObject(&go->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-
-    if(type != ENGINE_PRIMITIVE3D_SKYBOX)
-        BuffersAddUniformObject(&go->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-    else
-        BuffersAddUniformObject(&go->graphObj.local, sizeof(SomeData_e), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&go->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     go->image = calloc(1, sizeof(ImageStruct));
 
     if(strlen(dParam.filePath) != 0)
     {
         int len = strlen(dParam.filePath);
-        go->image->path = calloc(len, sizeof(char));
+        go->image->path = calloc(len + 1, sizeof(char));
         memcpy(go->image->path, dParam.filePath, len);
         go->image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+        ImageAddTexture(&go->graphObj.local, go->image);
     }
-    else
-    {
-        go->image->buffer = _binary_textures_default_error_png_start;
-        go->image->size = _binary_textures_default_error_png_size;
-    }
-
-    ImageAddTexture(&go->graphObj.local, go->image);
 
     GameObject3DCreateDrawItems(&go->graphObj);
 
@@ -136,13 +126,12 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
 
     PipelineCreateGraphics(&go->graphObj);
 
-    if(type != ENGINE_PRIMITIVE3D_SKYBOX)
-        Transform3DSetScale(go, size);
-    else{
+    if(type == ENGINE_PRIMITIVE3D_SKYBOX)
+    {
+        vec3 size;
         size.x = -500;
         size.y = -500;
         size.z = -500;
         Transform3DSetScale(go, size);
     }
-    Transform3DSetPosition(go, position);
 }

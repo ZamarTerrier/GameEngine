@@ -406,6 +406,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath, const ch
     setting.viewport.height = (float) swapChainExtent.height;
     setting.viewport.minDepth = 0.0f;
     setting.viewport.maxDepth = 1.0f;
+    setting.fromFile = 1;
     TextObjectAddSettingPipeline(to, setting);
 
     GameObject2DCreateDrawItems(to);
