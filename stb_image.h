@@ -1164,6 +1164,8 @@ static void *stbi__load_main(stbi__context *s, int *x, int *y, int *comp, int re
       return stbi__tga_load(s,x,y,comp,req_comp, ri);
    #endif
 
+   printf("unknown image type | Image not of any known type, or corrupt\n");
+
    return stbi__errpuc("unknown image type", "Image not of any known type, or corrupt");
 }
 

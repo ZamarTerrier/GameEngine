@@ -18,11 +18,12 @@ shader readFile(const char* filename);
 
 VkShaderModule createShaderModule(shader shdr);
 
-void InitPlane3D(vertexParam3D *vParam, indexParam *iParam,int rows, int colmns);
-int SphereGenerator3D(vertexParam3D *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
-void ConeGenerator(vertexParam3D *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount);
-int IcoSphereGenerator(vertexParam3D *vParam, indexParam *iParam,float radius);
-int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int vertexCountPerRow);
+void InitPlane3D(vertexParam *vParam, indexParam *iParam,int rows, int colmns);
+void InitTerrain3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns, int cell_step);
+int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
+void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount);
+int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius);
+int Cubesphere(vertexParam *vParam, indexParam *iParam, float radius,int vertexCountPerRow);
 
 float dot_grad(int hash, float xf);
 float dot_grad2(int hash, float xf, float yf);
@@ -39,5 +40,7 @@ float cosWithRange(float value, float minV, float range);
 
 void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2);
 bool ToolsCmpStrings(char *in, char *s1);
+
+void* ToolsLoadImageFromFile(size_t* len, char *filepath);
 
 #endif // TOOLS_H

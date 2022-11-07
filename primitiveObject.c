@@ -48,18 +48,19 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
     PlaneParam *pParam = (PlaneParam *)params;
     SphereParam *sParam = (SphereParam *)params;
     CubeSphereParam *csParam = (CubeSphereParam *)params;
-    ConeParam *cParam = (ConeParam *)params;
+    ConeParam *cParam = (ConeParam *)params;    
+    TerrainParam *tParam = (TerrainParam *)params;
 
     switch(type)
     {
         case ENGINE_PRIMITIVE3D_LINE :
-            GraphicsObject3DSetVertex(&go->graphObj, lineVert, 2, NULL, 0);
+            GraphicsObjectSetVertex(&go->graphObj, lineVert, 2, NULL, 0);
             break;
         case ENGINE_PRIMITIVE3D_TRIANGLE :
-            GraphicsObject3DSetVertex(&go->graphObj, triVert, 3, triIndx, 3);
+            GraphicsObjectSetVertex(&go->graphObj, triVert, 3, triIndx, 3);
             break;
         case ENGINE_PRIMITIVE3D_QUAD :
-            GraphicsObject3DSetVertex(&go->graphObj, quadVert, 4, quadIndx, 6);
+            GraphicsObjectSetVertex(&go->graphObj, quadVert, 4, quadIndx, 6);
             break;
         case ENGINE_PRIMITIVE3D_PLANE :
             InitPlane3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
@@ -82,6 +83,8 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
         case ENGINE_PRIMITIVE3D_SKYBOX:
             SphereGenerator3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
             GameObjectSetUpdateFunc(go, (void *)SkyBoxUpdate);
+        case ENGINE_PRIMITIVE3D_TERRAIN:
+            InitTerrain3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, tParam->rows, tParam->colmns, tParam->cell_step);
             break;
     }
 
@@ -96,9 +99,23 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
     else
         BuffersAddUniformObject(&go->graphObj.local, sizeof(SomeData_e), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
+    go->image = calloc(1, sizeof(ImageStruct));
 
     if(strlen(dParam.filePath) != 0)
-        ImageAddTexture(&go->graphObj.local, dParam.filePath, NULL);
+    {
+        int len = strlen(dParam.filePath);
+        go->image->path = calloc(len, sizeof(char));
+        memcpy(go->image->path, dParam.filePath, len);
+        go->image->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+    else
+    {
+        go->image->buffer = _binary_textures_default_error_png_start;
+        go->image->size = _binary_textures_default_error_png_size;
+    }
+
+    ImageAddTexture(&go->graphObj.local, go->image);
 
     GameObject3DCreateDrawItems(&go->graphObj);
 
@@ -108,10 +125,10 @@ void PrimitiveObjectInit(GameObject3D *go, vec3 size, vec3 position, DrawParam d
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_model_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
-        setting.fragShader = &_binary_shaders_model_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
+        setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
+        setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
         setting.fromFile = 0;
     }
 

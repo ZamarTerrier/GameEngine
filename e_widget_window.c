@@ -154,7 +154,7 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
 
     GameObject2DInit(&widget->go);
 
-    GraphicsObject2DSetVertex(&widget->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&widget->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(&widget->go, (void *)WindowWidgetUniformUpdate);
 

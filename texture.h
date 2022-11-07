@@ -6,17 +6,9 @@
 #include "e_resource.h"
 #include "tools.h"
 
-typedef struct{
-    int texWidth;
-    int texHeight;
-    int texChannels;
-    bool link;
-    void* pixels;
-} STBIStruct;
+Texture2D createTexture(const char* source, int size, bool from_file);
 
-Texture2D createTexture(const char* file, void* stbi_info);
-
-STBIStruct *TextureImageCreate(const char* file, Texture2D *texture, STBIStruct *stbi_info);
+void TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file);
 
 void createTextureImageView() ;
 
@@ -42,9 +34,9 @@ void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t 
 
 void copyImage(VkCommandBuffer cmdBuffer, VkImage srcImageId, VkImage dstImageId, uint32_t width, uint32_t height);
 
-void* ImageAddTexture(localParam *local, const char* file, void *stbi_info);
+void ImageAddTexture(localParam *local, ImageStruct *image);
 
-void changeTexture(localParam *local, int elem, const char* file);
+void changeTexture(localParam *local, int elem, const char* source, int size);
 
 void destroyTexture(Texture2D* texture);
 

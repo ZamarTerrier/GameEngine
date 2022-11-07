@@ -61,11 +61,11 @@ void GameObject3DDefaultDraw(GameObject3D* go){
         vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
-            createVertexBuffer3D(&go->graphObj.shape.vParam);
+            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex3D));
         }
 
         if(go->graphObj.shape.iParam.indexesSize > 0){
-            createIndexBuffer(&go->graphObj.shape.iParam);
+            BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
         }
 
         go->graphObj.shape.rebuild = false;
@@ -157,6 +157,7 @@ VkVertexInputBindingDescription GameObject3DGetBindingDescription() {
 
     return bindingDescription;
 }
+
 
 void GameObject3DDestroy(GameObject3D* go){
 

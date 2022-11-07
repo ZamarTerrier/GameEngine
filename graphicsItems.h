@@ -13,7 +13,6 @@ typedef struct{
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
-    void *stbi_info;
 } Texture2D;
 
 typedef struct{
@@ -32,14 +31,7 @@ typedef struct{
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     uint32_t verticesSize;
-    Vertex3D* vertices;
-} vertexParam3D;
-
-typedef struct{
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    uint32_t verticesSize;
-    Vertex2D* vertices;
+    void* vertices;
 } vertexParam;
 
 typedef struct{
@@ -70,14 +62,6 @@ typedef struct{
 } Shape;
 
 typedef struct{
-    indexParam iParam;
-    vertexParam3D vParam;
-    triangeParam tParam;
-    bool rebuild;
-} Shape3D;
-
-
-typedef struct{
     VkBuffer* uniformBuffers;
     VkDeviceMemory* uniformBuffersMemory;
     VkDeviceSize size;
@@ -90,7 +74,7 @@ typedef struct{
     VkShaderStageFlags stageflag;
     uint32_t size;
     VkDeviceSize buffsize;
-    char path[256];
+    ImageStruct *image;
 } ShaderBuffer;
 
 typedef struct{

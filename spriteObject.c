@@ -18,13 +18,25 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
         }
     }
 
-    GraphicsObject2DSetVertex(&so->go.graphObj, verts, 4, planeIndx, 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, 4, planeIndx, 6);
 
     GraphicsObjectSetShadersPath(&so->go.graphObj, sParam.vertShader, sParam.fragShader);
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
+    so->go.image = calloc(1, sizeof(ImageStruct));
+
     if(strlen(sParam.texturePath) != 0)
-        ImageAddTexture(&so->go.graphObj.local, sParam.texturePath, NULL);
+    {
+        so->go.image->path = sParam.texturePath;
+        so->go.image->buffer = ToolsLoadImageFromFile(&so->go.image->size, sParam.texturePath);
+    }
+    else
+    {
+        so->go.image->buffer = _binary_textures_default_error_png_start;
+        so->go.image->size = _binary_textures_default_error_png_size;
+    }
+
+    ImageAddTexture(&so->go.graphObj.local, so->go.image);
 
     GameObject2DCreateDrawItems(so);
 

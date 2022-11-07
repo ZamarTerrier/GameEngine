@@ -48,11 +48,11 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
     //-------------------
     //Создаем текстуру шрифта
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     if(strlen(tData->font.fontpath) > 0)
         stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1103, tData->font.cdata); // no guarantee this fits!
@@ -95,7 +95,7 @@ void TextObjectRecreateUniform(TextObject *to){
         if(to->go.graphObj.local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
             to->go.graphObj.local.descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
             to->go.graphObj.local.descriptors[i].uniform->size = to->go.graphObj.local.descriptors[i].buffsize;
-            createUniformBuffer(to->go.graphObj.local.descriptors[i].uniform, i);
+            BuffersCreateUniform(to->go.graphObj.local.descriptors[i].uniform, i);
         }
         else
         {

@@ -39,11 +39,11 @@ void GameObject2DDefaultDraw(GameObject2D* go){
         vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
-            createVertexBuffer2D(&go->graphObj.shape.vParam);
+            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
         }
 
         if(go->graphObj.shape.iParam.indexesSize > 0){
-            createIndexBuffer(&go->graphObj.shape.iParam);
+            BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
         }
 
         go->graphObj.shape.rebuild = false;
@@ -155,8 +155,8 @@ void GameObject2DInit(GameObject2D* go)
 
 vec2 GameObject2DGetSize(GameObject2D* go)
 {
-    vec2 size;
+    /*vec2 size;
     size.x = fabs((go->graphObj.shape.vParam.vertices[1].position.x - go->graphObj.shape.vParam.vertices[3].position.x) * (viewSize.x * diffSize.x)) * go->transform.scale.x;
     size.y = fabs((go->graphObj.shape.vParam.vertices[1].position.y - go->graphObj.shape.vParam.vertices[3].position.y) * (viewSize.y * diffSize.y)) * go->transform.scale.y;
-    return size;
+    return size;*/
 }

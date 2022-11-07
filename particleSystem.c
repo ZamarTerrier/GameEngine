@@ -104,7 +104,7 @@ void ParticleDraw(GameObject3D* go){
     }
 
     if(partCount != 0)
-        GraphicsObject3DSetVertex(&go->graphObj, partVert, partCount, NULL, 0);
+        GraphicsObjectSetVertex(&go->graphObj, partVert, partCount, NULL, 0);
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
 
@@ -149,8 +149,21 @@ void InitParticle3D(GameObject3D* particle, vec3 position, const char* texturePa
     BuffersAddUniformObject(&particle->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&particle->graphObj.local, sizeof(DataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
+    particle->image = calloc(1, sizeof(ImageStruct));
 
-    ImageAddTexture(&particle->graphObj.local, texturePath, NULL);
+    if(strlen(texturePath) != 0)
+    {
+        particle->image->path = texturePath;
+        particle->image->buffer = ToolsLoadImageFromFile(&particle->image->size, texturePath);
+    }
+    else
+    {
+        particle->image->buffer = _binary_textures_default_error_png_start;
+        particle->image->size = _binary_textures_default_error_png_size;
+    }
+
+    ImageAddTexture(&particle->graphObj.local, particle->image);
+
     GameObject3DCreateDrawItems(particle);
 
     PipelineSetting setting;

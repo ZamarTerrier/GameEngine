@@ -114,7 +114,7 @@ void TextWidgetRecreateUniform(EWidgetText *wt){
         if(wt->widget.go.graphObj.local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
             wt->widget.go.graphObj.local.descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
             wt->widget.go.graphObj.local.descriptors[i].uniform->size = wt->widget.go.graphObj.local.descriptors[i].buffsize;
-            createUniformBuffer(wt->widget.go.graphObj.local.descriptors[i].uniform, i);
+            BuffersCreateUniform(wt->widget.go.graphObj.local.descriptors[i].uniform, i);
         }
         else
         {
@@ -174,7 +174,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     GameObject2DInit(wt);
 
-    GraphicsObject2DSetVertex(&wt->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&wt->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(wt, (void *)TextWidgetUpdateUniformBufferDefault);
     GameObjectSetDrawFunc(wt, (void *)TextWidgetDrawDefault);

@@ -121,7 +121,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
     GameObject2DInit(&ew->go);
 
-    GraphicsObject2DSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(&ew->go, (void *)WidgetUniformUpdate);
 

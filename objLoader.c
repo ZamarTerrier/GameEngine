@@ -40,7 +40,7 @@ static void CalcNormal(float N[3], float v0[3], float v1[3], float v2[3]) {
   }
 }
 
-void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
+void ParseSomeStruct(ModelObject3D *mo, ModelVertex3D *vertexs){
 
     tinyobj_material_t* materials = NULL;
     size_t face_offset = 0;
@@ -143,16 +143,20 @@ void ParseSomeStruct(ModelObject3D *mo, Vertex3D *vertexs){
                 vertexs[3 * i + k].normal.y = n[k][1];
                 vertexs[3 * i + k].normal.z = n[k][2];
 
-                if (obj->attrib.material_ids[i] >= 0) {
+                /*if (obj->attrib.material_ids[i] >= 0) {
                   int matidx = obj->attrib.material_ids[i];
                   vertexs[3 * i + k].color.x = materials[matidx].diffuse[0];
                   vertexs[3 * i + k].color.y = materials[matidx].diffuse[1];
                   vertexs[3 * i + k].color.z = materials[matidx].diffuse[2];
                 }else {
-                    /*vertexs[3 * i + k].color.x = n[k][0];
+                    vertexs[3 * i + k].color.x = n[k][0];
                     vertexs[3 * i + k].color.y = n[k][1];
-                    vertexs[3 * i + k].color.z = n[k][2];*/
-                }
+                    vertexs[3 * i + k].color.z = n[k][2];
+                }*/
+
+                vertexs[3 * i + k].color.x = 1.0f;
+                vertexs[3 * i + k].color.y = 1.0f;
+                vertexs[3 * i + k].color.z = 1.0f;
 
                 /**/
 
@@ -247,54 +251,64 @@ void DestroyOBJModel(ModelObject3D *mo){
     tinyobj_attrib_free(&obj->attrib);
     tinyobj_shapes_free(obj->shapes,  obj->num_shapes);
     tinyobj_materials_free(obj->materials, obj->num_materials);
-    GraphicsObjectDestroy(&mo->models[0].graphObj);
+    free(mo->obj);
+
+    GraphicsObjectDestroy(&mo->nodes[0].models[0].graphObj);
+    free(mo->nodes[0].models);
+    free(mo->nodes);
 }
 
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
-    GameObjectSetUpdateFunc(mo, (void *)ModelDefaultUpdate);
-    GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
-    GameObjectSetCleanFunc(mo, (void *)ModelClean);
-    GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
-    GameObjectSetDestroyFunc(mo, (void *)DestroyOBJModel);
+  Transform3DInit(&mo->transform);
 
-    mo->obj = (OBJStruct *) calloc(1, sizeof(OBJStruct));
-    mo->num_models = 1;
+  GameObjectSetUpdateFunc(mo, (void *)ModelDefaultUpdate);
+  GameObjectSetDrawFunc(mo, (void *)ModelDefaultDraw);
+  GameObjectSetCleanFunc(mo, (void *)ModelClean);
+  GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
+  GameObjectSetDestroyFunc(mo, (void *)DestroyOBJModel);
 
-    OBJStruct *obj = mo->obj;
+  mo->obj = (OBJStruct *) calloc(1, sizeof(OBJStruct));
 
-    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-    tinyobj_parse_obj(&obj->attrib, &obj->shapes, &obj->num_materials, &obj->materials, &obj->num_materials, filepath, (void *)get_file_data, NULL, flags);
+  OBJStruct *obj = mo->obj;
 
-    mo->models = calloc(1, sizeof(ModelStruct));
+  unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
+  tinyobj_parse_obj(&obj->attrib, &obj->shapes, &obj->num_materials, &obj->materials, &obj->num_materials, filepath, (void *)get_file_data, NULL, flags);
 
-    mo->models->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+  mo->nodes = calloc(1, sizeof(ModelNode));
+  mo->num_draw_nodes = 1;
 
-    Transform3DInit(&mo->models->transform);
-    GraphicsObject3DInit(&mo->models->graphObj);
+  mo->nodes[0].models = calloc(1, sizeof(ModelStruct));
+  mo->nodes[0].num_models = 1;
 
-    mo->models->graphObj.gItems.perspective = true;
+  ModelStruct *model = &mo->nodes[0].models[0];
 
-    mo->models->graphObj.shape.vParam.vertices = (Vertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(Vertex3D));
-    mo->models->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
+  model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
-    ParseSomeStruct(mo, mo->models[0].graphObj.shape.vParam.vertices );
+  GraphicsObjectModel3DInit(&model->graphObj);
 
-    mo->models->graphObj.shape.vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
-    mo->models->graphObj.shape.iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
+  model->graphObj.gItems.perspective = true;
 
-    for(int i=0; i < mo->models->graphObj.shape.iParam.indexesSize;i++)
-        mo->models->graphObj.shape.iParam.indices[i] = i;
+  model->graphObj.shape.vParam.vertices = (ModelVertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(ModelVertex3D));
+  model->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
 
-    if(mo->models->graphObj.shape.vParam.verticesSize > 0){
-        createVertexBuffer3D(&mo->models->graphObj.shape.vParam);
-    }
+  ParseSomeStruct(mo, model->graphObj.shape.vParam.vertices );
 
-    if(mo->models->graphObj.shape.iParam.indexesSize > 0){
-        createIndexBuffer(&mo->models->graphObj.shape.iParam);
-    }
+  model->graphObj.shape.vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
+  model->graphObj.shape.iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
 
-    ModelDefaultInit(mo->models, dParam, NULL);
+  for(int i=0; i < model->graphObj.shape.iParam.indexesSize;i++)
+      model->graphObj.shape.iParam.indices[i] = i;
+
+  if(model->graphObj.shape.vParam.verticesSize > 0){
+      BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(ModelVertex3D));
+  }
+
+  if(model->graphObj.shape.iParam.indexesSize > 0){
+      BuffersCreateIndex(&model->graphObj.shape.iParam, sizeof(uint32_t));
+  }
+
+  ModelDefaultInit(model, dParam);
 }
 
 

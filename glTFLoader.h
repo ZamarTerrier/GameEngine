@@ -27,11 +27,12 @@ typedef struct{
 } engine_gltf_anim;
 
 typedef struct{
-    char *name;
+    char name[256];
     int id_node;
     int id_parent;
-    engine_mesh *mesh;
     char isModel;
+    engine_model_mesh **mesh;
+    uint32_t num_mesh;
     mat4 global_matrix;
     mat4 local_matrix;
 } engine_gltf_node;
@@ -42,14 +43,18 @@ typedef struct{
     engine_gltf_anim *animations;
     uint32_t num_anims;
 
+    join_mat_struct *joint_mats;
+    uint32_t num_join_mats;
 
     engine_gltf_node *nodes;
     uint32_t num_nodes;
 
     uint32_t num_meshes;
+
+    char *path;
 } glTFStruct;
 
 void Load3DglTFNextFrame(void *ptr, float time);
-void Load3DglTFModel(void *ptr, char *ascii, char *binary, DrawParam dParam);
+void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam dParam);
 
 #endif // GLTFLOADER_H

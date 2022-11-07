@@ -6,24 +6,23 @@
 #include "e_resource.h"
 #include "tools.h"
 
-void createFramebuffers();
+void BuffersCreateFramebuffers();
 
-void createCommandPool();
+void BuffersCreateCommandPool();
 
-void createCommandBuffers();
+void BuffersCreateCommand();
 
-void createVertexBuffer3D(vertexParam3D* vert);
-void createVertexBuffer2D(vertexParam* arg);
+void BufferCreateVertex(vertexParam* vert, uint32_t size);
 
-void createIndexBuffer(indexParam* arg);
+void BuffersCreateIndex(indexParam* arg, uint32_t type_size);
 
-void createUniformBuffer(UniformStruct* uniform, int size);
+void BuffersCreateUniform(UniformStruct* uniform, int size);
 
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory);
+void BuffersCreate(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory);
 
-void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+void BuffersCopy(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType type, VkShaderStageFlags flags);
 void BuffersRecreateUniform(localParam* param);

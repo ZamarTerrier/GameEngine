@@ -155,7 +155,7 @@ VkShaderModule createShaderModule(shader shdr) {
     return shaderModule;
 }
 
-void InitPlane3D(vertexParam3D *vParam, indexParam *iParam, int stackCount, int sectorCount){
+void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int sectorCount){
 
     vec3 pos = {0 , 0, 0};
     vec3 col = {0.3 , 0.1, 0.11};
@@ -168,6 +168,8 @@ void InitPlane3D(vertexParam3D *vParam, indexParam *iParam, int stackCount, int 
 
     int vIter = 0;
 
+    Vertex3D *verts = vParam->vertices;
+
     for(i=0; i <= stackCount;i++){
         for(j=0; j <= sectorCount;j++){
 
@@ -176,12 +178,12 @@ void InitPlane3D(vertexParam3D *vParam, indexParam *iParam, int stackCount, int 
             pos.x = 0.5 * i;
             pos.z = 0.5 * j;
 
-            vParam->vertices[vIter].position = pos;
-            vParam->vertices[vIter].color = (vec3){1.0f / stackCount * i, 0.0f, 1.0f / sectorCount * j};
-            vParam->vertices[vIter].normal = (vec3){0,1,0};
+            verts[vIter].position = pos;
+            verts[vIter].color = (vec3){1.0f, 1.0f, 1.0f};
+            verts[vIter].normal = (vec3){0,1,0};
 
 
-            vParam->vertices[vIter].texCoord = (vec2){(float)i / sectorCount, (float)j / stackCount};
+            verts[vIter].texCoord = (vec2){(float)i / sectorCount, (float)j / stackCount};
 
         }
     }
@@ -196,6 +198,72 @@ void InitPlane3D(vertexParam3D *vParam, indexParam *iParam, int stackCount, int 
         k1 = i * (sectorCount + 1);     // beginning of current stack
         k2 = k1 +  sectorCount + 1 ;      // beginning of next stack
         for(j=0; j < sectorCount; ++j, ++k1, ++k2){
+
+            iParam->indices[it] = k1 + 1;
+            iParam->indices[it + 1] = k2;
+            iParam->indices[it + 2] = k1;
+            it +=3;
+
+            iParam->indices[it] = k1 + 1;
+            iParam->indices[it + 1] = k2 + 1;
+            iParam->indices[it + 2] = k2;
+
+            it +=3;
+
+
+        }
+    }
+}
+
+void InitTerrain3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns, int cell_step){
+
+    if(rows < 4)
+        rows = 4;
+
+    if(colmns < 4)
+        colmns = 4;
+
+    vec3 pos = {0 , 0, 0};
+    vec3 col = {0.3 , 0.1, 0.11};
+
+    int i, j;
+
+    vParam->verticesSize = ((rows + 1) * (colmns + 1)) * 2;
+
+    vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
+
+    int vIter = 0;
+
+    Vertex3D *verts = vParam->vertices;
+
+    for(i=0; i <= rows;i++){
+        for(j=0; j <= colmns;j++){
+
+            vIter = i * colmns + (i > 0 ? j + i : j);
+
+            pos.x = 0.5 * i;
+            pos.z = 0.5 * j;
+
+            verts[vIter].position = pos;
+            verts[vIter].color = (vec3){1.0f, 1.0f, 1.0f};
+            verts[vIter].normal = (vec3){0,1,0};
+
+
+            verts[vIter].texCoord = (vec2){(float)i / (colmns / cell_step), (float)j / (rows / cell_step)};
+
+        }
+    }
+
+    iParam->indexesSize = (rows * rows) * 2 * 6 + 6;
+
+    iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
+
+    int k1, k2, it = 0, tt = 0;
+
+    for(i=0; i < rows;i++){
+        k1 = i * (rows + 1);     // beginning of current stack
+        k2 = k1 +  rows + 1 ;      // beginning of next stack
+        for(j=0; j < rows; ++j, ++k1, ++k2){
 
             iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
@@ -407,7 +475,7 @@ void subdivideVerticesFlat(vertexParam *vParam, indexParam *iParam, int subdivis
 
 }
 
-int IcoSphereGenerator(vertexParam3D *vParam, indexParam *iParam,float radius)
+int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius)
 {
 
     vParam->verticesSize = 60;
@@ -626,7 +694,7 @@ void addTexCoord(Vertex3D* verts, float s, float t, int current)
     verts[current].texCoord.y = t;
 }
 
-int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int vertexCountPerRow){
+int Cubesphere(vertexParam *vParam, indexParam *iParam, float radius,int vertexCountPerRow){
     // generate unit-length verties in +X face
         float* unitVertices = getUnitPositiveX(vertexCountPerRow);
 
@@ -716,12 +784,12 @@ int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int verte
         // build -X face by negating x and z values
         startIndex = vParam->verticesSize;
         vParam->verticesSize = vParam->verticesSize + vertexSize;
-        vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
+        Vertex3D *verts = vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
         memset(vParam->vertices + startIndex, +  0, sizeof(Vertex3D) * vertexSize);
         for(int i = 0; i < vertexSize; i ++)
         {
-            addVertex(vParam->vertices, -vParam->vertices[i].position.x, vParam->vertices[i].position.y, -vParam->vertices[i].position.z, curr);
-            addTexCoord(vParam->vertices, vParam->vertices[i].texCoord.x, vParam->vertices[i].texCoord.y, curr);
+            addVertex(verts, -verts[i].position.x, verts[i].position.y, -verts[i].position.z, curr);
+            addTexCoord(verts, verts[i].texCoord.x, verts[i].texCoord.y, curr);
             //addNormal(-normals[i], normals[i+1], -normals[i+2]);
             curr ++;
         }
@@ -745,12 +813,12 @@ int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int verte
         // build +Y face by swapping x=>y, y=>-z, z=>-x
         startIndex = vParam->verticesSize;
         vParam->verticesSize = vParam->verticesSize + vertexSize;
-        vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
+        verts = vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
         memset(vParam->vertices + startIndex, +  0, sizeof(Vertex3D) * vertexSize);
         for(int i = 0; i < vertexSize; i ++)
         {
-            addVertex(vParam->vertices, -vParam->vertices[i].position.z, vParam->vertices[i].position.x, -vParam->vertices[i].position.y, curr);
-            addTexCoord(vParam->vertices, vParam->vertices[i].texCoord.x, vParam->vertices[i].texCoord.y, curr);
+            addVertex(verts, -verts[i].position.z, verts[i].position.x, -verts[i].position.y, curr);
+            addTexCoord(verts, verts[i].texCoord.x, verts[i].texCoord.y, curr);
             //addNormal(-normals[i+2], normals[i], -normals[i+1]);
             curr ++;
         }
@@ -771,12 +839,12 @@ int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int verte
         // build -Y face by swapping x=>-y, y=>z, z=>-x
         startIndex = vParam->verticesSize;
         vParam->verticesSize = vParam->verticesSize + vertexSize;
-        vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
+        verts = vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
         memset(vParam->vertices + startIndex, +  0, sizeof(Vertex3D) * vertexSize);
         for(int i = 0; i < vertexSize; i ++)
         {
-            addVertex(vParam->vertices, -vParam->vertices[i].position.z, -vParam->vertices[i].position.x, vParam->vertices[i].position.y, curr);
-            addTexCoord(vParam->vertices, vParam->vertices[i].texCoord.x, vParam->vertices[i].texCoord.y, curr);
+            addVertex(verts, -verts[i].position.z, -verts[i].position.x, verts[i].position.y, curr);
+            addTexCoord(verts, verts[i].texCoord.x, verts[i].texCoord.y, curr);
             //addNormal(-normals[i+2], -normals[i], normals[i+1]);
             curr ++;
         }
@@ -800,12 +868,12 @@ int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int verte
         // build +Z face by swapping x=>z, z=>-x
         startIndex = vParam->verticesSize;
         vParam->verticesSize = vParam->verticesSize + vertexSize;
-        vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
+        verts = vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
         memset(vParam->vertices + startIndex, +  0, sizeof(Vertex3D) * vertexSize);
         for(int i = 0; i < vertexSize; i ++)
         {
-            addVertex(vParam->vertices, -vParam->vertices[i].position.z, vParam->vertices[i].position.y, vParam->vertices[i].position.x, curr);
-            addTexCoord(vParam->vertices, vParam->vertices[i].texCoord.x, vParam->vertices[i].texCoord.y, curr);
+            addVertex(verts, -verts[i].position.z, verts[i].position.y, verts[i].position.x, curr);
+            addTexCoord(verts, verts[i].texCoord.x, verts[i].texCoord.y, curr);
             //addNormal(-normals[i+2], normals[i+1], normals[i]);
             curr ++;
         }
@@ -826,12 +894,12 @@ int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int verte
         // build -Z face by swapping x=>-z, z=>x
         startIndex = vParam->verticesSize;
         vParam->verticesSize = vParam->verticesSize + vertexSize;
-        vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
+        verts = vParam->vertices = (Vertex3D *)realloc(vParam->vertices, vParam->verticesSize * sizeof(Vertex3D));
         memset(vParam->vertices + startIndex, +  0, sizeof(Vertex3D) * vertexSize);
         for(int i = 0; i < vertexSize; i ++)
         {
-            addVertex(vParam->vertices, vParam->vertices[i].position.z, vParam->vertices[i].position.y, -vParam->vertices[i].position.x, curr);
-            addTexCoord(vParam->vertices, vParam->vertices[i].texCoord.x, vParam->vertices[i].texCoord.y, curr);
+            addVertex(verts, verts[i].position.z, verts[i].position.y, -verts[i].position.x, curr);
+            addTexCoord(verts, verts[i].texCoord.x, verts[i].texCoord.y, curr);
             //addNormal(normals[i+2], normals[i+1], -normals[i]);
             curr ++;
         }
@@ -856,7 +924,7 @@ int Cubesphere(vertexParam3D *vParam, indexParam *iParam, float radius,int verte
 
 }
 
-int SphereGenerator3D(vertexParam3D *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount){
+int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount){
     float x, y, z, xz;                              // vertex position
     float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
     float s, t;                                     // vertex texCoord
@@ -877,6 +945,8 @@ int SphereGenerator3D(vertexParam3D *vParam, indexParam *iParam,float radius, in
         xz = radius * -cosf(stackAngle);             // r * cos(u)
         y = radius * -sinf(stackAngle);              // r * sin(u)
 
+        Vertex3D *verts = vParam->vertices;
+
         // add (sectorCount+1) vertices per stack
         // the first and last vertices have same position and normal, but different tex coords
         for(int j = 0; j <= sectorCount; ++j)
@@ -888,20 +958,20 @@ int SphereGenerator3D(vertexParam3D *vParam, indexParam *iParam,float radius, in
             // vertex position (x, y, z)
             x = xz * cosf(sectorAngle);             // r * cos(u) * cos(v)
             z = xz * sinf(sectorAngle);             // r * cos(u) * sin(v)
-            vParam->vertices[vIter].position = (vec3){x, y, z};
+            verts[vIter].position = (vec3){x, y, z};
 
             // normalized vertex normal (nx, ny, nz)
             nx = x * lengthInv;
             ny = y * lengthInv;
             nz = z * lengthInv;
-            vParam->vertices[vIter].normal = (vec3){nx, ny, nz};
+            verts[vIter].normal = (vec3){nx, ny, nz};
 
             // vertex tex coord (s, t) range between [0, 1]
 
             s = (float)j / stackCount;
             t = (float)i / sectorCount;
 
-            vParam->vertices[vIter].texCoord = (vec2){s, t};
+            verts[vIter].texCoord = (vec2){s, t};
         }
     }
 
@@ -940,7 +1010,7 @@ int SphereGenerator3D(vertexParam3D *vParam, indexParam *iParam,float radius, in
     return it;
 }
 
-void ConeGenerator(vertexParam3D *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount) {
+void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount) {
 
     vec3 pos = {0,0,0};
 
@@ -954,6 +1024,8 @@ void ConeGenerator(vertexParam3D *vParam, indexParam *iParam, const float height
     vParam->verticesSize = ((stackCount + 1) * (sectorCount + 1)) * 2;
 
     vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
+
+    Vertex3D *verts = vParam->vertices;
 
     int vIter = 0;
     int mulcount = (stackCount + 1) * (sectorCount + 1);
@@ -975,9 +1047,9 @@ void ConeGenerator(vertexParam3D *vParam, indexParam *iParam, const float height
             posit.x = x;
             posit.y = pos.y;
             posit.z = z;
-            vParam->vertices[vIter].position = posit;
-            vParam->vertices[vIter].texCoord = (vec2){(float)i / stackCount, (float)j / sectorCount};
-            vParam->vertices[vIter].color = (vec3){(float)i / stackCount, (float)j / sectorCount, (float)j / sectorCount};
+            verts[vIter].position = posit;
+            verts[vIter].texCoord = (vec2){(float)i / stackCount, (float)j / sectorCount};
+            verts[vIter].color = (vec3){(float)i / stackCount, (float)j / sectorCount, (float)j / sectorCount};
         }
     }
 
@@ -998,9 +1070,9 @@ void ConeGenerator(vertexParam3D *vParam, indexParam *iParam, const float height
             posit.x = x;
             posit.y = pos.y + i * heigInc - height;
             posit.z = z;
-            vParam->vertices[vIter].position = posit;
-            vParam->vertices[vIter].texCoord = (vec2){(float)i / stackCount, (float)j / sectorCount};
-            vParam->vertices[vIter].color = (vec3){(float)i / stackCount, (float)j / sectorCount, (float)j / sectorCount};
+            verts[vIter].position = posit;
+            verts[vIter].texCoord = (vec2){(float)i / stackCount, (float)j / sectorCount};
+            verts[vIter].color = (vec3){(float)i / stackCount, (float)j / sectorCount, (float)j / sectorCount};
         }
     }
 
@@ -1203,4 +1275,34 @@ bool ToolsCmpStrings(char *in, char *s1){
         return true;
 
     return false;
+}
+
+void* ToolsLoadImageFromFile(size_t* len, char *filepath)
+{
+    FILE* fd;
+    int size;
+
+    fd = fopen(filepath, "r");
+    if (fd == NULL) {
+        printf("File Not Found!\n");
+        return -1;
+    }
+
+
+    fseek(fd, 0L, SEEK_END);
+    size = ftell(fd);
+
+    char *buff = (char *)calloc(size, sizeof(char));
+
+    fseek(fd, 0L, SEEK_SET);
+
+    fread(buff, sizeof(char), size, fd);
+
+    fflush(fd);
+
+    fclose(fd);
+
+    *len = size;
+
+    return buff;
 }
