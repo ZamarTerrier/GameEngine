@@ -70,10 +70,10 @@ const Vertex3D quadVert[] = {
 };
 
 const Vertex2D planeVert[] = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {1.0f, 0.0f}},
+    {{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+    {{0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+    {{0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
 };
 
 const Vertex2D projPlaneVert[] = {
@@ -265,5 +265,5 @@ vec2 diffSize = { 1.0f, 1.0f };
 
 char *rootDirPath;
 
-ImageStruct *e_images;
+engine_buffered_image *e_images;
 int e_num_images = 0;

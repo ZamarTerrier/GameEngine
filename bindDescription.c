@@ -93,13 +93,14 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
         for(int j=0;j < params->descrCount;j++)
         {
-            if(params->descriptors[j].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+            ShaderBuffer *descriptor = &params->descriptors[j];
+            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
                 //Дескриптор Юнибафферов
                     unisize ++;
 
-                    bufferInfos[unisize - 1].buffer = params->descriptors[j].uniform->uniformBuffers[i];//Массив юнибавера
+                    bufferInfos[unisize - 1].buffer = descriptor->uniform->uniformBuffers[i];//Массив юнибавера
                     bufferInfos[unisize - 1].offset = 0;
-                    bufferInfos[unisize - 1].range = params->descriptors[j].uniform->size;//рамер юниформ бафера
+                    bufferInfos[unisize - 1].range = descriptor->uniform->size;//рамер юниформ бафера
 
                     descriptorWrites[j].pBufferInfo = &bufferInfos[unisize - 1];
              }else if(params->descriptors[j].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
@@ -107,8 +108,8 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
                     textsize ++;
 
                     imageInfos[textsize - 1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    imageInfos[textsize - 1].imageView = params->descriptors[j].texture->textureImageView;
-                    imageInfos[textsize - 1].sampler = params->descriptors[j].texture->textureSampler;
+                    imageInfos[textsize - 1].imageView = descriptor->texture->textureImageView;
+                    imageInfos[textsize - 1].sampler = descriptor->texture->textureSampler;
 
                     descriptorWrites[j].pImageInfo = &imageInfos[textsize - 1];
             }
@@ -118,7 +119,7 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
             descriptorWrites[j].dstBinding = j;
             descriptorWrites[j].dstArrayElement = 0;
             descriptorWrites[j].descriptorCount = 1;
-            descriptorWrites[j].descriptorType = params->descriptors[j].descrType;
+            descriptorWrites[j].descriptorType = descriptor->descrType;
         }
 
         //--------------------------------------

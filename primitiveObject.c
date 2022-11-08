@@ -95,7 +95,7 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
     BuffersAddUniformObject(&go->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&go->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    go->image = calloc(1, sizeof(ImageStruct));
+    go->image = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(dParam.filePath) != 0)
     {

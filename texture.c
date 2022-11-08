@@ -8,7 +8,8 @@ Texture2D createTexture(const char* source, int size, bool from_file){
 
     Texture2D texture;
 
-    TextureImageCreate(source, size, &texture, from_file);
+    int res = TextureImageCreate(source, size, &texture, from_file);
+
     createTextureImageView(&texture);
     createTextureSampler(&texture);
 
@@ -16,16 +17,15 @@ Texture2D createTexture(const char* source, int size, bool from_file){
 
 }
 
-void TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file) {
+int TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file) {
 
     int texWidth, texHeight, texChannels;
 
+    bool find = false;
     stbi_uc *pixels;
 
     if(from_file)
     {
-        bool find = false;
-
         for(int i=0; i < e_num_images;i++)
         {
             if(ToolsCmpStrings(e_images[i].path, source))
@@ -36,7 +36,6 @@ void TextureImageCreate(const char* source, int size, Texture2D *texture, bool f
                 texChannels = e_images[i].texChannels;
 
                 find = true;
-                break;
             }
         }
 
@@ -46,7 +45,7 @@ void TextureImageCreate(const char* source, int size, Texture2D *texture, bool f
 
             e_num_images++;
 
-            e_images = realloc(e_images, e_num_images * sizeof(ImageStruct));
+            e_images = realloc(e_images, e_num_images * sizeof(engine_buffered_image));
 
             int len = strlen(source);
             e_images[e_num_images - 1].path = calloc(len + 1, sizeof(char));
@@ -59,9 +58,44 @@ void TextureImageCreate(const char* source, int size, Texture2D *texture, bool f
         }
     }
     else
-        pixels = stbi_load_from_memory(source, size, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    {
+
+        for(int i=0; i < e_num_images;i++)
+        {
+            if(ToolsCmpStrings(e_images[i].path, source))
+            {
+                pixels = e_images[i].pixels;
+                texWidth = e_images[i].texWidth;
+                texHeight = e_images[i].texHeight;
+                texChannels = e_images[i].texChannels;
+
+                find = true;
+            }
+        }
+
+        if(!find)
+        {
+            pixels = stbi_load_from_memory(source, size, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+            e_num_images++;
+
+            e_images = realloc(e_images, e_num_images * sizeof(engine_buffered_image));
+
+            int len = strlen(source);
+            e_images[e_num_images - 1].path = calloc(len + 1, sizeof(char));
+            memcpy(e_images[e_num_images - 1].path, source, len);
+            e_images[e_num_images - 1].path[len] = '\0';
+            e_images[e_num_images - 1].texWidth = texWidth;
+            e_images[e_num_images - 1].texChannels = texChannels;
+            e_images[e_num_images - 1].texHeight = texHeight;
+            e_images[e_num_images - 1].pixels = pixels;
+        }
+    }
 
     VkDeviceSize imageSize = texWidth * texHeight * sizeof(float);
+
+    texture->texHeight = texHeight;
+    texture->texWidth = texWidth;
 
     if (!pixels) {
         printf("failed to load texture image!");
@@ -87,6 +121,8 @@ void TextureImageCreate(const char* source, int size, Texture2D *texture, bool f
 
     vkDestroyBuffer(device, stagingBuffer, NULL);
     vkFreeMemory(device, stagingBufferMemory, NULL);
+
+    return 0;
 }
 
 void createTextureImageView(Texture2D *texture) {
@@ -329,26 +365,31 @@ void copyImage(VkCommandBuffer cmdBuffer, VkImage srcImageId, VkImage dstImageId
 
 }
 
-void ImageAddTexture(localParam *local, ImageStruct *image){
+void ImageAddTexture(localParam *local, GameObjectImage *image){
 
     local->descrCount ++;
 
     local->descriptors = (ShaderBuffer *) realloc(local->descriptors, local->descrCount * sizeof(ShaderBuffer));
 
-    local->descriptors[local->descrCount - 1].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-    local->descriptors[local->descrCount - 1].image = image;
-    Texture2D tempTexture;
+    ShaderBuffer *descriptor = &local->descriptors[local->descrCount - 1];
+
+    descriptor->image = image;
+    Texture2D temptexture;
 
     if(image->size > 0)
-        tempTexture = createTexture(image->buffer, image->size, 0);
+        temptexture = createTexture(descriptor->image->buffer, descriptor->image->size, 0);
     else
-        tempTexture = createTexture(image->path, 0, 1);
+        temptexture = createTexture(descriptor->image->path, 0, 1);
 
-    memcpy(local->descriptors[local->descrCount - 1].texture, &tempTexture, sizeof(Texture2D)) ;
-    local->descriptors[local->descrCount - 1].descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    local->descriptors[local->descrCount - 1].size = 1;
-    local->descriptors[local->descrCount - 1].stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
-    local->descriptors[local->descrCount - 1].image = NULL;
+    descriptor->texture = calloc(1, sizeof(Texture2D));
+    memcpy(descriptor->texture, &temptexture, sizeof(Texture2D));
+
+    image->imgHeight = temptexture.texHeight;
+    image->imgWidth = temptexture.texWidth;
+
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor->size = 1;
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 }
 
@@ -356,15 +397,13 @@ void ImageAddTexture(localParam *local, ImageStruct *image){
 
 void changeTexture(localParam *local, int elem, const char* source, int size){
 
-    destroyTexture(local->descriptors[elem].texture);
-    Texture2D tempTexture;
+    /*destroyTexture(local->descriptors[elem].texture);
 
     if(size > 0)
-        tempTexture = createTexture(source, size, 0);
+        local->descriptors[elem].texture = createTexture(source, size, 0);
     else
-        tempTexture = createTexture(source, 0, 1);
+        local->descriptors[elem].texture = createTexture(source, 0, 1);*/
 
-    memcpy(local->descriptors[elem].texture, &tempTexture, sizeof(Texture2D)) ;
 }
 
 void destroyTexture(Texture2D* texture){

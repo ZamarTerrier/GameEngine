@@ -377,7 +377,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath, const ch
     GameObjectSetDrawFunc(to, (void *)TextObjectDrawDefault);
     GameObjectSetRecreateFunc(to, (void *)TextObjectRecreate);
 
-    Transform2DSetPosition(to, (vec2){0.0f, 0.0f});
+    Transform2DSetPosition(to, 0.0f, 0.0f);
 
     //Загружаем шрифт и настраеваем его на работу
 

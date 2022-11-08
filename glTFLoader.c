@@ -250,7 +250,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     {
                         cgltf_image *image = texture->image;
 
-                        g_mesh->image = calloc(1, sizeof(ImageStruct));
+                        g_mesh->image = calloc(1, sizeof(GameObjectImage));
 
                         if(image->uri != NULL)
                         {
@@ -263,10 +263,9 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         }
                         else if(image->buffer_view->buffer != NULL)
                         {
-                            int size = strlen(image->name);
+                            int size = strlen(glTF->name) + strlen(image->name);
                             g_mesh->image->path = calloc( size + 1, sizeof(char));
-                            memcpy(g_mesh->image->path, image->name, size);
-                            g_mesh->image->path[size] = '\0';
+                            ToolsAddStrings(g_mesh->image->path, size, glTF->name, image->name);
                             g_mesh->image->buffer = calloc(image->buffer_view->size, sizeof(char));
                             memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
                             g_mesh->image->size = image->buffer_view->size;
@@ -515,7 +514,7 @@ void update_hierarhy(ModelObject3D *mo)
 
 }
 
-void Load3DglTFNextFrame(void *ptr, float time)
+void Load3DglTFNextFrame(void *ptr, float time, int num_animation)
 {
   ModelObject3D *mo = ptr;
 
@@ -524,9 +523,9 @@ void Load3DglTFNextFrame(void *ptr, float time)
 
   glTFStruct *glTF = mo->obj;
 
-  engine_gltf_anim *anim = glTF->animations > 0 ? &glTF->animations[0] : NULL;
+  engine_gltf_anim *anim = glTF->num_anims > 0 ? ( num_animation < glTF->num_anims ? &glTF->animations[num_animation] : NULL) : NULL;
 
-  if (anim) {
+  if (anim != NULL) {
     glTF->anim_time += time;
 
     update_frame(mo, anim);
@@ -657,6 +656,11 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
   char *some_file[256];
   ToolsAddStrings(some_file, 256, path, name);
 
+  int len = strlen(name);
+  glTF->name = calloc(len + 1, sizeof(char));
+  memcpy(glTF->name, name, len);
+  glTF->name[len] = '\0';
+
   char *ascii[256];
   char *binary[256];
 
@@ -715,7 +719,7 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
 
                       if(model->image == NULL)
                       {
-                          model->image = calloc(1, sizeof(ImageStruct));
+                          model->image = calloc(1, sizeof(GameObjectImage));
                           int len = strlen(dParam.filePath);
                           model->image->path = calloc(len + 1, sizeof(char));
                           memcpy(model->image->path, dParam.filePath, len);

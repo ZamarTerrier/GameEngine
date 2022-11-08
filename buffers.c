@@ -201,14 +201,16 @@ void BuffersRecreateUniform(localParam* param){
     for(int i=0;i < param->descrCount;i++){
         if(param->descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             ShaderBuffer *descriptor = &param->descriptors[i];
-            Texture2D tempTexture;
+            Texture2D temptexture;
 
             if(descriptor->image->size > 0)
-                tempTexture = createTexture(descriptor->image->buffer, descriptor->image->size, 0);
+                temptexture = createTexture(descriptor->image->buffer, descriptor->image->size, 0);
             else
-                tempTexture = createTexture(descriptor->image->path, 0, 1);
+                temptexture = createTexture(descriptor->image->path, 0, 1);
 
-            memcpy(param->descriptors[i].texture, &tempTexture, sizeof(Texture2D)) ;
+            descriptor->texture = calloc(1, sizeof(Texture2D));
+            memcpy(descriptor->texture, &temptexture, sizeof(Texture2D));
+
         }
         else
         {

@@ -26,7 +26,7 @@ typedef struct{
     int32_t *instance_node_indices;
     size_t num_instances;
 
-    ImageStruct *image;
+    GameObjectImage *image;
 } engine_model_mesh;
 
 #endif // MODEL_INCLUDE_H

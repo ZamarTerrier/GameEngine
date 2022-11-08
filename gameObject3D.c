@@ -170,9 +170,6 @@ void GameObject3DDestroy(GameObject3D* go){
         if(go->image->size > 0)
             free(go->image->buffer);
 
-
-        free(go->image->pixels);
-
         free(go->image);
     }
 }

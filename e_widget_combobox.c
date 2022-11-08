@@ -6,13 +6,11 @@ void ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
 
     if(!cmb->show)
     {
-        vec2 size = {60, (cmb->list.size + 1) * 20};
         cmb->show = true;
-        Transform2DSetScale(&cmb->widget, size);
+        Transform2DSetScale(&cmb->widget, 60, (cmb->list.size + 1) * 20);
     }else{
-        vec2 size = {60, 20};
         cmb->show = false;
-        Transform2DSetScale(&cmb->widget, size);
+        Transform2DSetScale(&cmb->widget, 60, 20);
     }
 
     WidgetConfirmTrigger(cmb, GUI_TRIGGER_COMBOBOX_PRESS, NULL);
@@ -28,13 +26,11 @@ void ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
 
     if(!cmb->show)
     {
-        vec2 size = {60, (cmb->list.size + 1) * 20};
         cmb->show = true;
-        Transform2DSetScale(&cmb->widget, size);
+        Transform2DSetScale(&cmb->widget, 60, (cmb->list.size + 1) * 20);
     }else{
-        vec2 size = {60, 20};
         cmb->show = false;
-        Transform2DSetScale(&cmb->widget, size);
+        Transform2DSetScale(&cmb->widget, 60, 20);
     }
 
     WidgetConfirmTrigger(cmb, GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM, id);
@@ -46,15 +42,14 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 
     WidgetInit(&combobox->widget, param, parent);
     ButtonWidgetInit(&combobox->button, "", (vec4){ 0.4, 0.4, 0.4, 1.0}, &combobox->widget);
-    vec2 size = {60, 20};
-    Transform2DSetScale(&combobox->widget, size);
-    Transform2DSetScale(&combobox->button, size);
+
+    Transform2DSetScale(&combobox->widget, 60, 20);
+    Transform2DSetScale(&combobox->button, 60, 20);
 
     ListWidgetInit(&combobox->list, 60, 20, &combobox->widget);
     WidgetConnect(&combobox->button, GUI_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  NULL);
 
-    vec2 position = {0, 40};
-    Transform2DSetPosition(&combobox->list, position);
+    Transform2DSetPosition(&combobox->list, 0, 40);
     combobox->show = false;
 
 }
@@ -64,6 +59,5 @@ void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text){
 
     WidgetConnect(butt, GUI_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressSub,  combobox->list.size - 1);
 
-    vec2 size = {60, (combobox->list.size + 1) * 20};
-    Transform2DSetScale(&combobox->list, size);
+    Transform2DSetScale(&combobox->list, 60, (combobox->list.size + 1) * 20);
 }

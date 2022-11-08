@@ -8,7 +8,7 @@
 
 Texture2D createTexture(const char* source, int size, bool from_file);
 
-void TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file);
+int TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file);
 
 void createTextureImageView() ;
 
@@ -34,7 +34,7 @@ void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t 
 
 void copyImage(VkCommandBuffer cmdBuffer, VkImage srcImageId, VkImage dstImageId, uint32_t width, uint32_t height);
 
-void ImageAddTexture(localParam *local, ImageStruct *image);
+void ImageAddTexture(localParam *local, GameObjectImage *image);
 
 void changeTexture(localParam *local, int elem, const char* source, int size);
 

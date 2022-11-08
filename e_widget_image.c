@@ -101,7 +101,7 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
-    img->widget.go.image = calloc(1, sizeof(ImageStruct));
+    img->widget.go.image = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(dParam.filePath) != 0)
     {

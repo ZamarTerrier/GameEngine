@@ -254,6 +254,12 @@ void DestroyOBJModel(ModelObject3D *mo){
     free(mo->obj);
 
     GraphicsObjectDestroy(&mo->nodes[0].models[0].graphObj);
+
+    free(mo->nodes[0].models->image->path);
+
+    if(mo->nodes[0].models->image->size > 0)
+        free(mo->nodes[0].models->image->buffer);
+
     free(mo->nodes[0].models);
     free(mo->nodes);
 }

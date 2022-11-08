@@ -17,14 +17,30 @@
 typedef enum { false, true} bool;
 
 typedef struct{
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
+    VkImageView textureImageView;
+    VkSampler textureSampler;
+    int texWidth;
+    int texHeight;
+} Texture2D;
+
+typedef struct{
     char *path;
     char *buffer;
     int size;
+    int imgWidth;
+    int imgHeight;
+} GameObjectImage;
+
+typedef struct{
+    char *path;
     int texWidth;
     int texHeight;
     int texChannels;
     void *pixels;
-} ImageStruct;
+    Texture2D texture;
+} engine_buffered_image;
 
 typedef struct{
     uint32_t graphicsFamily;
@@ -128,6 +144,13 @@ typedef struct {
     vec2 rotation;
     vec2 scale;
 } TransformBuffer2D;
+
+typedef struct{
+    vec2 origin;
+    vec2 offset;
+    vec2 rotation;
+    vec2 scale;
+} ImageBufferObjects;
 
 typedef struct {
     vec3 position __attribute__ ((aligned (16)));

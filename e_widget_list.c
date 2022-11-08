@@ -40,9 +40,7 @@ EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text){
 
     EWidgetButton *item = (EWidgetButton *) calloc(1, sizeof(EWidgetButton));
 
-    vec2 pSize = Transform2DGetScale(&list->widget);
-    vec2 size ={list->size_x, list->size_y};
-    Transform2DSetScale(&list->widget, (vec2){list->size_x, list->size_y * list->size});
+    Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
     ButtonWidgetInit(item, text, list->widget.color, &list->widget);
     TextWidgetSetText(&item->text, text);
 
@@ -51,9 +49,9 @@ EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text){
     for(int i=0;i < list->size;i++)
     {
          ChildStack *child =WidgetFindChild(&list->widget, i);
-         vec2 pos = {0, i * (size.y * 2)};
-         Transform2DSetPosition(child->node, pos);
-         Transform2DSetScale(child->node, size);
+
+         Transform2DSetPosition(child->node, 0, i * (list->size_y * 2));
+         Transform2DSetScale(child->node, list->size_x, list->size_y);
     }
 
     return item;
@@ -79,17 +77,15 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
 
      list->size--;
 
-    vec2 pos;
-    vec2 size ={list->size_x, list->size_y};
-    Transform2DSetScale(&list->widget, (vec2){list->size_x, list->size_y * list->size});
+    Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
 
     for(int i=0;i < list->size;i++)
     {
         child =WidgetFindChild(&list->widget, i);
-        pos = (vec2){0, i * (size.y * 2)};
+
         EWidget* widget = child->node;
         widget->callbacks.stack[2].args = i;
-        Transform2DSetPosition(child->node, pos);
-        Transform2DSetScale(child->node, size);
+        Transform2DSetPosition(child->node, 0, i * (list->size_y * 2));
+        Transform2DSetScale(child->node, list->size_x, list->size_y);
     }
 }

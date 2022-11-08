@@ -102,7 +102,7 @@ extern vec2 diffSize;
 
 extern char *rootDirPath;
 
-extern ImageStruct *e_images;
+extern engine_buffered_image *e_images;
 extern int e_num_images;
 
 extern char _binary_shaders_model_frag_spv_end;

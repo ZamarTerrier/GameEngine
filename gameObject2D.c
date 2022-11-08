@@ -25,6 +25,18 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
     vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+
+    ImageBufferObjects ibo;
+    ibo.origin = go->transform.img.origin;
+    ibo.offset = go->transform.img.offset;
+    ibo.scale = go->transform.img.scale;
+
+    ibo.rotation.x = 0;
+    ibo.rotation.y = 0;
+
+    vkMapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
+    memcpy(data, &ibo, sizeof(ibo));
+    vkUnmapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
 }
 
 void GameObject2DDefaultDraw(GameObject2D* go){
@@ -144,9 +156,6 @@ void GameObject2DDestroy(GameObject2D* go){
 
         if(go->image->size > 0)
             free(go->image->buffer);
-
-
-        free(go->image->pixels);
 
         free(go->image);
     }
