@@ -263,8 +263,12 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         }
                         else if(image->buffer_view->buffer != NULL)
                         {
+                            int size = strlen(image->name);
+                            g_mesh->image->path = calloc( size + 1, sizeof(char));
+                            memcpy(g_mesh->image->path, image->name, size);
+                            g_mesh->image->path[size] = '\0';
                             g_mesh->image->buffer = calloc(image->buffer_view->size, sizeof(char));
-                            memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data, image->buffer_view->size);
+                            memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
                             g_mesh->image->size = image->buffer_view->size;
                         }
                     }
@@ -297,11 +301,14 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     v3_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
                     v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
 
+                    vec3 tmp;
+
                     for(int v=0;v < g_mesh->num_verts; v++)
                     {
                         switch(attribute->type)
                         {
                             case cgltf_attribute_type_position:
+                                tmp = v3_point[v];
                                 g_mesh->verts[v].position = v3_point[v];
                                 break;
                             case cgltf_attribute_type_normal:
@@ -589,7 +596,15 @@ void ModelglTFDestroy(ModelObject3D* mo){
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
         {
-            GraphicsObjectDestroy(&mo->nodes[i].models[j].graphObj);
+            ModelStruct *model = &mo->nodes[i].models[j];
+            GraphicsObjectDestroy(&model->graphObj);
+
+            free(model->image->path);
+
+            if(model->image->size > 0)
+                free(model->image->buffer);
+
+            free(model->image);
         }
 
         free(mo->nodes[i].models);

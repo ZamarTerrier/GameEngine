@@ -162,6 +162,19 @@ VkVertexInputBindingDescription GameObject3DGetBindingDescription() {
 void GameObject3DDestroy(GameObject3D* go){
 
     GraphicsObjectDestroy(&go->graphObj);
+
+    if(go->image != NULL)
+    {
+        free(go->image->path);
+
+        if(go->image->size > 0)
+            free(go->image->buffer);
+
+
+        free(go->image->pixels);
+
+        free(go->image);
+    }
 }
 
 

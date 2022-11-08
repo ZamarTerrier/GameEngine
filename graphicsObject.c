@@ -123,17 +123,6 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
             destroyTexture(descriptor->texture);
             free(descriptor->texture);
             descriptor->texture = NULL;
-
-//            if(descriptor->image != NULL)
-//            {
-//                if(descriptor->image->path != NULL)
-//                    free(descriptor->image->path);
-
-//                if(descriptor->image->pixels != NULL)
-//                    free(descriptor->image->pixels);
-
-//                free(descriptor->image);
-//            }
         }
         else{
             for (int j = 0; j < imagesCount; j++) {

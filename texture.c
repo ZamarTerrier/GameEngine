@@ -111,6 +111,7 @@ void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling
 
     if (vkCreateImage(device, &imageInfo, NULL, image) != VK_SUCCESS) {
         printf("failed to create image!");
+        exit(-1);
     }
 
     VkMemoryRequirements memRequirements;
@@ -123,6 +124,7 @@ void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling
 
     if (vkAllocateMemory(device, &allocInfo, NULL, imageMemory) != VK_SUCCESS) {
         printf("failed to allocate image memory!");
+        exit(-1);
     }
 
     vkBindImageMemory(device, *image, *imageMemory, 0);
@@ -346,6 +348,7 @@ void ImageAddTexture(localParam *local, ImageStruct *image){
     local->descriptors[local->descrCount - 1].descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     local->descriptors[local->descrCount - 1].size = 1;
     local->descriptors[local->descrCount - 1].stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    local->descriptors[local->descrCount - 1].image = NULL;
 
 }
 

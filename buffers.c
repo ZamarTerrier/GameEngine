@@ -191,6 +191,7 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
     param->descriptors[param->descrCount - 1].size = 1;
     param->descriptors[param->descrCount - 1].stageflag = flags;
     param->descriptors[param->descrCount - 1].buffsize = size;
+    param->descriptors[param->descrCount - 1].image = NULL;
 
     BuffersCreateUniform(param->descriptors[param->descrCount - 1].uniform, param->descrCount);
 

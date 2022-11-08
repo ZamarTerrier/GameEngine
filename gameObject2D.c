@@ -138,6 +138,18 @@ void GameObject2DDestroy(GameObject2D* go){
 
     GraphicsObjectDestroy(&go->graphObj);
 
+    if(go->image != NULL)
+    {
+        free(go->image->path);
+
+        if(go->image->size > 0)
+            free(go->image->buffer);
+
+
+        free(go->image->pixels);
+
+        free(go->image);
+    }
 }
 
 void GameObject2DInit(GameObject2D* go)

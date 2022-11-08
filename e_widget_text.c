@@ -166,6 +166,7 @@ void TextWidgetAddTexture(EWidgetText *wt){
     wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].size = 1;
     wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].image = NULL;
 
     TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].texture);
 }
