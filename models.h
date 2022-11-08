@@ -11,7 +11,7 @@
 
 typedef struct{
     GraphicsObject graphObj;    
-    ImageStruct *image;
+    GameObjectImage *image;
 } ModelStruct;
 
 typedef struct{

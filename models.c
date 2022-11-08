@@ -117,9 +117,11 @@ void ModelRecreate(ModelObject3D* mo){
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
         {
-            PipelineSetting *settings = (PipelineSetting *)mo->nodes[i].models[j].graphObj.gItems.settings;
+            ModelStruct *model = &mo->nodes[i].models[j];
 
-            for(int m=0; m < mo->nodes[i].models[j].graphObj.gItems.settingsCount;m++)
+            PipelineSetting *settings = (PipelineSetting *)model->graphObj.gItems.settings;
+
+            for(int m=0; m < model->graphObj.gItems.settingsCount;m++)
             {
                 settings[m].scissor.offset.x = 0;
                 settings[m].scissor.offset.y = 0;
@@ -131,9 +133,9 @@ void ModelRecreate(ModelObject3D* mo){
                 settings[m].viewport.width = WIDTH;
             }
 
-            BuffersRecreateUniform(&mo->nodes[i].models[j].graphObj.local);
-            GameObject3DCreateDrawItems(&mo->nodes[i].models[j].graphObj);
-            PipelineCreateGraphics(&mo->nodes[i].models[j].graphObj);
+            BuffersRecreateUniform(&model->graphObj.local);
+            GameObject3DCreateDrawItems(&model->graphObj);
+            PipelineCreateGraphics(&model->graphObj);
         }
     }
 }

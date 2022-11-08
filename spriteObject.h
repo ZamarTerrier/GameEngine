@@ -4,8 +4,6 @@
 #include "gameObject2D.h"
 
 typedef struct{
-    vec2 size;
-    vec2 position;
     vec3 color;
     char texturePath[256];
     char vertShader[256];
@@ -16,6 +14,6 @@ typedef struct{
     GameObject2D go;
 } SpriteObject;
 
-void SpriteObjectInit(SpriteObject *go, SpriteParam sParam);
+void SpriteObjectInit(GameObject2D *go, SpriteParam sParam);
 
 #endif // SPRITEOBJECT_H

@@ -296,10 +296,16 @@ void WidgetDraw(EWidget * widget){
 
 void WidgetDestroy(EWidget * widget){
     ChildStack *child = widget->child;
+    ChildStack *lastChild;
     while(child != NULL)
     {
         WidgetDestroy(child->node);
+        lastChild = child;
         child = child->next;
+        free(lastChild);
     }
     GameObjectDestroy(widget);
+
+    if(widget->callbacks.size > 0)
+        free(widget->callbacks.stack);
 }

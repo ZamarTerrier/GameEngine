@@ -94,9 +94,9 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
 
     WidgetInit(&entry->widget, dParam, parent);
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
-    vec2 pos = {0, 25 - (25 / fontSize) };
+
     TextWidgetInit(&entry->text, fontSize, dParam, &entry->widget);
-    Transform2DSetPosition(&entry->text, pos);
+    Transform2DSetPosition(&entry->text, 0, 25 - (25 / fontSize) );
 
     entry->currPos = 0;
 

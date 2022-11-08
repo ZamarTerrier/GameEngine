@@ -25,8 +25,8 @@ void ButtonWidgetInit(EWidgetButton *button, char *text, vec4 color, EWidget *pa
 
     TextWidgetInit(&button->text, 9, dParam, &button->widget);
     TextWidgetSetText(&button->text, text);
-    vec2 position = { 0, 9 * 2.0f};
-    Transform2DSetPosition(&button->text, position);
+
+    Transform2DSetPosition(&button->text, 0, 9 * 2.0f);
 
     WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_PRESS, ButtonWidgetPress, NULL);
     WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_RELEASE, ButtonWidgetRelease, NULL);

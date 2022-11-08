@@ -250,7 +250,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     {
                         cgltf_image *image = texture->image;
 
-                        g_mesh->image = calloc(1, sizeof(ImageStruct));
+                        g_mesh->image = calloc(1, sizeof(GameObjectImage));
 
                         if(image->uri != NULL)
                         {
@@ -263,8 +263,11 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         }
                         else if(image->buffer_view->buffer != NULL)
                         {
+                            int size = strlen(glTF->name) + strlen(image->name);
+                            g_mesh->image->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->image->path, size, glTF->name, image->name);
                             g_mesh->image->buffer = calloc(image->buffer_view->size, sizeof(char));
-                            memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data, image->buffer_view->size);
+                            memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
                             g_mesh->image->size = image->buffer_view->size;
                         }
                     }
@@ -297,11 +300,14 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     v3_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
                     v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
 
+                    vec3 tmp;
+
                     for(int v=0;v < g_mesh->num_verts; v++)
                     {
                         switch(attribute->type)
                         {
                             case cgltf_attribute_type_position:
+                                tmp = v3_point[v];
                                 g_mesh->verts[v].position = v3_point[v];
                                 break;
                             case cgltf_attribute_type_normal:
@@ -508,7 +514,7 @@ void update_hierarhy(ModelObject3D *mo)
 
 }
 
-void Load3DglTFNextFrame(void *ptr, float time)
+void Load3DglTFNextFrame(void *ptr, float time, int num_animation)
 {
   ModelObject3D *mo = ptr;
 
@@ -517,9 +523,9 @@ void Load3DglTFNextFrame(void *ptr, float time)
 
   glTFStruct *glTF = mo->obj;
 
-  engine_gltf_anim *anim = glTF->animations > 0 ? &glTF->animations[0] : NULL;
+  engine_gltf_anim *anim = glTF->num_anims > 0 ? ( num_animation < glTF->num_anims ? &glTF->animations[num_animation] : NULL) : NULL;
 
-  if (anim) {
+  if (anim != NULL) {
     glTF->anim_time += time;
 
     update_frame(mo, anim);
@@ -589,7 +595,15 @@ void ModelglTFDestroy(ModelObject3D* mo){
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
         {
-            GraphicsObjectDestroy(&mo->nodes[i].models[j].graphObj);
+            ModelStruct *model = &mo->nodes[i].models[j];
+            GraphicsObjectDestroy(&model->graphObj);
+
+            free(model->image->path);
+
+            if(model->image->size > 0)
+                free(model->image->buffer);
+
+            free(model->image);
         }
 
         free(mo->nodes[i].models);
@@ -641,6 +655,11 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
 
   char *some_file[256];
   ToolsAddStrings(some_file, 256, path, name);
+
+  int len = strlen(name);
+  glTF->name = calloc(len + 1, sizeof(char));
+  memcpy(glTF->name, name, len);
+  glTF->name[len] = '\0';
 
   char *ascii[256];
   char *binary[256];
@@ -700,7 +719,7 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
 
                       if(model->image == NULL)
                       {
-                          model->image = calloc(1, sizeof(ImageStruct));
+                          model->image = calloc(1, sizeof(GameObjectImage));
                           int len = strlen(dParam.filePath);
                           model->image->path = calloc(len + 1, sizeof(char));
                           memcpy(model->image->path, dParam.filePath, len);

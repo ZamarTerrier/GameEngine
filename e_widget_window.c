@@ -6,21 +6,19 @@
 
 vec2 mouse,  temp, tscale ;
 
-void WindowWidgetSetSize(EWidgetWindow* window, vec2 size)
+void WindowWidgetSetSize(EWidgetWindow* window, float x, float y)
 {
 
-    Transform2DSetScale(&window->top, size);
+    Transform2DSetScale(&window->top, x, y);
 
-    vec2 position = {(size.x - 10) * 2 , 0};
-    Transform2DSetPosition(&window->close, position);
-    position = (vec2){(size.x - 20) * 2 , 0};
-    Transform2DSetPosition(&window->resize, position);
-    position = (vec2){(size.x - 30) * 2 , 0};
-    Transform2DSetPosition(&window->hide, position);
+    vec2 position = {};
+    Transform2DSetPosition(&window->close, (x - 10) * 2 , 0);
+    Transform2DSetPosition(&window->resize, (x - 20) * 2 , 0);
+    Transform2DSetPosition(&window->hide, (x - 30) * 2 , 0);
 
-    size.y -= 12;
-    size.x -= 2;
-    Transform2DSetScale(&window->widget, size);
+    y -= 12;
+    x -= 2;
+    Transform2DSetScale(&window->widget, x, y);
 }
 
 void WindowWidgetPress(EWidget* widget, void* entry, void* args)
@@ -53,14 +51,14 @@ void WindowWidgetMove(EWidget* widget, void* entry, void* args)
     {
         te = v2_sub(te, mouse);
         te = v2_add(temp, te);
-        Transform2DSetPosition(widget, te);
+        Transform2DSetPosition(widget, xpos, ypos);
     }
     else
     {
         te = v2_sub(te, mouse);
         vec2 scale = v2_add(tscale, v2_divs(te, 2));
 
-        WindowWidgetSetSize(window, scale);
+        WindowWidgetSetSize(window, scale.x, scale.y);
 
         window->wasHide = false;
         window->wasResize = false;
@@ -84,8 +82,8 @@ void WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
         window->lastPos = Transform2DGetPosition(&window->top);
         window->lastSize = Transform2DGetScale(&window->top);
     }else if(window->wasResize){
-        Transform2DSetPosition(&window->top, window->lastPos);
-        WindowWidgetSetSize(window, window->lastSize);
+        Transform2DSetPosition(&window->top, window->lastPos.x, window->lastPos.y);
+        WindowWidgetSetSize(window, window->lastSize.x, window->lastSize.y);
         window->wasHide = false;
         window->wasResize = false;
         return;
@@ -93,12 +91,9 @@ void WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
 
     window->wasResize = true;
 
-    vec2 pos = {0,0};
-    vec2 size = {WIDTH / 2, HEIGHT / 2};
+    Transform2DSetPosition(&window->top, 0, 0);
 
-    Transform2DSetPosition(&window->top, pos);
-
-    WindowWidgetSetSize(window, size);
+    WindowWidgetSetSize(window, WIDTH / 2, HEIGHT / 2);
 
 }
 
@@ -111,8 +106,8 @@ void WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
         window->lastPos = Transform2DGetPosition(&window->top);
         window->lastSize = Transform2DGetScale(&window->top);
     }else if(window->wasHide){
-        Transform2DSetPosition(&window->top, window->lastPos);
-        WindowWidgetSetSize(window, window->lastSize);
+        Transform2DSetPosition(&window->top, window->lastPos.x, window->lastPos.y);
+        WindowWidgetSetSize(window, window->lastSize.x, window->lastSize.y);
         window->wasHide = false;
         window->wasResize = false;
         return;
@@ -120,11 +115,8 @@ void WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
 
     window->wasHide = true;
 
-    vec2 pos = {0,0};
-    vec2 size = {50, 12};
-
-    WindowWidgetSetSize(window, size);
-    Transform2DSetPosition(&widget->parent->go, pos);
+    WindowWidgetSetSize(window, 50, 12);
+    Transform2DSetPosition(&widget->parent->go, 0, 0);
 
 }
 
@@ -193,8 +185,8 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
 
     PipelineCreateGraphics(&widget->go.graphObj);
 
-    Transform2DSetScale(widget, size);
-    Transform2DSetPosition(widget, position);
+    Transform2DSetScale(widget, size.x, size.y);
+    Transform2DSetPosition(widget, position.x, position.y);
 
     widget->color = (vec4){1, 1, 1, 1.0};
 
@@ -203,12 +195,11 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
 
 void InitName(EWidget* widget, char* name, DrawParam dParam, EWidget *parent)
 {
-    vec2 position = {0, 16};
     TextWidgetInit(widget, 9, dParam, parent);
 
     TextWidgetSetText(widget, name);
 
-    Transform2DSetPosition(widget, position);
+    Transform2DSetPosition(widget, 0, 16);
 }
 
 void InitBot(EWidget* widget, DrawParam dParam, vec2 size, EWidget *parent){
@@ -218,49 +209,39 @@ void InitBot(EWidget* widget, DrawParam dParam, vec2 size, EWidget *parent){
     vec2 botSize = size;
     botSize.y -= 12;
     botSize.x -= 2;
-    vec2 position = {2, 22};
 
-    Transform2DSetScale(widget, botSize);
-    Transform2DSetPosition(widget, position);
+    Transform2DSetScale(widget, botSize.x, botSize.y);
+    Transform2DSetPosition(widget, 2, 22);
 }
 
 void InitClose(EWidget* widget, DrawParam dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
 
-    vec2 tempSize = {10, 10};
-    vec2 position = {(size.x - 10) * 2 , 0};
-
     widget->color = (vec4){ 1.0f, 0.0f, 0.0f, 1.0f};
 
-    Transform2DSetScale(widget, tempSize);
-    Transform2DSetPosition(widget, position);
+    Transform2DSetScale(widget, 10, 10);
+    Transform2DSetPosition(widget, (size.x - 10) * 2 , 0);
 }
 
 void InitResize(EWidget* widget, DrawParam dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
 
-    vec2 tempSize = {10, 10};
-    vec2 position = {(size.x - 20) * 2 , 0};
-
     widget->color = (vec4){ 0.0f, 1.0f, 0.0f, 1.0};
 
-    Transform2DSetScale(widget, tempSize);
-    Transform2DSetPosition(widget, position);
+    Transform2DSetScale(widget, 10, 10);
+    Transform2DSetPosition(widget, (size.x - 20) * 2 , 0);
 }
 
 void InitHide(EWidget* widget, DrawParam dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
 
-    vec2 tempSize = {10, 10};
-    vec2 position = {(size.x - 30) * 2 , 0};
-
     widget->color = (vec4){ 0.0f, 0.0f, 1.0f, 1.0f};
 
-    Transform2DSetScale(widget, tempSize);
-    Transform2DSetPosition(widget, position);
+    Transform2DSetScale(widget, 10, 10);
+    Transform2DSetPosition(widget, (size.x - 30) * 2 , 0);
 }
 
 void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam, vec2 position)

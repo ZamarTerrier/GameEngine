@@ -9,13 +9,6 @@ typedef struct{
 } shader;
 
 typedef struct{
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
-    VkSampler textureSampler;
-} Texture2D;
-
-typedef struct{
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorSet* descriptorSets;
     VkPipeline* graphicsPipeline;
@@ -74,7 +67,7 @@ typedef struct{
     VkShaderStageFlags stageflag;
     uint32_t size;
     VkDeviceSize buffsize;
-    ImageStruct *image;
+    GameObjectImage *image;
 } ShaderBuffer;
 
 typedef struct{
