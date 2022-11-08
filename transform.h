@@ -47,16 +47,16 @@ void Transform2DSetImageScale(struct GameObject2D* go, float x, float y);
 vec2 Transform2DGetImageScale(struct GameObject2D* go);
 void Transform2DRescale(struct GameObject2D* go);
 
-void Transform3DSetPositionT(Transform3D* transform, vec3 pos);
-void Transform3DSetPosition(struct GameObject3D* go, vec3 pos);
+void Transform3DSetPositionT(Transform3D* transform, float x, float y, float z);
+void Transform3DSetPosition(struct GameObject3D* go, float x, float y, float z);
 vec3 Transform3DGetPosition(struct GameObject3D* go);
 
-void Transform3DSetScaleT(Transform3D* transform, vec3 scale);
-void Transform3DSetScale(struct GameObject3D* go, vec3 scale);
+void Transform3DSetScaleT(Transform3D* transform, float x, float y, float z);
+void Transform3DSetScale(struct GameObject3D* go, float x, float y, float z);
 vec3 Transform3DGetScale(struct GameObject3D* go);
 
-void Transform3DSetRotateT(Transform3D* transform, vec3 rotate);
-void Transform3DSetRotate(struct GameObject3D* go, vec3 rotate);
+void Transform3DSetRotateT(Transform3D* transform, float x, float y, float z);
+void Transform3DSetRotate(struct GameObject3D* go, float x, float y, float z);
 vec3 Transform3DGetRotate(struct GameObject3D* go);
 
 #endif // TRANSFORM_H

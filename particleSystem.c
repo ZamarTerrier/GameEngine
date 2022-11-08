@@ -173,8 +173,8 @@ void InitParticle3D(GameObject3D* particle, vec3 position, const char* texturePa
     GameObject3DAddSettingPipeline(particle, setting);
     PipelineCreateGraphics(&particle->graphObj);
 
-    Transform3DSetScale(particle, (vec3){1,1,1});
-    Transform3DSetPosition(particle, position);
+    Transform3DSetScale(particle, 1, 1, 1);
+    Transform3DSetPosition(particle, position.x, position.y, position.z);
 }
 
 void AddParticle3D(GameObject3D* particle, vec3 position, vec3 direction, float life,float speed){

@@ -177,18 +177,20 @@ vec2 Transform2DGetScale(struct GameObject2D* go)
 }
 
 //3D Transforms
-void Transform3DSetPositionT(Transform3D* transform, vec3 pos)
+void Transform3DSetPositionT(Transform3D* transform, float x, float y, float z)
 {
-
-    transform->position = pos;
+    transform->position.x = x;
+    transform->position.y = y;
+    transform->position.z = z;
 }
 
-void Transform3DSetPosition(struct GameObject3D* go, vec3 pos)
+void Transform3DSetPosition(struct GameObject3D* go, float x, float y, float z)
 {
-
     GameObject3D *temp = (GameObject3D *)go;
 
-    temp->transform.position = pos;
+    temp->transform.position.x = x;
+    temp->transform.position.y = y;
+    temp->transform.position.z = z;
 }
 
 vec3 Transform3DGetPosition(struct GameObject3D* go)
@@ -198,18 +200,20 @@ vec3 Transform3DGetPosition(struct GameObject3D* go)
     return temp->transform.position;
 }
 
-void Transform3DSetScaleT(Transform3D* transform, vec3 scale)
+void Transform3DSetScaleT(Transform3D* transform, float x, float y, float z)
 {
-
-    transform->scale = scale;
+    transform->scale.x = x;
+    transform->scale.y = y;
+    transform->scale.z = z;
 }
 
-void Transform3DSetScale(struct GameObject3D* go, vec3 scale)
+void Transform3DSetScale(struct GameObject3D* go, float x, float y, float z)
 {
-
     GameObject3D *temp = (GameObject3D *)go;
 
-    temp->transform.scale = scale;
+    temp->transform.scale.x = x;
+    temp->transform.scale.y = y;
+    temp->transform.scale.z = z;
 }
 
 vec3 Transform3DGetScale(struct GameObject3D* go)
@@ -218,27 +222,29 @@ vec3 Transform3DGetScale(struct GameObject3D* go)
     return temp->transform.scale;
 }
 
-void Transform3DSetRotateT(Transform3D* transform, vec3 rotate)
+void Transform3DSetRotateT(Transform3D* transform, float x, float y, float z)
 {
-
-    transform->rotation = rotate;
+    transform->rotation.x = x;
+    transform->rotation.y = y;
+    transform->rotation.z = z;
 }
 
-void Transform3DSetRotate(struct GameObject3D* go, vec3 rotate){
+void Transform3DSetRotate(struct GameObject3D* go, float x, float y, float z){
 
     GameObject3D *temp = (GameObject3D *)go;
 
-    /*rotate.x = rotate.x > 360 ? 0 : rotate.x;
-    rotate.x = rotate.x < -360 ? 0 : rotate.x;
+    x = x > 360 ? 0 : x;
+    x = x < -360 ? 0 : x;
 
-    rotate.y = rotate.y > 360 ? 0 : rotate.y;
-    rotate.y = rotate.y < -360 ? 0 : rotate.y;
+    y = y > 360 ? 0 : y;
+    y = y < -360 ? 0 : y;
 
-    rotate.z = rotate.z > 360 ? 0 : rotate.z;
-    rotate.z = rotate.z < -360 ? 0 : rotate.z;*/
+    z = z > 360 ? 0 : z;
+    z = z < -360 ? 0 : z;
 
-    temp->transform.rotation = rotate;
-
+    temp->transform.rotation.x = x;
+    temp->transform.rotation.y = y;
+    temp->transform.rotation.z = z;
 }
 
 vec3 Transform3DGetRotate(struct GameObject3D* go){

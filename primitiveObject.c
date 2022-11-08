@@ -127,11 +127,5 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
     PipelineCreateGraphics(&go->graphObj);
 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
-    {
-        vec3 size;
-        size.x = -500;
-        size.y = -500;
-        size.z = -500;
-        Transform3DSetScale(go, size);
-    }
+        Transform3DSetScale(go, -500, -500, -500);
 }
