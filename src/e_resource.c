@@ -3,8 +3,8 @@
 #include <vulkan/vulkan.h>
 
 uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-uint32_t WIDTH = 1024;
-uint32_t HEIGHT = 800;
+float WIDTH = 1024;
+float HEIGHT = 800;
 uint32_t VALIDSIZE = 1;
 uint32_t DEVEXTSIZE = 1;
 

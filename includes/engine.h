@@ -1,8 +1,7 @@
 #ifndef GAMENGINE_H
 #define GAMENGINE_H
 
-#include "stdinclude.h"
-
+#include "engine_includes.h"
 
 void initVulkan();
 
@@ -10,7 +9,7 @@ void initEngine(int width, int height, const char* name);
 
 void EngineFixedCursorCenter();
 
-void EngineGetCursorPos(int *xpos, int *ypos);
+void EngineGetCursorPos(double *xpos, double *ypos);
 void EngineSetCursorPos(float xpos, float ypos);
 void EngineHideCursor(char state);
 

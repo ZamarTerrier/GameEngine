@@ -69,6 +69,8 @@ void BufferCreateVertex(vertexParam* vert, uint32_t size) {
 
     //Выделение памяти
 
+    vert->typeSize = size;
+
     VkDeviceSize bufferSize = size * vert->verticesSize;
 
     VkBuffer stagingBuffer;

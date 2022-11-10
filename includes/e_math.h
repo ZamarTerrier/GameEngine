@@ -1,7 +1,7 @@
 #ifndef E_MATH_H
 #define E_MATH_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
 #define min( a, b ) ((a) < (b) ? (a) : (b))
 #define max( a, b ) ((a) > (b) ? (a) : (b))
@@ -24,6 +24,7 @@ mat3 m3_translation_matrix(mat3 matrix, vec2 pos);
 mat3 m3_mult(mat3 m1, mat3 m2);
 vec3 m3_v3_mult(mat3 m, vec3 v);
 
+float v2_cross(vec2 a, vec2 b);
 vec2 v2_add(vec2 a, vec2 b);
 vec2 v2_adds  (vec2 a, float s);
 vec2 v2_sub   (vec2 a, vec2 b);
@@ -32,8 +33,10 @@ vec2 v2_mul   (vec2 a, vec2 b);
 vec2 v2_muls  (vec2 a, float s);
 vec2 v2_div   (vec2 a, vec2 b);
 vec2 v2_divs  (vec2 a, float s);
-float v2_length(vec2 v);
 vec2 v2_norm(vec2 v);
+float v2_length(vec2 v);
+float v2_dot (vec2 a, vec2 b);
+float  v2_distance(vec2 v1, vec2 v2);
 
 float v3_maxs(vec3 a);
 float v3_mins(vec3 a);

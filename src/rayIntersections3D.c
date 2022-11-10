@@ -2,11 +2,11 @@
 
 #include "gameObject3D.h"
 
-int IntersectRaySphere(IntRayParam *param, vec3 ObjP, float *t, vec3 *q)
+int Intersect3DRaySphere(InterRay3DParam *ray, vec3 ObjP, float *t, vec3 *q)
 {
     float r = 1;
-    vec3 m = v3_sub(param->position, ObjP);
-    float b = v3_dot(m, param->direction);
+    vec3 m = v3_sub(ray->position, ObjP);
+    float b = v3_dot(m, ray->direction);
     float c = v3_dot(m, m) - r * r;
 
     // Exit if r’s origin outside s (c > 0) and r pointing away from s (b > 0)
@@ -26,20 +26,20 @@ int IntersectRaySphere(IntRayParam *param, vec3 ObjP, float *t, vec3 *q)
     if (*t < 0.0f)
         *t = 0.0f;
 
-    if(*t > param->distance)
+    if(*t > ray->distance)
         return 0;
 
-    *q = v3_add(param->position, v3_muls(param->direction,*t ));
+    *q = v3_add(ray->position, v3_muls(ray->direction,*t ));
 
     return 1;
 }
 
 // Intersect segment S(t)=sa+t(sb-sa), 0<=t<=1 against cylinder specified by p, q and r
-int IntersectSegmentCylinder(IntRayParam *param, vec3 p, vec3 q, float r, float *t, vec3 *q_res)
+int Intersect3DSegmentCylinder(InterRay3DParam *ray, vec3 p, vec3 q, float r, float *t, vec3 *q_res)
 {
-    vec3 endPoint = v3_add(param->position, v3_muls(param->direction, param->distance));
+    vec3 endPoint = v3_add(ray->position, v3_muls(ray->direction, ray->distance));
 
-    vec3 d = v3_sub(q, p), m = v3_sub(param->position, p), n = v3_sub(endPoint, param->position);
+    vec3 d = v3_sub(q, p), m = v3_sub(ray->position, p), n = v3_sub(endPoint, ray->position);
     float md = v3_dot(m, d);
     float nd = v3_dot(n, d);
     float dd = v3_dot(d, d);
@@ -63,7 +63,7 @@ int IntersectSegmentCylinder(IntRayParam *param, vec3 p, vec3 q, float r, float 
         else if (md > dd) *t = (nd - mn) / nn; // Intersect segment against ’q’ endcap
         else *t = 0.0f;
 
-        *q_res = v3_add(param->position, v3_muls(v3_sub(endPoint, param->position), *t));
+        *q_res = v3_add(ray->position, v3_muls(v3_sub(endPoint, ray->position), *t));
 
          // ’a’ lies inside cylinder
         return 1;
@@ -82,7 +82,7 @@ int IntersectSegmentCylinder(IntRayParam *param, vec3 p, vec3 q, float r, float 
             *t = -md / nd;
         // Keep intersection if Dot(S(t) - p, S(t) - p) <= r∧ 2
 
-        *q_res = v3_add(param->position, v3_muls(v3_sub(endPoint, param->position), *t));
+        *q_res = v3_add(ray->position, v3_muls(v3_sub(endPoint, ray->position), *t));
         return k + 2 * *t * (mn + *t * nn) <= 0.0f;
     } else if (md + *t * nd > dd) {
         // Intersection outside cylinder on ’q’ side
@@ -90,22 +90,22 @@ int IntersectSegmentCylinder(IntRayParam *param, vec3 p, vec3 q, float r, float 
         *t = (dd - md) / nd;
         // Keep intersection if Dot(S(t) - q, S(t) - q) <= r∧ 2
 
-        *q_res = v3_add(param->position, v3_muls(v3_sub(endPoint, param->position), *t));
+        *q_res = v3_add(ray->position, v3_muls(v3_sub(endPoint, ray->position), *t));
         return k + dd - 2 * md + *t * (2 * (mn - nd) + *t * nn) <= 0.0f;
     }
 
-    *q_res = v3_add(param->position, v3_muls(v3_sub(endPoint, param->position), *t));
+    *q_res = v3_add(ray->position, v3_muls(v3_sub(endPoint, ray->position), *t));
     // Segment intersects cylinder between the endcaps; t is correct
     return 1;
 }
 
-int IntersectRayAABB(IntRayParam *param,  vec3 obj_min, vec3 obj_max, float *tmin, float *tmax, vec3 *q){
+int Intersect3DRayAABB(InterRay3DParam *ray,  vec3 obj_min, vec3 obj_max, float *tmin, float *tmax, vec3 *q){
 
     *tmin = 0.0f;
     *tmax = 20000;
 
-    float *d = (float *)&param->direction;
-    float *p = (float *)&param->position;
+    float *d = (float *)&ray->direction;
+    float *p = (float *)&ray->position;
     float *min = (float *)&obj_min;
     float *max = (float *)&obj_max;
 
@@ -128,16 +128,16 @@ int IntersectRayAABB(IntRayParam *param,  vec3 obj_min, vec3 obj_max, float *tmi
             return 0;
     }
 
-    if(*tmin > param->distance)
+    if(*tmin > ray->distance)
         return 0;
 
-    *q = v3_add(param->position, v3_muls(param->direction, *tmin));
+    *q = v3_add(ray->position, v3_muls(ray->direction, *tmin));
 
     return 1;
 
 }
 
-float IntersectRayTriangle(void* shape, IntRayParam *param, vec3 *q){
+float Intersect3DRayTriangle(void* shape, InterRay3DParam *ray, vec3 *q){
 
     GameObject3D *model = (GameObject3D *) shape;
 
@@ -169,13 +169,13 @@ float IntersectRayTriangle(void* shape, IntRayParam *param, vec3 *q){
         p1 = v3_add(v3_mul(verts[i1].position, scale), origPos);
         p2 = v3_add(v3_mul(verts[i2].position, scale), origPos);
 
-        if(v3_distance(p0, param->position) > param->distance + 1.0f)
+        if(v3_distance(p0, ray->position) > ray->distance + 1.0f)
             continue;
 
         vec3 e1 = v3_sub(p1, p0);
         vec3 e2 = v3_sub(p2, p0);
         // Вычисление вектора нормали к плоскости
-        vec3 pvec = v3_cross(param->direction, e2);
+        vec3 pvec = v3_cross(ray->direction, e2);
         float det = v3_dot(e1, pvec);
 
         // Луч параллелен плоскости
@@ -184,14 +184,14 @@ float IntersectRayTriangle(void* shape, IntRayParam *param, vec3 *q){
         }
 
         float inv_det = 1 / det;
-        vec3 tvec = v3_sub(param->position, p0);
+        vec3 tvec = v3_sub(ray->position, p0);
         float u = v3_dot(tvec, pvec) * inv_det;
         if (u < 0 || u > 1) {
             continue;
         }
 
         vec3 qvec = v3_cross(tvec, e1);
-        float v = v3_dot(param->direction, qvec) * inv_det;
+        float v = v3_dot(ray->direction, qvec) * inv_det;
         if (v < 0 || u + v > 1) {
             continue;
         }
@@ -201,10 +201,10 @@ float IntersectRayTriangle(void* shape, IntRayParam *param, vec3 *q){
 
     }
 
-    if(res > param->distance)
+    if(res > ray->distance)
         return 0;
 
-    *q = v3_add(param->position, v3_muls(param->direction, res));
+    *q = v3_add(ray->position, v3_muls(ray->direction, res));
 
     return res;
 }

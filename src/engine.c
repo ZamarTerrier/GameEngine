@@ -108,7 +108,7 @@ void EngineFixedCursorCenter(){
 
 }
 
-void EngineGetCursorPos(int *xpos, int *ypos){
+void EngineGetCursorPos(double *xpos, double *ypos){
     glfwGetCursorPos(e_window, xpos, ypos);
 }
 

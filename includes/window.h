@@ -1,7 +1,7 @@
 #ifndef WINENGINE_H
 #define WINENGINE_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 #include "debuger.h"
 #include "e_resource.h"
 

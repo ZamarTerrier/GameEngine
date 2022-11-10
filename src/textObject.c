@@ -370,7 +370,7 @@ void TextDataInit(TextData *tData, int fontSize, char* fontPath){
     TextDataSetFontPath(tData, fontPath);
 }
 
-void TextObjectInit(TextObject* to, int fontSize, const char* fontPath, const char* vertShader, const char* fragShader)
+void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 {
 
     GameObject2DInit(to);
@@ -382,9 +382,6 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath, const ch
     Transform2DSetPosition(to, 0.0f, 0.0f);
 
     //Загружаем шрифт и настраеваем его на работу
-
-    GraphicsObjectSetShadersPath(&to->go.graphObj, vertShader, fragShader);
-
     TextDataInit(&to->textData, fontSize, fontPath);
 
     //----------------------------------
@@ -394,21 +391,20 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath, const ch
     TextObjectAddTexture(to);
 
     PipelineSetting setting;
-    setting.poligonMode = VK_POLYGON_MODE_FILL;
+
+    PipelineSettingSetDefault(&to->go.graphObj, &setting);
+
+    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    {
+        setting.vertShader = &_binary_shaders_text_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
+        setting.fragShader = &_binary_shaders_text_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
+        setting.fromFile = 0;
+    }
+
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-    setting.vertShader = to->go.graphObj.aShader.vertShader;
-    setting.fragShader = to->go.graphObj.aShader.fragShader;
-    setting.drawType = 0;
-    setting.scissor.offset.x = 0;
-    setting.scissor.offset.y = 0;
-    setting.scissor.extent = *(EIExtent2D*)&swapChainExtent;
-    setting.viewport.x = 0.0f;
-    setting.viewport.y = 0.0f;
-    setting.viewport.width = (float) swapChainExtent.width;
-    setting.viewport.height = (float) swapChainExtent.height;
-    setting.viewport.minDepth = 0.0f;
-    setting.viewport.maxDepth = 1.0f;
-    setting.fromFile = 1;
+
     TextObjectAddSettingPipeline(to, setting);
 
     GameObject2DCreateDrawItems(to);

@@ -14,6 +14,6 @@ typedef struct{
     GameObject2D go;
 } SpriteObject;
 
-void SpriteObjectInit(GameObject2D *go, SpriteParam sParam);
+void SpriteObjectInit(SpriteObject *go, SpriteParam sParam);
 
 #endif // SPRITEOBJECT_H

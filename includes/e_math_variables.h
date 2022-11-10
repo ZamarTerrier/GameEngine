@@ -44,8 +44,4 @@ typedef struct{
     float m[16];
 } mat4_p;
 
-typedef struct{
-    vec3 p[3];
-} triangle;
-
 #endif // E_MATH_VARIABLES_H

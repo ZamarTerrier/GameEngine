@@ -1,11 +1,11 @@
 #ifndef RECOURCE_H
 #define RECOURCE_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
 extern uint32_t MAX_FRAMES_IN_FLIGHT;
-extern uint32_t WIDTH;
-extern uint32_t HEIGHT;
+extern float WIDTH;
+extern float HEIGHT;
 extern uint32_t VALIDSIZE;
 extern uint32_t DEVEXTSIZE;
 
