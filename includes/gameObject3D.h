@@ -9,7 +9,10 @@ typedef struct{
     GameObject self;
     GraphicsObject graphObj;
     Transform3D transform;
-    GameObjectImage *image;
+    GameObjectImage *diffuse;
+    GameObjectImage *specular;
+    GameObjectImage *normal;
+    int enable_light;
 } GameObject3D;
 
 void GameObject3DDefaultUpdate(GameObject3D* go);

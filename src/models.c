@@ -4,6 +4,8 @@
 
 #include "camera.h"
 #include "gameObject.h"
+#include "lightObject.h"
+
 #include "buffers.h"
 #include "texture.h"
 
@@ -97,7 +99,54 @@ void ModelDefaultUpdate(ModelObject3D* mo){
             vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
             LightBuffer3D lbo = {};
-            lbo.size = 0;
+            memset(&lbo, 0, sizeof(LightBuffer3D));
+
+            if(e_var_num_lights > 0 && mo->nodes[i].models[j].light_enable)
+            {
+                LightObject **lights = e_var_lights;
+
+                for(int i=0;i < e_var_num_lights; i++)
+                {
+
+                    switch (lights[i]->type) {
+                        case ENGINE_LIGHT_TYPE_DIRECTIONAL:
+                            lbo.dir.ambient = lights[i]->ambient;
+                            lbo.dir.diffuse = lights[i]->diffuse;
+                            lbo.dir.specular = lights[i]->specular;
+                            lbo.dir.direction = lights[i]->direction;
+                            break;
+                        case ENGINE_LIGHT_TYPE_POINT:
+                            lbo.num_points++;
+
+                            lbo.lights[lbo.num_points - 1].position = lights[i]->position;
+                            lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
+                            lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
+                            lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
+                            lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
+                            lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
+                            lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
+
+                            break;
+                        case ENGINE_LIGHT_TYPE_SPOT:
+                            lbo.num_spots++;
+
+                            lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
+                            lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
+                            lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
+                            lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
+                            lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
+                            lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
+                            lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
+                            lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
+                            lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            lbo.light_react = mo->nodes[i].models[j].light_enable;
 
             vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
             memcpy(data, &lbo, sizeof(lbo));
@@ -167,11 +216,15 @@ void ModelAddSettingPipeline(ModelStruct* model, PipelineSetting setting){
 
 void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
 
+    model->light_enable = true;
+
     BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    ImageAddTexture(&model->graphObj.local, model->image);
+    ImageAddTexture(&model->graphObj.local, model->diffuse);
+    ImageAddTexture(&model->graphObj.local, model->specular);
+    ImageAddTexture(&model->graphObj.local, model->normal);
 
     GameObject3DCreateDrawItems(&model->graphObj);
 

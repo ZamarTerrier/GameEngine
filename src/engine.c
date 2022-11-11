@@ -15,6 +15,7 @@
 
 #include "gameObject.h"
 #include "textObject.h"
+#include "lightObject.h"
 
 #include "e_widget_entry.h"
 #include "e_widget_entry_area.h"
@@ -80,6 +81,9 @@ void initVulkan(){
     charCallbacks = (e_charCallback *) calloc(0, sizeof(e_charCallback));
     keyCallbacks = (e_keyCallback *) calloc(0, sizeof(e_keyCallback));
     objs.count = 0;
+
+    e_var_lights = calloc(0, sizeof(LightObject *));
+    e_var_num_lights = 0;
 }
 
 void initEngine(int width, int height, const char* name){
@@ -363,11 +367,12 @@ void engineLoop(){
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
     free(objs.go);
-
-    objs.go = (GameObject **) calloc(0, sizeof(GameObject*));
-
+    objs.go = (GameObject **) calloc(0, sizeof(GameObject *));
     objs.count = 0;
 
+    free(e_var_lights);
+    e_var_lights = calloc(0, sizeof(LightObject *));
+    e_var_num_lights = 0;
 }
 
 void drawFrame(){
@@ -434,7 +439,10 @@ void engDraw(void* arg){
     GameObject* go = (GameObject *)arg;
 
     if(go->UpdatePoint == NULL)
+    {
         perror("False point!\n");
+        return;
+    }
 
     for(int i=0;i < objs.count;i++)
     {
@@ -482,6 +490,15 @@ void cleanUp(){
         }
 
         free(images);
+    }
+
+
+    if(e_var_num_lights > 0)
+    {
+        LightObject *lights = e_var_lights;
+
+        free(lights);
+        e_var_num_lights = 0;
     }
 
 }

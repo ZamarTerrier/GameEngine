@@ -268,3 +268,6 @@ char *rootDirPath;
 
 void *e_var_images;
 int e_var_num_images = 0;
+
+void **e_var_lights = NULL;
+int e_var_num_lights = 0;

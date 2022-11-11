@@ -185,7 +185,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     GraphicsObjectSetShadersPath(&wt->widget.go.graphObj, dParam.vertShader, dParam.fragShader);
 
-    TextDataInit(&wt->tData, fontSize, dParam.filePath);
+    TextDataInit(&wt->tData, fontSize, dParam.diffuse);
 
     BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextWidgetAddTexture(wt);

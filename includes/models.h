@@ -11,7 +11,10 @@
 
 typedef struct{
     GraphicsObject graphObj;    
-    GameObjectImage *image;
+    GameObjectImage *diffuse;
+    GameObjectImage *specular;
+    GameObjectImage *normal;
+    int light_enable;
 } ModelStruct;
 
 typedef struct{

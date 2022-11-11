@@ -65,17 +65,42 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
     BuffersAddUniformObject(&go->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&go->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    go->image = calloc(1, sizeof(GameObjectImage));
+    go->diffuse = calloc(1, sizeof(GameObjectImage));
+    go->specular = calloc(1, sizeof(GameObjectImage));
+    go->normal = calloc(1, sizeof(GameObjectImage));
 
-    if(strlen(dParam.filePath) != 0)
+    if(strlen(dParam.diffuse) != 0)
     {
-        int len = strlen(dParam.filePath);
-        go->image->path = calloc(len + 1, sizeof(char));
-        memcpy(go->image->path, dParam.filePath, len);
-        go->image->path[len] = '\0';
+        int len = strlen(dParam.diffuse);
+        go->diffuse->path = calloc(len + 1, sizeof(char));
+        memcpy(go->diffuse->path, dParam.diffuse, len);
+        go->diffuse->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        ImageAddTexture(&go->graphObj.local, go->image);
     }
+
+    ImageAddTexture(&go->graphObj.local, go->diffuse);
+
+    if(strlen(dParam.specular) != 0)
+    {
+        int len = strlen(dParam.specular);
+        go->specular->path = calloc(len + 1, sizeof(char));
+        memcpy(go->specular->path, dParam.specular, len);
+        go->specular->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    ImageAddTexture(&go->graphObj.local, go->specular);
+
+    if(strlen(dParam.normal) != 0)
+    {
+        int len = strlen(dParam.normal);
+        go->normal->path = calloc(len + 1, sizeof(char));
+        memcpy(go->normal->path, dParam.normal, len);
+        go->normal->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    ImageAddTexture(&go->graphObj.local, go->normal);
 
     GameObject3DCreateDrawItems(&go->graphObj);
 

@@ -97,6 +97,9 @@ extern char *rootDirPath;
 extern void *e_var_images;
 extern int e_var_num_images;
 
+extern void **e_var_lights;
+extern int e_var_num_lights;
+
 extern char _binary_shaders_model_frag_spv_end;
 extern int _binary_shaders_model_frag_spv_size;
 extern char _binary_shaders_model_frag_spv_start;

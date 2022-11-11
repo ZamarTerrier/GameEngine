@@ -256,13 +256,35 @@ void DestroyOBJModel(ModelObject3D *mo){
 
     GraphicsObjectDestroy(&mo->nodes[0].models[0].graphObj);
 
-    free(mo->nodes[0].models->image->path);
+    if(mo->nodes[0].models->diffuse != NULL)
+    {
+        free(mo->nodes[0].models->diffuse->path);
 
-    if(mo->nodes[0].models->image->size > 0)
-        free(mo->nodes[0].models->image->buffer);
+        if(mo->nodes[0].models->diffuse->size > 0)
+            free(mo->nodes[0].models->diffuse->buffer);
 
-    free(mo->nodes[0].models);
-    free(mo->nodes);
+        free(mo->nodes[0].models->diffuse);
+    }
+
+    if(mo->nodes[0].models->specular != NULL)
+    {
+        free(mo->nodes[0].models->specular->path);
+
+        if(mo->nodes[0].models->specular->size > 0)
+            free(mo->nodes[0].models->specular->buffer);
+
+        free(mo->nodes[0].models->specular);
+    }
+
+    if(mo->nodes[0].models->normal != NULL)
+    {
+        free(mo->nodes[0].models->normal->path);
+
+        if(mo->nodes[0].models->normal->size > 0)
+            free(mo->nodes[0].models->normal->buffer);
+
+        free(mo->nodes[0].models->normal);
+    }
 }
 
 void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
@@ -313,6 +335,45 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam dParam){
 
   if(model->graphObj.shape.iParam.indexesSize > 0){
       BuffersCreateIndex(&model->graphObj.shape.iParam, sizeof(uint32_t));
+  }
+
+  if(model->diffuse == NULL)
+  {
+      model->diffuse = calloc(1, sizeof(GameObjectImage));
+
+      if(strlen(dParam.diffuse) != 0)
+      {
+          int len = strlen(dParam.diffuse);
+          model->diffuse->path = calloc(len + 1, sizeof(char));
+          memcpy(model->diffuse->path, dParam.diffuse, len);
+          model->diffuse->path[len] = '\0';
+      }
+  }
+
+  if(model->specular == NULL)
+  {
+      model->specular = calloc(1, sizeof(GameObjectImage));
+
+      if(strlen(dParam.specular) != 0)
+      {
+          int len = strlen(dParam.specular);
+          model->specular->path = calloc(len + 1, sizeof(char));
+          memcpy(model->specular->path, dParam.specular, len);
+          model->specular->path[len] = '\0';
+      }
+  }
+
+  if(model->normal == NULL)
+  {
+      model->normal = calloc(1, sizeof(GameObjectImage));
+
+      if(strlen(dParam.normal) != 0)
+      {
+          int len = strlen(dParam.normal);
+          model->normal->path = calloc(len + 1, sizeof(char));
+          memcpy(model->normal->path, dParam.normal, len);
+          model->normal->path[len] = '\0';
+      }
   }
 
   ModelDefaultInit(model, dParam);

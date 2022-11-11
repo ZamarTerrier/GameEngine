@@ -2,11 +2,14 @@
 
 #include <stdlib.h>
 
+#include <vulkan/vulkan.h>
+
 #include "models.h"
 
 #include "camera.h"
 #include "gameObject.h"
 #include "graphicsObject.h"
+#include "lightObject.h"
 #include "transform.h"
 #include "buffers.h"
 
@@ -577,7 +580,54 @@ void DefaultglTFUpdate(ModelObject3D *mo)
           vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
           LightBuffer3D lbo = {};
-          lbo.size = 0;
+          memset(&lbo, 0, sizeof(LightBuffer3D));
+
+          if(e_var_num_lights > 0 && mo->nodes[i].models[j].light_enable)
+          {
+              LightObject **lights = e_var_lights;
+
+              for(int i=0;i < e_var_num_lights; i++)
+              {
+
+                  switch (lights[i]->type) {
+                      case ENGINE_LIGHT_TYPE_DIRECTIONAL:
+                          lbo.dir.ambient = lights[i]->ambient;
+                          lbo.dir.diffuse = lights[i]->diffuse;
+                          lbo.dir.specular = lights[i]->specular;
+                          lbo.dir.direction = lights[i]->direction;
+                          break;
+                      case ENGINE_LIGHT_TYPE_POINT:
+                          lbo.num_points++;
+
+                          lbo.lights[lbo.num_points - 1].position = lights[i]->position;
+                          lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
+                          lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
+                          lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
+                          lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
+                          lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
+                          lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
+
+                          break;
+                      case ENGINE_LIGHT_TYPE_SPOT:
+                          lbo.num_spots++;
+
+                          lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
+                          lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
+                          lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
+                          lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
+                          lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
+                          lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
+                          lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
+                          lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
+                          lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
+                          break;
+                      default:
+                          break;
+                  }
+              }
+          }
+
+          lbo.light_react = mo->nodes[i].models[j].light_enable;
 
           vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(LightBuffer3D), 0, &data);
           memcpy(data, &lbo, sizeof(LightBuffer3D));
@@ -598,12 +648,35 @@ void ModelglTFDestroy(ModelObject3D* mo){
             ModelStruct *model = &mo->nodes[i].models[j];
             GraphicsObjectDestroy(&model->graphObj);
 
-            free(model->image->path);
+            if(model->diffuse != NULL)
+            {
+                free(model->diffuse->path);
 
-            if(model->image->size > 0)
-                free(model->image->buffer);
+                if(model->diffuse->size > 0)
+                    free(model->diffuse->buffer);
 
-            free(model->image);
+                free(model->diffuse);
+            }
+
+            if(model->specular != NULL)
+            {
+                free(model->specular->path);
+
+                if(model->specular->size > 0)
+                    free(model->specular->buffer);
+
+                free(model->specular);
+            }
+
+            if(model->normal != NULL)
+            {
+                free(model->normal->path);
+
+                if(model->normal->size > 0)
+                    free(model->normal->buffer);
+
+                free(model->normal);
+            }
         }
 
         free(mo->nodes[i].models);
@@ -715,15 +788,45 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
                       ModelStruct *model = &mo->nodes[iter].models[j];
                       engine_model_mesh *mesh = node->mesh[j];
 
-                      model->image = mesh->image;
+                      model->diffuse = mesh->image;
 
-                      if(model->image == NULL)
+                      if(model->diffuse == NULL)
                       {
-                          model->image = calloc(1, sizeof(GameObjectImage));
-                          int len = strlen(dParam.filePath);
-                          model->image->path = calloc(len + 1, sizeof(char));
-                          memcpy(model->image->path, dParam.filePath, len);
-                          model->image->path[len] = '\0';
+                          model->diffuse = calloc(1, sizeof(GameObjectImage));
+
+                          if(strlen(dParam.diffuse) != 0)
+                          {
+                              int len = strlen(dParam.diffuse);
+                              model->diffuse->path = calloc(len + 1, sizeof(char));
+                              memcpy(model->diffuse->path, dParam.diffuse, len);
+                              model->diffuse->path[len] = '\0';
+                          }
+                      }
+
+                      if(model->specular == NULL)
+                      {
+                          model->specular = calloc(1, sizeof(GameObjectImage));
+
+                          if(strlen(dParam.specular) != 0)
+                          {
+                              int len = strlen(dParam.specular);
+                              model->specular->path = calloc(len + 1, sizeof(char));
+                              memcpy(model->specular->path, dParam.specular, len);
+                              model->specular->path[len] = '\0';
+                          }
+                      }
+
+                      if(model->normal == NULL)
+                      {
+                          model->normal = calloc(1, sizeof(GameObjectImage));
+
+                          if(strlen(dParam.normal) != 0)
+                          {
+                              int len = strlen(dParam.normal);
+                              model->normal->path = calloc(len + 1, sizeof(char));
+                              memcpy(model->normal->path, dParam.normal, len);
+                              model->normal->path[len] = '\0';
+                          }
                       }
 
                       model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));

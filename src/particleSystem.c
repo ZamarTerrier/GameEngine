@@ -151,14 +151,15 @@ void InitParticle3D(GameObject3D* particle, vec3 position, const char* texturePa
     BuffersAddUniformObject(&particle->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&particle->graphObj.local, sizeof(DataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    particle->image = calloc(1, sizeof(GameObjectImage));
+    particle->diffuse = calloc(1, sizeof(GameObjectImage));
+    particle->specular = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(texturePath) != 0)
     {
-        particle->image->path = texturePath;
-        particle->image->buffer = ToolsLoadImageFromFile(&particle->image->size, texturePath);
+        particle->diffuse->path = texturePath;
+        particle->diffuse->buffer = ToolsLoadImageFromFile(&particle->diffuse->size, texturePath);
 
-        ImageAddTexture(&particle->graphObj.local, particle->image);
+        ImageAddTexture(&particle->graphObj.local, particle->diffuse);
     }
 
 

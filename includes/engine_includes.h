@@ -109,8 +109,46 @@ typedef struct{
 
 typedef struct {
     vec3 position __attribute__ ((aligned (16)));
-    vec3 color __attribute__ ((aligned (16)));
-}Light;
+
+    float constant;
+    float linear;
+    float quadratic;
+
+    vec3 ambient __attribute__ ((aligned (16)));
+    vec3 diffuse __attribute__ ((aligned (16)));
+    vec3 specular __attribute__ ((aligned (16)));
+} PointLight;
+
+typedef struct {
+    vec3 position __attribute__ ((aligned (16)));
+    vec3  direction __attribute__ ((aligned (16)));
+
+    float constant;
+    float linear;
+    float quadratic;
+    float cutOff;
+
+    vec3 ambient __attribute__ ((aligned (16)));
+    vec3 diffuse __attribute__ ((aligned (16)));
+    vec3 specular __attribute__ ((aligned (16)));
+} SpotLight;
+
+typedef struct{
+    vec3 direction __attribute__ ((aligned (16)));
+
+    vec3 ambient __attribute__ ((aligned (16)));
+    vec3 diffuse __attribute__ ((aligned (16)));
+    vec3 specular __attribute__ ((aligned (16)));
+} DirLight;
+
+typedef struct{
+    DirLight dir;
+    PointLight lights[32];
+    SpotLight spots [32];
+    int num_points;
+    int num_spots;
+    int light_react;
+} LightBuffer3D;
 
 typedef struct{
     mat4 mats[MAX_BONES];
@@ -118,12 +156,9 @@ typedef struct{
 } InvMatrixsBuffer;
 
 typedef struct{
-    Light lights[16] __attribute__ ((aligned (16)));
-    int size __attribute__ ((aligned (16)));
-} LightBuffer3D;
-
-typedef struct{
-    char filePath[256];
+    char diffuse[256];
+    char specular[256];
+    char normal[256];
     char vertShader[256];
     char fragShader[256];
     char topology;

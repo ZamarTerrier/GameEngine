@@ -246,11 +246,21 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
 
     so->go.image = calloc(1, sizeof(GameObjectImage));
 
-    if(strlen(dParam.filePath) != 0)
+    if(strlen(dParam.diffuse) != 0)
     {
-        int len = strlen(dParam.filePath);
+        int len = strlen(dParam.diffuse);
         so->go.image->path = calloc(len + 1, sizeof(char));
-        memcpy(so->go.image->path, dParam.filePath, len);
+        memcpy(so->go.image->path, dParam.diffuse, len);
+        so->go.image->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+        ImageAddTexture(&so->go.graphObj.local, so->go.image);
+    }
+
+    if(strlen(dParam.specular) != 0)
+    {
+        int len = strlen(dParam.specular);
+        so->go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(so->go.image->path, dParam.specular, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         ImageAddTexture(&so->go.graphObj.local, so->go.image);

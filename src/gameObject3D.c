@@ -4,6 +4,8 @@
 
 #include "camera.h"
 
+#include "lightObject.h"
+
 #include "pipeline.h"
 #include "buffers.h"
 #include "texture.h"
@@ -34,14 +36,54 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
 
     LightBuffer3D lbo = {};
-    lbo.lights[0].position.x = 0;
-    lbo.lights[0].position.y = 0;
-    lbo.lights[0].position.z = 9.5f;
-    lbo.lights[0].color.x = 0.0f;
-    lbo.lights[0].color.y = 0.0f;
-    lbo.lights[0].color.z = 0.0f;
+    memset(&lbo, 0, sizeof(LightBuffer3D));
 
-    lbo.size = 0;
+    if(e_var_num_lights > 0 && go->enable_light)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+
+            switch (lights[i]->type) {
+                case ENGINE_LIGHT_TYPE_DIRECTIONAL:
+                    lbo.dir.ambient = lights[i]->ambient;
+                    lbo.dir.diffuse = lights[i]->diffuse;
+                    lbo.dir.specular = lights[i]->specular;
+                    lbo.dir.direction = lights[i]->direction;
+                    break;
+                case ENGINE_LIGHT_TYPE_POINT:
+                    lbo.num_points++;
+
+                    lbo.lights[lbo.num_points - 1].position = lights[i]->position;
+                    lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
+                    lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
+                    lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
+                    lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
+                    lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
+                    lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
+
+                    break;
+                case ENGINE_LIGHT_TYPE_SPOT:
+                    lbo.num_spots++;
+
+                    lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
+                    lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
+                    lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
+                    lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
+                    lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
+                    lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
+                    lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
+                    lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
+                    lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    lbo.light_react = go->enable_light;
 
     vkMapMemory(device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
     memcpy(data, &lbo, sizeof(lbo));
@@ -163,14 +205,34 @@ void GameObject3DDestroy(GameObject3D* go){
 
     GraphicsObjectDestroy(&go->graphObj);
 
-    if(go->image != NULL)
+    if(go->diffuse != NULL)
     {
-        free(go->image->path);
+        free(go->diffuse->path);
 
-        if(go->image->size > 0)
-            free(go->image->buffer);
+        if(go->diffuse->size > 0)
+            free(go->diffuse->buffer);
 
-        free(go->image);
+        free(go->diffuse);
+    }
+
+    if(go->specular != NULL)
+    {
+        free(go->specular->path);
+
+        if(go->specular->size > 0)
+            free(go->specular->buffer);
+
+        free(go->specular);
+    }
+
+    if(go->normal != NULL)
+    {
+        free(go->normal->path);
+
+        if(go->normal->size > 0)
+            free(go->normal->buffer);
+
+        free(go->normal);
     }
 }
 
@@ -189,4 +251,6 @@ void GameObject3DInit(GameObject3D *go){
     GraphicsObject3DInit(&go->graphObj);
 
     go->graphObj.gItems.perspective = true;
+
+    go->enable_light = true;
 }
