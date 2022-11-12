@@ -1,11 +1,13 @@
 #include "gameObject2D.h"
 
 #include <vulkan/vulkan.h>
+#include <math.h>
 
 #include "buffers.h"
 #include "pipeline.h"
 #include "camera.h"
-#include <math.h>
+
+#include "e_math.h"
 
 #include "e_pipeline_variables.h"
 
@@ -22,7 +24,7 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
 
     TransformBuffer2D tbo;
 
-    tbo.position = go->transform.position;
+    tbo.position = v2_subs(go->transform.position, 0.5f);
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 

@@ -1,7 +1,7 @@
 #ifndef GRAPHICSITEMS_H
 #define GRAPHICSITEMS_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
 typedef struct{
     uint32_t* code;
@@ -23,14 +23,10 @@ typedef struct{
 typedef struct{
     void* vertexBuffer;
     void* vertexBufferMemory;
+    uint32_t typeSize;
     uint32_t verticesSize;
     void* vertices;
 } vertexParam;
-
-typedef struct{
-    uint32_t trianglesSize;
-    triangle *triangles;
-} triangeParam;
 
 typedef struct{
     uint32_t* indices;
@@ -50,7 +46,6 @@ typedef struct{
 typedef struct{
     indexParam iParam;
     vertexParam vParam;
-    triangeParam tParam;
     bool rebuild;
 } Shape;
 

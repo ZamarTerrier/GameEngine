@@ -88,6 +88,16 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     memcpy(data, &tbo, sizeof(tbo));
     vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
 
+    ImageBufferObjects ibo;
+    memset(&ibo, 0, sizeof(ImageBufferObjects));
+
+    ibo.scale.x = 1.0f;
+    ibo.scale.y = 1.0f;
+
+    vkMapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
+    memcpy(data, &ibo, sizeof(ibo));
+    vkUnmapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+
 }
 
 
@@ -102,16 +112,27 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
     GraphicsObjectSetShadersPath(&img->widget.go.graphObj, dParam.vertShader, dParam.fragShader);
 
     BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     img->widget.go.image = calloc(1, sizeof(GameObjectImage));
 
-    if(strlen(dParam.filePath) != 0)
+    if(strlen(dParam.diffuse) != 0)
     {
-        int len = strlen(dParam.filePath);
-        img->widget.go.image->path = calloc(len, sizeof(char));
-        memcpy(img->widget.go.image->path, dParam.filePath, len);
+        int len = strlen(dParam.diffuse);
+        img->widget.go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(img->widget.go.image->path, dParam.diffuse, len);
         img->widget.go.image->path[len] = '\0';
-        //img->widget.go.image->buffer = ToolsLoadImageFromFile(&img->widget.go.image->size, dParam.filePath);
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+        ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
+    }
+
+    if(strlen(dParam.specular) != 0)
+    {
+        int len = strlen(dParam.specular);
+        img->widget.go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(img->widget.go.image->path, dParam.specular, len);
+        img->widget.go.image->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
     }
 

@@ -86,7 +86,7 @@ float ClosestPtSegmentSegment(vec3 p1, vec3 q1, vec3 p2, vec3 q2, float *s, floa
     return v3_dot(v3_sub(*c1, *c2), v3_sub(*c1, *c2));
 }
 
-vec3 ClosestPtPointTriangle(vec3 p, vec3 p0, vec3 p1, vec3 p2){
+vec3 ClosestPtPointTriangle3D(vec3 p, vec3 p0, vec3 p1, vec3 p2){
 
     vec3 ab = v3_sub(p1, p0);
     vec3 ac = v3_sub(p2, p0);
@@ -158,7 +158,7 @@ float SqDistPointAABB(vec3 pos, void *obj)
 int IntersectionSphereTriangle(vec3 sPos, float r, vec3 p0, vec3 p1, vec3 p2, vec3 *resPos, float *dist, float *depth, vec3 *dir)
 {
     // Find point P on triangle ABC closest to sphere center
-    *resPos = ClosestPtPointTriangle(sPos, p0, p1, p2);
+    *resPos = ClosestPtPointTriangle3D(sPos, p0, p1, p2);
     vec3 v = v3_sub(*resPos, sPos);
 
     *dist = v3_dot(v,v);

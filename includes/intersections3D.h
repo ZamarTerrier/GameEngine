@@ -1,29 +1,9 @@
 #ifndef INTERSECTIONS3D_H
 #define INTERSECTIONS3D_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
-typedef struct{
-    vec3 position;
-    float height;
-    float radius;
-} InterCapsuleParam;
-
-typedef struct{
-    vec3 center;
-    float radius;
-} InterSphereParam;
-
-typedef struct{
-    vec3 position;
-    float size;
-} InterAABBParam;
-
-typedef struct {
-    vec3 center; // OBB center point
-    vec3 axes; // Local x-, y-, and z-axes
-    vec3 halfwidth; // Positive halfwidth extents of OBB along each axis
-} InterOBBParam;
+#include "std_intersect.h"
 
 int IntersectionSphereTriangle(vec3 sPos, float r, vec3 p0, vec3 p1, vec3 p2, vec3 *resPos, float *dist, float *depth, vec3 *dir);
 int IntersectionCapsuleShape(void *obj1, void *shape, float *dist, float *depth, vec3 *dir);

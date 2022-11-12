@@ -1,7 +1,7 @@
 #ifndef GRAPHICSOBJECT_H
 #define GRAPHICSOBJECT_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 #include "graphicsItems.h"
 
 typedef struct{
@@ -15,6 +15,7 @@ typedef struct{
 void GraphicsObject2DInit(GraphicsObject* graphObj);
 void GraphicsObject3DInit(GraphicsObject* graphObj);
 void GraphicsObjectModel3DInit(GraphicsObject* graphObj);
+void GraphicsObjectParticle3DInit(GraphicsObject* graphObj);
 
 void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount);
 

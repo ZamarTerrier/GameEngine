@@ -1,7 +1,7 @@
 #ifndef MODELS_H
 #define MODELS_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
 #include "model_include.h"
 
@@ -11,7 +11,10 @@
 
 typedef struct{
     GraphicsObject graphObj;    
-    GameObjectImage *image;
+    GameObjectImage *diffuse;
+    GameObjectImage *specular;
+    GameObjectImage *normal;
+    int light_enable;
 } ModelStruct;
 
 typedef struct{

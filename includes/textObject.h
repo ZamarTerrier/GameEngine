@@ -1,7 +1,7 @@
 #ifndef TEXTOBJECT_H
 #define TEXTOBJECT_H
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
 #include "gameObject.h"
 #include "gameObject2D.h"
@@ -41,7 +41,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
 void TextObjectMakeLastText(TextObject *to);
 
 void TextDataInit(TextData *tData, int fontSize, char* fontPath);
-void TextObjectInit(TextObject* to, int fontSize,  const char* fontPath, const char* vertShader, const char* fragShader);
+void TextObjectInit(TextObject* to, int fontSize,  const char* fontPath);
 
 void TextDataSetFontPath(TextData* tData, const char* path);
 void TextDataSetTextColor(TextData* tData, vec3 color);

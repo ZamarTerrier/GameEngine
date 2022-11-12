@@ -2,41 +2,79 @@
 
 #include <vulkan/vulkan.h>
 
-#include "stdinclude.h"
+#include "engine_includes.h"
 
 #include "pipeline.h"
 #include "buffers.h"
 
-void SpriteObjectInit(GameObject2D *go, SpriteParam sParam){
+void SpriteObjectCreateQuad(SpriteObject *so)
+{
+    Vertex2D *verts = calloc(4, sizeof(Vertex2D));
 
-    GameObject2DInit(go);
+    float size = 0.5f;
 
-    Vertex2D *verts = (Vertex2D *) calloc(4, sizeof(Vertex2D));
-    memcpy(verts, planeVert, 4 * sizeof(Vertex2D));
+    verts[0].position.x = -size;
+    verts[0].position.y = -size;
+    verts[0].texCoord.x = 0;
+    verts[0].texCoord.y = 0;
 
-    GraphicsObjectSetVertex(&go->graphObj, verts, 4, planeIndx, 6);
+    verts[1].position.x = size;
+    verts[1].position.y = -size;
+    verts[1].texCoord.x = 1.0f;
+    verts[1].texCoord.y = 0;
 
-    GraphicsObjectSetShadersPath(&go->graphObj, sParam.vertShader, sParam.fragShader);
-    BuffersAddUniformObject(&go->graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&go->graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    verts[2].position.x = size;
+    verts[2].position.y = size;
+    verts[2].texCoord.x = 1.0f;
+    verts[2].texCoord.y = 1.0f;
 
-    go->image = calloc(1, sizeof(GameObjectImage));
+    verts[3].position.x = -size;
+    verts[3].position.y = size;
+    verts[3].texCoord.x = 0;
+    verts[3].texCoord.y = 1.0f;
+
+    for(int i=0;i < 4;i++)
+    {
+        verts[i].color = (vec3){ 1, 1, 1};
+    }
+
+    uint32_t *tIndx = calloc(6, sizeof(uint32_t));
+
+    uint32_t indx[] = {
+      0, 1, 2, 2, 3, 0
+    };
+
+    memcpy(tIndx, indx, 6 * sizeof(uint32_t));
+
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, 4, tIndx, 6);
+}
+
+void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
+
+    GameObject2DInit(so);
+
+    SpriteObjectCreateQuad(so);
+
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    so->go.image = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(sParam.texturePath) != 0)
     {
         int len = strlen(sParam.texturePath);
-        go->image->path = calloc(len + 1, sizeof(char));
-        memcpy(go->image->path, sParam.texturePath, len);
-        go->image->path[len] = '\0';
+        so->go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(so->go.image->path, sParam.texturePath, len);
+        so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        ImageAddTexture(&go->graphObj.local, go->image);
+        ImageAddTexture(&so->go.graphObj.local, so->go.image);
     }
 
-    GameObject2DCreateDrawItems(go);
+    GameObject2DCreateDrawItems(so);
 
     PipelineSetting setting;
 
-    PipelineSettingSetDefault(&go->graphObj, &setting);
+    PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
@@ -47,7 +85,7 @@ void SpriteObjectInit(GameObject2D *go, SpriteParam sParam){
         setting.fromFile = 0;
     }
 
-    GameObject2DAddSettingPipeline(go, &setting);
+    GameObject2DAddSettingPipeline(so, &setting);
 
-    PipelineCreateGraphics(&go->graphObj);
+    PipelineCreateGraphics(&so->go.graphObj);
 }

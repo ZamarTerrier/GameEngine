@@ -6,6 +6,43 @@
 
 #include "stb_image.h"
 
+void ImageCreateEmpty(void** image, void** imageMemory) {
+    VkImageCreateInfo imageInfo = {};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = 100;
+    imageInfo.extent.height = 100;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(device, &imageInfo, NULL, image) != VK_SUCCESS) {
+        printf("failed to create image!");
+        exit(-1);
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(device, *image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    if (vkAllocateMemory(device, &allocInfo, NULL, imageMemory) != VK_SUCCESS) {
+        printf("failed to allocate image memory!");
+        exit(-1);
+    }
+
+    vkBindImageMemory(device, *image, *imageMemory, 0);
+}
+
 Texture2D createTexture(const char* source, int size, bool from_file){
 
     Texture2D texture;
@@ -20,6 +57,14 @@ Texture2D createTexture(const char* source, int size, bool from_file){
 }
 
 int TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file) {
+
+    if(source == NULL)
+    {
+        ImageCreateEmpty(&texture->textureImage, &texture->textureImageMemory);
+        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        return;
+    }
 
     int texWidth, texHeight, texChannels;
 
@@ -110,7 +155,10 @@ int TextureImageCreate(const char* source, int size, Texture2D *texture, bool fr
 
     if (!pixels) {
         printf("failed to load texture image!");
-        exit(1);
+        ImageCreateEmpty(&texture->textureImage, &texture->textureImageMemory);
+        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        return 0;
     }
 
     VkBuffer stagingBuffer;

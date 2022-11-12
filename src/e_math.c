@@ -181,12 +181,14 @@ vec3 v3_cross(vec3 a, vec3 b)
 float v3_maxs(vec3 a){ return max(max(a.x, a.y), a.z); }
 float v3_mins(vec3 a){ return min(min(a.x, a.y), a.z); }
 
-
-
 vec3 v3_min(vec3 a, vec3 b){ return (vec3){ min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)}; }
 vec3 v3_max(vec3 a, vec3 b){ return (vec3){ max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) }; }
 
-float v2_length(vec2 v) { return sqrtf(v.x*v.x + v.y*v.y); }
+float v2_cross(vec2 a, vec2 b)
+{
+   return a.x * b.y - a.y * b.x;
+}
+
 vec2 v2_add(vec2 a, vec2 b) { return (vec2){ a.x + b.x, a.y + b.y}; }
 vec2 v2_adds  (vec2 a, float s) { return (vec2){ a.x + s,   a.y + s }; }
 vec2 v2_sub   (vec2 a, vec2 b) { return (vec2){ a.x - b.x, a.y - b.y }; }
@@ -195,6 +197,10 @@ vec2 v2_mul   (vec2 a, vec2 b) { return (vec2){ a.x * b.x, a.y * b.y }; }
 vec2 v2_muls  (vec2 a, float s) { return (vec2){ a.x * s,   a.y * s  }; }
 vec2 v2_div   (vec2 a, vec2 b) { return (vec2){ a.x / b.x, a.y / b.y }; }
 vec2 v2_divs  (vec2 a, float s) { return (vec2){ a.x / s,   a.y / s  }; }
+float v2_length(vec2 v) { return sqrtf(v.x*v.x + v.y*v.y); }
+float v2_dot (vec2 a, vec2 b) { return a.x*b.x + a.y*b.y; }
+float  v2_distance(vec2 v1, vec2 v2) { return sqrt(pow((v1.x - v2.x), 2) + pow((v1.y - v2.y), 2)); }
+
 
 vec3 v3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
 vec3 v3_adds  (vec3 a, float s) { return (vec3){ a.x + s,   a.y + s,   a.z + s   }; }

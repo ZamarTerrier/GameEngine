@@ -341,11 +341,9 @@ void DefaultFBXUpdate(ModelObject3D *mo)
           lbo.lights[0].position.x = 0;
           lbo.lights[0].position.y = 0;
           lbo.lights[0].position.z = 9.5f;
-          lbo.lights[0].color.x = 0.0f;
-          lbo.lights[0].color.y = 0.0f;
-          lbo.lights[0].color.z = 0.0f;
 
-          lbo.size = 0;
+          lbo.num_points = 0;
+          lbo.num_spots = 0;
 
           vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
           memcpy(data, &lbo, sizeof(lbo));

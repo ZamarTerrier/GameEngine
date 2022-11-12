@@ -289,7 +289,7 @@ void WidgetEventsPipe(EWidget* widget)
 
 void WidgetDraw(EWidget * widget){
     ChildStack *child = widget->child;
-    GameObjectDraw(widget);
+    engDraw(widget);
     while(child != NULL)
     {
         WidgetDraw(child->node);
