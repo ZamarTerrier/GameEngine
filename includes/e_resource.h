@@ -4,8 +4,8 @@
 #include "engine_includes.h"
 
 extern uint32_t MAX_FRAMES_IN_FLIGHT;
-extern float WIDTH;
-extern float HEIGHT;
+extern int WIDTH;
+extern int HEIGHT;
 extern uint32_t VALIDSIZE;
 extern uint32_t DEVEXTSIZE;
 
@@ -70,7 +70,7 @@ extern const char* deviceExtensions[];
 extern EIVertexInputAttributeDescription planeAttributeDescription[];
 extern EIVertexInputAttributeDescription cubeAttributeDescription[];
 extern EIVertexInputAttributeDescription modelAttributeDescription[];
-
+extern EIVertexInputAttributeDescription particleAttributeDescription[];
 
 typedef struct{
     int FindLetter;
@@ -120,6 +120,13 @@ extern char _binary_shaders_sprite_frag_spv_start;
 extern char _binary_shaders_sprite_vert_spv_end;
 extern int _binary_shaders_sprite_vert_spv_size;
 extern char _binary_shaders_sprite_vert_spv_start;
+
+extern char _binary_shaders_particle_frag_spv_end;
+extern int _binary_shaders_particle_frag_spv_size;
+extern char _binary_shaders_particle_frag_spv_start;
+extern char _binary_shaders_particle_vert_spv_end;
+extern int _binary_shaders_particle_vert_spv_size;
+extern char _binary_shaders_particle_vert_spv_start;
 
 extern char _binary_shaders_3d_object_frag_spv_end;
 extern int _binary_shaders_3d_object_frag_spv_size;

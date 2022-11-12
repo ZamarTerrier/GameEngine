@@ -16,7 +16,7 @@ typedef struct{
 
 typedef struct{
     vec2 *positions;
-    uint32_t size;
+    uint32_t num_positions;
     vec3 color;
 } ShapeParams;
 

@@ -23,6 +23,8 @@ void GameObject3DDestroy(GameObject3D* go);
 
 void GameObject3DInit(GameObject3D *go);
 
+void GameObject3DEnableLight(GameObject3D *go, bool enable);
+
 void GameObject3DAddSettingPipeline(GameObject3D* go, void *setting);
 void GameObject3DCreateDrawItems(GraphicsObject* go);
 

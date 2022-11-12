@@ -9,6 +9,7 @@
 
 #include "e_resource.h"
 
+#include "particleSystem.h"
 #include "gameObject2D.h"
 #include "gameObject3D.h"
 #include "models.h"
@@ -39,6 +40,16 @@ void GraphicsObjectModel3DInit(GraphicsObject* graphObj){
 
     graphObj->aShader.attr = modelAttributeDescription;
     graphObj->aShader.countAttr = 6;
+
+    graphObj->shape.rebuild = true;
+}
+
+void GraphicsObjectParticle3DInit(GraphicsObject* graphObj){
+
+    graphObj->aShader.bindingDescription = Particle3DGetBindingDescription();
+
+    graphObj->aShader.attr = particleAttributeDescription;
+    graphObj->aShader.countAttr = 3;
 
     graphObj->shape.rebuild = true;
 }
@@ -87,6 +98,7 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
     {
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             destroyTexture(graphObj->local.descriptors[i].texture);
+            free(graphObj->local.descriptors[i].texture);
         }
         else{
             for (int j = 0; j < imagesCount; j++) {

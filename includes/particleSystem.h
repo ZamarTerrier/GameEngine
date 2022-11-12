@@ -15,16 +15,22 @@ typedef struct {
 typedef struct{
     vec3 position;
     vec3 direction;
+    vec3 color;
+    float scale;
     float life;
     float speed;
+    float gravity;
 } Particle;
 
 typedef struct{
-    GameObject3D* go;
+    GameObject3D go;
     Particle* particles;
+    int num_parts;
 } ParticleObject3D;
 
-void InitParticle3D(GameObject3D* particle, vec3 position, const char* texturePath, const char* vertShader, const char* fragShader);
-void AddParticle3D(GameObject3D* particle, vec3 position, vec3 direction,  float life, float speed);
+EIVertexInputBindingDescription Particle3DGetBindingDescription();
+
+void Particle3DInit(ParticleObject3D* particle, DrawParam dParam);
+void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, float speed, float gravity, float life);
 
 #endif // PARTICLESYSTEM_H

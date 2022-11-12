@@ -34,7 +34,7 @@ typedef void (*e_keyCallback)(GLFWwindow*, int , int , int , int );
 
 renderObjects objs;
 
-void * RecreateFunc;
+void * RecreateFunc = NULL;
 
 e_charCallback *charCallbacks;
 int charCallbackSize;
@@ -234,9 +234,12 @@ void recreateSwapChain() {
         glfwWaitEvents();
     }
 
-    void (*reZero)(void) = RecreateFunc;
+    if(RecreateFunc != NULL)
+    {
+        void (*reZero)(void) = RecreateFunc;
 
-    reZero();
+        reZero();
+    }
 
     diffSize.x =  1;
     diffSize.y =  1;

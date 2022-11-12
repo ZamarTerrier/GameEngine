@@ -203,8 +203,9 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
 
 void BuffersRecreateUniform(localParam* param){
     for(int i=0;i < param->descrCount;i++){
-        if(param->descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            ShaderBuffer *descriptor = &param->descriptors[i];
+        ShaderBuffer *descriptor = &param->descriptors[i];
+
+        if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             Texture2D temptexture;
 
             if(descriptor->image->size > 0)
@@ -218,10 +219,10 @@ void BuffersRecreateUniform(localParam* param){
         }
         else
         {
-            int sizer = param->descriptors[i].buffsize;
-            param->descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
-            param->descriptors[i].uniform->size = sizer;
-            BuffersCreateUniform(param->descriptors[i].uniform, i);
+            int sizer = descriptor->buffsize;
+            descriptor->uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
+            descriptor->uniform->size = sizer;
+            BuffersCreateUniform(descriptor->uniform, i);
         }
     }
 }

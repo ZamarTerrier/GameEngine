@@ -6,7 +6,7 @@
 
 #include "engine.h"
 
-vec2 e_var_mouse,  e_var_temp, e_var_tscale ;
+vec2 e_var_mouse, e_var_temp, e_var_tscale ;
 
 void WindowWidgetSetSize(EWidgetWindow* window, float x, float y)
 {
@@ -53,7 +53,7 @@ void WindowWidgetMove(EWidget* widget, void* entry, void* args)
     {
         te = v2_sub(te, e_var_mouse);
         te = v2_add(e_var_temp, te);
-        Transform2DSetPosition(widget, xpos, ypos);
+        Transform2DSetPosition(widget, te.x, te.y);
     }
     else
     {

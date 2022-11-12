@@ -148,10 +148,10 @@ void ShapeObjectCreateCircle(ShapeObject *so, CircleParams *param)
 void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
 {
 
-    if(param->size <= 2)
+    if(param->num_positions <= 2)
         return;
 
-    uint32_t num_verts = param->size + 1;
+    uint32_t num_verts = param->num_positions + 1;
     Vertex2D *verts = calloc( num_verts, sizeof(Vertex2D));
 
     vec2 center = {0, 0};
@@ -160,7 +160,7 @@ void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
 
     vec2 min = param->positions[0];
     vec2 max = param->positions[0];
-    for(int i=1; i < param->size; i++)
+    for(int i=1; i < param->num_positions; i++)
     {
         if(min.x > param->positions[i].x)
             min.x = param->positions[i].x;
@@ -176,7 +176,7 @@ void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
     min = v2_div(min, w_size);
     max = v2_div(max, w_size);
 
-    for(int i=0; i < param->size; i++)
+    for(int i=0; i < param->num_positions; i++)
     {
         Vertex2D *vert = &verts[i + 1];
 
@@ -188,7 +188,7 @@ void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
         center = v2_add(center, param->positions[i]);
     }
 
-    center = v2_divs(center, param->size);
+    center = v2_divs(center, param->num_positions);
 
     verts[0].position = v2_div(center, w_size);
     verts[0].texCoord.x = 0.5f;
@@ -196,11 +196,11 @@ void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
     verts[0].color = param->color;
 
 
-    uint32_t indx_size = (param->size + 1) * 3;
+    uint32_t indx_size = (param->num_positions + 1) * 3;
     uint32_t *indx = calloc( indx_size, sizeof(uint32_t));
 
     int k0 = 0, k1 = 1, k2 = 2, iter = 0;
-    for(int i = 0; i < param->size; ++i)
+    for(int i = 0; i < param->num_positions; ++i)
     {
         indx[iter] = k0;
         indx[iter + 1] = k1;

@@ -252,5 +252,10 @@ void GameObject3DInit(GameObject3D *go){
 
     go->graphObj.gItems.perspective = true;
 
-    go->enable_light = true;
+    go->enable_light = false;
+}
+
+void GameObject3DEnableLight(GameObject3D *go, bool enable)
+{
+    go->enable_light = enable;
 }

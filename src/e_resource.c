@@ -3,8 +3,8 @@
 #include <vulkan/vulkan.h>
 
 uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-float WIDTH = 1024;
-float HEIGHT = 800;
+int WIDTH = 1024;
+int HEIGHT = 800;
 uint32_t VALIDSIZE = 1;
 uint32_t DEVEXTSIZE = 1;
 
@@ -183,6 +183,25 @@ EIVertexInputAttributeDescription modelAttributeDescription[] = {
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .offset = offsetof(ModelVertex3D, weight) }
 };
+
+EIVertexInputAttributeDescription particleAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(ParticleVertex3D, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32_SFLOAT,
+        .offset = offsetof(ParticleVertex3D, size) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(ParticleVertex3D, color) }
+};
+
 
 const FontIndexes fontIndexes[] ={
     { 1040, 225 },//А
