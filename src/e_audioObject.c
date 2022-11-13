@@ -3,6 +3,10 @@
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
+#include "camera.h"
+
+#include "e_math.h"
+
 #define DELAY_IN_SECONDS    0.4f
 #define DECAY               0.25f   /* Volume falloff for each echo. */
 
@@ -93,6 +97,20 @@ void AudioObjectSetPitch(AudioObject *ao, float pitch)
     {
         ma_sound_set_pitch(ao->sounds[i], ao->pitch);
     }
+}
+
+void AudioObjectSetSourcePosition3D(AudioObject *ao, vec3 position)
+{
+    vec3 side = v3_cross((vec3){ 0, 1, 0}, v3_norm(getViewRotation()));
+    side = v3_norm(side);
+    vec3 razn = v3_sub(position, getViewPos());
+    float x_temp = v3_dot(razn, side);
+    float pan = clamp(x_temp / 10.0f, -1, 1);
+
+    float vol = 1 / v3_length(razn);//(cos(EngineGetTime()) + 1.0f) / 2.f
+
+    AudioObjectSetPan(ao, -pan);
+    AudioObjectSetVolume(ao, vol);
 }
 
 void AudioObjectStopSound(AudioObject* ao, uint32_t num)
