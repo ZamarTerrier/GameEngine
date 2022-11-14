@@ -56,7 +56,7 @@
 
 или
 
-    libvulkan-1 libglfw3
+    vulkan-1.lib glfw3.lib
     
 ## Данное ПО распространяется по лицензии zlib :
 
