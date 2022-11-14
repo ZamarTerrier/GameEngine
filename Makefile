@@ -62,7 +62,7 @@ BINFILES += bin/shaders/gui/widget_frag.o \
     bin/shaders/particle/frag.o \
     bin/shaders/particle/vert.o \
  
-all : libGameEngine.so
+all : clean mdir libGameEngine.so
 
 obj/%.o : src/%.c
 	gcc -c -fPIC $< -o $@ -Iincludes -Ilibs
@@ -72,3 +72,10 @@ obj/%.o : libs/%.c
 
 libGameEngine.so : $(BINFILES) $(OBJECTS)
 	gcc -shared $^ -o $@ -Iincludes
+	
+mdir : 
+	mkdir obj
+
+clean : 
+	$(RM) -r obj 
+	$(RM) libGameEngine.so
