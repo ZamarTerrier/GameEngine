@@ -218,6 +218,28 @@ void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
     GraphicsObjectSetVertex(&so->go.graphObj, verts, num_verts, indx, indx_size);
 }
 
+void ShapeObjectCreateLine(ShapeObject *so, LineParams *line)
+{
+    Vertex2D *verts = calloc(2, sizeof(Vertex2D));
+
+
+    vec2 position;
+
+    verts[0].position.x = line->position.x / WIDTH;
+    position.x = verts[0].position.x + (line->direction.x * (line->length / WIDTH));
+
+    verts[0].position.y = line->position.y / HEIGHT;
+    position.y = verts[0].position.y + (line->direction.y * (line->length / HEIGHT));
+
+    verts[0].color = line->color;
+
+    verts[1].position = position;
+    verts[1].color = line->color;
+
+
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, 2, NULL, 0);
+}
+
 void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *param)
 {
     GameObject2DInit(so);
@@ -226,6 +248,9 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
 
     switch(type)
     {
+        case ENGINE_SHAPE_OBJECT_LINE:
+            ShapeObjectCreateLine(so, param);
+            break;
         case ENGINE_SHAPE_OBJECT_QUAD:
             ShapeObjectCreateQuad(so, param);
             break;
@@ -279,6 +304,12 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
         setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
         setting.fromFile = 0;
+    }
+
+    if(type == ENGINE_SHAPE_OBJECT_LINE)
+    {
+        setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        setting.drawType = 1;
     }
 
     GameObject2DAddSettingPipeline(so, &setting);

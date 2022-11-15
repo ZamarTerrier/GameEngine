@@ -4,6 +4,195 @@
 
 #include "math.h"
 
+GJKObject gjkObject;
+
+vec2 perpendicular (vec2 v) { vec2 p = { v.y, -v.x }; return p; }
+float lengthSquared (vec2 v) { return v.x * v.x + v.y * v.y; }
+
+vec2 tripleProduct(vec2 a, vec2 b, vec2 c){
+    vec3 A = {a.x, a.y, 0};
+    vec3 B = {b.x, b.y, 0};
+    vec3 C = {c.x, c.y, 0};
+
+    vec3 first = v3_cross(A, B);
+    vec3 second = v3_cross(first, C);
+
+    return (vec2){second.x, second.y};
+}
+
+size_t indexOfFurthestPoint (void *obj, vec2 direction) {
+
+    GameObject2D *shape = obj;
+
+    float maxdot = -1;
+    size_t index = -1;
+
+    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    Vertex2D *vertex = vParam->vertices;
+
+    for (int i=0;i < vParam->verticesSize;i++) {
+      float dot = v2_dot(vertex[i].position, direction);
+      if (dot > maxdot){
+          maxdot = dot;
+          index = i;
+      }
+    }
+
+    return index;
+}
+
+vec2 supportFunc(void *obj, vec2 direction)
+{
+    GameObject2D *shape = obj;
+
+    float maxdot = -1;
+    vec2 base;
+
+    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    Vertex2D *vertex = vParam->vertices;
+
+    for (int i=0;i < vParam->verticesSize;i++) {
+      float dot = v2_dot(vertex[i].position, direction);
+      if (dot > maxdot){
+          maxdot = dot;
+          base = v2_add(vertex[i].position, shape->transform.position);
+      }
+    }
+
+    return base;
+}
+
+vec2 averagePoint (void *obj) {
+
+    GameObject2D *shape = obj;
+
+    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    Vertex2D *vertex = vParam->vertices;
+
+    vec2 avg = { 0.f, 0.f };
+    for (size_t i = 0; i < vParam->verticesSize; i++) {
+        avg.x += vertex[i].position.x + shape->transform.position.x;
+        avg.y += vertex[i].position.y + shape->transform.position.y;
+    }
+    avg.x /= vParam->verticesSize;
+    avg.y /= vParam->verticesSize;
+    return avg;
+}
+
+vec2 support (void *obj1, void *obj2, vec2 d) {
+
+    GameObject2D *shape1 = obj1;
+    GameObject2D *shape2 = obj2;
+
+    Vertex2D *vertex1 = shape1->graphObj.shape.vParam.vertices;
+    Vertex2D *vertex2 = shape2->graphObj.shape.vParam.vertices;
+
+    // get furthest point of first body along an arbitrary direction
+    size_t i = indexOfFurthestPoint (obj1, d);
+
+    // get furthest point of second body along the opposite direction
+    size_t j = indexOfFurthestPoint (obj2, v2_muls(d, -1));
+
+    // subtract (Minkowski sum) the two points to see if bodies 'overlap'
+    return v2_sub(v2_add(vertex1[i].position, shape1->transform.position), v2_add(vertex2[j].position, shape2->transform.position));
+}
+
+int TestGJK2D (GJKObject *gjk) {
+    vec2 a, b, c, d, ao, ab, ac, abperp, acperp;
+
+    vec2 position1 = averagePoint (gjk->obj1); // not a CoG but
+    vec2 position2 = averagePoint (gjk->obj2); // it's ok for GJK )
+
+    // initial direction from the center of 1st body to the center of 2nd body
+    d = v2_sub(position1, position2);
+
+    // if initial direction is zero – set it to any arbitrary axis (we choose X)
+    if ((d.x == 0) && (d.y == 0))
+        d.x = 1.f;
+
+    // set the first support as initial point of the new simplex
+    a = gjk->simplex[0] = v2_sub(gjk->support1(gjk->obj1, d), gjk->support2(gjk->obj2, v2_muls(d, -1)));
+
+    if (v2_dot(a, d) <= 0)
+        return 0; // no collision
+
+    d = v2_muls(a, -1); // The next search direction is always towards the origin, so the next search direction is negate(a)
+
+    while (1) {
+        a = gjk->simplex[++gjk->num_verts] = v2_sub(gjk->support1(gjk->obj1, d), gjk->support2(gjk->obj2, v2_muls(d, -1)));
+
+        if (v2_dot(a, d) <= 0)
+            return 0; // no collision
+
+        ao = v2_muls(a, -1); // from point A to Origin is just negative A
+
+        // simplex has 2 points (a line segment, not a triangle yet)
+        if (gjk->num_verts < 2) {
+            b = gjk->simplex[0];
+            ab = v2_sub(b, a); // from point A to B
+            d = tripleProduct (ab, ao, ab); // normal to AB towards Origin
+            if (lengthSquared (d) == 0)
+                d = perpendicular (ab);
+            continue; // skip to next iteration
+        }
+
+        b = gjk->simplex[1];
+        c = gjk->simplex[0];
+        ab = v2_sub(b, a); // from point A to B
+        ac = v2_sub(c, a); // from point A to C
+
+        acperp = tripleProduct (ab, ac, ac);
+
+        if (v2_dot(acperp, ao) >= 0) {
+
+            d = acperp; // new direction is normal to AC towards Origin
+
+        } else {
+
+            abperp = tripleProduct (ac, ab, ab);
+
+            if (v2_dot(abperp, ao) < 0)
+                return 1; // collision
+
+            gjk->simplex[0] = gjk->simplex[1]; // swap first element (point C)
+
+            d = abperp; // new direction is normal to AB towards Origin
+        }
+
+        gjk->simplex[1] = gjk->simplex[2]; // swap element in the middle (point B)
+        --gjk->num_verts;
+    }
+
+    return 0;
+}
+
+bool IntersectGJK2D(GJKObject *gjk, void *obj1, void *obj2){
+    // reset everything
+    gjk->num_verts = 0;
+    gjk->obj1 = obj1;
+    gjk->obj2 = obj2;
+    gjk->support1 = supportFunc;
+    gjk->support2 = supportFunc;
+
+    // do the actual test
+    EvolveResult result = StillEvolving;
+    while(result == StillEvolving) {
+        result = TestGJK2D(gjk);
+    }
+    return result == FoundIntersection;
+}
+
+int IntersectLineToLine(vec2 p1, vec2 p2, vec2 p3, vec2 p4)
+{
+    vec2 s1 = v2_sub(p2, p1);
+    vec2 s2 = v2_sub(p4, p3);
+
+    float s = (-s1.x * (p1.x - p3.x) + s1.x * (p1.y - p3.y)) / (-s2.x * s1.y + s1.x * s2.y);
+    float t = (s2.x * (p1.y - p3.y) - s2.y * (p1.x - p3.x)) / (-s2.x * s1.y + s1.x * s2.y);
+
+    return s >= 0 && s <= 1 && t >= 0 && t <= 1;
+}
+
 float SqDistPointSquare(vec2 pos, InterSquareParam *box)
 {
     vec2 up = {box->position.x + box->size, box->position.y + box->size};
@@ -39,27 +228,30 @@ int ComputeSideSquare(vec2 p, vec2 min, vec2 max)
     return code;
 }
 
-
 bool ComputeTwoTrianles(InterTriangleParam t1, InterTriangleParam t2)
 {
-    vec2 da = v2_sub(t1.p1, t2.p3);
-    vec2 db = v2_sub(t1.p2, t2.p3);
-    vec2 dc = v2_sub(t1.p3, t2.p3);
-    float dX21 = t2.p3.x - t2.p2.x;
-    float dY12 = t2.p2.y - t2.p3.y;
-    float D = dY12 * (t2.p1.x - t2.p3.x) + dX21 * (t2.p1.y - t2.p3.y);
-    float sa = dY12 * da.x + dX21 * da.y;
-    float sb = dY12 * db.x + dX21 * db.y;
-    float sc = dY12 * dc.x + dX21 * db.y;
-    float ta = (t2.p3.y - t2.p1.y) * da.x + (t2.p1.x - t2.p3.x) * da.y;
-    float tb = (t2.p3.y - t2.p1.y) * db.x + (t2.p1.x - t2.p3.x) * db.y;
-    float tc = (t2.p3.y - t2.p1.y) * dc.x + (t2.p1.x - t2.p3.x) * dc.y;
-    if (D < 0) return ((sa >= 0 && sb >= 0 && sc >= 0) ||
-                       (ta >= 0 && tb >= 0 && tc >= 0) ||
-                       (sa+ta <= D && sb+tb <= D && sc+tc <= D));
-    return ((sa <= 0 && sb <= 0 && sc <= 0) ||
-          (ta <= 0 && tb <= 0 && tc <= 0) ||
-          (sa+ta >= D && sb+tb >= D && sc+tc >= D));
+    if(IntersectLineToLine(t1.p1, t1.p2, t2.p1, t2.p2))
+        return true;
+    else if(IntersectLineToLine(t1.p1, t1.p2, t2.p2, t2.p3))
+        return true;
+    else if(IntersectLineToLine(t1.p1, t1.p2, t2.p3, t2.p1))
+        return true;
+
+    else if(IntersectLineToLine(t1.p2, t1.p3, t2.p1, t2.p2))
+        return true;
+    else if(IntersectLineToLine(t1.p2, t1.p3, t2.p2, t2.p3))
+        return true;
+    else if(IntersectLineToLine(t1.p2, t1.p3, t2.p3, t2.p1))
+        return true;
+
+    else if(IntersectLineToLine(t1.p3, t1.p1, t2.p1, t2.p2))
+        return true;
+    else if(IntersectLineToLine(t1.p3, t1.p1, t2.p2, t2.p3))
+        return true;
+    else if(IntersectLineToLine(t1.p3, t1.p1, t2.p3, t2.p1))
+        return true;
+
+    return false;
 }
 
 bool IntersectionSegmentSquare(vec2 p1, vec2 p2, InterSquareParam *box)
@@ -284,20 +476,22 @@ int IntersectionTriangleSquare(InterTriangleParam triangle, InterSquareParam *bo
 
 int IntersectionSphapeSquare(void *obj1, InterSquareParam *square)
 {
-    GameObject2D *shape1 = obj1;
+    GameObject2D *shape = obj1;
 
-    vertexParam *vParam1 = &shape1->graphObj.shape.vParam;
+    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    indexParam *iParam = &shape->graphObj.shape.iParam;
+
 
     InterTriangleParam triangle;
 
-    for(int i=0;i<vParam1->verticesSize; i+=3)
+    vec2 wind_size = {WIDTH, HEIGHT};
+
+    for(int i=0;i< iParam->indexesSize; i+=3)
     {
-        Vertex2D * vert = &vParam1->vertices + ((i + 0) * vParam1->typeSize);
-        triangle.p1 = vert->position;
-        vert = &vParam1->vertices + ((i + 1) * vParam1->typeSize);
-        triangle.p2 = vert->position;
-        vert = &vParam1->vertices + ((i + 2) * vParam1->typeSize);
-        triangle.p3 = vert->position;
+        Vertex2D * vert = vParam->vertices;
+        triangle.p1 = v2_mul(v2_add(vert[iParam->indices[i + 0]].position, shape->transform.position), wind_size);
+        triangle.p2 = v2_mul(v2_add(vert[iParam->indices[i + 1]].position, shape->transform.position), wind_size);
+        triangle.p3 = v2_mul(v2_add(vert[iParam->indices[i + 2]].position, shape->transform.position), wind_size);
 
         if(IntersectionTriangleSquare(triangle, square))
             return true;
@@ -314,24 +508,24 @@ int IntersectionShapeShape(void *obj1, void *obj2)
     vertexParam *vParam1 = &shape1->graphObj.shape.vParam;
     vertexParam *vParam2 = &shape2->graphObj.shape.vParam;
 
+    indexParam *iParam1 = &shape1->graphObj.shape.iParam;
+    indexParam *iParam2 = &shape2->graphObj.shape.iParam;
+
     InterTriangleParam triangle1, triangle2;
 
-    for(int i=0;i<vParam1->verticesSize; i+=3)
+    for(int i=0;i < iParam1->indexesSize; i+=3)
     {
-        Vertex2D * vert = &vParam1->vertices + ((i + 0) * vParam1->typeSize);
-        triangle1.p1 = vert->position;
-        vert = &vParam1->vertices + ((i + 1) * vParam1->typeSize);
-        triangle1.p2 = vert->position;
-        vert = &vParam1->vertices + ((i + 2) * vParam1->typeSize);
-        triangle1.p3 = vert->position;
-        for(int j=0;j < vParam2->verticesSize; j+=3)
+        Vertex2D *vert = vParam1->vertices;
+        triangle1.p1 = v2_add(vert[iParam1->indices[i + 0]].position, shape1->transform.position);
+        triangle1.p2 = v2_add(vert[iParam1->indices[i + 1]].position, shape1->transform.position);
+        triangle1.p3 = v2_add(vert[iParam1->indices[i + 2]].position, shape1->transform.position);
+
+        for(int j=0;j < iParam2->indexesSize; j+=3)
         {
-            vert = &vParam2->vertices + ((i + 0) * vParam2->typeSize);
-            triangle2.p1 = vert->position;
-            vert = &vParam2->vertices + ((i + 1) * vParam2->typeSize);
-            triangle2.p2 = vert->position;
-            vert = &vParam2->vertices + ((i + 2) * vParam2->typeSize);
-            triangle2.p3 = vert->position;
+            vert = vParam2->vertices;
+            triangle2.p1 = v2_add(vert[iParam2->indices[j + 0]].position, shape2->transform.position);
+            triangle2.p2 = v2_add(vert[iParam2->indices[j + 1]].position, shape2->transform.position);
+            triangle2.p3 = v2_add(vert[iParam2->indices[j + 2]].position, shape2->transform.position);
 
             if(ComputeTwoTrianles(triangle1, triangle2))
                 return true;

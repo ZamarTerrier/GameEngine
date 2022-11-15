@@ -4,6 +4,13 @@
 #include "gameObject2D.h"
 
 typedef struct{
+    vec2 position;
+    vec2 direction;
+    float length;
+    vec3 color;
+} LineParams;
+
+typedef struct{
     float size;
     vec3 color;
 } QuadParams;
@@ -21,6 +28,7 @@ typedef struct{
 } ShapeParams;
 
 typedef enum{
+    ENGINE_SHAPE_OBJECT_LINE,
     ENGINE_SHAPE_OBJECT_QUAD,
     ENGINE_SHAPE_OBJECT_CIRCLE,
     ENGINE_SHAPE_OBJECT_SHAPE
