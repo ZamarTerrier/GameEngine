@@ -20,6 +20,9 @@ typedef struct{
 } GameObject2D;
 
 void GameObject2DInit(GameObject2D* go);
+void GameObject2DClean(GameObject2D* go);
+void GameObject2DRecreate(GameObject2D* go);
+void GameObject2DDestroy(GameObject2D* go);
 
 void GameObject2DAddSettingPipeline(GameObject2D* go, void *setting);
 

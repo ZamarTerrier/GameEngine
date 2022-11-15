@@ -70,7 +70,8 @@ extern const char* deviceExtensions[];
 extern EIVertexInputAttributeDescription planeAttributeDescription[];
 extern EIVertexInputAttributeDescription cubeAttributeDescription[];
 extern EIVertexInputAttributeDescription modelAttributeDescription[];
-extern EIVertexInputAttributeDescription particleAttributeDescription[];
+extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
+extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
 
 typedef struct{
     int FindLetter;
@@ -121,12 +122,19 @@ extern char _binary_shaders_sprite_vert_spv_end;
 extern int _binary_shaders_sprite_vert_spv_size;
 extern char _binary_shaders_sprite_vert_spv_start;
 
-extern char _binary_shaders_particle_frag_spv_end;
-extern int _binary_shaders_particle_frag_spv_size;
-extern char _binary_shaders_particle_frag_spv_start;
-extern char _binary_shaders_particle_vert_spv_end;
-extern int _binary_shaders_particle_vert_spv_size;
-extern char _binary_shaders_particle_vert_spv_start;
+extern char _binary_shaders_particle_frag2D_spv_end;
+extern int _binary_shaders_particle_frag2D_spv_size;
+extern char _binary_shaders_particle_frag2D_spv_start;
+extern char _binary_shaders_particle_vert2D_spv_end;
+extern int _binary_shaders_particle_vert2D_spv_size;
+extern char _binary_shaders_particle_vert2D_spv_start;
+
+extern char _binary_shaders_particle_frag3D_spv_end;
+extern int _binary_shaders_particle_frag3D_spv_size;
+extern char _binary_shaders_particle_frag3D_spv_start;
+extern char _binary_shaders_particle_vert3D_spv_end;
+extern int _binary_shaders_particle_vert3D_spv_size;
+extern char _binary_shaders_particle_vert3D_spv_start;
 
 extern char _binary_shaders_3d_object_frag_spv_end;
 extern int _binary_shaders_3d_object_frag_spv_size;

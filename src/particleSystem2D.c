@@ -1,35 +1,27 @@
-#include <particleSystem.h>
+#include "particleSystem2D.h"
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
-#include "tools.h"
+#include <buffers.h>
 
-#include "graphicsObject.h"
+#include <camera.h>
 
-#include "camera.h"
-#include "pipeline.h"
-#include "e_resource.h"
-#include "buffers.h"
-#include "texture.h"
-
-#include "transform.h"
-
-#include "e_math.h"
+#include <e_math.h>
 
 
 //Описание вертекса
-EIVertexInputBindingDescription Particle3DGetBindingDescription() {
+EIVertexInputBindingDescription Particle2DGetBindingDescription() {
     EIVertexInputBindingDescription bindingDescription = {};
 
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(ParticleVertex3D);
+    bindingDescription.stride = sizeof(ParticleVertex2D);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     return bindingDescription;
 }
 
-void Particle3DFind(ParticleObject3D *particle){
+void Particle2DFind(ParticleObject2D *particle){
 
     for(int i=0; i < particle->num_parts; i++)
     {
@@ -43,7 +35,7 @@ void Particle3DFind(ParticleObject3D *particle){
 
             particle->num_parts--;
 
-            particle->particles = (Particle *) realloc(particle->particles, particle->num_parts * sizeof(Particle));
+            particle->particles = (Particle2D *) realloc(particle->particles, particle->num_parts * sizeof(Particle2D));
 
             i--;
         }
@@ -51,7 +43,7 @@ void Particle3DFind(ParticleObject3D *particle){
 
 }
 
-void Particle3DDefaultUpdate(ParticleObject3D* particle){
+void Particle2DDefaultUpdate(ParticleObject2D* particle){
 
 
     if(particle->go.graphObj.local.descriptors == NULL)
@@ -64,11 +56,11 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     {
         particle->particles[i].life -= 0.01;
         particle->particles[i].direction.y -= 0.1f * particle->particles[i].gravity * 10;
-        particle->particles[i].position = v3_add(particle->particles[i].position, v3_muls(v3_divs(particle->particles[i].direction, 10), particle->particles[i].speed)) ;
+        particle->particles[i].position = v2_add(particle->particles[i].position, v2_muls(v2_divs(particle->particles[i].direction, 10), particle->particles[i].speed)) ;
         particle->particles[i].scale -= 0.001f * particle->particles[i].speed;
     }
 
-    Particle3DFind(particle);
+    Particle2DFind(particle);
 
     if(particle->num_parts == 0)
         return;
@@ -78,14 +70,14 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     if(vParam->vertices != NULL)
         free(vParam->vertices);
 
-    vParam->vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
+    vParam->vertices = calloc(particle->num_parts, sizeof(ParticleVertex2D));
 
-    ParticleVertex3D *verts = vParam->vertices;
+    ParticleVertex2D *verts = vParam->vertices;
 
     for(int i=0; i < particle->num_parts; i++)
     {
         verts[i].color = particle->particles[i].color;
-        verts[i].position = v3_divs(particle->particles[i].position, 10);
+        verts[i].position = v2_divs(particle->particles[i].position, 10);
         verts[i].size = particle->particles[i].scale;
     }
 
@@ -94,37 +86,19 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     Camera3D* cam = (Camera3D*) cam3D;
     void* data;
 
-    ModelBuffer3D mbo = {};
-    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+    TransformBuffer2D tbo = {};
 
-    mbo.model = m4_translate_mat_add(m4_mult(m4_scale_mat(particle->go.transform.scale), m4_rotation_matrix(particle->go.transform.rotation)), particle->go.transform.position);
-    mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
-    mbo.proj.m[1][1] *= -1;
+    tbo.position = particle->go.transform.position;
+    tbo.rotation = particle->go.transform.rotation;
+    tbo.scale = particle->go.transform.scale;
 
-    vkMapMemory(device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-    memcpy(data, &mbo, sizeof(mbo));
+    vkMapMemory(device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    memcpy(data, &tbo, sizeof(tbo));
     vkUnmapMemory(device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
-
-    DataBuffer dbo = {};
-    dbo.camRot = cam->rotation;
-    dbo.camPos = cam->position;
-
-    double xpos, ypos;
-
-    dbo.time = glfwGetTime();
-    EngineGetCursorPos(&xpos, &ypos);
-
-    dbo.mouse.x = xpos / (WIDTH);
-    dbo.mouse.y = ypos / (HEIGHT);
-
-    vkMapMemory(device,  particle->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(dbo), 0, &data);
-    memcpy(data, &dbo, sizeof(dbo));
-    vkUnmapMemory(device,  particle->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
-void Particle3DDefaultDraw(GameObject3D* go){
+void Particle2DDefaultDraw(GameObject2D* go){
 
     if(go->graphObj.shape.vParam.verticesSize == 0)
         return;
@@ -139,7 +113,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
-            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(ParticleVertex3D));
+            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(ParticleVertex2D));
         }
 
         go->graphObj.shape.rebuild = false;
@@ -175,42 +149,38 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
 }
 
-void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
+void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
 
-    GameObjectSetUpdateFunc(particle, (void *)Particle3DDefaultUpdate);
-    GameObjectSetDrawFunc(particle, (void *)Particle3DDefaultDraw);
-    GameObjectSetCleanFunc(particle, (void *)GameObject3DClean);
-    GameObjectSetRecreateFunc(particle, (void *)GameObject3DRecreate);
-    GameObjectSetDestroyFunc(particle, (void *)GameObject3DDestroy);
+    GameObjectSetUpdateFunc(particle, (void *)Particle2DDefaultUpdate);
+    GameObjectSetDrawFunc(particle, (void *)Particle2DDefaultDraw);
+    GameObjectSetCleanFunc(particle, (void *)GameObject2DClean);
+    GameObjectSetRecreateFunc(particle, (void *)GameObject2DRecreate);
+    GameObjectSetDestroyFunc(particle, (void *)GameObject2DDestroy);
 
     particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
     Transform3DInit(&particle->go.transform);
-    GraphicsObjectParticle3DInit(&particle->go.graphObj);
+    GraphicsObjectParticle2DInit(&particle->go.graphObj);
 
     particle->go.graphObj.gItems.perspective = true;
-    particle->go.enable_light = false;
 
-    particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
-    particle->particles = (Particle*) calloc(particle->num_parts, sizeof(Particle));
+    particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex2D));
+    particle->particles = (Particle2D*) calloc(particle->num_parts, sizeof(Particle2D));
 
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(DataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
-    particle->go.diffuse = calloc(1, sizeof(GameObjectImage));
-    particle->go.specular = calloc(1, sizeof(GameObjectImage));
-    particle->go.normal = calloc(1, sizeof(GameObjectImage));
+    particle->go.image = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(dParam.diffuse) != 0)
     {
         int len = strlen(dParam.diffuse);
-        particle->go.diffuse->path = calloc(len + 1, sizeof(char));
-        memcpy(particle->go.diffuse->path, dParam.diffuse, len);
-        particle->go.diffuse->path[len] = '\0';
+        particle->go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(particle->go.image->path, dParam.diffuse, len);
+        particle->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    ImageAddTexture(&particle->go.graphObj.local, particle->go.diffuse);
+    ImageAddTexture(&particle->go.graphObj.local, particle->go.image);
 
     GameObject3DCreateDrawItems(&particle->go.graphObj);
 
@@ -220,10 +190,10 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_particle_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert_spv_size);
-        setting.fragShader = &_binary_shaders_particle_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_particle_frag_spv_size);
+        setting.vertShader = &_binary_shaders_particle_vert2D_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert2D_spv_size);
+        setting.fragShader = &_binary_shaders_particle_frag2D_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_particle_frag2D_spv_size);
         setting.fromFile = 0;
     }
 
@@ -237,7 +207,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     particle->num_parts = 0;
 }
 
-void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, float speed, float gravity, float life){
+void Particle2DAdd(ParticleObject2D* particle, vec2 position, vec2 direction, float speed, float gravity, float life){
 
     double time = EngineGetTime();
 
@@ -245,9 +215,9 @@ void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, fl
 
     particle->num_parts ++;
 
-    particle->particles = (Particle*) realloc(particle->particles, particle->num_parts * sizeof(Particle));
+    particle->particles = (Particle2D*) realloc(particle->particles, particle->num_parts * sizeof(Particle2D));
 
-    Particle part;
+    Particle2D part;
     part.position = position;
     part.direction = direction;
     part.life = life;

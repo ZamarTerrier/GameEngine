@@ -1,5 +1,5 @@
-#ifndef PARTICLESYSTEM_H
-#define PARTICLESYSTEM_H
+#ifndef PARTICLESYSTEM3D_H
+#define PARTICLESYSTEM3D_H
 
 #include "engine_includes.h"
 
@@ -20,11 +20,11 @@ typedef struct{
     float life;
     float speed;
     float gravity;
-} Particle;
+} Particle3D;
 
 typedef struct{
     GameObject3D go;
-    Particle* particles;
+    Particle3D* particles;
     int num_parts;
 } ParticleObject3D;
 
@@ -33,4 +33,4 @@ EIVertexInputBindingDescription Particle3DGetBindingDescription();
 void Particle3DInit(ParticleObject3D* particle, DrawParam dParam);
 void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, float speed, float gravity, float life);
 
-#endif // PARTICLESYSTEM_H
+#endif // PARTICLESYSTEM3D_H

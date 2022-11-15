@@ -9,7 +9,8 @@
 
 #include "e_resource.h"
 
-#include "particleSystem.h"
+#include "particleSystem2D.h"
+#include "particleSystem3D.h"
 #include "gameObject2D.h"
 #include "gameObject3D.h"
 #include "models.h"
@@ -44,11 +45,21 @@ void GraphicsObjectModel3DInit(GraphicsObject* graphObj){
     graphObj->shape.rebuild = true;
 }
 
+void GraphicsObjectParticle2DInit(GraphicsObject* graphObj){
+
+    graphObj->aShader.bindingDescription = Particle2DGetBindingDescription();
+
+    graphObj->aShader.attr = particle2DAttributeDescription;
+    graphObj->aShader.countAttr = 3;
+
+    graphObj->shape.rebuild = true;
+}
+
 void GraphicsObjectParticle3DInit(GraphicsObject* graphObj){
 
     graphObj->aShader.bindingDescription = Particle3DGetBindingDescription();
 
-    graphObj->aShader.attr = particleAttributeDescription;
+    graphObj->aShader.attr = particle3DAttributeDescription;
     graphObj->aShader.countAttr = 3;
 
     graphObj->shape.rebuild = true;
