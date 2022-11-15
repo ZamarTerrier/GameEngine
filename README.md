@@ -49,7 +49,7 @@
     -lvulkan -lglfw -lX11 -lpthread
     
     
-#### ТМожно использовать Makefile :
+#### Можно использовать Makefile :
 
      make
 
