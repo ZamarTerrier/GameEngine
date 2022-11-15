@@ -97,6 +97,9 @@ void initEngine(int width, int height, const char* name){
 
     //rootDirPath = e_GetCurrectFilePath();
 
+//    InitGLFWFun();
+//    InitVulkanVariables();
+
     initWindow();
     initVulkan();
 
