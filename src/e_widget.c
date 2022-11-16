@@ -81,6 +81,8 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
     ew->parent = parent;
     ew->child = NULL;
+    ew->first = NULL;
+    ew->last = NULL;
 
     if(parent != NULL)
     {
@@ -95,11 +97,17 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
             child->next = (ChildStack *)calloc(1, sizeof(ChildStack));
             child->next->next = NULL;
+            child->next->before = child;
             child->next->node = ew;
+
+            parent->last = child->next;
+
         }else{
             parent->child = (ChildStack *)calloc(1, sizeof(ChildStack));
             parent->child->next = NULL;
-            parent->child->node = ew;
+            parent->child->before = NULL;
+            parent->child->node = ew;            
+            parent->first = parent->child;
         }
     }
 }
@@ -203,7 +211,7 @@ EWidget* WidgetCheckMouseInner(EWidget* widget){
             ypos > widget->position.y && ypos < (widget->position.y + (widget->scale.y * 2)))
     {
 
-        ChildStack *next = widget->child;
+        ChildStack *next = widget->last;
 
         while(next != NULL)
         {
@@ -215,7 +223,7 @@ EWidget* WidgetCheckMouseInner(EWidget* widget){
                 return res;
             }
 
-            next = next->next;
+            next = next->before;
         }
 
         return widget;

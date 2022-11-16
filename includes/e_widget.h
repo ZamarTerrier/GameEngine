@@ -44,6 +44,7 @@ typedef struct{
 } CallbackStack;
 
 typedef struct ChildStack{
+    struct ChildStack* before;
     struct ChildStack* next;
     void *node;
 } ChildStack;
@@ -56,6 +57,8 @@ typedef struct EWidget{
     vec2 scale;
     struct EWidget* parent;
     struct ChildStack* child;
+    struct ChildStack* first;
+    struct ChildStack* last;
     bool in, was_in, out, was_out, active;
     CallbackStack callbacks;
 } EWidget;

@@ -354,6 +354,21 @@ void TextObjectSetTextW(const wchar_t* text, TextObject* to)
 }
 
 void TextObjectRecreate(TextObject* to){
+
+    PipelineSetting *settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
+
+    for(int i=0; i < to->go.graphObj.gItems.settingsCount;i++)
+    {
+        settings[i].scissor.offset.x = 0;
+        settings[i].scissor.offset.y = 0;
+        settings[i].scissor.extent.height = HEIGHT;
+        settings[i].scissor.extent.width = WIDTH;
+        settings[i].viewport.x = 0;
+        settings[i].viewport.y = 0;
+        settings[i].viewport.height = HEIGHT;
+        settings[i].viewport.width = WIDTH;
+    }
+
     TextObjectRecreateUniform(to);
     GameObject2DCreateDrawItems(to);
     PipelineCreateGraphics(&to->go.graphObj);
@@ -387,7 +402,6 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
     //----------------------------------
 
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-
     TextObjectAddTexture(to);
 
     PipelineSetting setting;

@@ -177,8 +177,6 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     GameObject2DInit(wt);
 
-    GraphicsObjectSetVertex(&wt->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
-
     GameObjectSetUpdateFunc(wt, (void *)TextWidgetUpdateUniformBufferDefault);
     GameObjectSetDrawFunc(wt, (void *)TextWidgetDrawDefault);
     GameObjectSetRecreateFunc(wt, (void *)TextWidgettRecreate);
@@ -187,7 +185,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     TextDataInit(&wt->tData, fontSize, dParam.diffuse);
 
-    BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextWidgetAddTexture(wt);
 
     GameObject2DCreateDrawItems(wt);
