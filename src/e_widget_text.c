@@ -128,11 +128,7 @@ void TextWidgetRecreateUniform(EWidgetText *wt){
 }
 
 void TextWidgetMakeLastText(EWidgetText *wt){
-    if(strlen(wt->tData.text) > 0){
-        TextWidgetSetText(wt, wt->tData.text);
-    }
-    else
-        TextWidgetSetTextW(wt, wt->tData.wText);
+    TextWidgetSetText(wt, wt->tData.text);
 }
 
 void TextWidgettRecreate(EWidgetText* wt){
@@ -230,9 +226,4 @@ void TextWidgetSetColor(EWidgetText* wt, vec3 color)
 void TextWidgetSetText(EWidgetText* wt, const char* text)
 {
     TextImageSetText(text, &wt->widget.go, &wt->tData);
-}
-
-void TextWidgetSetTextW(EWidgetText* wt, const wchar_t* text)
-{
-    TextImageSetTextW(text, &wt->widget.go, &wt->tData);
 }

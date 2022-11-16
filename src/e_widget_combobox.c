@@ -41,7 +41,7 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
     DrawParam param = {};
 
     WidgetInit(&combobox->widget, param, parent);
-    ButtonWidgetInit(&combobox->button, "", (vec4){ 0.4, 0.4, 0.4, 1.0}, &combobox->widget);
+    ButtonWidgetInit(&combobox->button, L" ", (vec4){ 0.4, 0.4, 0.4, 1.0}, &combobox->widget);
 
     Transform2DSetScale(&combobox->widget, 60, 20);
     Transform2DSetScale(&combobox->button, 60, 20);

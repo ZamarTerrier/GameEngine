@@ -6,13 +6,15 @@
 #include "e_widget.h"
 #include "e_widget_text.h"
 
+#include <wchar.h>
+
 typedef struct{
     EWidget widget;
     EWidgetText text;
     vec4 selfColor;
 } EWidgetButton;
 
-void ButtonWidgetInit(EWidgetButton *button, char *text, vec4 color, EWidget *parent);
-void ButtonWidgetSetText(EWidgetButton *button, char *text);
+void ButtonWidgetInit(EWidgetButton *button, wchar_t *text, vec4 color, EWidget *parent);
+void ButtonWidgetSetText(EWidgetButton *button, wchar_t *text);
 
 #endif // E_WIDGET_BUTTON_H

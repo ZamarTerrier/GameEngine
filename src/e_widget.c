@@ -297,7 +297,7 @@ void WidgetEventsPipe(EWidget* widget)
 
 void WidgetDraw(EWidget * widget){
     ChildStack *child = widget->child;
-    engDraw(widget);
+    EngineDraw(widget);
     while(child != NULL)
     {
         WidgetDraw(child->node);

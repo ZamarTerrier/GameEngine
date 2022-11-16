@@ -62,7 +62,7 @@ void EngineKeyCallback(GLFWwindow* window,  int key, int scancode, int action, i
         keyCallbacks[i](window, key, scancode, action, mods);
 }
 
-void initVulkan(){
+void EngineInitVulkan(){
     createInstance();
     setupDebugMessenger();
     createSurface();
@@ -75,7 +75,7 @@ void initVulkan(){
     createDepthResources();
     BuffersCreateFramebuffers();
     BuffersCreateCommand();
-    createSyncObjects();
+    EngineCreateSyncobjects();
 
     objs.go = (GameObject **) calloc(0, sizeof(GameObject*));
     charCallbacks = (e_charCallback *) calloc(0, sizeof(e_charCallback));
@@ -86,7 +86,7 @@ void initVulkan(){
     e_var_num_lights = 0;
 }
 
-void initEngine(int width, int height, const char* name){
+void EngineInitSystem(int width, int height, const char* name){
     strcpy(app_name, name);
 
     WIDTH = width;
@@ -101,7 +101,7 @@ void initEngine(int width, int height, const char* name){
 //    InitVulkanVariables();
 
     initWindow();
-    initVulkan();
+    EngineInitVulkan();
 
     glfwSetCharCallback(e_window, EngineCharacterCallback);
     glfwSetKeyCallback(e_window, EngineKeyCallback);
@@ -198,7 +198,7 @@ void EngineSetRecreateFunc(void *func)
     RecreateFunc = func;
 }
 
-void cleanupSwapChain() {
+void EngineCleanupSwapChain() {
 
     vkDestroyImageView(device, depthImageView, NULL);
     vkDestroyImage(device, depthImage, NULL);
@@ -228,7 +228,7 @@ void cleanupSwapChain() {
 
 }
 
-void recreateSwapChain() {
+void EnginereRecreateSwapChain() {
 
     glfwGetFramebufferSize(e_window, &WIDTH, &HEIGHT);
 
@@ -249,7 +249,7 @@ void recreateSwapChain() {
 
     vkDeviceWaitIdle(device);
 
-    cleanupSwapChain();
+    EngineCleanupSwapChain();
 
     createSwapChain();
     createImageViews();
@@ -270,7 +270,7 @@ void recreateSwapChain() {
 
 }
 
-void createSyncObjects() {
+void EngineCreateSyncobjects() {
     imageAvailableSemaphores = (VkSemaphore *) calloc(MAX_FRAMES_IN_FLIGHT, sizeof(VkSemaphore));
     renderFinishedSemaphores = (VkSemaphore *) calloc(MAX_FRAMES_IN_FLIGHT, sizeof(VkSemaphore));
     inFlightFences = (VkFence *) calloc(MAX_FRAMES_IN_FLIGHT, sizeof(VkFence));
@@ -296,14 +296,14 @@ void createSyncObjects() {
     }
 }
 
-void engineLoop(){
+void EngineLoop(){
 
     EngineUpdateLine();
 
     VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR && framebufferwasResized) {
-        recreateSwapChain();
+        EnginereRecreateSwapChain();
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         printf("failed to acquire swap chain image!");
@@ -322,7 +322,7 @@ void engineLoop(){
 
     //vkResetCommandPool(device, commandPool, 0);
 
-    drawFrame();
+    EngineDrawFrame();
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -364,7 +364,7 @@ void engineLoop(){
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || (framebufferResized && framebufferwasResized)) {
         framebufferResized = false;
         framebufferwasResized = false;
-        recreateSwapChain();
+        EnginereRecreateSwapChain();
     } else if (result != VK_SUCCESS) {
         printf("failed to present swap chain image!");
         exit(1);
@@ -381,7 +381,7 @@ void engineLoop(){
     e_var_num_lights = 0;
 }
 
-void drawFrame(){
+void EngineDrawFrame(){
 
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -440,7 +440,7 @@ void drawFrame(){
 
 }
 
-void engDraw(void* arg){
+void EngineDraw(void* arg){
 
     GameObject* go = (GameObject *)arg;
 
@@ -461,8 +461,8 @@ void engDraw(void* arg){
     objs.go[objs.count - 1] = go;
 }
 
-void cleanUp(){
-    cleanupSwapChain();
+void EngineCleanUp(){
+    EngineCleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], NULL);
@@ -491,8 +491,8 @@ void cleanUp(){
 
         for(int i=0; i < e_var_num_images;i++)
         {
-            free(images->path);
-            free(images->pixels);
+            free(images[i].path);
+            free(images[i].pixels);
         }
 
         free(images);

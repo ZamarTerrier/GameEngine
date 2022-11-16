@@ -39,9 +39,9 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
 
             stbtt_InitFont(tData->font.info , ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
         }else
-            stbtt_InitFont(tData->font.info , &_binary_fonts_arial_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_arial_ttf_start,0));
+            stbtt_InitFont(tData->font.info , &_binary_fonts_RobotoBlack_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_RobotoBlack_ttf_start,0));
     }else
-        stbtt_InitFont(tData->font.info , &_binary_fonts_arial_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_arial_ttf_start,0));
+        stbtt_InitFont(tData->font.info , &_binary_fonts_RobotoBlack_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_RobotoBlack_ttf_start,0));
 
     //--------------------
     //Создаем буфер вершин для плоскости
@@ -59,7 +59,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
     if(strlen(tData->font.fontpath) > 0)
         stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1103, tData->font.cdata); // no guarantee this fits!
     else
-        stbtt_BakeFontBitmap(&_binary_fonts_arial_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1103, tData->font.cdata); // no guarantee this fits!
+        stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1103, tData->font.cdata); // no guarantee this fits!
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -83,11 +83,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
 }
 
 void TextObjectMakeLastText(TextObject *to){
-    if(strlen(to->textData.text) > 0){
-        TextObjectSetText(to->textData.text, to);
-    }
-    else
-        TextObjectSetTextW(to->textData.wText, to);
+    TextObjectSetText(to->textData.text, to);
 }
 
 void TextObjectRecreateUniform(TextObject *to){
@@ -193,16 +189,20 @@ void TextDataSetTextSize(TextData* tData, float size){
     tData->font.fontSize = size;
 }
 
-void TextImageSetText(const char* text, GameObject2D* go, TextData *tData){
-    int len = strlen(text);
+void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
+    int len = 0;
 
-    char buffer[len];
+    while(text[len+1] != 0)
+        len++;
 
-    memcpy(buffer, text, sizeof(char) * len);
+    len++;
 
-    memset(tData->wText, 0, BUFFER_SIZE * BUFFER_SIZE);
-    memset(tData->text, 0, BUFFER_SIZE * BUFFER_SIZE);
-    memcpy(tData->text, buffer, len);
+    uint32_t buffer[len];
+
+    memcpy(buffer, text, sizeof(uint32_t) * len);
+
+    memset(tData->text, 0, BUFFER_SIZE * BUFFER_SIZE * sizeof(uint32_t));
+    memcpy(tData->text, buffer, len * sizeof(uint32_t));
 
     Vertex2D* mapped = NULL;
     stbtt_aligned_quad q;
@@ -216,7 +216,7 @@ void TextImageSetText(const char* text, GameObject2D* go, TextData *tData){
     float x = 0.0f;
     float y = 0.0f;
 
-    char *tempI = tData->text;
+    uint32_t *tempI = tData->text;
 
     // Generate a uv mapped quad per char in the new text
     for (int i=0;i < len;i++)
@@ -267,90 +267,9 @@ void TextImageSetText(const char* text, GameObject2D* go, TextData *tData){
     mapped = NULL;
 }
 
-void TextImageSetTextW(const wchar_t* text, GameObject2D* go, TextData *tData){
-    int len = wcslen(text);
-
-    wchar_t buffer[len];
-
-    memcpy(buffer, text, sizeof(wchar_t) * len);
-
-    memset(tData->text, 0, BUFFER_SIZE * BUFFER_SIZE);
-    memset(tData->wText, 0, BUFFER_SIZE * BUFFER_SIZE * sizeof(wchar_t));
-    memcpy(tData->wText, buffer, len * sizeof(wchar_t));
-
-    //русские буквы в пределах 1040-1103
-
-    Vertex2D* mapped = NULL;
-    stbtt_aligned_quad q;
-
-    vkMapMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
-    tData->font.numLetters = 0;
-
-    float  mulX  = tData->font.fontSize / WIDTH / fontResizer;
-    float  mulY  = tData->font.fontSize / HEIGHT / fontResizer;
-
-    float x = 0.0f;
-    float y = 0.0f;
-
-
-    // Generate a uv mapped quad per char in the new text
-    for (int i=0;i<len;i++)
-    {
-        if(tData->wText[i] == '\n')
-        {
-            x = 0;
-            y += (mulY * 13000);
-            continue;
-        }
-
-        stbtt_GetBakedQuad(tData->font.cdata, 512,512, tData->wText[i], &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
-
-        mapped->position.x = (float)q.x0 * mulX;
-        mapped->position.y = (float)q.y0 * mulY;
-        mapped->color = tData->font.color;
-        mapped->texCoord.x = q.s0;
-        mapped->texCoord.y = q.t0;
-        mapped++;
-
-        mapped->position.x = (float)q.x1 * mulX;
-        mapped->position.y = (float)q.y0 * mulY;
-        mapped->color = tData->font.color;
-        mapped->texCoord.x = q.s1;
-        mapped->texCoord.y = q.t0;
-        mapped++;
-
-        mapped->position.x = (float)q.x0 * mulX;
-        mapped->position.y = (float)q.y1 * mulY;
-        mapped->color = tData->font.color;
-        mapped->texCoord.x = q.s0;
-        mapped->texCoord.y = q.t1;
-        mapped++;
-
-        mapped->position.x = (float)q.x1 * mulX;
-        mapped->position.y = (float)q.y1 * mulY;
-        mapped->color =tData->font.color;
-        mapped->texCoord.x = q.s1;
-        mapped->texCoord.y = q.t1;
-        mapped++;
-
-        tData->font.numLetters++;
-
-    }
-
-    vkUnmapMemory(device, go->graphObj.shape.vParam.vertexBufferMemory);
-    mapped = NULL;
-}
-
-void TextObjectSetText(const char* text, TextObject* to)
+void TextObjectSetText(const uint32_t* text, TextObject* to)
 {
-
     TextImageSetText(text, &to->go, &to->textData);
-
-}
-
-void TextObjectSetTextW(const wchar_t* text, TextObject* to)
-{
-    TextImageSetTextW(text, &to->go, &to->textData);
 }
 
 void TextObjectRecreate(TextObject* to){

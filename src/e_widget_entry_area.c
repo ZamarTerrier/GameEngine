@@ -11,6 +11,7 @@ void EntryAreaWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     if(key == GLFW_KEY_ENTER)
     {
+        temp->linePos = 0;
         temp->buffer[temp->currPos] = '\n';
         temp->currPos++;
 

@@ -18,7 +18,7 @@ void createImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tili
 
 void* createImageView(void* image, uint32_t format, uint32_t aspectFlags);
 
-void createTextureSampler();
+void createTextureSampler(Texture2D *texture);
 
 void createDepthResources() ;
 

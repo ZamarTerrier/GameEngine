@@ -161,6 +161,7 @@ int TextureImageCreate(const char* source, int size, Texture2D *texture, bool fr
         return 0;
     }
 
+
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 

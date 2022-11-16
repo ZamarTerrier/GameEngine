@@ -7,8 +7,11 @@
 typedef struct{
     EWidget widget;
     EWidgetText text;
-    char buffer[MAX_LINE_CHAR];
-    char currPos;
+    uint32_t buffer[MAX_LINE_CHAR];
+    int currPos;
+    int linePos;
+    uint32_t width;
+    uint32_t height;
 } EWidgetEntry;
 
 void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent);

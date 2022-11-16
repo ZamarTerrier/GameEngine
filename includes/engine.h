@@ -149,9 +149,9 @@
 
 #define ENGINE_KEY_LAST               ENGINE_KEY_MENU
 
-void initVulkan();
+void EngineInitVulkan();
 
-void initEngine(int width, int height, const char* name);
+void EngineInitSystem(int width, int height, const char* name);
 
 void EngineFixedCursorCenter();
 
@@ -178,20 +178,20 @@ void EnginePoolEvents();
 
 void EngineDeviceWaitIdle();
 
-void cleanupSwapChain();
+void EngineCleanupSwapChain();
 
-void recreateSwapChain();
+void EnginereRecreateSwapChain();
 
-void createSyncObjects();
+void EngineCreateSyncobjects();
 
-void engineLoop();
+void EngineLoop();
 
-void drawFrame();
+void EngineDrawFrame();
 
-void engDraw(void* obj);
+void EngineDraw(void* obj);
 
-void updateUniformBuffer();
+void EngineUpdateUniformBuffer();
 
-void cleanUp();
+void EngineCleanUp();
 
 #endif

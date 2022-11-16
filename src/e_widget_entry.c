@@ -9,8 +9,12 @@ void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
 
     EWidgetEntry *temp = widget;
 
+    if(temp->linePos + 1 >= temp->width)
+        return;
+
     temp->buffer[temp->currPos] = codepoint;
     temp->currPos++;
+    temp->linePos++;
 
     TextWidgetSetText(&temp->text, temp->buffer);
 
@@ -24,12 +28,36 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     if(key == GLFW_KEY_BACKSPACE)
     {
+
+        if(temp->buffer[temp->currPos - 1] == '\n')
+        {
+            if(temp->currPos - 2 <= 0)
+                return;
+
+            uint32_t *point = &temp->buffer[temp->currPos - 2];
+
+            uint32_t counter = 0;
+            for(int i = temp->currPos - 1;i > -1;i--)
+            {
+                if(point[i] == '\n')
+                    break;
+
+                counter++;
+            }
+
+            temp->linePos = counter + 1;
+        }else
+            temp->linePos--;
+
         temp->buffer[temp->currPos] = 0;
 
         temp->currPos--;
 
         if(temp->currPos < 0)
+        {
             temp->currPos = 0;
+            temp->linePos = 0;
+        }
 
         temp->buffer[temp->currPos] = 0;
     }
@@ -79,7 +107,11 @@ void EntryUpdateLine(){
 
     EWidgetEntry *temp = e_var_current_entry;
 
-    temp->buffer[temp->currPos] = '|';
+
+    vec2 scale = Transform2DGetScale(temp);
+    temp->width = scale.x / temp->text.tData.font.fontSize  * 2;
+
+    temp->buffer[temp->currPos] = L'|';
 
     TextWidgetSetText(&temp->text, temp->buffer);
 }
