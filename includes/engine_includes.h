@@ -8,10 +8,15 @@
 
 #include "e_math_variables.h"
 
-#define MAX_LINE_CHAR 256
 #define MAX_BONES 64
 
 typedef enum { false, true} bool;
+
+typedef struct ChildStack{
+    struct ChildStack* before;
+    struct ChildStack* next;
+    void *node;
+} ChildStack;
 
 typedef struct EIExtent2D {
     uint32_t    width;
@@ -171,6 +176,8 @@ typedef struct{
     char diffuse[256];
     char specular[256];
     char normal[256];
+    char second[256];
+    char font[256];
     char vertShader[256];
     char fragShader[256];
     char topology;

@@ -41,6 +41,7 @@ void WidgetUniformUpdate(EWidget *ew){
     gb.position = ew->position;
     gb.size = ew->scale;
     gb.color = ew->color;
+    gb.transparent = ew->transparent;
 
     vkMapMemory(device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
@@ -81,7 +82,6 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
     ew->parent = parent;
     ew->child = NULL;
-    ew->first = NULL;
     ew->last = NULL;
 
     if(parent != NULL)
@@ -106,8 +106,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
             parent->child = (ChildStack *)calloc(1, sizeof(ChildStack));
             parent->child->next = NULL;
             parent->child->before = NULL;
-            parent->child->node = ew;            
-            parent->first = parent->child;
+            parent->child->node = ew;
         }
     }
 }
@@ -141,6 +140,19 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
     BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
     BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
+    ew->go.image = calloc(1, sizeof(GameObjectImage));
+
+    if(strlen(dParam.diffuse) != 0)
+    {
+        int len = strlen(dParam.diffuse);
+        ew->go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(ew->go.image->path, dParam.diffuse, len);
+        ew->go.image->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    ImageAddTexture(&ew->go.graphObj.local, ew->go.image);
+
     GameObject2DCreateDrawItems(&ew->go);
 
     PipelineSetting setting = {};
@@ -162,6 +174,7 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
 
     ew->offset.x = 0;
     ew->offset.y = 0;
+    ew->transparent = 1.0f;
 
     WidgetSetParent(ew, parent);
 
@@ -196,8 +209,6 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
 
-    GameObjectUpdate(widget);
-
     if(!widget->active)
         return NULL;
 
@@ -215,12 +226,15 @@ EWidget* WidgetCheckMouseInner(EWidget* widget){
 
         while(next != NULL)
         {
-            EWidget* res = WidgetCheckMouseInner(next->node);
-
-            if(res != NULL)
+            if(next->node != NULL)
             {
-                widget->out = true;
-                return res;
+                EWidget* res = WidgetCheckMouseInner(next->node);
+
+                if(res != NULL)
+                {
+                    widget->out = true;
+                    return res;
+                }
             }
 
             next = next->before;
@@ -301,6 +315,7 @@ void WidgetDraw(EWidget * widget){
     while(child != NULL)
     {
         WidgetDraw(child->node);
+
         child = child->next;
     }
 }

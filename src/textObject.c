@@ -192,7 +192,10 @@ void TextDataSetTextSize(TextData* tData, float size){
 void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     int len = 0;
 
-    while(text[len+1] != 0)
+    if(text[len] == 0)
+        return;
+
+    while(text[len] != 0)
         len++;
 
     len++;

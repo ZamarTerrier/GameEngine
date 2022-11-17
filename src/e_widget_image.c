@@ -72,7 +72,15 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     }
 
     settings[0].scissor.offset.x = parentPos.x * WIDTH;
+
+    if(settings[0].scissor.offset.x < 0)
+        settings[0].scissor.offset.x = 0;
+
     settings[0].scissor.offset.y = parentPos.y * HEIGHT;
+
+    if(settings[0].scissor.offset.y < 0)
+        settings[0].scissor.offset.y = 0;
+
     settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
     settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
 

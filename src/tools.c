@@ -1284,6 +1284,21 @@ bool ToolsCmpStrings(char *in, char *s1){
     return false;
 }
 
+int ToolsStr32BitLength(uint32_t *text)
+{
+    int size = 0;
+
+    uint32_t *point = text;
+
+    while(*point != 0)
+    {
+        size ++;
+        point++;
+    }
+
+    return size;
+}
+
 void* ToolsLoadImageFromFile(size_t* len, char *filepath)
 {
     FILE* fd;

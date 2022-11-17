@@ -137,6 +137,7 @@ void WindowWidgetUniformUpdate(EWidget *ew){
     gb.position = ew->position;
     gb.size = ew->scale;
     gb.color = ew->color;
+    gb.transparent = ew->transparent;
 
     vkMapMemory(device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
@@ -156,6 +157,19 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
 
     BuffersAddUniformObject(&widget->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
+    widget->go.image = calloc(1, sizeof(GameObjectImage));
+
+    if(strlen(dParam.second) != 0)
+    {
+        int len = strlen(dParam.second);
+        widget->go.image->path = calloc(len + 1, sizeof(char));
+        memcpy(widget->go.image->path, dParam.second, len);
+        widget->go.image->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    ImageAddTexture(&widget->go.graphObj.local, widget->go.image);
+
     GameObject2DCreateDrawItems(&widget->go);
 
     PipelineSetting setting = {};
@@ -173,8 +187,6 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
 
     GameObject2DAddSettingPipeline(&widget->go, &setting);
 
-    widget->color = (vec4){0.4, 0.1, 0.1, 1.0};
-
     widget->offset.x = 0;
     widget->offset.y = 0;
 
@@ -191,6 +203,7 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
     Transform2DSetPosition(widget, position.x, position.y);
 
     widget->color = (vec4){1, 1, 1, 1.0};
+    widget->transparent = 1.0f;
 
     widget->active = true;
 }
@@ -253,6 +266,8 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam
 
     InitName(&ww->name, name, dParam, &ww->top);
     InitBot(&ww->widget, dParam, size, &ww->top);
+
+    memset(dParam.diffuse, 0, 256);
     InitClose(&ww->close, dParam, size, &ww->top);
     InitResize(&ww->resize, dParam, size, &ww->top);
     InitHide(&ww->hide, dParam, size, &ww->top);

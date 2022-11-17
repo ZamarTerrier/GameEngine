@@ -174,6 +174,10 @@ int EngineWindowIsClosed();
 
 double EngineGetTime();
 
+const char *EngineGetClipBoard();
+
+void EngineSetClipBoardString(const char *string);
+
 void EnginePoolEvents();
 
 void EngineDeviceWaitIdle();

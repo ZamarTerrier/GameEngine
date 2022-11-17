@@ -71,7 +71,15 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     }
 
     settings[0].scissor.offset.x = parentPos.x * WIDTH;
+
+    if(settings[0].scissor.offset.x < 0)
+        settings[0].scissor.offset.x = 0;
+
     settings[0].scissor.offset.y = parentPos.y * HEIGHT;
+
+    if(settings[0].scissor.offset.y < 0)
+        settings[0].scissor.offset.y = 0;
+
     settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
     settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
 
@@ -179,7 +187,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     GraphicsObjectSetShadersPath(&wt->widget.go.graphObj, dParam.vertShader, dParam.fragShader);
 
-    TextDataInit(&wt->tData, fontSize, dParam.diffuse);
+    TextDataInit(&wt->tData, fontSize, dParam.font);
 
     BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextWidgetAddTexture(wt);
@@ -202,7 +210,6 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
 
     GameObject2DAddSettingPipeline(wt, &setting);
 
-
     wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
     wt->widget.offset.x = 0;
@@ -223,7 +230,7 @@ void TextWidgetSetColor(EWidgetText* wt, vec3 color)
     TextDataSetTextColor(&wt->tData, color);
 }
 
-void TextWidgetSetText(EWidgetText* wt, const char* text)
+void TextWidgetSetText(EWidgetText* wt, const uint32_t* text)
 {
     TextImageSetText(text, &wt->widget.go, &wt->tData);
 }

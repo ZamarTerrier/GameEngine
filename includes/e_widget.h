@@ -43,18 +43,13 @@ typedef struct{
     int size;
 } CallbackStack;
 
-typedef struct ChildStack{
-    struct ChildStack* before;
-    struct ChildStack* next;
-    void *node;
-} ChildStack;
-
 typedef struct EWidget{
     GameObject2D go;
     vec2 offset;
     vec4 color;
     vec2 position;
     vec2 scale;
+    float transparent;
     struct EWidget* parent;
     struct ChildStack* child;
     struct ChildStack* first;
@@ -73,6 +68,7 @@ typedef struct{
     vec2 position;
     vec2 size;
     vec4 color __attribute__ ((aligned (16)));
+    float transparent __attribute__ ((aligned (16)));
 } GUIBuffer;
 
 typedef struct{

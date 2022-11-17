@@ -155,6 +155,16 @@ double EngineGetTime()
     return glfwGetTime();
 }
 
+const char *EngineGetClipBoardString()
+{
+    return glfwGetClipboardString(e_window);
+}
+
+void EngineSetClipBoardString(const char *string)
+{
+    glfwSetClipboardString( e_window, string);
+}
+
 void EnginePoolEvents()
 {
     glfwPollEvents();

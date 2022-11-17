@@ -56,14 +56,40 @@ Texture2D createTexture(const char* source, int size, bool from_file){
 
 }
 
+void TextureCreateEmpty(Texture2D *texture)
+{
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    BuffersCreate(40000, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
+
+    char some_data[40000];
+    memset(some_data, 0, 40000);
+
+    void * data;
+    vkMapMemory(device, stagingBufferMemory, 0, 40000, 0, &data);
+    memcpy(data, some_data, 40000);
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    ImageCreateEmpty(&texture->textureImage, &texture->textureImageMemory);
+
+    transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    copyBufferToImage(stagingBuffer, texture->textureImage, 100, 100);
+    transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+
+    vkDestroyBuffer(device, stagingBuffer, NULL);
+    vkFreeMemory(device, stagingBufferMemory, NULL);
+}
+
 int TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file) {
 
     if(source == NULL)
     {
-        ImageCreateEmpty(&texture->textureImage, &texture->textureImageMemory);
-        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        return;
+        TextureCreateEmpty(texture);
+        return 0;
     }
 
     int texWidth, texHeight, texChannels;
@@ -153,26 +179,30 @@ int TextureImageCreate(const char* source, int size, Texture2D *texture, bool fr
     texture->texHeight = texHeight;
     texture->texWidth = texWidth;
 
-    if (!pixels) {
-        printf("failed to load texture image!");
-        ImageCreateEmpty(&texture->textureImage, &texture->textureImageMemory);
-        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        return 0;
-    }
-
-
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    BuffersCreate(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     void* data;
+
+    if (!pixels) {
+        printf("failed to load texture image!");
+
+        TextureCreateEmpty(texture);
+
+        return 0;
+
+    }
+
+
+    BuffersCreate(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
     vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
     memcpy(data, pixels, imageSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     createImage( texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
+
 
     transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyBufferToImage(stagingBuffer, texture->textureImage, texWidth, texHeight);

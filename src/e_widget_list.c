@@ -62,15 +62,42 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
     if(num + 1 > list->size)
         return;
 
-    ChildStack *child =WidgetFindChild(&list->widget, num - 1);
+    ChildStack *child = WidgetFindChild(&list->widget, num);
 
-    if(child->next != NULL)
+    if(child->next != NULL && child->before != NULL)
     {
+        ChildStack *next = child->next;
+        ChildStack *before = child->before;
+
         WidgetDestroy(child->node);
-        child->node = child->next->node;
-        child->next = child->next->next;
+        free(child->node);
+        child->node = NULL;
+
+        free(child);
+        next->before = before;
+        before->next = next;
+
+    }else if(child->next != NULL){
+
+        WidgetDestroy(child->node);
+        free(child->node);
+        child->node = NULL;
+
+        child->next->before = NULL;
+        list->widget.child = child->next;
+        free(child);
+
     }else{
         WidgetDestroy(child->node);
+        free(child->node);
+        child->node = NULL;
+
+        if(child->before != NULL);
+        {
+            child->before->next = NULL;
+            list->widget.last = child->before;
+        }
+
         free(child);
         child = NULL;
     }

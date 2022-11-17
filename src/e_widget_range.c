@@ -65,6 +65,7 @@ void RangeWidgetInit(EWidgetRange *range, vec2 size, int min, int max, EWidget *
     range->line.active = false;
 
     range->widget.color = (vec4){0.7, 0.7, 0.7, 0.0};
+    range->widget.transparent = 0.0f;
     Transform2DSetScale(&range->widget, size.x, size.y);
 
     range->min = min;

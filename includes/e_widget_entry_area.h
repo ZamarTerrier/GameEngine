@@ -5,6 +5,7 @@
 
 typedef struct{
     EWidgetEntry entry;
+    uint32_t lineNum;
 } EWidgetEntryArea;
 
 void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent);
