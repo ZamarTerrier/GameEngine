@@ -10,6 +10,7 @@ typedef struct {
     void *CleanPoint;
     void *RecreatePoint;
     void *DestroyPoint;
+    char ToBeFree;
 } GameObject;
 
 void GameObjectSetInitFunc(GameObject *go, void *func);

@@ -7,12 +7,14 @@
 typedef struct{
     EWidget widget;
     EWidgetText text;
+    uint32_t num_texts;
+    uint32_t curr_texts;
     uint32_t **buffers;
     uint32_t num_lines;
     uint32_t curr_line;
     int currPos;
-    uint32_t width;
-    uint32_t height;
+    float width;
+    float height;
 } EWidgetEntry;
 
 extern bool e_ctrl_press, e_c_press, e_v_press, e_pasted;

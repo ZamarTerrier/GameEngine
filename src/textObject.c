@@ -224,13 +224,13 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     // Generate a uv mapped quad per char in the new text
     for (int i=0;i < len;i++)
     {
-        if(*tempI == '\n')
+        /*if(*tempI == '\n')
         {
             x = 0;
             y += (mulY * HEIGHT * 20);
             ++tempI;
             continue;
-        }
+        }*/
 
         stbtt_GetBakedQuad(tData->font.cdata, 512,512, *tempI, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
 
@@ -268,6 +268,10 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
 
     vkUnmapMemory(device, go->graphObj.shape.vParam.vertexBufferMemory);
     mapped = NULL;
+
+    tData->textWidth = x;
+    tData->textHeight = y;
+
 }
 
 void TextObjectSetText(const uint32_t* text, TextObject* to)

@@ -69,8 +69,8 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         ChildStack *next = child->next;
         ChildStack *before = child->before;
 
-        WidgetDestroy(child->node);
-        free(child->node);
+        GameObject *go = child->node;
+        go->ToBeFree = true;
         child->node = NULL;
 
         free(child);
@@ -78,9 +78,8 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         before->next = next;
 
     }else if(child->next != NULL){
-
-        WidgetDestroy(child->node);
-        free(child->node);
+        GameObject *go = child->node;
+        go->ToBeFree = true;
         child->node = NULL;
 
         child->next->before = NULL;
@@ -88,8 +87,8 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         free(child);
 
     }else{
-        WidgetDestroy(child->node);
-        free(child->node);
+        GameObject *go = child->node;
+        go->ToBeFree = true;
         child->node = NULL;
 
         if(child->before != NULL);

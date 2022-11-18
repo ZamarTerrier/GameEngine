@@ -118,7 +118,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
     if(child != NULL)
     {
-        while(child->next != NULL && num > 0 && counter != num)
+        while(child->next != NULL && counter < num)
         {
             counter ++;
             child = child->next;
@@ -175,6 +175,7 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
     ew->offset.x = 0;
     ew->offset.y = 0;
     ew->transparent = 1.0f;
+    ew->visible = true;
 
     WidgetSetParent(ew, parent);
 
@@ -209,7 +210,7 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
 
-    if(!widget->active)
+    if(!widget->active || !widget->visible)
         return NULL;
 
     double xpos, ypos;
@@ -309,7 +310,11 @@ void WidgetEventsPipe(EWidget* widget)
 
 }
 
-void WidgetDraw(EWidget * widget){
+void WidgetDraw(EWidget * widget)
+{
+    if(!widget->visible)
+        return;
+
     ChildStack *child = widget->child;
     EngineDraw(widget);
     while(child != NULL)

@@ -204,6 +204,7 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
 
     widget->color = (vec4){1, 1, 1, 1.0};
     widget->transparent = 1.0f;
+    widget->visible = true;
 
     widget->active = true;
 }

@@ -19,7 +19,9 @@ typedef enum{
     GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM,
     GUI_TRIGGER_LIST_PRESS_ITEM,
     GUI_TRIGGER_ENTRY_CHAR_INPUT,
+    GUI_TRIGGER_ENTRY_UPDATE,
     GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT,
+    GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT,
     GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT,
     GUI_TRIGGER_RANGE_CHANGE,
 } TriggersEnum;
@@ -54,7 +56,7 @@ typedef struct EWidget{
     struct ChildStack* child;
     struct ChildStack* first;
     struct ChildStack* last;
-    bool in, was_in, out, was_out, active;
+    bool in, was_in, out, was_out, active, visible;
     CallbackStack callbacks;
 } EWidget;
 

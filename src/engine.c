@@ -321,7 +321,8 @@ void EngineLoop(){
     }
 
     for(int i=0;i < objs.count;i++){
-        GameObjectUpdate(objs.go[i]);
+        if(!objs.go[i]->ToBeFree)
+            GameObjectUpdate(objs.go[i]);
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -382,6 +383,14 @@ void EngineLoop(){
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
+    for(int i=0;i < objs.count;i++){
+        if(objs.go[i]->ToBeFree)
+        {
+            GameObjectDestroy(objs.go[i]);
+            free(objs.go[i]);
+        }
+    }
+
     free(objs.go);
     objs.go = (GameObject **) calloc(0, sizeof(GameObject *));
     objs.count = 0;
@@ -431,7 +440,8 @@ void EngineDrawFrame(){
 
     while(temp < objs.count){
 
-        GameObjectDraw(objs.go[temp]);
+        if(!objs.go[temp]->ToBeFree)
+            GameObjectDraw(objs.go[temp]);
 
         temp ++;
     }

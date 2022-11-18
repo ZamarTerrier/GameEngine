@@ -27,6 +27,8 @@ typedef struct{
         const char fontpath[256];
         vec3 color;
     } font;
+    float textWidth;
+    float textHeight;
     uint32_t text[BUFFER_SIZE * BUFFER_SIZE];
 } TextData;
 

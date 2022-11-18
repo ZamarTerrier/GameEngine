@@ -5,7 +5,7 @@
 
 typedef struct{
     EWidgetEntry entry;
-    uint32_t lineNum;
+    float textHeight;
 } EWidgetEntryArea;
 
 void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent);

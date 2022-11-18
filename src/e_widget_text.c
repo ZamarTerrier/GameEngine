@@ -70,6 +70,11 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
 
     }
 
+    if(wt->widget.position.y + (wt->tData.font.fontSize * 2) < parentPos.y)
+        wt->widget.visible  = false;
+    else
+        wt->widget.visible  = true;;
+
     settings[0].scissor.offset.x = parentPos.x * WIDTH;
 
     if(settings[0].scissor.offset.x < 0)
@@ -218,6 +223,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
     WidgetSetParent(&wt->widget, parent);
 
     wt->widget.in = wt->widget.was_in = wt->widget.was_out = wt->widget.out = false;
+    wt->widget.visible = true;
 
     wt->widget.callbacks.stack = (CallbackStruct *) calloc(0, sizeof(CallbackStruct));
 
@@ -232,5 +238,5 @@ void TextWidgetSetColor(EWidgetText* wt, vec3 color)
 
 void TextWidgetSetText(EWidgetText* wt, const uint32_t* text)
 {
-    TextImageSetText(text, &wt->widget.go, &wt->tData);
+    return TextImageSetText(text, &wt->widget.go, &wt->tData);
 }

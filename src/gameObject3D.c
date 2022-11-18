@@ -244,6 +244,7 @@ void GameObject3DInit(GameObject3D *go){
     GameObjectSetCleanFunc(go, (void *)GameObject3DClean);
     GameObjectSetRecreateFunc(go, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(go, (void *)GameObject3DDestroy);
+    go->self.ToBeFree = false;
 
     go->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 

@@ -166,6 +166,8 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     img->widget.offset.x = 0;
     img->widget.offset.y = 0;
+    img->widget.transparent = 1.0f;
+    img->widget.visible = true;
 
     WidgetSetParent(&img->widget, parent);
 
