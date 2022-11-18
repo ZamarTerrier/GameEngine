@@ -16,7 +16,7 @@ void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
     WidgetConfirmTrigger(widget, GUI_TRIGGER_BUTTON_PRESS, NULL);
 }
 
-void ButtonWidgetInit(EWidgetButton *button, wchar_t *text, vec4 color, EWidget *parent){
+void ButtonWidgetInit(EWidgetButton *button, const char *text, vec4 color, EWidget *parent){
 
     DrawParam dParam = {};
 
@@ -34,6 +34,6 @@ void ButtonWidgetInit(EWidgetButton *button, wchar_t *text, vec4 color, EWidget 
 
 }
 
-void ButtonWidgetSetText(EWidgetButton *button, wchar_t *text){
+void ButtonWidgetSetText(EWidgetButton *button, const char *text){
     TextWidgetSetText(&button->text, text);
 }

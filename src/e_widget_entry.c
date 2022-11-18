@@ -18,8 +18,23 @@ void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
     if(text->tData.textWidth >= temp->width)
         return;
 
-    temp->buffers[temp->curr_line][temp->currPos] = codepoint;
-    temp->currPos++;
+    if(codepoint > 256)
+    {
+        for(int i=0;i < 64; i++)
+        {
+            if(fontIndexes[i].FindLetter == codepoint)
+            {
+                uint16_t t = fontIndexes[i].IndexLetter & 0xFF;
+                temp->buffers[temp->curr_line][temp->currPos + 1] = t;
+                t = fontIndexes[i].IndexLetter >> 8;
+                temp->buffers[temp->curr_line][temp->currPos] = t;
+                temp->currPos+=2;
+            }
+        }
+    }else{
+        temp->buffers[temp->curr_line][temp->currPos] = codepoint;
+        temp->currPos++;
+    }
 
     TextWidgetSetText(text, temp->buffers[temp->curr_line]);
 }
@@ -30,6 +45,7 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     if(key == GLFW_KEY_BACKSPACE)
     {
+
         temp->buffers[temp->curr_line][temp->currPos] = 0;
 
         temp->currPos--;
@@ -37,6 +53,13 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
         if(temp->currPos < 0)
         {
             temp->currPos = 0;
+        }
+
+        if(temp->buffers[temp->curr_line][temp->currPos] < 0)
+        {
+            temp->buffers[temp->curr_line][temp->currPos] = 0;
+
+            temp->currPos--;
         }
 
         temp->buffers[temp->curr_line][temp->currPos] = 0;
@@ -47,15 +70,16 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     if(e_ctrl_press == true && e_v_press == true && !e_pasted)
     {
-        uint32_t *point = &temp->buffers[temp->curr_line][temp->currPos];
 
-        char *text = glfwGetClipboardString(e_window);
+        char *clipboard = glfwGetClipboardString(e_window);
 
-        uint32_t size = strlen(text);
+        uint32_t size = strlen(clipboard);
+
+        char *point = &temp->buffers[temp->curr_line][temp->currPos];
 
         for(int i=0;i < size;i++)
         {
-            point[i] = text[i];
+            point[i] = clipboard[i];
 
             temp->currPos ++;
 
@@ -85,6 +109,14 @@ void EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
         if(temp->currPos < 0)
         {
             temp->currPos = 0;
+        }
+
+
+        if(temp->buffers[temp->curr_line][temp->currPos] < 0)
+        {
+            temp->buffers[temp->curr_line][temp->currPos] = 0;
+
+            temp->currPos--;
         }
 
         temp->buffers[temp->curr_line][temp->currPos] = 0;
@@ -162,7 +194,6 @@ void EntryUpdateLine(){
             return;
 
     EWidgetEntry *temp = e_var_current_entry;
-
 
     vec2 scale = Transform2DGetScale(temp);
     temp->width = scale.x * 3;

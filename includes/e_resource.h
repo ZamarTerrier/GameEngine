@@ -75,7 +75,7 @@ extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
 
 typedef struct{
     uint32_t FindLetter;
-    uint8_t IndexLetter;
+    uint16_t IndexLetter;
 } FontIndexes;
 
 extern const FontIndexes fontIndexes[];

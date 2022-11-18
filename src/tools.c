@@ -1328,3 +1328,42 @@ void* ToolsLoadImageFromFile(size_t* len, char *filepath)
 
     return buff;
 }
+
+int ToolsStringToUInt32(uint32_t *dest, const char *src)
+{
+    uint32_t size = strlen(src);
+
+    bool find = false;
+    int iter = 0;
+    for(int i=0; i < size; i++)
+    {
+        find = false;
+        if(src[i] < 0)
+        {
+            for(int j=0; j < 64; j++)
+            {
+                char temp[2];
+                temp[0] = src[i + 1];
+                temp[1] = src[i];
+                uint16_t t_value = *(uint16_t *)temp;
+                if(fontIndexes[j].IndexLetter == t_value)
+                {
+                    dest[iter] = fontIndexes[j].FindLetter;
+                    find = true;
+                    break;
+                }
+            }
+
+            i ++;
+        }
+
+        if(!find)
+            dest[iter] = src[i];
+
+        iter++;
+    }
+
+    dest[iter] = 0;
+
+    return iter;
+}

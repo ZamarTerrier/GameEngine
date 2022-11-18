@@ -40,6 +40,7 @@ void EntryAreaWidgetMakeAnotherLine(EWidgetEntryArea * area)
 
 void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
 {
+
     area->entry.buffers[area->entry.curr_line][area->entry.currPos] = 0;
 
     area->entry.currPos--;
@@ -51,8 +52,6 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
         if(area->entry.num_texts > 1)
         {
             area->textHeight -= area->entry.text.tData.font.fontSize / 7 * 20;
-
-
 
             if(area->textHeight  <= area->entry.height){
                 ChildStack *child = WidgetFindChild(&area->entry.widget, area->entry.curr_texts);
@@ -104,15 +103,9 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
             {
                 for(int j = 0; j < area->entry.num_texts; j++)
                 {
-                    uint32_t nT = area->entry.num_texts;
-                    uint32_t nL = area->entry.num_lines;
-                    uint32_t tex = area->entry.num_texts - 1 - j;
-                    EWidgetText *text = WidgetFindChild(&area->entry.widget, tex)->node;
-                    int line = (int)area->entry.num_lines - 1 - j;
-                    if(area->entry.num_lines > area->entry.num_texts)
-                        line --;
+                    EWidgetText *text = WidgetFindChild(&area->entry.widget, area->entry.num_texts - 1 - j)->node;
 
-                    TextWidgetSetText(text, area->entry.buffers[line]);
+                    TextWidgetSetText(text, area->entry.buffers[area->entry.num_lines - 1 - j]);
                 }
             }
 
@@ -127,6 +120,14 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
         }
     }else {
 
+
+        if(area->entry.buffers[area->entry.curr_line][area->entry.currPos] < 0)
+        {
+            area->entry.buffers[area->entry.curr_line][area->entry.currPos] = 0;
+
+            area->entry.currPos--;
+        }
+
         area->entry.buffers[area->entry.curr_line][area->entry.currPos] = 0;
 
         EWidgetText *text = WidgetFindChild(&area->entry.widget, area->entry.curr_texts)->node;
@@ -134,16 +135,17 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
     }
 }
 
-void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *text)
-{
-    uint32_t *point = &area->entry.buffers[area->entry.curr_line][area->entry.currPos];
+void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src)
+{    
+    uint32_t size = strlen(src);
 
-    uint32_t size = strlen(text);
+    char *point = &area->entry.buffers[area->entry.curr_line][area->entry.currPos];
+
 
     int iter = 0;
     for(int i=0;i < size;i++)
     {
-        point[iter] = text[i];
+        point[iter] = src[i];
 
         area->entry.currPos ++;
         iter ++;

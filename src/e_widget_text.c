@@ -236,7 +236,12 @@ void TextWidgetSetColor(EWidgetText* wt, vec3 color)
     TextDataSetTextColor(&wt->tData, color);
 }
 
-void TextWidgetSetText(EWidgetText* wt, const uint32_t* text)
+void TextWidgetSetText(EWidgetText* wt, const char* text)
 {
-    return TextImageSetText(text, &wt->widget.go, &wt->tData);
+    uint32_t size = strlen(text);
+    uint32_t buff[size + 1];
+
+    ToolsStringToUInt32(buff, text);
+
+    return TextImageSetText(buff, &wt->widget.go, &wt->tData);
 }

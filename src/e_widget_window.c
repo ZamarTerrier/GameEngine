@@ -209,7 +209,7 @@ void InitTop(EWidget* widget, DrawParam dParam, vec2 size, vec2 position){
     widget->active = true;
 }
 
-void InitName(EWidget* widget, char* name, DrawParam dParam, EWidget *parent)
+void InitName(EWidget* widget, uint32_t* name, DrawParam dParam, EWidget *parent)
 {
     TextWidgetInit(widget, 9, dParam, parent);
 

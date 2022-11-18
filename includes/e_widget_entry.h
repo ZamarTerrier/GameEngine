@@ -9,7 +9,7 @@ typedef struct{
     EWidgetText text;
     uint32_t num_texts;
     uint32_t curr_texts;
-    uint32_t **buffers;
+    char **buffers;
     uint32_t num_lines;
     uint32_t curr_line;
     int currPos;

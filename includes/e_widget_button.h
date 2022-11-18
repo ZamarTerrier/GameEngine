@@ -14,7 +14,7 @@ typedef struct{
     vec4 selfColor;
 } EWidgetButton;
 
-void ButtonWidgetInit(EWidgetButton *button, wchar_t *text, vec4 color, EWidget *parent);
-void ButtonWidgetSetText(EWidgetButton *button, wchar_t *text);
+void ButtonWidgetInit(EWidgetButton *button, const char *text, vec4 color, EWidget *parent);
+void ButtonWidgetSetText(EWidgetButton *button, const char *text);
 
 #endif // E_WIDGET_BUTTON_H
