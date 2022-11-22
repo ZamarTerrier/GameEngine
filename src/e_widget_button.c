@@ -18,16 +18,14 @@ void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
 
 void ButtonWidgetInit(EWidgetButton *button, const char *text, vec4 color, EWidget *parent){
 
-    DrawParam dParam = {};
-
-    WidgetInit(button, dParam, parent);
+    WidgetInit(button, NULL, parent);
 
     button->selfColor = button->widget.color = color;
 
-    TextWidgetInit(&button->text, 9, dParam, &button->widget);
+    TextWidgetInit(&button->text, 9, NULL, &button->widget);
     TextWidgetSetText(&button->text, text);
 
-    Transform2DSetPosition(&button->text, 0, 9 * 2.0f);
+    Transform2DSetPosition(&button->text, 0, 9 * 4.0f);
 
     WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_PRESS, ButtonWidgetPress, NULL);
     WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_RELEASE, ButtonWidgetRelease, NULL);

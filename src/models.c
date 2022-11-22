@@ -214,9 +214,19 @@ void ModelAddSettingPipeline(ModelStruct* model, PipelineSetting setting){
     memcpy(&settings[model->graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
 }
 
-void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
+void ModelSetLightEnable(void *obj, bool enable)
+{
+    ModelObject3D *mo = (ModelObject3D *)obj;
+    for(int i=0;i < mo->num_draw_nodes;i++)
+    {
+        for(int j=0;j < mo->nodes[i].num_models;j++)
+        {
+            mo->nodes[i].models[j].light_enable = enable;
+        }
+    }
+}
 
-    model->light_enable = true;
+void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
 
     BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
@@ -248,5 +258,7 @@ void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
     ModelAddSettingPipeline(model, setting);
 
     PipelineCreateGraphics(&model->graphObj);
+
+    model->light_enable = false;
 
 }

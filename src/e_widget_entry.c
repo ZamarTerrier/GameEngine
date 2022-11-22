@@ -20,7 +20,7 @@ void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
 
     if(codepoint > 256)
     {
-        for(int i=0;i < 64; i++)
+        for(int i=0;i < 66; i++)
         {
             if(fontIndexes[i].FindLetter == codepoint)
             {
@@ -210,18 +210,15 @@ void EntryUpdateLine(){
 
 void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
 
-    DrawParam dParam = {};
-    memset(&dParam, 0, sizeof(DrawParam));
-
     if(fontSize > 16)
         fontSize = 16;
     else if(fontSize <= 0)
         fontSize = 2;
 
-    WidgetInit(&entry->widget, dParam, parent);
+    WidgetInit(&entry->widget, NULL, parent);
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
-    TextWidgetInit(&entry->text, fontSize, dParam, &entry->widget);
+    TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
     Transform2DSetPosition(&entry->text, 0, 25 - (25 / fontSize) );
 
     entry->currPos = 0;

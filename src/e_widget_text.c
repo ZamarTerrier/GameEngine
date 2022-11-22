@@ -182,7 +182,7 @@ void TextWidgetAddTexture(EWidgetText *wt){
     TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].texture);
 }
 
-void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* parent){
+void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent){
 
     GameObject2DInit(wt);
 
@@ -190,9 +190,17 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* pa
     GameObjectSetDrawFunc(wt, (void *)TextWidgetDrawDefault);
     GameObjectSetRecreateFunc(wt, (void *)TextWidgettRecreate);
 
-    GraphicsObjectSetShadersPath(&wt->widget.go.graphObj, dParam.vertShader, dParam.fragShader);
+    if(dParam != NULL)
+    {
+        GraphicsObjectSetShadersPath(&wt->widget.go.graphObj, dParam->vertShader, dParam->fragShader);
 
-    TextDataInit(&wt->tData, fontSize, dParam.font);
+        TextDataInit(&wt->tData, fontSize, dParam->font);
+    }else
+    {
+        char temp[256];
+        memset(temp, 0, 256);
+        TextDataInit(&wt->tData, fontSize, temp);
+    }
 
     BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextWidgetAddTexture(wt);

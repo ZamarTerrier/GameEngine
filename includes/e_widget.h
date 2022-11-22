@@ -80,7 +80,7 @@ typedef struct{
 
  ChildStack * WidgetFindChild(EWidget* widget, int num);
 void WidgetSetParent(EWidget* ew, EWidget* parent);
-void WidgetInit(EWidget *ew, DrawParam dParam, EWidget *parent);
+void WidgetInit(EWidget *ew, DrawParam *dParam, EWidget *parent);
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
 void WidgetConnect(EWidget *widget, int trigger, void* callback, void *args);
 void WidgetRecreate(EWidget *widget);

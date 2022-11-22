@@ -84,6 +84,9 @@ void EngineInitVulkan(){
 
     e_var_lights = calloc(0, sizeof(LightObject *));
     e_var_num_lights = 0;
+
+    e_var_images = calloc(1000, sizeof(engine_buffered_image));
+    e_var_num_images = 0;
 }
 
 void EngineInitSystem(int width, int height, const char* name){
@@ -276,6 +279,7 @@ void EnginereRecreateSwapChain() {
     BuffersCreateFramebuffers();
     BuffersCreateCommand();
 
+
     framebufferwasResized = true;
 
 }
@@ -321,8 +325,7 @@ void EngineLoop(){
     }
 
     for(int i=0;i < objs.count;i++){
-        if(!objs.go[i]->ToBeFree)
-            GameObjectUpdate(objs.go[i]);
+        GameObjectUpdate(objs.go[i]);
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -383,14 +386,6 @@ void EngineLoop(){
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    for(int i=0;i < objs.count;i++){
-        if(objs.go[i]->ToBeFree)
-        {
-            GameObjectDestroy(objs.go[i]);
-            free(objs.go[i]);
-        }
-    }
-
     free(objs.go);
     objs.go = (GameObject **) calloc(0, sizeof(GameObject *));
     objs.count = 0;
@@ -439,9 +434,7 @@ void EngineDrawFrame(){
     int temp = 0;
 
     while(temp < objs.count){
-
-        if(!objs.go[temp]->ToBeFree)
-            GameObjectDraw(objs.go[temp]);
+        GameObjectDraw(objs.go[temp]);
 
         temp ++;
     }
@@ -492,6 +485,20 @@ void EngineCleanUp(){
 
     vkDestroyCommandPool(device, commandPool, NULL);
 
+    if(e_var_num_images > 0)
+    {
+        engine_buffered_image *images = e_var_images;
+
+        for(int i=0; i < e_var_num_images;i++)
+        {
+            free(images[i].path);
+            free(images[i].pixels);
+        }
+
+    }
+
+    free(e_var_images);
+
     vkDestroyDevice(device, NULL);
 
     if (enableValidationLayers) {
@@ -504,20 +511,6 @@ void EngineCleanUp(){
     glfwDestroyWindow(e_window);
 
     glfwTerminate();
-
-    if(e_var_num_images > 0)
-    {
-        engine_buffered_image *images = e_var_images;
-
-        for(int i=0; i < e_var_num_images;i++)
-        {
-            free(images[i].path);
-            free(images[i].pixels);
-        }
-
-        free(images);
-    }
-
 
     if(e_var_num_lights > 0)
     {

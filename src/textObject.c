@@ -21,7 +21,7 @@ int fontResizer = 7;
 void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *texturePoint){
 
     tData->font.info = (stbtt_fontinfo *) calloc(1, sizeof(stbtt_fontinfo));
-    tData->font.cdata = (stbtt_bakedchar *) calloc(1103, sizeof(stbtt_fontinfo));
+    tData->font.cdata = (stbtt_bakedchar *) calloc(1106, sizeof(stbtt_fontinfo));
 
     unsigned char ttf_buffer[1<<20];
     unsigned char temp_bitmap[tData->font.fontWidth * tData->font.fontHeight];
@@ -57,9 +57,9 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     if(strlen(tData->font.fontpath) > 0)
-        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1103, tData->font.cdata); // no guarantee this fits!
+        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, tData->font.cdata); // no guarantee this fits!
     else
-        stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1103, tData->font.cdata); // no guarantee this fits!
+        stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, tData->font.cdata); // no guarantee this fits!
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);

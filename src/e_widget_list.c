@@ -13,7 +13,7 @@ void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
 
     DrawParam dParam = {};
 
-    WidgetInit(list, dParam, parent);
+    WidgetInit(list, NULL, parent);
     list->widget.color = (vec4){ 0.4, 0.4, 0.4, 1.0};
 
     list->size_x = size_x;
@@ -69,8 +69,8 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         ChildStack *next = child->next;
         ChildStack *before = child->before;
 
-        GameObject *go = child->node;
-        go->ToBeFree = true;
+        WidgetDestroy(child->node);
+        free(child->node);
         child->node = NULL;
 
         free(child);
@@ -78,8 +78,8 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         before->next = next;
 
     }else if(child->next != NULL){
-        GameObject *go = child->node;
-        go->ToBeFree = true;
+        WidgetDestroy(child->node);
+        free(child->node);
         child->node = NULL;
 
         child->next->before = NULL;
@@ -87,8 +87,8 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         free(child);
 
     }else{
-        GameObject *go = child->node;
-        go->ToBeFree = true;
+        WidgetDestroy(child->node);
+        free(child->node);
         child->node = NULL;
 
         if(child->before != NULL);

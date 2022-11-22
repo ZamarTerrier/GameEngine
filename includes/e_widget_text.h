@@ -13,7 +13,7 @@ typedef struct{
     TextData tData;
 } EWidgetText;
 
-void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam dParam, EWidget* parent);
+void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent);
 void TextWidgetSetColor(EWidgetText* wt, vec3 color);
 void TextWidgetSetText(EWidgetText* wt, const char* text);
 

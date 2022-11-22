@@ -174,7 +174,6 @@ void GameObject2DInit(GameObject2D* go)
     GameObjectSetCleanFunc(go, (void *)GameObject2DClean);
     GameObjectSetRecreateFunc(go, (void *)GameObject2DRecreate);
     GameObjectSetDestroyFunc(go, (void *)GameObject2DDestroy);
-    go->self.ToBeFree = false;
 
     Transform2DInit(&go->transform);
     GraphicsObject2DInit(&go->graphObj);

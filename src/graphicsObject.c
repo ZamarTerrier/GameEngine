@@ -107,9 +107,9 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
 
     for(int i=0;i< graphObj->local.descrCount;i++)
     {
+
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            destroyTexture(graphObj->local.descriptors[i].texture);
-            free(graphObj->local.descriptors[i].texture);
+
         }
         else{
             for (int j = 0; j < imagesCount; j++) {
@@ -145,7 +145,7 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
     {
         ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            destroyTexture(descriptor->texture);
+            ImageDestroyTexture(descriptor->texture);
             free(descriptor->texture);
             descriptor->texture = NULL;
         }

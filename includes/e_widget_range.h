@@ -10,8 +10,10 @@ typedef struct{
     EWidget line;
     float min;
     float max;
+    float *dest;
 } EWidgetRange;
 
-void RangeWidgetInit(EWidgetRange *range, vec2 size, int min, int max, EWidget *parent);
+void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min, float max, EWidget *parent);
+void RangeWidgetSetValueDestin(EWidgetRange *range, float *val_dest);
 
 #endif // E_WIDGET_RANGE_H

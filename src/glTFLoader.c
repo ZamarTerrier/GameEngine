@@ -274,6 +274,62 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                             g_mesh->image->size = image->buffer_view->size;
                         }
                     }
+
+                    texture = primitive->material->normal_texture.texture;
+
+                    if(texture != NULL)
+                    {
+                        cgltf_image *image = texture->image;
+
+                        g_mesh->normal = calloc(1, sizeof(GameObjectImage));
+
+                        if(image->uri != NULL)
+                        {
+                            int size = strlen(glTF->path) + strlen(image->uri);
+                            g_mesh->normal->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->normal->path, size, glTF->path, image->uri);
+                            g_mesh->normal->size = 0;
+                            //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
+
+                        }
+                        else if(image->buffer_view->buffer != NULL)
+                        {
+                            int size = strlen(glTF->name) + strlen(image->name);
+                            g_mesh->normal->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->normal->path, size, glTF->name, image->name);
+                            g_mesh->normal->buffer = calloc(image->buffer_view->size, sizeof(char));
+                            memcpy(g_mesh->normal->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
+                            g_mesh->normal->size = image->buffer_view->size;
+                        }
+                    }
+
+                    texture = primitive->material->emissive_texture.texture;
+
+                    if(texture != NULL)
+                    {
+                        cgltf_image *image = texture->image;
+
+                        g_mesh->specular = calloc(1, sizeof(GameObjectImage));
+
+                        if(image->uri != NULL)
+                        {
+                            int size = strlen(glTF->path) + strlen(image->uri);
+                            g_mesh->specular->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->specular->path, size, glTF->path, image->uri);
+                            g_mesh->specular->size = 0;
+                            //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
+
+                        }
+                        else if(image->buffer_view->buffer != NULL)
+                        {
+                            int size = strlen(glTF->name) + strlen(image->name);
+                            g_mesh->specular->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->specular->path, size, glTF->name, image->name);
+                            g_mesh->specular->buffer = calloc(image->buffer_view->size, sizeof(char));
+                            memcpy(g_mesh->specular->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
+                            g_mesh->specular->size = image->buffer_view->size;
+                        }
+                    }
                 }
 
                 g_mesh->num_indices = primitive->indices->count;
@@ -304,6 +360,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
 
                     vec3 tmp;
+                    float f_tmp;
 
                     for(int v=0;v < g_mesh->num_verts; v++)
                     {
@@ -324,7 +381,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                                 }
                                 break;
                             case cgltf_attribute_type_color:
-                                //g_mesh->verts[v].color = v3_point[v];
+                                //g_mesh->verts[v].color = (vec3){ 1.0f, 1.0f, 1.0f};
                                 break;
                             case cgltf_attribute_type_joints:
                                 g_mesh->verts[v].joints.x = v4_u8_point[v].x;
@@ -466,9 +523,8 @@ void update_frame(ModelObject3D *mo, engine_gltf_anim * animation)
                     node->local_matrix = m4_rotation_mat_quternion(node->local_matrix, vector4);
                     break;
                 case cgltf_animation_path_type_scale:
-                    /*vector3 = getValueV3(channel, frameCurr, time);
-                    transform = m4_translate_mat(vector3);
-                    node->global_matrix = mat4_mult_transform(node->global_matrix, transform);*/
+                    vector3 = getValueV3(channel, wrappedTime);
+                    node->local_matrix = m4_scale(node->local_matrix, vector3);
                     break;
                 default:
                     break;
@@ -789,6 +845,8 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
                       engine_model_mesh *mesh = node->mesh[j];
 
                       model->diffuse = mesh->image;
+                      model->specular = mesh->specular;
+                      model->normal = mesh->normal;
 
                       if(model->diffuse == NULL)
                       {

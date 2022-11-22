@@ -64,8 +64,8 @@ void Transform2DSetPosition(struct GameObject2D* go, float x, float y)
     if(y != 0)
         y /= HEIGHT;
 
-    temp->transform.position.x = x;
-    temp->transform.position.y = y;
+    temp->transform.position.x = x / 2;
+    temp->transform.position.y = y / 2;
 }
 
 void Transform2DSetImageOrigin(struct GameObject2D* go, float x, float y)
@@ -90,8 +90,8 @@ vec2 Transform2DGetImageOrigin(struct GameObject2D* go)
 void Transform2DReposition(struct GameObject2D* go)
 {
     GameObject2D *temp = (GameObject2D *)go;
-    temp->transform.position.x = temp->transform.positionOrig.x / (WIDTH);
-    temp->transform.position.y = temp->transform.positionOrig.y / (HEIGHT);
+    temp->transform.position.x = temp->transform.positionOrig.x / (WIDTH) / 2;
+    temp->transform.position.y = temp->transform.positionOrig.y / (HEIGHT) / 2;
 }
 
 vec2 Transform2DGetPosition(struct GameObject2D* go)
@@ -100,8 +100,8 @@ vec2 Transform2DGetPosition(struct GameObject2D* go)
 
     vec2 pos = temp->transform.position;
 
-    pos.x *= WIDTH;
-    pos.y *= HEIGHT;
+    pos.x *= WIDTH * 2;
+    pos.y *= HEIGHT * 2;
 
     return pos;
 }
@@ -135,8 +135,8 @@ void Transform2DSetScale(struct GameObject2D* go, float x, float y)
     x /= WIDTH;
     y /= HEIGHT;
 
-    temp->transform.scale.x = x;
-    temp->transform.scale.y = y;
+    temp->transform.scale.x = x / 2;
+    temp->transform.scale.y = y / 2;
 }
 
 void Transform2DSetImageScale(struct GameObject2D* go, float x, float y)
@@ -161,8 +161,8 @@ vec2 Transform2DGetImageScale(struct GameObject2D* go)
 void Transform2DRescale(struct GameObject2D* go)
 {
     GameObject2D *temp = (GameObject2D *)go;
-    temp->transform.scale.x = temp->transform.scaleOrig.x / (WIDTH);
-    temp->transform.scale.y = temp->transform.scaleOrig.y / (HEIGHT);
+    temp->transform.scale.x = temp->transform.scaleOrig.x / (WIDTH) / 2;
+    temp->transform.scale.y = temp->transform.scaleOrig.y / (HEIGHT) / 2;
 }
 
 vec2 Transform2DGetScale(struct GameObject2D* go)
@@ -170,8 +170,8 @@ vec2 Transform2DGetScale(struct GameObject2D* go)
     GameObject2D *temp = (GameObject2D *)go;
 
     vec2 size;
-    size.x = temp->transform.scale.x * (WIDTH);
-    size.y = temp->transform.scale.y * (HEIGHT);
+    size.x = temp->transform.scale.x * (WIDTH) * 2;
+    size.y = temp->transform.scale.y * (HEIGHT) * 2;
 
     return size;
 }

@@ -15,14 +15,12 @@ bool e_var_backspace = false;
 
 EWidgetText *EntryAreaWidgetMakeAnotherText(EWidgetEntryArea * area)
 {
-    DrawParam dParam;
-    memset(&dParam, 0, sizeof(DrawParam));
 
     area->entry.num_texts ++;
     area->entry.curr_texts++;
 
     EWidgetText *text = calloc(1, sizeof(EWidgetText));
-    TextWidgetInit(text, area->entry.text.tData.font.fontSize, dParam, &area->entry.widget);
+    TextWidgetInit(text, area->entry.text.tData.font.fontSize, NULL, &area->entry.widget);
     Transform2DSetPosition(text, 0, area->entry.text.tData.font.fontSize * 2 * area->entry.num_texts);
 
 }
@@ -61,8 +59,8 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
                     ChildStack *next = child->next;
                     ChildStack *before = child->before;
 
-                    GameObject *go = child->node;
-                    go->ToBeFree = true;
+                    WidgetDestroy(child->node);
+                    free(child->node);
                     child->node = NULL;
 
                     free(child);
@@ -71,8 +69,8 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
 
                 }else if(child->next != NULL){
 
-                    GameObject *go = child->node;
-                    go->ToBeFree = true;
+                    WidgetDestroy(child->node);
+                    free(child->node);
                     child->node = NULL;
 
                     child->next->before = NULL;
@@ -81,8 +79,8 @@ void EntryAreaWidgetMakeDelete(EWidgetEntryArea *area)
 
                 }else{
 
-                    GameObject *go = child->node;
-                    go->ToBeFree = true;
+                    WidgetDestroy(child->node);
+                    free(child->node);
                     child->node = NULL;
 
                     if(child->before != NULL)
@@ -245,17 +243,16 @@ void EntryAreaWidgetKeyRepeatInput(EWidget* widget, int key, void *arg)
 }
 
 void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent){
-    DrawParam dParam = {};
 
     if(fontSize > 16)
         fontSize = 16;
     else if(fontSize <= 0)
         fontSize = 2;
 
-    WidgetInit(&entry->entry.widget, dParam, parent);
+    WidgetInit(&entry->entry.widget, NULL, parent);
     entry->entry.widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
-    TextWidgetInit(&entry->entry.text, fontSize, dParam, &entry->entry.widget);
+    TextWidgetInit(&entry->entry.text, fontSize, NULL, &entry->entry.widget);
     Transform2DSetPosition(&entry->entry.text, 0, fontSize * 2);
     entry->entry.num_texts = 1;
     entry->entry.curr_texts = 0;

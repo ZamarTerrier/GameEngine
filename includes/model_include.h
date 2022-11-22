@@ -27,6 +27,8 @@ typedef struct{
     size_t num_instances;
 
     GameObjectImage *image;
+    GameObjectImage *specular;
+    GameObjectImage *normal;
 } engine_model_mesh;
 
 #endif // MODEL_INCLUDE_H

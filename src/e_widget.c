@@ -128,28 +128,30 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
     return child;
 }
 
-void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
+void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     GameObject2DInit(&ew->go);
 
     GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(&ew->go, (void *)WidgetUniformUpdate);
 
-    GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam.vertShader, dParam.fragShader);
+    if(dParam != NULL)
+        GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam->vertShader, dParam->fragShader);
 
     BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
     BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     ew->go.image = calloc(1, sizeof(GameObjectImage));
 
-    if(strlen(dParam.diffuse) != 0)
-    {
-        int len = strlen(dParam.diffuse);
-        ew->go.image->path = calloc(len + 1, sizeof(char));
-        memcpy(ew->go.image->path, dParam.diffuse, len);
-        ew->go.image->path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
+    if(dParam != NULL)
+        if(strlen(dParam->diffuse) != 0)
+        {
+            int len = strlen(dParam->diffuse);
+            ew->go.image->path = calloc(len + 1, sizeof(char));
+            memcpy(ew->go.image->path, dParam->diffuse, len);
+            ew->go.image->path[len] = '\0';
+            //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+        }
 
     ImageAddTexture(&ew->go.graphObj.local, ew->go.image);
 

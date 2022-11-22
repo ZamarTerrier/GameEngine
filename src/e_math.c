@@ -547,17 +547,16 @@ mat4 m4_scale_mat(vec3 scale){
 }
 
 mat4 m4_scale(mat4 mat, vec3 scale){
-    mat4 scale_mat;
 
-    scale_mat = edenMat;
+    for(int i =0;i < 3;i++)
+    {
+        mat.m[0][i] *= scale.x;
+        mat.m[1][i] *= scale.y;
+        mat.m[2][i] *= scale.z;
+    }
 
-    scale_mat.m[0][0] = scale.x;
-    scale_mat.m[1][1] = scale.y;
-    scale_mat.m[2][2] = scale.z;
 
-    mat4 result = m4_mult(mat, scale_mat);
-
-    return result;
+    return mat;
 }
 
 mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)

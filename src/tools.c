@@ -1340,7 +1340,7 @@ int ToolsStringToUInt32(uint32_t *dest, const char *src)
         find = false;
         if(src[i] < 0)
         {
-            for(int j=0; j < 64; j++)
+            for(int j=0; j < 66; j++)
             {
                 char temp[2];
                 temp[0] = src[i + 1];
