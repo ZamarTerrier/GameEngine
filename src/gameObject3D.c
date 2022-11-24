@@ -113,8 +113,9 @@ void GameObject3DDefaultDraw(GameObject3D* go){
         go->graphObj.shape.rebuild = false;
     }
 
+    int count = go->wired ? 2 : 1;
 
-    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
+    for(int i=0; i < count; i++){//go->graphObj.gItems.pipelineCount; i++){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
@@ -258,6 +259,7 @@ void GameObject3DInit(GameObject3D *go){
     go->graphObj.gItems.perspective = true;
 
     go->enable_light = false;
+    go->wired = false;
 }
 
 void GameObject3DEnableLight(GameObject3D *go, bool enable)

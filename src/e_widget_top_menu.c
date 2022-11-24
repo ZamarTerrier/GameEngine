@@ -2,8 +2,41 @@
 
 #include "e_widget_button.h"
 
+void TopMenuWidgetFocus(EWidget *widget, void *entry, void *args)
+{
+    EWidget *menu = widget;
+
+    int iter = 0;
+    EWidget *child = WidgetFindChild(menu, iter)->node;
+    EWidget *last = NULL;
+
+    while (last != child) {
+        iter ++;
+        last = child;
+        child = WidgetFindChild(menu, iter)->node;
+
+        if(child->type == GUI_TYPE_LIST)
+            child->visible = false;
+    }
+}
+
 void ToggleMenu(EWidget *widget, void *entry, EWidgetList *list)
 {
+    EWidget *menu = widget->parent->parent;
+
+    int iter = 0;
+    EWidget *child = WidgetFindChild(menu, iter)->node;
+    EWidget *last = NULL;
+
+    while (last != child) {
+        iter ++;
+        last = child;
+        child = WidgetFindChild(menu, iter)->node;
+
+        if(child->type == GUI_TYPE_LIST && child != list)
+            child->visible = false;
+    }
+
     list->widget.visible = !list->widget.visible ? true : false;
 }
 
@@ -36,6 +69,8 @@ void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window)
     top_menu->num_elems = 0;
 
     TopMenuWidgetResize(top_menu);
+
+    WidgetConnect(&top_menu->widget, GUI_TRIGGER_WIDGET_FOCUS, TopMenuWidgetFocus, NULL);
 }
 
 int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name)

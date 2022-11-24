@@ -47,6 +47,6 @@ void ModelDestroy(ModelObject3D* mo);
 
 void ModelSetLightEnable(void *obj, bool enable);
 
-void ModelDefaultInit(ModelStruct *model, DrawParam dParam);
+void ModelDefaultInit(ModelStruct *model, DrawParam *dParam);
 
 #endif // MODELS_H

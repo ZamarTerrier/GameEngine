@@ -373,7 +373,7 @@ void ModelFBXDestroy(ModelObject3D *mo){
 
 }
 
-void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam)
+void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
 {
 
   Transform3DInit(&mo->transform);

@@ -38,7 +38,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         shader vertShaderCode;
         shader fragShaderCode;
 
-        PipelineSetting *setting = &settings[i];
+        PipelineSetting *setting = settings[i];
 
         if(settings[i]->fromFile)
         {

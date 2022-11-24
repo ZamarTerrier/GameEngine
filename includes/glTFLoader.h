@@ -56,6 +56,6 @@ typedef struct{
 } glTFStruct;
 
 void Load3DglTFNextFrame(void *ptr, float time, int num_animation);
-void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam dParam);
+void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam *dParam);
 
 #endif // GLTFLOADER_H

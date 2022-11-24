@@ -204,14 +204,12 @@ void ModelDestroy(ModelObject3D* mo){
 }
 
 void ModelAddSettingPipeline(ModelStruct* model, PipelineSetting setting){
-    PipelineSetting* settings;
-
     model->graphObj.gItems.settingsCount++;
-    model->graphObj.gItems.settings = realloc(model->graphObj.gItems.settings, model->graphObj.gItems.settingsCount * sizeof(PipelineSetting));
+    model->graphObj.gItems.settings = realloc(model->graphObj.gItems.settings, model->graphObj.gItems.settingsCount * sizeof(PipelineSetting *));
 
-    settings = (PipelineSetting *) model->graphObj.gItems.settings;
-
-    memcpy(&settings[model->graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
+    PipelineSetting** settings = model->graphObj.gItems.settings;
+    settings[model->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
+    memcpy(settings[model->graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
 }
 
 void ModelSetLightEnable(void *obj, bool enable)
@@ -226,7 +224,7 @@ void ModelSetLightEnable(void *obj, bool enable)
     }
 }
 
-void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
+void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
@@ -253,7 +251,7 @@ void ModelDefaultInit(ModelStruct *model, DrawParam dParam){
         setting.fromFile = 0;
     }
     else
-        GraphicsObjectSetShadersPath(&model->graphObj, dParam.vertShader, dParam.fragShader);
+        GraphicsObjectSetShadersPath(&model->graphObj, dParam->vertShader, dParam->fragShader);
 
     ModelAddSettingPipeline(model, setting);
 

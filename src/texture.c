@@ -81,6 +81,12 @@ void TextureCreateEmpty(Texture2D *texture)
 
 int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_file) {
 
+    if(image == NULL)
+    {
+        TextureCreateEmpty(texture);
+        return 0;
+    }
+
     if(image->path == NULL && image->buffer == NULL)
     {
         TextureCreateEmpty(texture);
@@ -465,14 +471,19 @@ void ImageAddTexture(localParam *local, GameObjectImage *image){
 
     descriptor->texture = calloc(1, sizeof(Texture2D));
 
-    if(descriptor->image->size > 0)
-        TextureCreate(descriptor->texture, descriptor->image, 0);
-    else
-        TextureCreate(descriptor->texture, descriptor->image, 1);
+    if(image != NULL)
+    {
+        if(descriptor->image->size > 0)
+            TextureCreate(descriptor->texture, descriptor->image, 0);
+        else
+            TextureCreate(descriptor->texture, descriptor->image, 1);
 
-    Texture2D * texture = descriptor->texture;
-    image->imgHeight = texture->texHeight;
-    image->imgWidth = texture->texWidth;
+        Texture2D * texture = descriptor->texture;
+        image->imgHeight = texture->texHeight;
+        image->imgWidth = texture->texWidth;
+    }else
+        TextureCreate(descriptor->texture, descriptor->image, 0);
+
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->size = 1;

@@ -19,7 +19,7 @@ typedef struct{
     EWidget top;
     EWidgetWindow *window;
     LinkedButtonList list[256];
-    uint32_t num_elems;
+    uint32_t num_elems;    
 } EWidgetTopMenu;
 
 void TopMenuWidgetResize(EWidgetTopMenu *top_menu);

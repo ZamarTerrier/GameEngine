@@ -5,7 +5,7 @@
 
 #include "e_math.h"
 
-vec2 range_mouse,  range_temp;
+vec2 range_mouse, range_temp;
 
 void RangeWidgetPress(EWidget* widget, void* entry, void* args){
 
