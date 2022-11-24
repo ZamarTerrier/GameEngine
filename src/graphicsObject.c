@@ -88,7 +88,6 @@ void GraphicsObjectCleanPipelines(GraphicsObject *graphObj){
         vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline[i], NULL);
         vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout[i], NULL);
     }
-    \
 
     free(graphObj->gItems.graphicsPipeline);
     graphObj->gItems.graphicsPipeline = NULL;
@@ -124,10 +123,13 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
 
 void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
+    PipelineSetting** settings = graphObj->gItems.settings;
     for(int i=0;i < graphObj->gItems.pipelineCount; i++){
         vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline[i], NULL);
         vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout[i], NULL);
+        free(settings[i]);
     }
+    free(graphObj->gItems.settings);
 
     vkDestroyDescriptorPool(device, graphObj->gItems.descriptorPool, NULL);
     vkDestroyDescriptorSetLayout(device, graphObj->gItems.descriptorSetLayout, NULL);

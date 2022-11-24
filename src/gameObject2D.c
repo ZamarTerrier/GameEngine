@@ -70,7 +70,7 @@ void GameObject2DDefaultDraw(GameObject2D* go){
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -97,11 +97,11 @@ void GameObject2DAddSettingPipeline(GameObject2D* go, void *arg){
     PipelineSetting* setting = arg;
 
     go->graphObj.gItems.settingsCount++;
-    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting));
+    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting *));
 
-    PipelineSetting* settings = (PipelineSetting *) go->graphObj.gItems.settings;
-
-    memcpy(&settings[go->graphObj.gItems.settingsCount - 1], setting, sizeof(PipelineSetting));
+    PipelineSetting** settings = go->graphObj.gItems.settings;
+    settings[go->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
+    memcpy(settings[go->graphObj.gItems.settingsCount - 1], setting, sizeof(PipelineSetting));
 
 }
 
@@ -119,18 +119,18 @@ void GameObject2DClean(GameObject2D* go){
 
 void GameObject2DRecreate(GameObject2D* go){
 
-    PipelineSetting *settings = (PipelineSetting *)go->graphObj.gItems.settings;
+    PipelineSetting **settings = (PipelineSetting *)go->graphObj.gItems.settings;
 
     for(int i=0; i < go->graphObj.gItems.settingsCount;i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        settings[i]->scissor.offset.x = 0;
+        settings[i]->scissor.offset.y = 0;
+        settings[i]->scissor.extent.height = HEIGHT;
+        settings[i]->scissor.extent.width = WIDTH;
+        settings[i]->viewport.x = 0;
+        settings[i]->viewport.y = 0;
+        settings[i]->viewport.height = HEIGHT;
+        settings[i]->viewport.width = WIDTH;
     }
 
     BuffersRecreateUniform(&go->graphObj.local);

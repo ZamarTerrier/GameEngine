@@ -107,6 +107,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
             parent->child->next = NULL;
             parent->child->before = NULL;
             parent->child->node = ew;
+            parent->last = parent->child;
         }
     }
 }
@@ -172,7 +173,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     GameObject2DAddSettingPipeline(&ew->go, &setting);
 
-    ew->color = (vec4){0.4, 0.1, 0.1, 1.0};
+    ew->color = (vec4){0.2, 0.2, 0.2, 1.0};
 
     ew->offset.x = 0;
     ew->offset.y = 0;

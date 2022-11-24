@@ -14,7 +14,7 @@ typedef struct{
     void** graphicsPipeline;
     void** pipelineLayout;
     uint32_t pipelineCount;
-    void* settings;
+    void** settings;
     uint32_t settingsCount;
     void* descriptorPool;
     bool perspective;

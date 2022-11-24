@@ -181,7 +181,7 @@ void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
 
     EWidgetEntry *temp = widget;
 
-    temp->buffers[temp->curr_line][temp->currPos] = ' ';
+    temp->buffers[temp->curr_line][temp->currPos] = 0;
 
     EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
 
@@ -196,7 +196,7 @@ void EntryUpdateLine(){
     EWidgetEntry *temp = e_var_current_entry;
 
     vec2 scale = Transform2DGetScale(temp);
-    temp->width = scale.x * 3;
+    temp->width = scale.x * 1.5f;
     temp->height = scale.y * 2.5f;
 
     temp->buffers[temp->curr_line][temp->currPos] = L'|';
@@ -216,6 +216,7 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
         fontSize = 2;
 
     WidgetInit(&entry->widget, NULL, parent);
+    entry->widget.type = GUI_TYPE_ENTRY;
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
@@ -237,3 +238,26 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
     WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, EntryWidgetKeyRepeatInput, NULL);
 
 }
+
+char *EntryWidgetGetText(EWidgetEntry *entry)
+{
+    return entry->buffers[entry->curr_line];
+}
+
+void EntryWidgetSetText(EWidgetEntry *entry, char *text)
+{
+    EWidgetText *temp = WidgetFindChild(&entry->widget, entry->curr_texts)->node;
+
+    memset(entry->buffers[entry->curr_line], 0, BUFFER_SIZE);
+
+    int len = strlen(text);
+    for(int i=0;i < len;i++)
+    {
+        entry->buffers[entry->curr_line][i] = text[i];
+    }
+
+    entry->currPos = len;
+
+    TextWidgetSetText(temp, entry->buffers[entry->curr_line]);
+}
+

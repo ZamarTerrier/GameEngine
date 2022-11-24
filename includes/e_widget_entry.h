@@ -23,5 +23,7 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent);
 void EntryUpdateLine();
 void EntryWidgetCharacterCallback(void* window, uint32_t codepoint);
 void EntryWidgetKeyCallback(void* window,  int key, int scancode, int action, int mods);
+char *EntryWidgetGetText(EWidgetEntry *entry);
+void EntryWidgetSetText(EWidgetEntry *entry, char *text);
 
 #endif // E_WIDGET_ENTRY_H

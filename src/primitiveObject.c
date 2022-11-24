@@ -36,7 +36,7 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
             InitPlane3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
             break;
         case ENGINE_PRIMITIVE3D_CUBE :
-            Cubesphere(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, 1, 2);
+            Cubesphere(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, 2, 10);
             break;
         case ENGINE_PRIMITIVE3D_CUBESPHERE :
             Cubesphere(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, csParam->radius, csParam->verperrow);
@@ -108,16 +108,26 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
 
     PipelineSettingSetDefault(&go->graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
-        setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
+    setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    setting.drawType = 0;
+    setting.fromFile = 0;
 
     GameObject3DAddSettingPipeline(go, &setting);
+
+    setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_line_vert_spv_size);
+    setting.fragShader = &_binary_shaders_3d_object_line_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_line_frag_spv_size);
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    setting.drawType = 0;
+    setting.fromFile = 0;
+
+    GameObject3DAddSettingPipeline(go, &setting);
+
 
     PipelineCreateGraphics(&go->graphObj);
 

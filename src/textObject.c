@@ -83,7 +83,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
 }
 
 void TextObjectMakeLastText(TextObject *to){
-    TextObjectSetText(to->textData.text, to);
+    TextImageSetText(to->textData.text, to, &to->textData);
 }
 
 void TextObjectRecreateUniform(TextObject *to){
@@ -97,8 +97,10 @@ void TextObjectRecreateUniform(TextObject *to){
         }
         else
         {
-            to->go.graphObj.local.descriptors[i].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-            TextImageMakeTexture(&to->go, &to->textData, to->go.graphObj.local.descriptors[i].texture);
+            /*ImageDestroyTexture(to->go.graphObj.local.descriptors[i].texture);
+            free(to->go.graphObj.local.descriptors[i].texture);
+            //to->go.graphObj.local.descriptors[i].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
+            TextImageMakeTexture(&to->go, &to->textData, to->go.graphObj.local.descriptors[i].texture);*/
         }
     }
 
@@ -160,7 +162,7 @@ void TextObjectDrawDefault(TextObject* to)
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.graphicsPipeline[i]);
         vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelineLayout[i], 0, 1, &to->go.graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
 
-        PipelineSetting *settings = &to->go.graphObj.gItems.settings[i];
+        PipelineSetting *settings = to->go.graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -281,18 +283,18 @@ void TextObjectSetText(const uint32_t* text, TextObject* to)
 
 void TextObjectRecreate(TextObject* to){
 
-    PipelineSetting *settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
+    PipelineSetting **settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
 
     for(int i=0; i < to->go.graphObj.gItems.settingsCount;i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        settings[i]->scissor.offset.x = 0;
+        settings[i]->scissor.offset.y = 0;
+        settings[i]->scissor.extent.height = HEIGHT;
+        settings[i]->scissor.extent.width = WIDTH;
+        settings[i]->viewport.x = 0;
+        settings[i]->viewport.y = 0;
+        settings[i]->viewport.height = HEIGHT;
+        settings[i]->viewport.width = WIDTH;
     }
 
     TextObjectRecreateUniform(to);

@@ -17,6 +17,7 @@ typedef struct{
     bool show;
     bool wasResize;
     bool wasHide;
+    bool resizeble;
     vec2 lastSize;
     vec2 lastPos;
 }EWidgetWindow;

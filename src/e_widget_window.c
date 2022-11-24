@@ -49,21 +49,23 @@ void WindowWidgetMove(EWidget* widget, void* entry, void* args)
     te.y = ypos;
 
 
-    if(e_var_mouse.y < e_var_temp.y + 10)
-    {
-        te = v2_sub(te, e_var_mouse);
-        te = v2_add(e_var_temp, v2_muls(te, 2));
-        Transform2DSetPosition(widget, te.x, te.y);
-    }
-    else
+    if(e_var_mouse.y > e_var_temp.y + 10 && e_var_mouse.y < e_var_temp.y && window->resizeble)
     {
         te = v2_sub(te, e_var_mouse);
         vec2 scale = v2_add(e_var_tscale, te);
 
+        scale.x = scale.x <= 0 ? 100 : scale.x;
+        scale.y = scale.y <= 0 ? 20 : scale.y;
         WindowWidgetSetSize(window, scale.x, scale.y);
 
         window->wasHide = false;
         window->wasResize = false;
+    }
+    else
+    {
+        te = v2_sub(te, e_var_mouse);
+        te = v2_add(e_var_temp, v2_muls(te, 2));
+        Transform2DSetPosition(widget, te.x, te.y);
     }
 
 }
@@ -78,6 +80,9 @@ void WindowWidgetCloseButton(EWidget* widget, void* entry, void *arg){
 void WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
+
+    if(!window->resizeble)
+        return;
 
     if(!window->wasResize && !window->wasHide)
     {
@@ -117,8 +122,8 @@ void WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
 
     window->wasHide = true;
 
-    WindowWidgetSetSize(window, 50, 12);
-    Transform2DSetPosition(&widget->parent->go, 0, 0);
+    WindowWidgetSetSize(window, 100, 12);
+    Transform2DSetPosition(&widget->parent->go, 20, (HEIGHT * 2) - 40);
 
 }
 
@@ -284,9 +289,11 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dPara
     WidgetConnect(&ww->resize, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetResizeButton, ww);
     WidgetConnect(&ww->hide, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetHideButton, ww);
 
+    ww->top.type = GUI_TYPE_WINDOW;
     ww->show = true;
     ww->wasHide = false;
     ww->wasResize = false;
+    ww->resizeble = true;
 }
 
 void WindowWidgetShow(EWidgetWindow *ww){

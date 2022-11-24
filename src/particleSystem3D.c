@@ -133,7 +133,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);

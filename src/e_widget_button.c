@@ -16,11 +16,12 @@ void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
     WidgetConfirmTrigger(widget, GUI_TRIGGER_BUTTON_PRESS, NULL);
 }
 
-void ButtonWidgetInit(EWidgetButton *button, const char *text, vec4 color, EWidget *parent){
+void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
     WidgetInit(button, NULL, parent);
 
-    button->selfColor = button->widget.color = color;
+    button->widget.type = GUI_TYPE_BUTTON;
+    button->selfColor = button->widget.color = (vec4){ 1, 1, 1, 1};
 
     TextWidgetInit(&button->text, 9, NULL, &button->widget);
     TextWidgetSetText(&button->text, text);
@@ -34,4 +35,8 @@ void ButtonWidgetInit(EWidgetButton *button, const char *text, vec4 color, EWidg
 
 void ButtonWidgetSetText(EWidgetButton *button, const char *text){
     TextWidgetSetText(&button->text, text);
+}
+
+void ButtonWidgetSetColor(EWidgetButton *button, vec4 color){
+    button->selfColor = button->widget.color = color;
 }

@@ -31,6 +31,9 @@ typedef enum{
     GUI_TYPE_TEXT,
     GUI_TYPE_BUTTON,
     GUI_TYPE_LIST,
+    GUI_TYPE_COMBOBOX,
+    GUI_TYPE_ENTRY,
+    GUI_TYPE_RANGE,
     GUI_TYPE_WINDOW
 } TypeEnum;
 
@@ -57,6 +60,7 @@ typedef struct EWidget{
     struct ChildStack* first;
     struct ChildStack* last;
     bool in, was_in, out, was_out, active, visible;
+    TypeEnum type;
     CallbackStack callbacks;
 } EWidget;
 

@@ -143,6 +143,13 @@ extern char _binary_shaders_3d_object_vert_spv_end;
 extern int _binary_shaders_3d_object_vert_spv_size;
 extern char _binary_shaders_3d_object_vert_spv_start;
 
+extern char _binary_shaders_3d_object_line_frag_spv_end;
+extern int _binary_shaders_3d_object_line_frag_spv_size;
+extern char _binary_shaders_3d_object_line_frag_spv_start;
+extern char _binary_shaders_3d_object_line_vert_spv_end;
+extern int _binary_shaders_3d_object_line_vert_spv_size;
+extern char _binary_shaders_3d_object_line_vert_spv_start;
+
 extern char _binary_shaders_gui_widget_frag_spv_end;
 extern int _binary_shaders_gui_widget_frag_spv_size;
 extern char _binary_shaders_gui_widget_frag_spv_start;

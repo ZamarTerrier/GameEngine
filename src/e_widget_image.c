@@ -22,7 +22,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     }
 
 
-    PipelineSetting *settings =  img->widget.go.graphObj.gItems.settings;
+    PipelineSetting **settings =  img->widget.go.graphObj.gItems.settings;
 
     vec2 parentPos = {0, 0};
 
@@ -71,18 +71,18 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 
     }
 
-    settings[0].scissor.offset.x = parentPos.x * WIDTH;
+    settings[0]->scissor.offset.x = parentPos.x * WIDTH;
 
-    if(settings[0].scissor.offset.x < 0)
-        settings[0].scissor.offset.x = 0;
+    if(settings[0]->scissor.offset.x < 0)
+        settings[0]->scissor.offset.x = 0;
 
-    settings[0].scissor.offset.y = parentPos.y * HEIGHT;
+    settings[0]->scissor.offset.y = parentPos.y * HEIGHT;
 
-    if(settings[0].scissor.offset.y < 0)
-        settings[0].scissor.offset.y = 0;
+    if(settings[0]->scissor.offset.y < 0)
+        settings[0]->scissor.offset.y = 0;
 
-    settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
-    settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
+    settings[0]->scissor.extent.height = parentSize.y * 2 * HEIGHT;
+    settings[0]->scissor.extent.width = parentSize.x * 2 * WIDTH;
 
     ShaderBuffer* sBuffer = img->widget.go.graphObj.local.descriptors;
 

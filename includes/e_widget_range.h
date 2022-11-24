@@ -15,5 +15,6 @@ typedef struct{
 
 void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min, float max, EWidget *parent);
 void RangeWidgetSetValueDestin(EWidgetRange *range, float *val_dest);
+void RangeWidgetSetValue(EWidgetRange *range, float val);
 
 #endif // E_WIDGET_RANGE_H

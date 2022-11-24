@@ -38,7 +38,7 @@ void ModelDefaultDraw(ModelObject3D* mo){
             {
                 vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.graphicsPipeline[p]);
 
-                PipelineSetting *settings = &model->graphObj.gItems.settings[p];
+                PipelineSetting *settings = model->graphObj.gItems.settings[p];
 
                 vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
                 vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);

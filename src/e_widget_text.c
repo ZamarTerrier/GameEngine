@@ -21,7 +21,7 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     }
 
 
-    PipelineSetting *settings =  wt->widget.go.graphObj.gItems.settings;
+    PipelineSetting **settings =  wt->widget.go.graphObj.gItems.settings;
 
     vec2 parentPos = {0, 0};
 
@@ -75,18 +75,18 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     else
         wt->widget.visible  = true;;
 
-    settings[0].scissor.offset.x = parentPos.x * WIDTH;
+    settings[0]->scissor.offset.x = parentPos.x * WIDTH;
 
-    if(settings[0].scissor.offset.x < 0)
-        settings[0].scissor.offset.x = 0;
+    if(settings[0]->scissor.offset.x < 0)
+        settings[0]->scissor.offset.x = 0;
 
-    settings[0].scissor.offset.y = parentPos.y * HEIGHT;
+    settings[0]->scissor.offset.y = parentPos.y * HEIGHT;
 
-    if(settings[0].scissor.offset.y < 0)
-        settings[0].scissor.offset.y = 0;
+    if(settings[0]->scissor.offset.y < 0)
+        settings[0]->scissor.offset.y = 0;
 
-    settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
-    settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
+    settings[0]->scissor.extent.height = parentSize.y * 2 * HEIGHT;
+    settings[0]->scissor.extent.width = parentSize.x * 2 * WIDTH;
 
     ShaderBuffer* sBuffer = wt->widget.go.graphObj.local.descriptors;
 
@@ -104,11 +104,12 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
 
 void TextWidgetDrawDefault(EWidgetText* wt)
 {
-    for(int i=0; i < wt->widget.go.graphObj.gItems.pipelineCount; i++){
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, wt->widget.go.graphObj.gItems.graphicsPipeline[i]);
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, wt->widget.go.graphObj.gItems.pipelineLayout[i], 0, 1, &wt->widget.go.graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+    GraphicItems *gItems = &wt->widget.go.graphObj.gItems;
+    for(int i=0; i < gItems->pipelineCount; i++){
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, gItems->graphicsPipeline[i]);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, gItems->pipelineLayout[i], 0, 1, &gItems->descriptorSets[imageIndex], 0, NULL);
 
-        PipelineSetting *settings = &wt->widget.go.graphObj.gItems.settings[i];
+        PipelineSetting *settings = gItems->settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -133,31 +134,33 @@ void TextWidgetRecreateUniform(EWidgetText *wt){
         }
         else
         {
+            /*ImageDestroyTexture(wt->widget.go.graphObj.local.descriptors[i].texture);
+            free(wt->widget.go.graphObj.local.descriptors[i].texture);
             wt->widget.go.graphObj.local.descriptors[i].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-            TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[i].texture);
+            TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[i].texture);*/
         }
     }
 
 }
 
 void TextWidgetMakeLastText(EWidgetText *wt){
-    TextWidgetSetText(wt, wt->tData.text);
+    TextImageSetText(wt->tData.text, wt, &wt->tData);
 }
 
 void TextWidgettRecreate(EWidgetText* wt){
 
-    PipelineSetting *settings = (PipelineSetting *)wt->widget.go.graphObj.gItems.settings;
+    PipelineSetting **settings = (PipelineSetting *)wt->widget.go.graphObj.gItems.settings;
 
     for(int i=0; i < wt->widget.go.graphObj.gItems.settingsCount;i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        settings[i]->scissor.offset.x = 0;
+        settings[i]->scissor.offset.y = 0;
+        settings[i]->scissor.extent.height = HEIGHT;
+        settings[i]->scissor.extent.width = WIDTH;
+        settings[i]->viewport.x = 0;
+        settings[i]->viewport.y = 0;
+        settings[i]->viewport.height = HEIGHT;
+        settings[i]->viewport.width = WIDTH;
     }
 
     TextWidgetRecreateUniform(wt);
@@ -223,6 +226,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
 
     GameObject2DAddSettingPipeline(wt, &setting);
 
+    wt->widget.type = GUI_TYPE_TEXT;
     wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
     wt->widget.offset.x = 0;

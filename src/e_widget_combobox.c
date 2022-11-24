@@ -39,10 +39,13 @@ void ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
 void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 
     WidgetInit(&combobox->widget, NULL, parent);
-    ButtonWidgetInit(&combobox->button, " ", (vec4){ 0.4, 0.4, 0.4, 1.0}, &combobox->widget);
+    ButtonWidgetInit(&combobox->button, " ", &combobox->widget);
+    ButtonWidgetSetColor(&combobox->button, (vec4){0.4, 0.4, 0.4, 1.0});
 
+    combobox->widget.type = GUI_TYPE_COMBOBOX;
     combobox->size_x = 100;
     combobox->size_y = 30;
+    combobox->currId = -1;
 
     Transform2DSetScale(&combobox->widget, combobox->size_x, combobox->size_y);
     Transform2DSetScale(&combobox->button, combobox->size_x, combobox->size_y);

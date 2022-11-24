@@ -1,6 +1,8 @@
 
 #include "e_widget_range.h"
 
+#include "engine.h"
+
 #include "e_math.h"
 
 vec2 range_mouse,  range_temp;
@@ -62,6 +64,7 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
     WidgetInit(&range->line, NULL, &range->widget);
     WidgetInit(&range->range, NULL, &range->widget);
 
+    range->widget.type = GUI_TYPE_RANGE;
     range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
     Transform2DSetScale(&range->line, size_x, 2);
     Transform2DSetPosition(&range->line, 0, size_y - 4);
@@ -86,4 +89,19 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
 void RangeWidgetSetValueDestin(EWidgetRange *range, float *val_dest)
 {
     range->dest = val_dest;
+}
+
+void RangeWidgetSetValue(EWidgetRange *range, float val)
+{
+
+    vec2 size = v2_muls(Transform2DGetScale(&range->widget), 2);
+    size.x -= 20;
+
+    vec2 te = Transform2DGetPosition(&range->range);
+
+    int len = range->max - range->min;
+    float diff =  len / size.x;
+
+    te.x = (val - range->min) / diff;
+    Transform2DSetPosition(&range->range, te.x, te.y);
 }
