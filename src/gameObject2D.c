@@ -177,7 +177,6 @@ void GameObject2DInit(GameObject2D* go)
 
     Transform2DInit(&go->transform);
     GraphicsObject2DInit(&go->graphObj);
-
 }
 
 vec2 GameObject2DGetSize(GameObject2D* go)

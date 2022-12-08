@@ -60,7 +60,7 @@ typedef struct EWidget{
     struct ChildStack* child;
     struct ChildStack* first;
     struct ChildStack* last;
-    bool in, was_in, out, was_out, active, visible;
+    bool in, was_in, out, was_out, active, visible, self_visible;
     TypeEnum type;
     CallbackStack callbacks;
 } EWidget;
