@@ -27,8 +27,9 @@ typedef struct{
         const char fontpath[256];
         vec3 color;
     } font;
-    char text[BUFFER_SIZE * BUFFER_SIZE];
-    wchar_t wText[BUFFER_SIZE * BUFFER_SIZE];
+    float textWidth;
+    float textHeight;
+    uint32_t text[BUFFER_SIZE * BUFFER_SIZE];
 } TextData;
 
 typedef struct{
@@ -47,10 +48,8 @@ void TextDataSetFontPath(TextData* tData, const char* path);
 void TextDataSetTextColor(TextData* tData, vec3 color);
 void TextDataSetTextSize(TextData* tData, float size);
 
-void TextImageSetText(const char* text, GameObject2D* go, TextData *tData);
-void TextImageSetTextW(const wchar_t* text, GameObject2D* go, TextData *tData);
+void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData);
 
-void TextObjectSetText(const char* text, TextObject* to);
-void TextObjectSetTextW(const wchar_t* text, TextObject* to);
+void TextObjectSetText(const uint32_t* text, TextObject* to);
 
 #endif // TEXTOBJECT_H

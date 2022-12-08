@@ -19,9 +19,12 @@ typedef enum{
     GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM,
     GUI_TRIGGER_LIST_PRESS_ITEM,
     GUI_TRIGGER_ENTRY_CHAR_INPUT,
+    GUI_TRIGGER_ENTRY_UPDATE,
     GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT,
+    GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT,
     GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT,
     GUI_TRIGGER_RANGE_CHANGE,
+    GUI_TRIGGER_ROLLER_MOVE,
 } TriggersEnum;
 
 typedef enum{
@@ -29,6 +32,9 @@ typedef enum{
     GUI_TYPE_TEXT,
     GUI_TYPE_BUTTON,
     GUI_TYPE_LIST,
+    GUI_TYPE_COMBOBOX,
+    GUI_TYPE_ENTRY,
+    GUI_TYPE_RANGE,
     GUI_TYPE_WINDOW
 } TypeEnum;
 
@@ -43,20 +49,19 @@ typedef struct{
     int size;
 } CallbackStack;
 
-typedef struct ChildStack{
-    struct ChildStack* next;
-    void *node;
-} ChildStack;
-
 typedef struct EWidget{
     GameObject2D go;
     vec2 offset;
     vec4 color;
     vec2 position;
     vec2 scale;
+    float transparent;
     struct EWidget* parent;
     struct ChildStack* child;
-    bool in, was_in, out, was_out, active;
+    struct ChildStack* first;
+    struct ChildStack* last;
+    bool in, was_in, out, was_out, active, visible;
+    TypeEnum type;
     CallbackStack callbacks;
 } EWidget;
 
@@ -70,6 +75,7 @@ typedef struct{
     vec2 position;
     vec2 size;
     vec4 color __attribute__ ((aligned (16)));
+    float transparent __attribute__ ((aligned (16)));
 } GUIBuffer;
 
 typedef struct{
@@ -79,7 +85,7 @@ typedef struct{
 
  ChildStack * WidgetFindChild(EWidget* widget, int num);
 void WidgetSetParent(EWidget* ew, EWidget* parent);
-void WidgetInit(EWidget *ew, DrawParam dParam, EWidget *parent);
+void WidgetInit(EWidget *ew, DrawParam *dParam, EWidget *parent);
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
 void WidgetConnect(EWidget *widget, int trigger, void* callback, void *args);
 void WidgetRecreate(EWidget *widget);

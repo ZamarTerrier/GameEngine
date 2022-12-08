@@ -41,10 +41,11 @@ void WidgetUniformUpdate(EWidget *ew){
     gb.position = ew->position;
     gb.size = ew->scale;
     gb.color = ew->color;
+    gb.transparent = ew->transparent;
 
-    vkMapMemory(device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
     MaskObjectBuffer mbo = {};
 
@@ -71,9 +72,9 @@ void WidgetUniformUpdate(EWidget *ew){
         mbo.size = 0;
     }
 
-    vkMapMemory(device, ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device,  ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -81,6 +82,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
     ew->parent = parent;
     ew->child = NULL;
+    ew->last = NULL;
 
     if(parent != NULL)
     {
@@ -95,11 +97,17 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
             child->next = (ChildStack *)calloc(1, sizeof(ChildStack));
             child->next->next = NULL;
+            child->next->before = child;
             child->next->node = ew;
+
+            parent->last = child->next;
+
         }else{
             parent->child = (ChildStack *)calloc(1, sizeof(ChildStack));
             parent->child->next = NULL;
+            parent->child->before = NULL;
             parent->child->node = ew;
+            parent->last = parent->child;
         }
     }
 }
@@ -111,7 +119,7 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
     if(child != NULL)
     {
-        while(child->next != NULL && num > 0 && counter != num)
+        while(child->next != NULL && counter < num)
         {
             counter ++;
             child = child->next;
@@ -121,17 +129,34 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
     return child;
 }
 
-void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
+void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     GameObject2DInit(&ew->go);
+
+    memcpy(ew->go.name, "Widget", 6);
 
     GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(&ew->go, (void *)WidgetUniformUpdate);
 
-    GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam.vertShader, dParam.fragShader);
+    if(dParam != NULL)
+        GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam->vertShader, dParam->fragShader);
 
     BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
     BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    ew->go.image = calloc(1, sizeof(GameObjectImage));
+
+    if(dParam != NULL)
+        if(strlen(dParam->diffuse) != 0)
+        {
+            int len = strlen(dParam->diffuse);
+            ew->go.image->path = calloc(len + 1, sizeof(char));
+            memcpy(ew->go.image->path, dParam->diffuse, len);
+            ew->go.image->path[len] = '\0';
+            //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+        }
+
+    ImageAddTexture(&ew->go.graphObj.local, ew->go.image);
 
     GameObject2DCreateDrawItems(&ew->go);
 
@@ -150,10 +175,12 @@ void WidgetInit(EWidget* ew, DrawParam dParam, EWidget* parent){
 
     GameObject2DAddSettingPipeline(&ew->go, &setting);
 
-    ew->color = (vec4){0.4, 0.1, 0.1, 1.0};
+    ew->color = (vec4){0.2, 0.2, 0.2, 1.0};
 
     ew->offset.x = 0;
     ew->offset.y = 0;
+    ew->transparent = 1.0f;
+    ew->visible = true;
 
     WidgetSetParent(ew, parent);
 
@@ -188,9 +215,7 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
 
-    GameObjectUpdate(widget);
-
-    if(!widget->active)
+    if(!widget->active || !widget->visible)
         return NULL;
 
     double xpos, ypos;
@@ -203,19 +228,22 @@ EWidget* WidgetCheckMouseInner(EWidget* widget){
             ypos > widget->position.y && ypos < (widget->position.y + (widget->scale.y * 2)))
     {
 
-        ChildStack *next = widget->child;
+        ChildStack *next = widget->last;
 
         while(next != NULL)
         {
-            EWidget* res = WidgetCheckMouseInner(next->node);
-
-            if(res != NULL)
+            if(next->node != NULL)
             {
-                widget->out = true;
-                return res;
+                EWidget* res = WidgetCheckMouseInner(next->node);
+
+                if(res != NULL)
+                {
+                    widget->out = true;
+                    return res;
+                }
             }
 
-            next = next->next;
+            next = next->before;
         }
 
         return widget;
@@ -287,12 +315,17 @@ void WidgetEventsPipe(EWidget* widget)
 
 }
 
-void WidgetDraw(EWidget * widget){
+void WidgetDraw(EWidget * widget)
+{
+    if(!widget->visible)
+        return;
+
     ChildStack *child = widget->child;
-    engDraw(widget);
+    EngineDraw(widget);
     while(child != NULL)
     {
         WidgetDraw(child->node);
+
         child = child->next;
     }
 }

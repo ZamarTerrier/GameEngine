@@ -14,7 +14,7 @@ typedef struct{
     void** graphicsPipeline;
     void** pipelineLayout;
     uint32_t pipelineCount;
-    void* settings;
+    void** settings;
     uint32_t settingsCount;
     void* descriptorPool;
     bool perspective;
@@ -66,7 +66,7 @@ typedef struct{
 } ShaderBuffer;
 
 typedef struct{
-    ShaderBuffer* descriptors;
+    ShaderBuffer** descriptors;
     uint32_t descrCount;
 } localParam;
 

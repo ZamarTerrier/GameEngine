@@ -1,5 +1,7 @@
 #include "gameObject.h"
 
+#include "engine.h"
+
 void GameObjectSetInitFunc(GameObject *go, void *func){
     go->InitPoint = func;
 }
@@ -27,12 +29,18 @@ void GameObjectSetDestroyFunc(GameObject *go, void *func){
 
 void GameObjectInit(GameObject* go){
 
+    if(go == NULL)
+        return;
+
     void (*init)(GameObject* go) = go->InitPoint;
 
     init(go);
 }
 
 void GameObjectUpdate(GameObject* go) {
+
+    if(go == NULL)
+        return;
 
     void (*update)(GameObject* go) = go->UpdatePoint;
 
@@ -41,12 +49,18 @@ void GameObjectUpdate(GameObject* go) {
 
 void GameObjectDraw(GameObject* go) {
 
+    if(go == NULL)
+        return;
+
     void (*draw)(GameObject* go) = go->DrawPoint;
 
     draw(go);
 }
 
 void GameObjectClean(GameObject* go){
+
+    if(go == NULL)
+        return;
 
     void (*update)(GameObject* go) = go->CleanPoint;
 
@@ -55,12 +69,20 @@ void GameObjectClean(GameObject* go){
 
 void GameObjectRecreate(GameObject* go){
 
+    if(go == NULL)
+        return;
+
     void (*recreate)(GameObject* go) = go->RecreatePoint;
 
     recreate(go);
 }
 
 void GameObjectDestroy(GameObject* go){
+
+    EngineDeviceWaitIdle();
+
+    if(go == NULL)
+        return;
 
     void (*destroy)(GameObject* go) = go->DestroyPoint;
 

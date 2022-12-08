@@ -15,6 +15,7 @@ typedef struct{
     GameObjectImage *specular;
     GameObjectImage *normal;
     int light_enable;
+    bool selfCamera;
 } ModelStruct;
 
 typedef struct{
@@ -45,6 +46,10 @@ void ModelClean(ModelObject3D* mo);
 void ModelRecreate(ModelObject3D* mo);
 void ModelDestroy(ModelObject3D* mo);
 
-void ModelDefaultInit(ModelStruct *model, DrawParam dParam);
+void ModelSetLightEnable(void *obj, bool enable);
+void ModelSetSelCameraEnable(void *obj, bool enable);
+void ModelSetSomeViewport(ModelObject3D* mo, float x, float y, float height, float width);
+
+void ModelDefaultInit(ModelStruct *model, DrawParam *dParam);
 
 #endif // MODELS_H

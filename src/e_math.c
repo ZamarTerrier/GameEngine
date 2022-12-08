@@ -184,6 +184,8 @@ float v3_mins(vec3 a){ return min(min(a.x, a.y), a.z); }
 vec3 v3_min(vec3 a, vec3 b){ return (vec3){ min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)}; }
 vec3 v3_max(vec3 a, vec3 b){ return (vec3){ max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) }; }
 
+vec3 v3_abs(vec3 a){ return (vec3){ fabs(a.x), fabs(a.y), fabs(a.z)}; }
+
 float v2_cross(vec2 a, vec2 b)
 {
    return a.x * b.y - a.y * b.x;
@@ -547,17 +549,16 @@ mat4 m4_scale_mat(vec3 scale){
 }
 
 mat4 m4_scale(mat4 mat, vec3 scale){
-    mat4 scale_mat;
 
-    scale_mat = edenMat;
+    for(int i =0;i < 3;i++)
+    {
+        mat.m[0][i] *= scale.x;
+        mat.m[1][i] *= scale.y;
+        mat.m[2][i] *= scale.z;
+    }
 
-    scale_mat.m[0][0] = scale.x;
-    scale_mat.m[1][1] = scale.y;
-    scale_mat.m[2][2] = scale.z;
 
-    mat4 result = m4_mult(mat, scale_mat);
-
-    return result;
+    return mat;
 }
 
 mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)

@@ -11,6 +11,8 @@ typedef struct{
     EWidgetList list;
     bool show;
     int currId;
+    int size_x;
+    int size_y;
 } EWidgetCombobox;
 
 void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent);

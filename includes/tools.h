@@ -42,6 +42,8 @@ float cosWithRange(float value, float minV, float range);
 
 void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2);
 bool ToolsCmpStrings(char *in, char *s1);
+int ToolsStr32BitLength(uint32_t *text);
+int ToolsStringToUInt32(uint32_t *dest, const char *src);
 
 void* ToolsLoadImageFromFile(size_t* len, char *filepath);
 

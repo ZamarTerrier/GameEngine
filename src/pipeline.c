@@ -27,7 +27,7 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
 void PipelineCreateGraphics(GraphicsObject* graphObj){
 
-    PipelineSetting* settings = (PipelineSetting *)graphObj->gItems.settings;
+    PipelineSetting** settings = (PipelineSetting *)graphObj->gItems.settings;
 
     graphObj->gItems.pipelineLayout = (VkPipelineLayout *)calloc(graphObj->gItems.settingsCount, sizeof(VkPipelineLayout));
     graphObj->gItems.graphicsPipeline = (VkPipeline *)calloc(graphObj->gItems.settingsCount, sizeof(VkPipeline));
@@ -38,16 +38,18 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         shader vertShaderCode;
         shader fragShaderCode;
 
-        if(settings[i].fromFile)
-        {
-            vertShaderCode = readFile(settings[i].vertShader);
-            fragShaderCode = readFile(settings[i].fragShader);
-        }else{
-            vertShaderCode.code = settings[i].vertShader;
-            vertShaderCode.size = settings[i].sizeVertShader;
+        PipelineSetting *setting = settings[i];
 
-            fragShaderCode.code = settings[i].fragShader;
-            fragShaderCode.size = settings[i].sizeFragShader;
+        if(settings[i]->fromFile)
+        {
+            vertShaderCode = readFile(settings[i]->vertShader);
+            fragShaderCode = readFile(settings[i]->fragShader);
+        }else{
+            vertShaderCode.code = settings[i]->vertShader;
+            vertShaderCode.size = settings[i]->sizeVertShader;
+
+            fragShaderCode.code = settings[i]->fragShader;
+            fragShaderCode.size = settings[i]->sizeFragShader;
         }
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
@@ -71,7 +73,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssembly.topology = settings[i].topology;
+        inputAssembly.topology = settings[i]->topology;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
         //-----------
         //Растеризатор
@@ -79,7 +81,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizer.depthClampEnable = VK_FALSE;
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
-        rasterizer.polygonMode = settings[i].poligonMode;
+        rasterizer.polygonMode = settings[i]->poligonMode;
         rasterizer.lineWidth = 1.0f;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
         rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -132,7 +134,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptorSetLayout; // Optional
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
-        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout[i]) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(e_device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout[i]) != VK_SUCCESS) {
             printf("failed to create pipeline layout!");
             exit(1);
         }
@@ -170,15 +172,15 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.pDepthStencilState = &depthStencil;
 
-        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline[i]) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(e_device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline[i]) != VK_SUCCESS) {
             printf("failed to create graphics pipeline!");
             exit(1);
         }
 
         //-----------------------
 
-        vkDestroyShaderModule(device, fragShaderModule, NULL);
-        vkDestroyShaderModule(device, vertShaderModule, NULL);
+        vkDestroyShaderModule(e_device, fragShaderModule, NULL);
+        vkDestroyShaderModule(e_device, vertShaderModule, NULL);
 
     }
 
@@ -239,7 +241,7 @@ void PipelineCreateRenderPass() {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device, &renderPassInfo, NULL, &renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(e_device, &renderPassInfo, NULL, &renderPass) != VK_SUCCESS) {
         printf("failed to create render pass!");
         exit(1);
     }

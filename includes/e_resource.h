@@ -17,8 +17,8 @@ extern void* e_window;
 extern void* instance;
 extern void* debugMessenger;
 
-extern void* physicalDevice;
-extern void* device;
+extern void* e_physicalDevice;
+extern void* e_device;
 
 extern void* graphicsQueue;
 extern void* presentQueue;
@@ -70,11 +70,12 @@ extern const char* deviceExtensions[];
 extern EIVertexInputAttributeDescription planeAttributeDescription[];
 extern EIVertexInputAttributeDescription cubeAttributeDescription[];
 extern EIVertexInputAttributeDescription modelAttributeDescription[];
-extern EIVertexInputAttributeDescription particleAttributeDescription[];
+extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
+extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
 
 typedef struct{
-    int FindLetter;
-    int IndexLetter;
+    uint32_t FindLetter;
+    uint16_t IndexLetter;
 } FontIndexes;
 
 extern const FontIndexes fontIndexes[];
@@ -121,12 +122,19 @@ extern char _binary_shaders_sprite_vert_spv_end;
 extern int _binary_shaders_sprite_vert_spv_size;
 extern char _binary_shaders_sprite_vert_spv_start;
 
-extern char _binary_shaders_particle_frag_spv_end;
-extern int _binary_shaders_particle_frag_spv_size;
-extern char _binary_shaders_particle_frag_spv_start;
-extern char _binary_shaders_particle_vert_spv_end;
-extern int _binary_shaders_particle_vert_spv_size;
-extern char _binary_shaders_particle_vert_spv_start;
+extern char _binary_shaders_particle_frag2D_spv_end;
+extern int _binary_shaders_particle_frag2D_spv_size;
+extern char _binary_shaders_particle_frag2D_spv_start;
+extern char _binary_shaders_particle_vert2D_spv_end;
+extern int _binary_shaders_particle_vert2D_spv_size;
+extern char _binary_shaders_particle_vert2D_spv_start;
+
+extern char _binary_shaders_particle_frag3D_spv_end;
+extern int _binary_shaders_particle_frag3D_spv_size;
+extern char _binary_shaders_particle_frag3D_spv_start;
+extern char _binary_shaders_particle_vert3D_spv_end;
+extern int _binary_shaders_particle_vert3D_spv_size;
+extern char _binary_shaders_particle_vert3D_spv_start;
 
 extern char _binary_shaders_3d_object_frag_spv_end;
 extern int _binary_shaders_3d_object_frag_spv_size;
@@ -134,6 +142,13 @@ extern char _binary_shaders_3d_object_frag_spv_start;
 extern char _binary_shaders_3d_object_vert_spv_end;
 extern int _binary_shaders_3d_object_vert_spv_size;
 extern char _binary_shaders_3d_object_vert_spv_start;
+
+extern char _binary_shaders_3d_object_line_frag_spv_end;
+extern int _binary_shaders_3d_object_line_frag_spv_size;
+extern char _binary_shaders_3d_object_line_frag_spv_start;
+extern char _binary_shaders_3d_object_line_vert_spv_end;
+extern int _binary_shaders_3d_object_line_vert_spv_size;
+extern char _binary_shaders_3d_object_line_vert_spv_start;
 
 extern char _binary_shaders_gui_widget_frag_spv_end;
 extern int _binary_shaders_gui_widget_frag_spv_size;
@@ -149,12 +164,20 @@ extern char _binary_shaders_gui_widget_window_vert_spv_end;
 extern int _binary_shaders_gui_widget_window_vert_spv_size;
 extern char _binary_shaders_gui_widget_window_vert_spv_start;
 
+extern char _binary_fonts_null_normal_otf_end;
+extern int _binary_fonts_null_normal_otf_size;
+extern char _binary_fonts_null_normal_otf_start;
+
 extern char _binary_fonts_fantazer_normal_ttf_end;
 extern int _binary_fonts_fantazer_normal_ttf_size;
 extern char _binary_fonts_fantazer_normal_ttf_start;
 
-extern char _binary_fonts_arial_ttf_end;
-extern int _binary_fonts_arial_ttf_size;
-extern char _binary_fonts_arial_ttf_start;
+extern char _binary_fonts_RobotoBlack_ttf_end;
+extern int _binary_fonts_RobotoBlack_ttf_size;
+extern char _binary_fonts_RobotoBlack_ttf_start;
+
+extern char _binary_fonts_TenorSans_ttf_end;
+extern int _binary_fonts_TenorSans_ttf_size;
+extern char _binary_fonts_TenorSans_ttf_start;
 
 #endif

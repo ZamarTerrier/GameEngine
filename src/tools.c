@@ -47,7 +47,7 @@ void* beginSingleTimeCommands() {
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+    vkAllocateCommandBuffers(e_device, &allocInfo, &commandBuffer);
 
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -69,7 +69,7 @@ void endSingleTimeCommands(void* commandBuffer) {
     vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphicsQueue);
 
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(e_device, commandPool, 1, &commandBuffer);
 }
 
 
@@ -79,7 +79,7 @@ bool isComplete(QueueFamilyIndices self) {
 
 QueueFamilyIndices findQueueFamilies(void* arg) {
 
-    VkPhysicalDevice device = arg;
+    VkPhysicalDevice device = (VkPhysicalDevice)arg;
 
     QueueFamilyIndices indices;
     indices.graphicsFamily = 0;
@@ -153,7 +153,7 @@ void* createShaderModule(shader shdr) {
     createInfo.codeSize = shdr.size;
     createInfo.pCode = shdr.code;
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(device, &createInfo, NULL, &shaderModule) != VK_SUCCESS) {
+    if (vkCreateShaderModule(e_device, &createInfo, NULL, &shaderModule) != VK_SUCCESS) {
         printf("failed to create shader module!");
         exit(1);
     }
@@ -978,7 +978,7 @@ int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int 
 
             verts[vIter].texCoord = (vec2){s, t};
 
-            verts[vIter].color = (vec3){1,1,1};
+            verts[vIter].color = (vec3){1,0,0};
         }
     }
 
@@ -1284,6 +1284,21 @@ bool ToolsCmpStrings(char *in, char *s1){
     return false;
 }
 
+int ToolsStr32BitLength(uint32_t *text)
+{
+    int size = 0;
+
+    uint32_t *point = text;
+
+    while(*point != 0)
+    {
+        size ++;
+        point++;
+    }
+
+    return size;
+}
+
 void* ToolsLoadImageFromFile(size_t* len, char *filepath)
 {
     FILE* fd;
@@ -1312,4 +1327,43 @@ void* ToolsLoadImageFromFile(size_t* len, char *filepath)
     *len = size;
 
     return buff;
+}
+
+int ToolsStringToUInt32(uint32_t *dest, const char *src)
+{
+    uint32_t size = strlen(src);
+
+    bool find = false;
+    int iter = 0;
+    for(int i=0; i < size; i++)
+    {
+        find = false;
+        if(src[i] < 0)
+        {
+            for(int j=0; j < 66; j++)
+            {
+                char temp[2];
+                temp[0] = src[i + 1];
+                temp[1] = src[i];
+                uint16_t t_value = *(uint16_t *)temp;
+                if(fontIndexes[j].IndexLetter == t_value)
+                {
+                    dest[iter] = fontIndexes[j].FindLetter;
+                    find = true;
+                    break;
+                }
+            }
+
+            i ++;
+        }
+
+        if(!find)
+            dest[iter] = src[i];
+
+        iter++;
+    }
+
+    dest[iter] = 0;
+
+    return iter;
 }

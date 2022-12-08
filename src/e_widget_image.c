@@ -22,7 +22,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     }
 
 
-    PipelineSetting *settings =  img->widget.go.graphObj.gItems.settings;
+    PipelineSetting **settings =  img->widget.go.graphObj.gItems.settings;
 
     vec2 parentPos = {0, 0};
 
@@ -71,10 +71,18 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 
     }
 
-    settings[0].scissor.offset.x = parentPos.x * WIDTH;
-    settings[0].scissor.offset.y = parentPos.y * HEIGHT;
-    settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
-    settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
+    settings[0]->scissor.offset.x = parentPos.x * WIDTH;
+
+    if(settings[0]->scissor.offset.x < 0)
+        settings[0]->scissor.offset.x = 0;
+
+    settings[0]->scissor.offset.y = parentPos.y * HEIGHT;
+
+    if(settings[0]->scissor.offset.y < 0)
+        settings[0]->scissor.offset.y = 0;
+
+    settings[0]->scissor.extent.height = parentSize.y * 2 * HEIGHT;
+    settings[0]->scissor.extent.width = parentSize.x * 2 * WIDTH;
 
     ShaderBuffer* sBuffer = img->widget.go.graphObj.local.descriptors;
 
@@ -84,9 +92,9 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     tbo.rotation = img->widget.go.transform.rotation;
     tbo.scale = img->widget.go.transform.scale;
 
-    vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
 
     ImageBufferObjects ibo;
     memset(&ibo, 0, sizeof(ImageBufferObjects));
@@ -94,9 +102,9 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     ibo.scale.x = 1.0f;
     ibo.scale.y = 1.0f;
 
-    vkMapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
+    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
     memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -104,6 +112,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     GameObject2DInit(img);
+    memcpy(img->widget.go.name, "Widget_Image", 10);
 
     GraphicsObjectSetVertex(&img->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
@@ -158,6 +167,8 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     img->widget.offset.x = 0;
     img->widget.offset.y = 0;
+    img->widget.transparent = 1.0f;
+    img->widget.visible = true;
 
     WidgetSetParent(&img->widget, parent);
 

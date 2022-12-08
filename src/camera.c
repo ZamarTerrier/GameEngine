@@ -36,10 +36,12 @@ void setActiveCamera2D(Camera2D *cam){
     cam2D = cam;
 }
 
-void setViewRotation(vec3 rotation){
+void setViewRotation(float x, float y, float z){
     Camera3D* cam = (Camera3D*)cam3D;
 
-    cam->rotation = rotation;
+    cam->rotation.x = x;
+    cam->rotation.y = y;
+    cam->rotation.z = z;
 }
 
 vec3 getViewRotation(){
@@ -48,16 +50,19 @@ vec3 getViewRotation(){
     return cam->rotation;
 }
 
-void setViewPos2D(vec2 pos){
+void setViewPos2D(float x, float y){
     Camera2D* cam = (Camera2D*)cam2D;
 
-    cam->position = pos;
+    cam->position.x = x;
+    cam->position.y = y;
 }
 
-void setViewPos(vec3 pos){
+void setViewPos(float x, float y, float z){
     Camera3D* cam = (Camera3D*)cam3D;
 
-    cam->position = pos;
+    cam->position.x = x;
+    cam->position.y = y;
+    cam->position.z = z;
 }
 
 vec2 getViewPos2D(){
@@ -72,14 +77,17 @@ vec3 getViewPos(){
     return cam->position;
 }
 
-void setViewScale2D(vec2 scale){
+void setViewScale2D(float x, float y){
     Camera2D* cam = (Camera2D*)cam2D;
 
-    cam->scale = scale;
+    cam->scale.x = x;
+    cam->scale.y = y;
 }
 
-void setViewScale(vec3 scale){
+void setViewScale(float x, float y, float z){
     Camera3D* cam = (Camera3D*)cam3D;
 
-    cam->scale = scale;
+    cam->scale.x = x;
+    cam->scale.y = y;
+    cam->scale.z = z;
 }

@@ -326,16 +326,16 @@ void DefaultFBXUpdate(ModelObject3D *mo)
           mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
           mbo.proj.m[1][1] *= -1;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
           memcpy(data, &mbo, sizeof(mbo));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
           InvMatrixsBuffer imb = {};
           memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
           memcpy(data, &imb, sizeof(InvMatrixsBuffer));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
           LightBuffer3D lbo = {};
           lbo.lights[0].position.x = 0;
@@ -345,9 +345,9 @@ void DefaultFBXUpdate(ModelObject3D *mo)
           lbo.num_points = 0;
           lbo.num_spots = 0;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
           memcpy(data, &lbo, sizeof(lbo));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex]);
       }
   }
 }
@@ -373,7 +373,7 @@ void ModelFBXDestroy(ModelObject3D *mo){
 
 }
 
-void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam dParam)
+void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
 {
 
   Transform3DInit(&mo->transform);

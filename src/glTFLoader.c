@@ -274,6 +274,62 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                             g_mesh->image->size = image->buffer_view->size;
                         }
                     }
+
+                    texture = primitive->material->normal_texture.texture;
+
+                    if(texture != NULL)
+                    {
+                        cgltf_image *image = texture->image;
+
+                        g_mesh->normal = calloc(1, sizeof(GameObjectImage));
+
+                        if(image->uri != NULL)
+                        {
+                            int size = strlen(glTF->path) + strlen(image->uri);
+                            g_mesh->normal->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->normal->path, size, glTF->path, image->uri);
+                            g_mesh->normal->size = 0;
+                            //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
+
+                        }
+                        else if(image->buffer_view->buffer != NULL)
+                        {
+                            int size = strlen(glTF->name) + strlen(image->name);
+                            g_mesh->normal->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->normal->path, size, glTF->name, image->name);
+                            g_mesh->normal->buffer = calloc(image->buffer_view->size, sizeof(char));
+                            memcpy(g_mesh->normal->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
+                            g_mesh->normal->size = image->buffer_view->size;
+                        }
+                    }
+
+                    texture = primitive->material->emissive_texture.texture;
+
+                    if(texture != NULL)
+                    {
+                        cgltf_image *image = texture->image;
+
+                        g_mesh->specular = calloc(1, sizeof(GameObjectImage));
+
+                        if(image->uri != NULL)
+                        {
+                            int size = strlen(glTF->path) + strlen(image->uri);
+                            g_mesh->specular->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->specular->path, size, glTF->path, image->uri);
+                            g_mesh->specular->size = 0;
+                            //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
+
+                        }
+                        else if(image->buffer_view->buffer != NULL)
+                        {
+                            int size = strlen(glTF->name) + strlen(image->name);
+                            g_mesh->specular->path = calloc( size + 1, sizeof(char));
+                            ToolsAddStrings(g_mesh->specular->path, size, glTF->name, image->name);
+                            g_mesh->specular->buffer = calloc(image->buffer_view->size, sizeof(char));
+                            memcpy(g_mesh->specular->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
+                            g_mesh->specular->size = image->buffer_view->size;
+                        }
+                    }
                 }
 
                 g_mesh->num_indices = primitive->indices->count;
@@ -304,6 +360,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                     v2_point = attribute->data->buffer_view->buffer->data + attribute->data->buffer_view->offset;
 
                     vec3 tmp;
+                    float f_tmp;
 
                     for(int v=0;v < g_mesh->num_verts; v++)
                     {
@@ -466,9 +523,8 @@ void update_frame(ModelObject3D *mo, engine_gltf_anim * animation)
                     node->local_matrix = m4_rotation_mat_quternion(node->local_matrix, vector4);
                     break;
                 case cgltf_animation_path_type_scale:
-                    /*vector3 = getValueV3(channel, frameCurr, time);
-                    transform = m4_translate_mat(vector3);
-                    node->global_matrix = mat4_mult_transform(node->global_matrix, transform);*/
+                    vector3 = getValueV3(channel, wrappedTime);
+                    node->local_matrix = m4_scale(node->local_matrix, vector3);
                     break;
                 default:
                     break;
@@ -557,16 +613,27 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           engine_gltf_node *node = &glTF->nodes[mo->nodes[i].id_node];
 
+          ModelStruct *obj = &mo->nodes[i].models[j];
+
           mo->nodes[i].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
           mbo.model = mo->nodes[i].model;
-          mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+          if(!obj->selfCamera)
+          {
+              mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+          }
+          else
+          {
+              vec3 cPos = { 0, 0, 0};
+              vec3 cRot = { 0, 0, -180};
+              mbo.view = m4_look_at(cPos, v3_add(cPos, cRot), cameraUp);
+          }
           mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
           mbo.proj.m[1][1] *= -1;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
           memcpy(data, &mbo, sizeof(mbo));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
           InvMatrixsBuffer imb = {};
 
@@ -575,9 +642,9 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           imb.size = glTF->num_join_mats;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
           memcpy(data, &imb, sizeof(InvMatrixsBuffer));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
           LightBuffer3D lbo = {};
           memset(&lbo, 0, sizeof(LightBuffer3D));
@@ -629,9 +696,9 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           lbo.light_react = mo->nodes[i].models[j].light_enable;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(LightBuffer3D), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(LightBuffer3D), 0, &data);
           memcpy(data, &lbo, sizeof(LightBuffer3D));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex]);
       }
 
   }
@@ -708,7 +775,7 @@ void ModelglTFDestroy(ModelObject3D* mo){
     free(mo->nodes);
 }
 
-void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam dParam){
+void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam *dParam){
 
   ModelObject3D *mo = (ModelObject3D *)ptr;
 
@@ -789,43 +856,48 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
                       engine_model_mesh *mesh = node->mesh[j];
 
                       model->diffuse = mesh->image;
+                      model->specular = mesh->specular;
+                      model->normal = mesh->normal;
 
-                      if(model->diffuse == NULL)
+                      if(dParam != NULL)
                       {
-                          model->diffuse = calloc(1, sizeof(GameObjectImage));
-
-                          if(strlen(dParam.diffuse) != 0)
+                          if(model->diffuse == NULL)
                           {
-                              int len = strlen(dParam.diffuse);
-                              model->diffuse->path = calloc(len + 1, sizeof(char));
-                              memcpy(model->diffuse->path, dParam.diffuse, len);
-                              model->diffuse->path[len] = '\0';
+                              model->diffuse = calloc(1, sizeof(GameObjectImage));
+
+                              if(strlen(dParam->diffuse) != 0)
+                              {
+                                  int len = strlen(dParam->diffuse);
+                                  model->diffuse->path = calloc(len + 1, sizeof(char));
+                                  memcpy(model->diffuse->path, dParam->diffuse, len);
+                                  model->diffuse->path[len] = '\0';
+                              }
                           }
-                      }
 
-                      if(model->specular == NULL)
-                      {
-                          model->specular = calloc(1, sizeof(GameObjectImage));
-
-                          if(strlen(dParam.specular) != 0)
+                          if(model->specular == NULL)
                           {
-                              int len = strlen(dParam.specular);
-                              model->specular->path = calloc(len + 1, sizeof(char));
-                              memcpy(model->specular->path, dParam.specular, len);
-                              model->specular->path[len] = '\0';
+                              model->specular = calloc(1, sizeof(GameObjectImage));
+
+                              if(strlen(dParam->specular) != 0)
+                              {
+                                  int len = strlen(dParam->specular);
+                                  model->specular->path = calloc(len + 1, sizeof(char));
+                                  memcpy(model->specular->path, dParam->specular, len);
+                                  model->specular->path[len] = '\0';
+                              }
                           }
-                      }
 
-                      if(model->normal == NULL)
-                      {
-                          model->normal = calloc(1, sizeof(GameObjectImage));
-
-                          if(strlen(dParam.normal) != 0)
+                          if(model->normal == NULL)
                           {
-                              int len = strlen(dParam.normal);
-                              model->normal->path = calloc(len + 1, sizeof(char));
-                              memcpy(model->normal->path, dParam.normal, len);
-                              model->normal->path[len] = '\0';
+                              model->normal = calloc(1, sizeof(GameObjectImage));
+
+                              if(strlen(dParam->normal) != 0)
+                              {
+                                  int len = strlen(dParam->normal);
+                                  model->normal->path = calloc(len + 1, sizeof(char));
+                                  memcpy(model->normal->path, dParam->normal, len);
+                                  model->normal->path[len] = '\0';
+                              }
                           }
                       }
 

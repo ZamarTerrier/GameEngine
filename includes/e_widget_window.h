@@ -17,14 +17,16 @@ typedef struct{
     bool show;
     bool wasResize;
     bool wasHide;
+    bool resizeble;
     vec2 lastSize;
     vec2 lastPos;
 }EWidgetWindow;
 
-void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam dParam, vec2 position);
+void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dParam, vec2 position);
 void WindowWidgetShow(EWidgetWindow *ww);
 void WindowWidgetHide(EWidgetWindow *ww);
 void WindowWidgetUpdate(EWidgetWindow *ww);
 void WindowWidgetDraw(EWidgetWindow *ww);
+void WindowWidgetDestroy(EWidgetWindow *ww);
 
 #endif // E_WIDGET_WINDOW_H

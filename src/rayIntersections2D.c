@@ -1,36 +1,24 @@
 #include "rayIntersections2D.h"
 
+#include "intersections2D.h"
+
 #include "gameObject2D.h"
 
 int IntersectRayCircle(InterRay2DParam *ray, InterCircleParam *circle, float *t, vec2 *q)
 {
-    vec2 m = v2_sub(ray->position, circle->center);
-    float b = v2_dot(m, ray->direction);
-    float c = v2_dot(m, m) - circle->radius * circle->radius;
-
-    // Exit if r’s origin outside s (c > 0) and r pointing away from s (b > 0)
-    if (c > 0.0f && b > 0.0f)
-        return 0;
-
-    float discr = b*b - c;
-
-    // A negative discriminant corresponds to ray missing sphere
-    if (discr < 0.0f)
-        return 0;
-
-    // Ray now found to intersect sphere, compute smallest t value of intersection
-    *t = -b - sqrt(discr);
-
-    // If t is negative, ray started inside sphere so clamp t to zero
-    if (*t < 0.0f)
-        *t = 0.0f;
-
-    if(*t > ray->distance)
-        return 0;
-
-    *q = v2_add(ray->position, v2_muls(ray->direction,*t ));
-
-    return 1;
+    vec2 ac = v2_sub(circle->center, ray->position);
+    vec2 p2 = v2_add(ray->position, v2_muls(ray->direction, ray->distance));
+    vec2 ab = v2_sub(p2, ray->position);
+    float ab2 = v2_dot(ab, ab);
+    float acab = v2_dot(ac, ab);
+    float d = acab / ab2;
+    d = (d < 0) ? 0 : d;
+    d = (d > 1) ? 1 : d;
+    vec2 h;
+    h.x = (ab.x * d + ray->position.x) - circle->center.x;
+    h.y = (ab.y * d + ray->position.y) - circle->center.y;
+    float h2 = v2_dot(h, h);
+    return h2 <= circle->radius * circle->radius;
 }
 
 int IntersectRaySquare(InterRay2DParam *ray,  InterSquareParam *square, float *tmin, float *tmax, vec2 *q){
@@ -74,65 +62,45 @@ int IntersectRaySquare(InterRay2DParam *ray,  InterSquareParam *square, float *t
 
 }
 
-float IntersectRayTriangle2D(InterTriangleParam *tri, InterRay2DParam *ray){
 
-    float res = 0;
+int IntersectRayTriangle2D(InterTriangleParam *tri, InterRay2DParam *ray){
 
-    /*vec2 e1 = v2_sub(tri->p2, tri->p1);
-    vec2 e2 = v2_sub(tri->p3, tri->p1);
-    // Вычисление вектора нормали к плоскости
-    vec2 pvec = v2_cross(ray->direction, e2);
-    float det = v2_dot(e1, pvec);
+    vec2 p1 = ray->position;
+    vec2 p2 = v2_add(ray->position, v2_muls(ray->direction, ray->distance));
 
-    // Луч параллелен плоскости
-    if (det < 1e-8 && det > -1e-8) {
-        continue;
-    }
+    if(IntersectLineToLine(p1, p2, tri->p1, tri->p2))
+        return true;
+    else if(IntersectLineToLine(p1, p2, tri->p2, tri->p3))
+        return true;
+    else if(IntersectLineToLine(p1, p2, tri->p3, tri->p1))
+        return true;
 
-    float inv_det = 1 / det;
-    vec2 tvec = v2_sub(ray->position, tri->p1);
-    float u = v2_dot(tvec, pvec) * inv_det;
-    if (u < 0 || u > 1) {
-        continue;
-    }
-
-    vec2 qvec = v2_cross(tvec, e1);
-    float v = v2_dot(ray->direction, qvec) * inv_det;
-    if (v < 0 || u + v > 1) {
-        continue;
-    }
-
-    res = v2_dot(e2, qvec) * inv_det;*/
-
-    return res;
+    return false;
 }
 
-int IntersectRayShape(void *obj, InterRay2DParam *ray)
+int IntersectRayShape( InterRay2DParam *ray, void *obj)
 {
     GameObject2D *shape = obj;
 
     vertexParam *vParam = &shape->graphObj.shape.vParam;
+    indexParam *iParam = &shape->graphObj.shape.iParam;
 
     InterTriangleParam triangle;
 
-    for(int i=0; i < vParam->verticesSize;i+=3)
+    vec2 wind_size = {WIDTH, HEIGHT};
+
+    for(int i=0; i < iParam->indexesSize;i+=3)
     {
 
-        Vertex2D * vert = &vParam->vertices + ((i + 0) * vParam->typeSize);
-
-        if(v2_distance(vert->position, ray->position) > ray->distance + 1.0f)
-            continue;
-
-        triangle.p1 = vert->position;
-        vert = &vParam->vertices + ((i + 1) * vParam->typeSize);
-        triangle.p2 = vert->position;
-        vert = &vParam->vertices + ((i + 2) * vParam->typeSize);
-        triangle.p3 = vert->position;
+        Vertex2D * vert = vParam->vertices;
+        triangle.p1 = v2_mul(v2_add(vert[iParam->indices[i + 0]].position, shape->transform.position), wind_size);
+        triangle.p2 = v2_mul(v2_add(vert[iParam->indices[i + 1]].position, shape->transform.position), wind_size);
+        triangle.p3 = v2_mul(v2_add(vert[iParam->indices[i + 2]].position, shape->transform.position), wind_size);
 
         if(IntersectRayTriangle2D(&triangle, ray))
             return true;
 
     }
 
-    return 0;
+    return false;
 }

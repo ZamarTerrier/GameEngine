@@ -13,6 +13,8 @@ typedef struct{
     GameObjectImage *specular;
     GameObjectImage *normal;
     int enable_light;
+    bool wired;
+    bool selfCamera;
 } GameObject3D;
 
 void GameObject3DDefaultUpdate(GameObject3D* go);

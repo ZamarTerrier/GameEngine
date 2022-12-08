@@ -5,17 +5,38 @@
 
 #include "e_resource.h"
 
+#include "tools.h"
+
+bool e_ctrl_press = false, e_c_press = false, e_v_press = false, e_pasted = false, e_copied = false;
+
 void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
 
     EWidgetEntry *temp = widget;
 
-    temp->buffer[temp->currPos] = codepoint;
-    temp->currPos++;
+    EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
 
-    TextWidgetSetText(&temp->text, temp->buffer);
+    if(text->tData.textWidth >= temp->width)
+        return;
 
-    if(temp->currPos > MAX_LINE_CHAR)
-        temp->currPos = MAX_LINE_CHAR;
+    if(codepoint > 256)
+    {
+        for(int i=0;i < 66; i++)
+        {
+            if(fontIndexes[i].FindLetter == codepoint)
+            {
+                uint16_t t = fontIndexes[i].IndexLetter & 0xFF;
+                temp->buffers[temp->curr_line][temp->currPos + 1] = t;
+                t = fontIndexes[i].IndexLetter >> 8;
+                temp->buffers[temp->curr_line][temp->currPos] = t;
+                temp->currPos+=2;
+            }
+        }
+    }else{
+        temp->buffers[temp->curr_line][temp->currPos] = codepoint;
+        temp->currPos++;
+    }
+
+    TextWidgetSetText(text, temp->buffers[temp->curr_line]);
 }
 
 void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
@@ -24,17 +45,82 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     if(key == GLFW_KEY_BACKSPACE)
     {
-        temp->buffer[temp->currPos] = 0;
+
+        temp->buffers[temp->curr_line][temp->currPos] = 0;
 
         temp->currPos--;
 
         if(temp->currPos < 0)
+        {
             temp->currPos = 0;
+        }
 
-        temp->buffer[temp->currPos] = 0;
+        if(temp->buffers[temp->curr_line][temp->currPos] < 0)
+        {
+            temp->buffers[temp->curr_line][temp->currPos] = 0;
+
+            temp->currPos--;
+        }
+
+        temp->buffers[temp->curr_line][temp->currPos] = 0;
     }
 
-    TextWidgetSetText(&temp->text, temp->buffer);
+    if(temp->text.tData.textWidth >= temp->width)
+        return;
+
+    if(e_ctrl_press == true && e_v_press == true && !e_pasted)
+    {
+
+        char *clipboard = glfwGetClipboardString(e_window);
+
+        uint32_t size = strlen(clipboard);
+
+        char *point = &temp->buffers[temp->curr_line][temp->currPos];
+
+        for(int i=0;i < size;i++)
+        {
+            point[i] = clipboard[i];
+
+            temp->currPos ++;
+
+            EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
+            TextWidgetSetText(text, temp->buffers[temp->curr_line]);
+
+            if(text->tData.textWidth >= temp->width)
+            {
+                e_pasted = true;
+                break;
+            }
+        }
+
+        e_pasted = true;
+    }
+}
+
+void EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
+    EWidgetEntry *temp = widget;
+
+    if(key == GLFW_KEY_BACKSPACE)
+    {
+        temp->buffers[temp->curr_line][temp->currPos] = 0;
+
+        temp->currPos--;
+
+        if(temp->currPos < 0)
+        {
+            temp->currPos = 0;
+        }
+
+
+        if(temp->buffers[temp->curr_line][temp->currPos] < 0)
+        {
+            temp->buffers[temp->curr_line][temp->currPos] = 0;
+
+            temp->currPos--;
+        }
+
+        temp->buffers[temp->curr_line][temp->currPos] = 0;
+    }
 }
 
 void EntryWidgetCharacterCallback(void* arg, uint32_t codepoint)
@@ -50,9 +136,37 @@ void EntryWidgetKeyCallback(void* arg,  int key, int scancode, int action, int m
     if(e_var_current_entry == NULL)
             return;
 
+    if(key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+        e_ctrl_press = true;
+    else if(key == GLFW_KEY_LEFT_CONTROL && action == GLFW_RELEASE){
+        e_ctrl_press = false;
+
+        if(e_v_press == false)
+            e_pasted = false;
+
+        if(e_c_press == false)
+            e_copied = false;
+    }
+
+    if(key == GLFW_KEY_V && action == GLFW_PRESS)
+        e_v_press = true;
+    else if(key == GLFW_KEY_V && action == GLFW_RELEASE){
+        e_v_press = false;
+        e_pasted = false;
+    }
+
+    if(key == GLFW_KEY_C && action == GLFW_PRESS)
+        e_c_press = true;
+    else if(key == GLFW_KEY_C && action == GLFW_RELEASE){
+        e_c_press = false;
+        e_copied = false;
+    }
+
     if(action == GLFW_PRESS)
         WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT, key);
-    else
+    else if(action == GLFW_REPEAT)
+        WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, key);
+    else if(action == GLFW_RELEASE)
         WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT, key);
 
 }
@@ -67,9 +181,11 @@ void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
 
     EWidgetEntry *temp = widget;
 
-    temp->buffer[temp->currPos] = 0;
+    temp->buffers[temp->curr_line][temp->currPos] = 0;
 
-    TextWidgetSetText(&temp->text, temp->buffer);
+    EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
+
+    TextWidgetSetText(text, temp->buffers[temp->curr_line]);
 }
 
 void EntryUpdateLine(){
@@ -79,34 +195,70 @@ void EntryUpdateLine(){
 
     EWidgetEntry *temp = e_var_current_entry;
 
-    temp->buffer[temp->currPos] = '|';
+    vec2 scale = Transform2DGetScale(temp);
+    temp->width = scale.x * 1.5f;
+    temp->height = scale.y * 2.5f;
 
-    TextWidgetSetText(&temp->text, temp->buffer);
+    temp->buffers[temp->curr_line][temp->currPos] = L'|';
+
+    EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
+
+    TextWidgetSetText(text, temp->buffers[temp->curr_line]);
+
+    WidgetConfirmTrigger(temp, GUI_TRIGGER_ENTRY_UPDATE, NULL);
 }
 
 void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
-
-    DrawParam dParam = {};
 
     if(fontSize > 16)
         fontSize = 16;
     else if(fontSize <= 0)
         fontSize = 2;
 
-    WidgetInit(&entry->widget, dParam, parent);
+    WidgetInit(&entry->widget, NULL, parent);
+    memcpy(entry->widget.go.name, "Entry", 5);
+    entry->widget.type = GUI_TYPE_ENTRY;
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
-    TextWidgetInit(&entry->text, fontSize, dParam, &entry->widget);
+    TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
     Transform2DSetPosition(&entry->text, 0, 25 - (25 / fontSize) );
 
     entry->currPos = 0;
 
-    memset(entry->buffer, 0, MAX_LINE_CHAR);
+    entry->buffers = calloc(1, sizeof(uint32_t *));
+    entry->buffers[0] = calloc(BUFFER_SIZE, sizeof(uint32_t));
+    memset(entry->buffers[0], 0, BUFFER_SIZE * sizeof(uint32_t));
+    entry->num_lines = 1;
+    entry->curr_line = 0;
 
     WidgetConnect(entry, GUI_TRIGGER_MOUSE_PRESS, EntryWidgetPress, NULL);
     WidgetConnect(entry, GUI_TRIGGER_WIDGET_UNFOCUS, EntryWidgetUnfocus, NULL);
 
     WidgetConnect(entry, GUI_TRIGGER_ENTRY_CHAR_INPUT, EntryWidgetCharInput, NULL);
     WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT, EntryWidgetKeyPressInput, NULL);
+    WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, EntryWidgetKeyRepeatInput, NULL);
 
 }
+
+char *EntryWidgetGetText(EWidgetEntry *entry)
+{
+    return entry->buffers[entry->curr_line];
+}
+
+void EntryWidgetSetText(EWidgetEntry *entry, char *text)
+{
+    EWidgetText *temp = WidgetFindChild(&entry->widget, entry->curr_texts)->node;
+
+    memset(entry->buffers[entry->curr_line], 0, BUFFER_SIZE);
+
+    int len = strlen(text);
+    for(int i=0;i < len;i++)
+    {
+        entry->buffers[entry->curr_line][i] = text[i];
+    }
+
+    entry->currPos = len;
+
+    TextWidgetSetText(temp, entry->buffers[entry->curr_line]);
+}
+

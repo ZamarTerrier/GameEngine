@@ -30,9 +30,9 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 
     LightBuffer3D lbo = {};
@@ -85,9 +85,9 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
     lbo.light_react = go->enable_light;
 
-    vkMapMemory(device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
     memcpy(data, &lbo, sizeof(lbo));
-    vkUnmapMemory(device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, go->graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -96,11 +96,11 @@ void GameObject3DDefaultDraw(GameObject3D* go){
     if(go->graphObj.shape.rebuild)
     {
 
-        vkDestroyBuffer(device, go->graphObj.shape.iParam.indexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
 
-        vkDestroyBuffer(device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
             BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex3D));
@@ -113,12 +113,13 @@ void GameObject3DDefaultDraw(GameObject3D* go){
         go->graphObj.shape.rebuild = false;
     }
 
+    int count = go->wired ? 2 : 1;
 
-    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
+    for(int i=0; i < count; i++){//go->graphObj.gItems.pipelineCount; i++){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -148,11 +149,13 @@ void GameObject3DAddSettingPipeline(GameObject3D* go, void *arg){
     PipelineSetting* setting = arg;
 
     go->graphObj.gItems.settingsCount++;
-    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting));
+    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting *));
 
-    PipelineSetting* settings = (PipelineSetting *) go->graphObj.gItems.settings;
+    //go->graphObj.gItems.settings[go->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
 
-    memcpy(&settings[go->graphObj.gItems.settingsCount - 1], setting, sizeof(PipelineSetting));
+    PipelineSetting** settings = go->graphObj.gItems.settings;
+    settings[go->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
+    memcpy(settings[go->graphObj.gItems.settingsCount - 1], setting, sizeof(PipelineSetting));
 
 }
 
@@ -170,18 +173,18 @@ void GameObject3DClean(GameObject3D* go){
 
 void GameObject3DRecreate(GameObject3D* go){
 
-    PipelineSetting *settings = (PipelineSetting *)go->graphObj.gItems.settings;
+    PipelineSetting **settings = (PipelineSetting *)go->graphObj.gItems.settings;
 
     for(int i=0; i < go->graphObj.gItems.settingsCount;i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        settings[i]->scissor.offset.x = 0;
+        settings[i]->scissor.offset.y = 0;
+        settings[i]->scissor.extent.height = HEIGHT;
+        settings[i]->scissor.extent.width = WIDTH;
+        settings[i]->viewport.x = 0;
+        settings[i]->viewport.y = 0;
+        settings[i]->viewport.height = HEIGHT;
+        settings[i]->viewport.width = WIDTH;
     }
 
     BuffersRecreateUniform(&go->graphObj.local);
@@ -246,6 +249,9 @@ void GameObject3DInit(GameObject3D *go){
     GameObjectSetDestroyFunc(go, (void *)GameObject3DDestroy);
 
     go->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+    go->graphObj.local.descrCount = 0;
+    go->graphObj.gItems.settings = (PipelineSetting **) calloc(2, sizeof(PipelineSetting *));
+    go->graphObj.gItems.settingsCount = 0;
 
     Transform3DInit(&go->transform);
     GraphicsObject3DInit(&go->graphObj);
@@ -253,6 +259,7 @@ void GameObject3DInit(GameObject3D *go){
     go->graphObj.gItems.perspective = true;
 
     go->enable_light = false;
+    go->wired = false;
 }
 
 void GameObject3DEnableLight(GameObject3D *go, bool enable)

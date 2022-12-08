@@ -24,7 +24,7 @@ void BuffersCreateFramebuffers() {
         framebufferInfo.height = swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(device, &framebufferInfo, NULL, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+        if (vkCreateFramebuffer(e_device, &framebufferInfo, NULL, &swapChainFramebuffers[i]) != VK_SUCCESS) {
             printf("failed to create framebuffer!");
             exit(1);
         }
@@ -32,14 +32,14 @@ void BuffersCreateFramebuffers() {
 }
 
 void BuffersCreateCommandPool() {
-    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(e_physicalDevice);
 
     VkCommandPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(device, &poolInfo, NULL, &commandPool) != VK_SUCCESS) {
+    if (vkCreateCommandPool(e_device, &poolInfo, NULL, &commandPool) != VK_SUCCESS) {
         printf("failed to create command pool!");
         exit(1);
     }
@@ -58,7 +58,7 @@ void BuffersCreateCommand(){
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = (uint32_t) imagesCount;
 
-    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(e_device, &allocInfo, commandBuffers) != VK_SUCCESS) {
         printf("failed to allocate command buffers!");
         exit(1);
     }
@@ -83,16 +83,16 @@ void BufferCreateVertex(vertexParam* vert, uint32_t size) {
     //Перенос данных в буфер
 
     void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
         memcpy(data, vert->vertices, (size_t) bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+    vkUnmapMemory(e_device, stagingBufferMemory);
 
     //-------------
 
     BuffersCopy(stagingBuffer, vert->vertexBuffer, bufferSize);
 
-    vkDestroyBuffer(device, stagingBuffer, NULL);
-    vkFreeMemory(device, stagingBufferMemory, NULL);
+    vkDestroyBuffer(e_device, stagingBuffer, NULL);
+    vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
 }
 
@@ -107,14 +107,14 @@ void BuffersCreateIndex(indexParam* ind, uint32_t type_size) {
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
 
     void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, ind->indices, (size_t) bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+    vkUnmapMemory(e_device, stagingBufferMemory);
 
     BuffersCopy(stagingBuffer, ind->indexBuffer, bufferSize);
 
-    vkDestroyBuffer(device, stagingBuffer, NULL);
-    vkFreeMemory(device, stagingBufferMemory, NULL);
+    vkDestroyBuffer(e_device, stagingBuffer, NULL);
+    vkFreeMemory(e_device, stagingBufferMemory, NULL);
 }
 
 void BuffersCreateUniform(UniformStruct* uniform, int size) {
@@ -130,7 +130,7 @@ void BuffersCreateUniform(UniformStruct* uniform, int size) {
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 
     VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+    vkGetPhysicalDeviceMemoryProperties(e_physicalDevice, &memProperties);
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -150,25 +150,25 @@ void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** bu
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &bufferInfo, NULL, buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(e_device, &bufferInfo, NULL, buffer) != VK_SUCCESS) {
         printf("failed to create buffer!");
         exit(1);
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, *buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(e_device, *buffer, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(device, &allocInfo, NULL, bufferMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(e_device, &allocInfo, NULL, bufferMemory) != VK_SUCCESS) {
         printf("failed to allocate buffer memory!");
         exit(1);
     }
 
-    vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
+    vkBindBufferMemory(e_device, *buffer, *bufferMemory, 0);
 }
 
 void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size) {
@@ -187,34 +187,28 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
 
     param->descrCount ++;
 
-    param->descriptors = (ShaderBuffer *) realloc(param->descriptors, param->descrCount * sizeof(ShaderBuffer));
+    param->descriptors = (ShaderBuffer **) realloc(param->descriptors, param->descrCount * sizeof(ShaderBuffer*));
 
-    param->descriptors[param->descrCount - 1].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
-    param->descriptors[param->descrCount - 1].uniform->size = size;
-    param->descriptors[param->descrCount - 1].descrType = type;
-    param->descriptors[param->descrCount - 1].size = 1;
-    param->descriptors[param->descrCount - 1].stageflag = flags;
-    param->descriptors[param->descrCount - 1].buffsize = size;
-    param->descriptors[param->descrCount - 1].image = NULL;
+    param->descriptors[param->descrCount - 1] = calloc(1, sizeof(ShaderBuffer));
+    ShaderBuffer *descriptor = param->descriptors[param->descrCount - 1];
 
-    BuffersCreateUniform(param->descriptors[param->descrCount - 1].uniform, param->descrCount);
+    descriptor->uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
+    descriptor->uniform->size = size;
+    descriptor->descrType = type;
+    descriptor->size = 1;
+    descriptor->stageflag = flags;
+    descriptor->buffsize = size;
+    descriptor->image = NULL;
+
+    BuffersCreateUniform(descriptor->uniform, param->descrCount);
 
 }
 
 void BuffersRecreateUniform(localParam* param){
     for(int i=0;i < param->descrCount;i++){
-        ShaderBuffer *descriptor = &param->descriptors[i];
+        ShaderBuffer *descriptor = param->descriptors[i];
 
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            Texture2D temptexture;
-
-            if(descriptor->image->size > 0)
-                temptexture = createTexture(descriptor->image->buffer, descriptor->image->size, 0);
-            else
-                temptexture = createTexture(descriptor->image->path, 0, 1);
-
-            descriptor->texture = calloc(1, sizeof(Texture2D));
-            memcpy(descriptor->texture, &temptexture, sizeof(Texture2D));
 
         }
         else

@@ -3,14 +3,14 @@
 
 #include "engine_includes.h"
 
-#include "e_texture_variables.h".h"
+#include "e_texture_variables.h"
 
 #include "e_resource.h"
 #include "tools.h"
 
-Texture2D createTexture(const char* source, int size, bool from_file);
+void TextureCreate( void *texture, GameObjectImage *image, bool from_file);
 
-int TextureImageCreate(const char* source, int size, Texture2D *texture, bool from_file);
+int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_file);
 
 void createTextureImageView() ;
 
@@ -18,7 +18,7 @@ void createImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tili
 
 void* createImageView(void* image, uint32_t format, uint32_t aspectFlags);
 
-void createTextureSampler();
+void createTextureSampler(Texture2D *texture);
 
 void createDepthResources() ;
 
@@ -40,6 +40,6 @@ void ImageAddTexture(localParam *local, GameObjectImage *image);
 
 void changeTexture(localParam *local, int elem, const char* source, int size);
 
-void destroyTexture(Texture2D* texture);
+void ImageDestroyTexture(Texture2D* texture);
 
 #endif // TEXTURE_H

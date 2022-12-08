@@ -1,4 +1,4 @@
-#include <particleSystem.h>
+#include <particleSystem3D.h>
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
@@ -43,7 +43,7 @@ void Particle3DFind(ParticleObject3D *particle){
 
             particle->num_parts--;
 
-            particle->particles = (Particle *) realloc(particle->particles, particle->num_parts * sizeof(Particle));
+            particle->particles = (Particle3D *) realloc(particle->particles, particle->num_parts * sizeof(Particle3D));
 
             i--;
         }
@@ -102,25 +102,9 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
-
-    DataBuffer dbo = {};
-    dbo.camRot = cam->rotation;
-    dbo.camPos = cam->position;
-
-    double xpos, ypos;
-
-    dbo.time = glfwGetTime();
-    EngineGetCursorPos(&xpos, &ypos);
-
-    dbo.mouse.x = xpos / (WIDTH);
-    dbo.mouse.y = ypos / (HEIGHT);
-
-    vkMapMemory(device,  particle->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(dbo), 0, &data);
-    memcpy(data, &dbo, sizeof(dbo));
-    vkUnmapMemory(device,  particle->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -132,10 +116,10 @@ void Particle3DDefaultDraw(GameObject3D* go){
     if(go->graphObj.shape.rebuild)
     {
 
-        vkDeviceWaitIdle(device);
+        vkDeviceWaitIdle(e_device);
 
-        vkDestroyBuffer(device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
@@ -149,7 +133,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -192,10 +176,9 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     particle->go.enable_light = false;
 
     particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
-    particle->particles = (Particle*) calloc(particle->num_parts, sizeof(Particle));
+    particle->particles = (Particle3D*) calloc(particle->num_parts, sizeof(Particle3D));
 
     BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(DataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     particle->go.diffuse = calloc(1, sizeof(GameObjectImage));
     particle->go.specular = calloc(1, sizeof(GameObjectImage));
@@ -220,10 +203,10 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.vertShader = &_binary_shaders_particle_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert_spv_size);
-        setting.fragShader = &_binary_shaders_particle_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_particle_frag_spv_size);
+        setting.vertShader = &_binary_shaders_particle_vert3D_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert3D_spv_size);
+        setting.fragShader = &_binary_shaders_particle_frag3D_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_particle_frag3D_spv_size);
         setting.fromFile = 0;
     }
 
@@ -245,9 +228,9 @@ void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, fl
 
     particle->num_parts ++;
 
-    particle->particles = (Particle*) realloc(particle->particles, particle->num_parts * sizeof(Particle));
+    particle->particles = (Particle3D*) realloc(particle->particles, particle->num_parts * sizeof(Particle3D));
 
-    Particle part;
+    Particle3D part;
     part.position = position;
     part.direction = direction;
     part.life = life;

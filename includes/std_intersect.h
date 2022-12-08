@@ -56,4 +56,19 @@ typedef struct{
     vec2 p3;
 } InterTriangleParam;
 
+typedef struct{
+    vec2 simplex[3];
+    uint32_t num_verts;
+    void *obj1;
+    void *obj2;
+    vec2 (*support1)(void *, vec2);
+    vec2 (*support2)(void *, vec2);
+} GJKObject;
+
+typedef enum{
+    NoIntersection,
+    FoundIntersection,
+    StillEvolving
+}EvolveResult;
+
 #endif // STD_INTERSECT_H
