@@ -61,6 +61,7 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
 
     DrawParam param = {};
     WidgetInit(&range->widget, NULL, parent);
+    memcpy(range->widget.go.name, "Widget_Range", 11);
     WidgetInit(&range->line, NULL, &range->widget);
     WidgetInit(&range->range, NULL, &range->widget);
 

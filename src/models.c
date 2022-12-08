@@ -87,16 +87,16 @@ void ModelDefaultUpdate(ModelObject3D* mo){
             mbo.proj.m[1][1] *= -1;
 
 
-            vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+            vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
             memcpy(data, &mbo, sizeof(mbo));
-            vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+            vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
             InvMatrixsBuffer imb = {};
             memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
-            vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(imb), 0, &data);
+            vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(imb), 0, &data);
             memcpy(data, &imb, sizeof(imb));
-            vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+            vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
             LightBuffer3D lbo = {};
             memset(&lbo, 0, sizeof(LightBuffer3D));
@@ -148,9 +148,9 @@ void ModelDefaultUpdate(ModelObject3D* mo){
 
             lbo.light_react = mo->nodes[i].models[j].light_enable;
 
-            vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+            vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
             memcpy(data, &lbo, sizeof(lbo));
-            vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
+            vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex]);
         }
     }
 }
@@ -172,23 +172,44 @@ void ModelRecreate(ModelObject3D* mo){
         {
             ModelStruct *model = &mo->nodes[i].models[j];
 
-            PipelineSetting *settings = (PipelineSetting *)model->graphObj.gItems.settings;
+            PipelineSetting **settings = model->graphObj.gItems.settings;
 
             for(int m=0; m < model->graphObj.gItems.settingsCount;m++)
             {
-                settings[m].scissor.offset.x = 0;
-                settings[m].scissor.offset.y = 0;
-                settings[m].scissor.extent.height = HEIGHT;
-                settings[m].scissor.extent.width = WIDTH;
-                settings[m].viewport.x = 0;
-                settings[m].viewport.y = 0;
-                settings[m].viewport.height = HEIGHT;
-                settings[m].viewport.width = WIDTH;
+                settings[m]->scissor.offset.x = 0;
+                settings[m]->scissor.offset.y = 0;
+                settings[m]->scissor.extent.height = HEIGHT;
+                settings[m]->scissor.extent.width = WIDTH;
+                settings[m]->viewport.x = 0;
+                settings[m]->viewport.y = 0;
+                settings[m]->viewport.height = HEIGHT;
+                settings[m]->viewport.width = WIDTH;
             }
 
             BuffersRecreateUniform(&model->graphObj.local);
             GameObject3DCreateDrawItems(&model->graphObj);
             PipelineCreateGraphics(&model->graphObj);
+        }
+    }
+}
+
+void ModelSetSomeViewport(ModelObject3D* mo, float x, float y, float height, float width)
+{
+    for(int i=0; i < mo->num_draw_nodes;i++)
+    {
+        for(int j=0;j < mo->nodes[i].num_models;j++)
+        {
+            ModelStruct *model = &mo->nodes[i].models[j];
+
+            PipelineSetting **settings = (PipelineSetting *)model->graphObj.gItems.settings;
+
+            for(int m=0; m < model->graphObj.gItems.settingsCount; m++)
+            {
+                settings[m]->viewport.x = x;
+                settings[m]->viewport.y = y;
+                settings[m]->viewport.height = height;
+                settings[m]->viewport.width = width;
+            }
         }
     }
 }
@@ -220,6 +241,18 @@ void ModelSetLightEnable(void *obj, bool enable)
         for(int j=0;j < mo->nodes[i].num_models;j++)
         {
             mo->nodes[i].models[j].light_enable = enable;
+        }
+    }
+}
+
+void ModelSetSelCameraEnable(void *obj, bool enable)
+{
+    ModelObject3D *mo = (ModelObject3D *)obj;
+    for(int i=0;i < mo->num_draw_nodes;i++)
+    {
+        for(int j=0;j < mo->nodes[i].num_models;j++)
+        {
+            mo->nodes[i].models[j].selfCamera = enable;
         }
     }
 }

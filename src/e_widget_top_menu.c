@@ -61,6 +61,7 @@ void TopMenuWidgetResize(EWidgetTopMenu *top_menu)
 void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window)
 {
     WidgetInit(&top_menu->widget, NULL, window);
+    memcpy(top_menu->widget.go.name, "Widget_Menu", 10);
     WidgetInit(&top_menu->top, NULL, &top_menu->widget);
     top_menu->widget.transparent = 0.0f;
     top_menu->window = window;
@@ -93,6 +94,7 @@ EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char
     if(top_menu->list[num_menu].list != NULL)
     {
         EWidgetButton *button = ListWidgetAddItem(top_menu->list[num_menu].list, name);
+        WidgetConnect(button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[num_menu].list);
 
         return button;
     }
@@ -114,5 +116,6 @@ EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char
     l_menu->widget.visible = false;
     top_menu->list[num_menu].list = l_menu;
     WidgetConnect(top_menu->list[top_menu->num_elems - 1].button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);
+    WidgetConnect(button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);
     return button;
 }

@@ -102,9 +102,9 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -116,10 +116,10 @@ void Particle3DDefaultDraw(GameObject3D* go){
     if(go->graphObj.shape.rebuild)
     {
 
-        vkDeviceWaitIdle(device);
+        vkDeviceWaitIdle(e_device);
 
-        vkDestroyBuffer(device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
 
         if(go->graphObj.shape.vParam.verticesSize > 0){

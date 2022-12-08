@@ -17,8 +17,8 @@ extern void* e_window;
 extern void* instance;
 extern void* debugMessenger;
 
-extern void* physicalDevice;
-extern void* device;
+extern void* e_physicalDevice;
+extern void* e_device;
 
 extern void* graphicsQueue;
 extern void* presentQueue;

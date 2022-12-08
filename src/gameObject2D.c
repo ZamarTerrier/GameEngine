@@ -28,9 +28,9 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
-    vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
 
     ImageBufferObjects ibo;
     ibo.origin = go->transform.img.origin;
@@ -40,9 +40,9 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     ibo.rotation.x = 0;
     ibo.rotation.y = 0;
 
-    vkMapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
+    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
     memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
 }
 
 void GameObject2DDefaultDraw(GameObject2D* go){
@@ -50,11 +50,11 @@ void GameObject2DDefaultDraw(GameObject2D* go){
     if(go->graphObj.shape.rebuild)
     {
 
-        vkDestroyBuffer(device, go->graphObj.shape.iParam.indexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
 
-        vkDestroyBuffer(device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
             BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));

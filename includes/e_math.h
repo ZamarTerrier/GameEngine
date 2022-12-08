@@ -40,6 +40,8 @@ float  v2_distance(vec2 v1, vec2 v2);
 
 float v3_maxs(vec3 a);
 float v3_mins(vec3 a);
+vec3 v3_abs(vec3 a);
+
 vec3 v3_min(vec3 a, vec3 b);
 vec3 v3_max(vec3 a, vec3 b);
 vec3 v3_add   (vec3 a, vec3 b);

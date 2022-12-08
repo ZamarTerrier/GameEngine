@@ -184,6 +184,8 @@ float v3_mins(vec3 a){ return min(min(a.x, a.y), a.z); }
 vec3 v3_min(vec3 a, vec3 b){ return (vec3){ min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)}; }
 vec3 v3_max(vec3 a, vec3 b){ return (vec3){ max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) }; }
 
+vec3 v3_abs(vec3 a){ return (vec3){ fabs(a.x), fabs(a.y), fabs(a.z)}; }
+
 float v2_cross(vec2 a, vec2 b)
 {
    return a.x * b.y - a.y * b.x;

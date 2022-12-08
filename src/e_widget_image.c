@@ -92,9 +92,9 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     tbo.rotation = img->widget.go.transform.rotation;
     tbo.scale = img->widget.go.transform.scale;
 
-    vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
 
     ImageBufferObjects ibo;
     memset(&ibo, 0, sizeof(ImageBufferObjects));
@@ -102,9 +102,9 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     ibo.scale.x = 1.0f;
     ibo.scale.y = 1.0f;
 
-    vkMapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
+    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
     memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -112,6 +112,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
 
     GameObject2DInit(img);
+    memcpy(img->widget.go.name, "Widget_Image", 10);
 
     GraphicsObjectSetVertex(&img->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 

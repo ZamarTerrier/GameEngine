@@ -43,9 +43,9 @@ void WidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
     MaskObjectBuffer mbo = {};
 
@@ -72,9 +72,9 @@ void WidgetUniformUpdate(EWidget *ew){
         mbo.size = 0;
     }
 
-    vkMapMemory(device, ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device,  ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -131,6 +131,8 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
 
 void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     GameObject2DInit(&ew->go);
+
+    memcpy(ew->go.name, "Widget", 6);
 
     GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 

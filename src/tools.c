@@ -47,7 +47,7 @@ void* beginSingleTimeCommands() {
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+    vkAllocateCommandBuffers(e_device, &allocInfo, &commandBuffer);
 
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -69,7 +69,7 @@ void endSingleTimeCommands(void* commandBuffer) {
     vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphicsQueue);
 
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(e_device, commandPool, 1, &commandBuffer);
 }
 
 
@@ -79,7 +79,7 @@ bool isComplete(QueueFamilyIndices self) {
 
 QueueFamilyIndices findQueueFamilies(void* arg) {
 
-    VkPhysicalDevice device = arg;
+    VkPhysicalDevice device = (VkPhysicalDevice)arg;
 
     QueueFamilyIndices indices;
     indices.graphicsFamily = 0;
@@ -153,7 +153,7 @@ void* createShaderModule(shader shdr) {
     createInfo.codeSize = shdr.size;
     createInfo.pCode = shdr.code;
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(device, &createInfo, NULL, &shaderModule) != VK_SUCCESS) {
+    if (vkCreateShaderModule(e_device, &createInfo, NULL, &shaderModule) != VK_SUCCESS) {
         printf("failed to create shader module!");
         exit(1);
     }

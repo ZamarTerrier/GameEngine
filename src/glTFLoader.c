@@ -381,7 +381,7 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                                 }
                                 break;
                             case cgltf_attribute_type_color:
-                                //g_mesh->verts[v].color = (vec3){ 1.0f, 1.0f, 1.0f};
+                                //g_mesh->verts[v].color = v3_point[v];
                                 break;
                             case cgltf_attribute_type_joints:
                                 g_mesh->verts[v].joints.x = v4_u8_point[v].x;
@@ -613,16 +613,27 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           engine_gltf_node *node = &glTF->nodes[mo->nodes[i].id_node];
 
+          ModelStruct *obj = &mo->nodes[i].models[j];
+
           mo->nodes[i].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
           mbo.model = mo->nodes[i].model;
-          mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+          if(!obj->selfCamera)
+          {
+              mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+          }
+          else
+          {
+              vec3 cPos = { 0, 0, 0};
+              vec3 cRot = { 0, 0, -180};
+              mbo.view = m4_look_at(cPos, v3_add(cPos, cRot), cameraUp);
+          }
           mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
           mbo.proj.m[1][1] *= -1;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
           memcpy(data, &mbo, sizeof(mbo));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
           InvMatrixsBuffer imb = {};
 
@@ -631,9 +642,9 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           imb.size = glTF->num_join_mats;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
           memcpy(data, &imb, sizeof(InvMatrixsBuffer));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
           LightBuffer3D lbo = {};
           memset(&lbo, 0, sizeof(LightBuffer3D));
@@ -685,9 +696,9 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           lbo.light_react = mo->nodes[i].models[j].light_enable;
 
-          vkMapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(LightBuffer3D), 0, &data);
+          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(LightBuffer3D), 0, &data);
           memcpy(data, &lbo, sizeof(LightBuffer3D));
-          vkUnmapMemory(device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
+          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2]->uniform->uniformBuffersMemory[imageIndex]);
       }
 
   }

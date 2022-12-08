@@ -88,7 +88,7 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     settings[0]->scissor.extent.height = parentSize.y * 2 * HEIGHT;
     settings[0]->scissor.extent.width = parentSize.x * 2 * WIDTH;
 
-    ShaderBuffer* sBuffer = wt->widget.go.graphObj.local.descriptors;
+    ShaderBuffer** sBuffer = wt->widget.go.graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -96,9 +96,9 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     tbo.rotation = wt->widget.go.transform.rotation;
     tbo.scale = wt->widget.go.transform.scale;
 
-    vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, sBuffer[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -127,10 +127,10 @@ void TextWidgetRecreateUniform(EWidgetText *wt){
     int count = wt->widget.go.graphObj.local.descrCount;
 
     for(int i=0;i < count;i++){
-        if(wt->widget.go.graphObj.local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
-            wt->widget.go.graphObj.local.descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
-            wt->widget.go.graphObj.local.descriptors[i].uniform->size = wt->widget.go.graphObj.local.descriptors[i].buffsize;
-            BuffersCreateUniform(wt->widget.go.graphObj.local.descriptors[i].uniform, i);
+        if(wt->widget.go.graphObj.local.descriptors[i]->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+            wt->widget.go.graphObj.local.descriptors[i]->uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
+            wt->widget.go.graphObj.local.descriptors[i]->uniform->size = wt->widget.go.graphObj.local.descriptors[i]->buffsize;
+            BuffersCreateUniform(wt->widget.go.graphObj.local.descriptors[i]->uniform, i);
         }
         else
         {
@@ -176,13 +176,16 @@ void TextWidgetAddTexture(EWidgetText *wt){
 
     wt->widget.go.graphObj.local.descriptors = (ShaderBuffer *) realloc(wt->widget.go.graphObj.local.descriptors, wt->widget.go.graphObj.local.descrCount * sizeof(ShaderBuffer));
 
-    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].size = 1;
-    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
-    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].image = NULL;
+    wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1] = calloc(1, sizeof(ShaderBuffer));
+    ShaderBuffer *descriptor = wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1];
 
-    TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount - 1].texture);
+    descriptor->texture = (Texture2D *) calloc(1, sizeof(Texture2D));
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor->size = 1;
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor->image = NULL;
+
+    TextImageMakeTexture(&wt->widget.go, &wt->tData, descriptor->texture);
 }
 
 void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent){
@@ -192,6 +195,8 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
     GameObjectSetUpdateFunc(wt, (void *)TextWidgetUpdateUniformBufferDefault);
     GameObjectSetDrawFunc(wt, (void *)TextWidgetDrawDefault);
     GameObjectSetRecreateFunc(wt, (void *)TextWidgettRecreate);
+
+    memcpy(wt->widget.go.name, "Widget_Text", 10);
 
     if(dParam != NULL)
     {

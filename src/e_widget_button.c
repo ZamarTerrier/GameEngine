@@ -19,6 +19,7 @@ void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
 void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
     WidgetInit(button, NULL, parent);
+    memcpy(button->widget.go.name, "Button", 6);
 
     button->widget.type = GUI_TYPE_BUTTON;
     button->selfColor = button->widget.color = (vec4){ 1, 1, 1, 1};

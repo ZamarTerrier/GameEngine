@@ -14,6 +14,7 @@ void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
     DrawParam dParam = {};
 
     WidgetInit(list, NULL, parent);
+    memcpy(list->widget.go.name, "Widget_List", 11);
     list->widget.type = GUI_TYPE_LIST;
     list->widget.color = (vec4){ 0.4, 0.4, 0.4, 1.0};
 

@@ -134,7 +134,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptorSetLayout; // Optional
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
-        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout[i]) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(e_device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout[i]) != VK_SUCCESS) {
             printf("failed to create pipeline layout!");
             exit(1);
         }
@@ -172,15 +172,15 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.pDepthStencilState = &depthStencil;
 
-        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline[i]) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(e_device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline[i]) != VK_SUCCESS) {
             printf("failed to create graphics pipeline!");
             exit(1);
         }
 
         //-----------------------
 
-        vkDestroyShaderModule(device, fragShaderModule, NULL);
-        vkDestroyShaderModule(device, vertShaderModule, NULL);
+        vkDestroyShaderModule(e_device, fragShaderModule, NULL);
+        vkDestroyShaderModule(e_device, vertShaderModule, NULL);
 
     }
 
@@ -241,7 +241,7 @@ void PipelineCreateRenderPass() {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device, &renderPassInfo, NULL, &renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(e_device, &renderPassInfo, NULL, &renderPass) != VK_SUCCESS) {
         printf("failed to create render pass!");
         exit(1);
     }

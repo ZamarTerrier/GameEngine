@@ -20,9 +20,9 @@ void ProjectionPlaneUpdate(GameObject2D *go){
     pdf.camRot = cam->rotation;
     pdf.camPos = v3_divs(cam->position, 10);
 
-    vkMapMemory(device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(pdf), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(pdf), 0, &data);
     memcpy(data, &pdf, sizeof(pdf));
-    vkUnmapMemory(device,  go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 

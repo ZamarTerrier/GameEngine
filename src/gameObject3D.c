@@ -30,9 +30,9 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 
     LightBuffer3D lbo = {};
@@ -85,9 +85,9 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
     lbo.light_react = go->enable_light;
 
-    vkMapMemory(device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
     memcpy(data, &lbo, sizeof(lbo));
-    vkUnmapMemory(device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, go->graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -96,11 +96,11 @@ void GameObject3DDefaultDraw(GameObject3D* go){
     if(go->graphObj.shape.rebuild)
     {
 
-        vkDestroyBuffer(device, go->graphObj.shape.iParam.indexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
 
-        vkDestroyBuffer(device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
             BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex3D));

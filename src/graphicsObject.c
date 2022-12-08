@@ -85,8 +85,8 @@ void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj){
 
     for(int i=0;i < graphObj->gItems.pipelineCount; i++){
-        vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline[i], NULL);
-        vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout[i], NULL);
+        vkDestroyPipeline(e_device, graphObj->gItems.graphicsPipeline[i], NULL);
+        vkDestroyPipelineLayout(e_device, graphObj->gItems.pipelineLayout[i], NULL);
     }
 
     free(graphObj->gItems.graphicsPipeline);
@@ -100,23 +100,25 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
 {
     GraphicsObjectCleanPipelines(graphObj);
 
-    vkDestroyDescriptorPool(device, graphObj->gItems.descriptorPool, NULL);
-    vkDestroyDescriptorSetLayout(device, graphObj->gItems.descriptorSetLayout, NULL);
+    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptorPool, NULL);
+    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptorSetLayout, NULL);
 
 
     for(int i=0;i< graphObj->local.descrCount;i++)
     {
 
-        if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+        ShaderBuffer *descriptor = graphObj->local.descriptors[i];
+        if(graphObj->local.descriptors[i]->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
 
         }
         else{
             for (int j = 0; j < imagesCount; j++) {
-                vkDestroyBuffer(device, graphObj->local.descriptors[i].uniform->uniformBuffers[j], NULL);
-                vkFreeMemory(device, graphObj->local.descriptors[i].uniform->uniformBuffersMemory[j], NULL);
+                ShaderBuffer *desriptor = graphObj->local.descriptors[i];
+                vkDestroyBuffer(e_device, desriptor->uniform->uniformBuffers[j], NULL);
+                vkFreeMemory(e_device, desriptor->uniform->uniformBuffersMemory[j], NULL);
             }
-            free(graphObj->local.descriptors[i].uniform);
-            graphObj->local.descriptors[i].uniform = NULL;
+            free(descriptor->uniform);
+            descriptor->uniform = NULL;
         }
     }
 }
@@ -125,27 +127,32 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
     PipelineSetting** settings = graphObj->gItems.settings;
     for(int i=0;i < graphObj->gItems.pipelineCount; i++){
-        vkDestroyPipeline(device, graphObj->gItems.graphicsPipeline[i], NULL);
-        vkDestroyPipelineLayout(device, graphObj->gItems.pipelineLayout[i], NULL);
+        vkDestroyPipeline(e_device, graphObj->gItems.graphicsPipeline[i], NULL);
+        vkDestroyPipelineLayout(e_device, graphObj->gItems.pipelineLayout[i], NULL);
         free(settings[i]);
     }
+
     free(graphObj->gItems.settings);
+    free(graphObj->gItems.graphicsPipeline);
+    graphObj->gItems.graphicsPipeline = NULL;
+    free(graphObj->gItems.pipelineLayout);
+    graphObj->gItems.pipelineLayout = NULL;
 
-    vkDestroyDescriptorPool(device, graphObj->gItems.descriptorPool, NULL);
-    vkDestroyDescriptorSetLayout(device, graphObj->gItems.descriptorSetLayout, NULL);
+    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptorPool, NULL);
+    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptorSetLayout, NULL);
 
 
-    vkDestroyBuffer(device, graphObj->shape.iParam.indexBuffer, NULL);
-    vkFreeMemory(device, graphObj->shape.iParam.indexBufferMemory, NULL);
+    vkDestroyBuffer(e_device, graphObj->shape.iParam.indexBuffer, NULL);
+    vkFreeMemory(e_device, graphObj->shape.iParam.indexBufferMemory, NULL);
     //free(graphObj->shape.iParam.indices);
 
-    vkDestroyBuffer(device, graphObj->shape.vParam.vertexBuffer, NULL);
-    vkFreeMemory(device, graphObj->shape.vParam.vertexBufferMemory, NULL);
+    vkDestroyBuffer(e_device, graphObj->shape.vParam.vertexBuffer, NULL);
+    vkFreeMemory(e_device, graphObj->shape.vParam.vertexBufferMemory, NULL);
     //free(graphObj->shape.vParam.vertices);
 
     for(int i=0;i< graphObj->local.descrCount;i++)
     {
-        ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
+        ShaderBuffer *descriptor = graphObj->local.descriptors[i];
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             ImageDestroyTexture(descriptor->texture);
             free(descriptor->texture);
@@ -153,12 +160,13 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
         }
         else{
             for (int j = 0; j < imagesCount; j++) {
-                vkDestroyBuffer(device, descriptor->uniform->uniformBuffers[j], NULL);
-                vkFreeMemory(device, descriptor->uniform->uniformBuffersMemory[j], NULL);
+                vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
+                vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
             }
             free(descriptor->uniform);
             descriptor->uniform = NULL;
         }
+        free(descriptor);
     }
 
     free(graphObj->local.descriptors);

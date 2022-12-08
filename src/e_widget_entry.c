@@ -216,6 +216,7 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
         fontSize = 2;
 
     WidgetInit(&entry->widget, NULL, parent);
+    memcpy(entry->widget.go.name, "Entry", 5);
     entry->widget.type = GUI_TYPE_ENTRY;
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 

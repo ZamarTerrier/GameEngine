@@ -144,9 +144,9 @@ void WindowWidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -271,6 +271,7 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dPara
 {
 
     InitTop(&ww->top, dParam, size, position);
+    memcpy(ww->top.go.name, "Widget_Window", 12);
 
     InitName(&ww->name, name, dParam, &ww->top);
     InitBot(&ww->widget, dParam, size, &ww->top);

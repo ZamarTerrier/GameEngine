@@ -62,9 +62,9 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
         stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, tData->font.cdata); // no guarantee this fits!
 
     void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, temp_bitmap, tData->font.fontWidth * tData->font.fontHeight);
-    vkUnmapMemory(device, stagingBufferMemory);
+    vkUnmapMemory(e_device, stagingBufferMemory);
 
     createImage(tData->font.fontWidth, tData->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texturePoint->textureImage, &texturePoint->textureImageMemory);
 
@@ -72,8 +72,8 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
     copyBufferToImage(stagingBuffer, texturePoint->textureImage, tData->font.fontWidth, tData->font.fontHeight);
     transitionImageLayout(texturePoint->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(device, stagingBuffer, NULL);
-    vkFreeMemory(device, stagingBufferMemory, NULL);
+    vkDestroyBuffer(e_device, stagingBuffer, NULL);
+    vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
 
     texturePoint->textureImageView = createImageView(texturePoint->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -90,10 +90,10 @@ void TextObjectRecreateUniform(TextObject *to){
     int count = to->go.graphObj.local.descrCount;
 
     for(int i=0;i < count;i++){
-        if(to->go.graphObj.local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
-            to->go.graphObj.local.descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
-            to->go.graphObj.local.descriptors[i].uniform->size = to->go.graphObj.local.descriptors[i].buffsize;
-            BuffersCreateUniform(to->go.graphObj.local.descriptors[i].uniform, i);
+        if(to->go.graphObj.local.descriptors[i]->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+            to->go.graphObj.local.descriptors[i]->uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
+            to->go.graphObj.local.descriptors[i]->uniform->size = to->go.graphObj.local.descriptors[i]->buffsize;
+            BuffersCreateUniform(to->go.graphObj.local.descriptors[i]->uniform, i);
         }
         else
         {
@@ -110,14 +110,17 @@ void TextObjectAddTexture(TextObject* to){
 
     to->go.graphObj.local.descrCount ++;
 
-    to->go.graphObj.local.descriptors = (ShaderBuffer *) realloc(to->go.graphObj.local.descriptors, to->go.graphObj.local.descrCount * sizeof(ShaderBuffer));
+    to->go.graphObj.local.descriptors = (ShaderBuffer **) realloc(to->go.graphObj.local.descriptors, to->go.graphObj.local.descrCount * sizeof(ShaderBuffer*));
 
-    to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-    to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1].descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1].size = 1;
-    to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1].stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1] = calloc(1, sizeof(ShaderBuffer));
+    ShaderBuffer *descriptor = to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1];
 
-    TextImageMakeTexture(&to->go, &to->textData, to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1].texture);
+    descriptor->texture = (Texture2D *) calloc(1, sizeof(Texture2D));
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor->size = 1;
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    TextImageMakeTexture(&to->go, &to->textData, descriptor->texture);
 }
 
 
@@ -150,9 +153,9 @@ void TextObjectUpdateUniformBufferDefault(TextObject* to) {
     tbo.rotation = to->go.transform.rotation;
     tbo.scale = to->go.transform.scale;
 
-    vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -212,7 +215,7 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     Vertex2D* mapped = NULL;
     stbtt_aligned_quad q;
 
-    vkMapMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
+    vkMapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
     tData->font.numLetters = 0;
 
     float  mulX  = tData->font.fontSize / WIDTH / fontResizer;
@@ -268,7 +271,7 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
         ++tempI;
     }
 
-    vkUnmapMemory(device, go->graphObj.shape.vParam.vertexBufferMemory);
+    vkUnmapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory);
     mapped = NULL;
 
     tData->textWidth = x;

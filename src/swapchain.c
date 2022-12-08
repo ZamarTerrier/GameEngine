@@ -70,7 +70,7 @@ void createSwapChain() {
 
     SwapChainSupportDetails swapChainSupport;
 
-    querySwapChainSupport(physicalDevice, &swapChainSupport);
+    querySwapChainSupport(e_physicalDevice, &swapChainSupport);
 
     EDSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats, swapChainSupport.sizeFormats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes, swapChainSupport.sizeModes);
@@ -92,7 +92,7 @@ void createSwapChain() {
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(e_physicalDevice);
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily, indices.presentFamily};
 
     if (indices.graphicsFamily != indices.presentFamily) {
@@ -110,14 +110,14 @@ void createSwapChain() {
 
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(device, &createInfo, NULL, &swapChain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(e_device, &createInfo, NULL, &swapChain) != VK_SUCCESS) {
         printf("failed to create swap chain!");
         exit(1);
     }
 
-    vkGetSwapchainImagesKHR(device, swapChain, &imagesCount, NULL);
+    vkGetSwapchainImagesKHR(e_device, swapChain, &imagesCount, NULL);
     swapChainImages = (VkImage *) calloc(imagesCount, sizeof(VkImage));
-    vkGetSwapchainImagesKHR(device, swapChain, &imagesCount, swapChainImages);
+    vkGetSwapchainImagesKHR(e_device, swapChain, &imagesCount, swapChainImages);
 
     swapChainImageFormat = surfaceFormat.format;
     swapChainExtent = *(EIExtent2D*)&extent;

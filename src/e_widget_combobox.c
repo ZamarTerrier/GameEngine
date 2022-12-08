@@ -39,6 +39,7 @@ void ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
 void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 
     WidgetInit(&combobox->widget, NULL, parent);
+    memcpy(combobox->widget.go.name, "Combobox", 8);
     ButtonWidgetInit(&combobox->button, " ", &combobox->widget);
     ButtonWidgetSetColor(&combobox->button, (vec4){0.4, 0.4, 0.4, 1.0});
 

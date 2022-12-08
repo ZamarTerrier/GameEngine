@@ -66,7 +66,7 @@ typedef struct{
 } ShaderBuffer;
 
 typedef struct{
-    ShaderBuffer* descriptors;
+    ShaderBuffer** descriptors;
     uint32_t descrCount;
 } localParam;
 

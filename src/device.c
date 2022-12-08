@@ -6,10 +6,10 @@ bool checkDeviceExtensionSupport(void* arg) {
 
     VkPhysicalDevice *device = arg;
 
-    vkEnumerateDeviceExtensionProperties(device, NULL, &extensionCount, NULL);
+    vkEnumerateDeviceExtensionProperties(*device, NULL, &extensionCount, NULL);
 
     VkExtensionProperties* availableExtensions = (VkExtensionProperties*) calloc( extensionCount, sizeof(VkExtensionProperties));
-    vkEnumerateDeviceExtensionProperties(device, NULL, &extensionCount, availableExtensions);
+    vkEnumerateDeviceExtensionProperties(*device, NULL, &extensionCount, availableExtensions);
 
     const char** requiredExtensions = (const char**) calloc(DEVEXTSIZE, sizeof(char*));
 
@@ -46,14 +46,14 @@ bool isDeviceSuitable(void* arg) {
 
     VkPhysicalDevice *device = arg;
 
-    QueueFamilyIndices indices = findQueueFamilies(device);
+    QueueFamilyIndices indices = findQueueFamilies(*device);
 
     bool extensionsSupported = checkDeviceExtensionSupport(device);
 
     bool swapChainAdequate = true;
 
     VkPhysicalDeviceFeatures supportedFeatures;
-    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+    vkGetPhysicalDeviceFeatures(*device, &supportedFeatures);
 
     return isComplete(indices) && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy && supportedFeatures.fillModeNonSolid;
 
@@ -75,14 +75,14 @@ void pickPhysicalDevice() {
     VkPhysicalDevice tDevice;
     for (int i=0; i < deviceCount; i++){
         tDevice = devices[i];
-        bool temp = isDeviceSuitable(tDevice);
+        bool temp = isDeviceSuitable(&tDevice);
         if (temp) {
-            physicalDevice = tDevice;
+            e_physicalDevice = tDevice;
             break;
         }
     }
 
-    if(physicalDevice == NULL) {
+    if(e_physicalDevice == NULL) {
         printf("failed to find a suitable GPU!");
         exit(1);
     }
@@ -93,7 +93,7 @@ void pickPhysicalDevice() {
 
 void createLogicalDevice() {
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(e_physicalDevice);
 
     VkDeviceQueueCreateInfo* queueCreateInfos;
     queueCreateInfos = (VkDeviceQueueCreateInfo*) calloc(2, sizeof(VkDeviceQueueCreateInfo));
@@ -131,13 +131,13 @@ void createLogicalDevice() {
         createInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(physicalDevice, &createInfo, NULL, &device) != VK_SUCCESS) {
+    if (vkCreateDevice(e_physicalDevice, &createInfo, NULL, &e_device) != VK_SUCCESS) {
         printf("failed to create logical device!");
         exit(1);
     }
 
-    vkGetDeviceQueue(device, indices.presentFamily, 0, &presentQueue);
-    vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
+    vkGetDeviceQueue(e_device, indices.presentFamily, 0, &presentQueue);
+    vkGetDeviceQueue(e_device, indices.graphicsFamily, 0, &graphicsQueue);
 
     free(queueCreateInfos);
     free(uniqueQueueFamilies);

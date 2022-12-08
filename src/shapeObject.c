@@ -24,9 +24,9 @@ void ShapeObjectDefaultUpdate(GameObject2D* go) {
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
-    vkMapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
 
     ImageBufferObjects ibo;
     ibo.origin = go->transform.img.origin;
@@ -36,9 +36,9 @@ void ShapeObjectDefaultUpdate(GameObject2D* go) {
     ibo.rotation.x = 0;
     ibo.rotation.y = 0;
 
-    vkMapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
+    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
     memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
 }
 
 void ShapeObjectCreateQuad(ShapeObject *so, QuadParams *param)

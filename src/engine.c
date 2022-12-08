@@ -175,7 +175,7 @@ void EnginePoolEvents()
 
 void EngineDeviceWaitIdle()
 {
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(e_device);
 }
 
 int EngineGetKeyPress(int Key){
@@ -213,15 +213,15 @@ void EngineSetRecreateFunc(void *func)
 
 void EngineCleanupSwapChain() {
 
-    vkDestroyImageView(device, depthImageView, NULL);
-    vkDestroyImage(device, depthImage, NULL);
-    vkFreeMemory(device, depthImageMemory, NULL);
+    vkDestroyImageView(e_device, depthImageView, NULL);
+    vkDestroyImage(e_device, depthImage, NULL);
+    vkFreeMemory(e_device, depthImageMemory, NULL);
 
     for (size_t i = 0; i < imagesCount; i++) {
-        vkDestroyFramebuffer(device, swapChainFramebuffers[i], NULL);
+        vkDestroyFramebuffer(e_device, swapChainFramebuffers[i], NULL);
     }
 
-    vkFreeCommandBuffers(device, commandPool, imagesCount, commandBuffers);
+    vkFreeCommandBuffers(e_device, commandPool, imagesCount, commandBuffers);
 
     int temp = objs.count;
 
@@ -231,13 +231,13 @@ void EngineCleanupSwapChain() {
         temp --;
     }
 
-    vkDestroyRenderPass(device, renderPass, NULL);
+    vkDestroyRenderPass(e_device, renderPass, NULL);
 
     for (size_t i = 0; i < imagesCount; i++) {
-        vkDestroyImageView(device, swapChainImageViews[i], NULL);
+        vkDestroyImageView(e_device, swapChainImageViews[i], NULL);
     }
 
-    vkDestroySwapchainKHR(device, swapChain, NULL);
+    vkDestroySwapchainKHR(e_device, swapChain, NULL);
 
 }
 
@@ -260,7 +260,7 @@ void EnginereRecreateSwapChain() {
     diffSize.x =  1;
     diffSize.y =  1;
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(e_device);
 
     EngineCleanupSwapChain();
 
@@ -301,9 +301,9 @@ void EngineCreateSyncobjects() {
         imagesInFlight[i] = VK_NULL_HANDLE;
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateSemaphore(device, &semaphoreInfo, NULL, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(device, &semaphoreInfo, NULL, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(device, &fenceInfo, NULL, &inFlightFences[i]) != VK_SUCCESS) {
+        if (vkCreateSemaphore(e_device, &semaphoreInfo, NULL, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(e_device, &semaphoreInfo, NULL, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+                vkCreateFence(e_device, &fenceInfo, NULL, &inFlightFences[i]) != VK_SUCCESS) {
             printf("failed to create synchronization objects for a frame!");
             exit(1);
         }
@@ -314,7 +314,7 @@ void EngineLoop(){
 
     EngineUpdateLine();
 
-    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(e_device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR && framebufferwasResized) {
         EnginereRecreateSwapChain();
@@ -329,12 +329,12 @@ void EngineLoop(){
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-        vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(e_device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
     }
 
     imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
-    //vkResetCommandPool(device, commandPool, 0);
+    //vkResetCommandPool(e_device, commandPool, 0);
 
     EngineDrawFrame();
 
@@ -354,7 +354,8 @@ void EngineLoop(){
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(device, 1, &inFlightFences[currentFrame]);
+    EngineDeviceWaitIdle();
+    vkResetFences(e_device, 1, &inFlightFences[currentFrame]);
 
     if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
         printf("failed to submit draw command buffer!");
@@ -478,12 +479,12 @@ void EngineCleanUp(){
     EngineCleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(device, renderFinishedSemaphores[i], NULL);
-        vkDestroySemaphore(device, imageAvailableSemaphores[i], NULL);
-        vkDestroyFence(device, inFlightFences[i], NULL);
+        vkDestroySemaphore(e_device, renderFinishedSemaphores[i], NULL);
+        vkDestroySemaphore(e_device, imageAvailableSemaphores[i], NULL);
+        vkDestroyFence(e_device, inFlightFences[i], NULL);
     }
 
-    vkDestroyCommandPool(device, commandPool, NULL);
+    vkDestroyCommandPool(e_device, commandPool, NULL);
 
     if(e_var_num_images > 0)
     {
@@ -499,7 +500,7 @@ void EngineCleanUp(){
 
     free(e_var_images);
 
-    vkDestroyDevice(device, NULL);
+    vkDestroyDevice(e_device, NULL);
 
     if (enableValidationLayers) {
         DestroyDebugUtilsMessengerEXT(instance, debugMessenger, NULL);

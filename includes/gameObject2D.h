@@ -17,6 +17,7 @@ typedef struct{
     GraphicsObject graphObj;
     Transform2D transform;
     GameObjectImage *image;
+    char name[256];
 } GameObject2D;
 
 void GameObject2DInit(GameObject2D* go);

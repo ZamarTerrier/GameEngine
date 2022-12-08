@@ -2,6 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 uint32_t CreateDebugUtilsMessengerEXT(void* arg, const EdDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const EdAllocationCallbacks* pAllocator, void** messenger) {
 
     VkInstance *instance = arg;
@@ -29,6 +33,12 @@ void DestroyDebugUtilsMessengerEXT(void* arg, void* debugMessenger, const EdAllo
     }
 }
 
+
+void *thread_f(const char *text) //функция для вычисления элемента матрицы
+{
+    printf("validation layer : %s\n", text);
+}
+
 uint32_t debugCallback(
         uint32_t messageSeverity,
         uint32_t messageType,
@@ -42,7 +52,10 @@ uint32_t debugCallback(
         int i =0;
     }
 
-    printf("validation layer : %s\n", pCallbackData->pMessage);
+    pthread_t threader;
+    pthread_create(&threader, NULL, thread_f, (void *)pCallbackData->pMessage);
+    //переводим в отсоединенное состояние
+    pthread_detach(threader);
 
     return VK_FALSE;
 

@@ -92,9 +92,9 @@ void Particle2DDefaultUpdate(ParticleObject2D* particle){
     tbo.rotation = particle->go.transform.rotation;
     tbo.scale = particle->go.transform.scale;
 
-    vkMapMemory(device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -106,10 +106,10 @@ void Particle2DDefaultDraw(GameObject2D* go){
     if(go->graphObj.shape.rebuild)
     {
 
-        vkDeviceWaitIdle(device);
+        vkDeviceWaitIdle(e_device);
 
-        vkDestroyBuffer(device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
 
 
         if(go->graphObj.shape.vParam.verticesSize > 0){

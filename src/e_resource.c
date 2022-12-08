@@ -16,8 +16,8 @@ void* e_window;
 void* instance;
 void* debugMessenger;
 
-void* physicalDevice;
-void* device;
+void* e_physicalDevice;
+void* e_device;
 
 void* graphicsQueue;
 void* presentQueue;
