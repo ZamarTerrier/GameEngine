@@ -86,7 +86,15 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
         settings[0]->scissor.offset.y = 0;
 
     settings[0]->scissor.extent.height = parentSize.y * 2 * HEIGHT;
+
+    if(settings[0]->scissor.extent.height > 2000)
+        settings[0]->scissor.extent.height = 0;
+
     settings[0]->scissor.extent.width = parentSize.x * 2 * WIDTH;
+
+    if(settings[0]->scissor.extent.width > 2000)
+        settings[0]->scissor.extent.width = 0;
+
 
     ShaderBuffer** sBuffer = wt->widget.go.graphObj.local.descriptors;
 

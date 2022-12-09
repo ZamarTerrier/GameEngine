@@ -5,9 +5,11 @@
 
 #include "e_widget.h"
 #include "e_widget_button.h"
+#include "e_widget_scroll.h"
 
 typedef struct{
     EWidget widget;
+    EWidgetScroll scroll;
     int size_x;
     int size_y;
     int size;
