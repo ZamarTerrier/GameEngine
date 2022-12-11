@@ -330,6 +330,18 @@ void WidgetDraw(EWidget * widget)
     }
 }
 
+void WidgetRecreate(EWidget * widget){
+    EngineDeviceWaitIdle();
+    ChildStack *child = widget->child;
+    GameObjectClean(widget);
+    GameObjectRecreate(widget);
+    while(child != NULL)
+    {
+        WidgetRecreate(child->node);
+        child = child->next;
+    }
+}
+
 void WidgetDestroy(EWidget * widget){
     ChildStack *child = widget->child;
     ChildStack *lastChild;

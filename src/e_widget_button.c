@@ -4,7 +4,7 @@
 void ButtonWidgetPress(EWidget *widget, void* entry, void *arg){
     EWidgetButton *button = (EWidgetButton *)widget;
 
-    button->widget.color = (vec4){ button->selfColor.x - 0.1f, button->selfColor.y - 0.1f, button->selfColor.z - 0.1f, button->selfColor.w };
+    button->widget.color = (vec4){ button->selfColor.x - 0.2f, button->selfColor.y - 0.2f, button->selfColor.z - 0.2f, button->selfColor.w };
 }
 
 void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){

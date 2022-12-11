@@ -81,8 +81,8 @@ int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name)
     EWidgetButton *b_menu = calloc(1, sizeof(EWidgetButton));
     ButtonWidgetInit(b_menu, name, &top_menu->top);
 
-    Transform2DSetPosition(b_menu, (top_menu->num_elems - 1) * 160, 0);
-    Transform2DSetScale(b_menu, 80, 20);
+    Transform2DSetPosition(b_menu, (top_menu->num_elems - 1) * 240, 0);
+    Transform2DSetScale(b_menu, 120, 20);
 
     top_menu->list[top_menu->num_elems - 1].button = b_menu;
 
@@ -108,7 +108,7 @@ EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char
     else
         point = top_menu->window;
 
-    ListWidgetInit(l_menu, 70, 20, point);
+    ListWidgetInit(l_menu, 110, 20, point);
     ListWidgetSetColor(l_menu, (vec4){ 0.6, 0.6, 0.6, 1.0});
     vec2 pos = Transform2DGetPosition(top_menu->list[top_menu->num_elems - 1].button);
     Transform2DSetPosition(l_menu, pos.x, 40);
