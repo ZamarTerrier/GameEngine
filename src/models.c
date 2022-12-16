@@ -282,6 +282,7 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
         setting.fragShader = &_binary_shaders_model_frag_spv_start;
         setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
         setting.fromFile = 0;
+        setting.drawWay = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     }
     else
         GraphicsObjectSetShadersPath(&model->graphObj, dParam->vertShader, dParam->fragShader);

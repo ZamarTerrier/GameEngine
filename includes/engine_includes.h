@@ -8,7 +8,7 @@
 
 #include "e_math_variables.h"
 
-#define MAX_BONES 64
+#define MAX_BONES 128
 
 typedef enum { false, true} bool;
 
@@ -79,12 +79,12 @@ typedef struct {
 } ParticleVertex3D;
 
 typedef struct {
-    vec3 position __attribute__ ((aligned (16)));
-    vec3 normal __attribute__ ((aligned (16)));
-    vec3 color __attribute__ ((aligned (16)));
-    vec2 texCoord __attribute__ ((aligned (16)));
-    vec4 joints __attribute__ ((aligned (16)));
-    vec4 weight __attribute__ ((aligned (16)));
+    vec3 position;
+    vec3 normal;
+    vec3 color;
+    vec2 texCoord;
+    vec4 joints;
+    vec4 weight;
 } ModelVertex3D;
 
 typedef struct EIVertexInputBindingDescription {

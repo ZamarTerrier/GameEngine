@@ -23,6 +23,7 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
     setting->viewport.height = (float) swapChainExtent.height;
     setting->viewport.minDepth = 0.0f;
     setting->viewport.maxDepth = 1.0f;
+    setting->drawWay = VK_FRONT_FACE_CLOCKWISE;
 }
 
 void PipelineCreateGraphics(GraphicsObject* graphObj){
@@ -84,7 +85,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         rasterizer.polygonMode = settings[i]->poligonMode;
         rasterizer.lineWidth = 1.0f;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.frontFace = settings[i]->drawWay;
         rasterizer.depthBiasEnable = VK_FALSE;
         //-----------------
         //Колор блендинг
