@@ -589,7 +589,7 @@ void Load3DglTFNextFrame(void *ptr, float time, int num_animation)
 
     update_frame(mo, anim);
 
-    update_hierarhy(ptr);
+    update_hierarhy(mo);
   }
 
 }
@@ -636,6 +636,7 @@ void DefaultglTFUpdate(ModelObject3D *mo)
           vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
 
           InvMatrixsBuffer imb = {};
+          memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
           for(int k=0;k < glTF->num_join_mats;k++)
             imb.mats[k] = glTF->joint_mats[k].join_mat;

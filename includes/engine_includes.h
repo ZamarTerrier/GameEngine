@@ -79,12 +79,12 @@ typedef struct {
 } ParticleVertex3D;
 
 typedef struct {
-    vec3 position;
-    vec3 normal;
-    vec3 color;
-    vec2 texCoord;
-    vec4 joints;
-    vec4 weight;
+    vec3 position __attribute__ ((aligned (16)));
+    vec3 normal __attribute__ ((aligned (16)));
+    vec3 color __attribute__ ((aligned (16)));
+    vec2 texCoord __attribute__ ((aligned (16)));
+    vec4 joints __attribute__ ((aligned (16)));
+    vec4 weight __attribute__ ((aligned (16)));
 } ModelVertex3D;
 
 typedef struct EIVertexInputBindingDescription {
@@ -168,7 +168,7 @@ typedef struct{
 } LightBuffer3D;
 
 typedef struct{
-    mat4 mats[MAX_BONES];
+    mat4 mats[MAX_BONES] __attribute__ ((aligned (16)));
     int size __attribute__ ((aligned (16)));
 } InvMatrixsBuffer;
 
