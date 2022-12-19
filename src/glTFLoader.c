@@ -266,9 +266,14 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         }
                         else if(image->buffer_view->buffer != NULL)
                         {
-                            int size = strlen(glTF->name) + strlen(image->name);
+                            char *name_point = image->name;
+
+                            if(name_point == NULL)
+                                name_point = image->buffer_view->name;
+
+                            int size = strlen(glTF->name) + strlen(name_point);
                             g_mesh->image->path = calloc( size + 1, sizeof(char));
-                            ToolsAddStrings(g_mesh->image->path, size, glTF->name, image->name);
+                            ToolsAddStrings(g_mesh->image->path, size, glTF->name, name_point);
                             g_mesh->image->buffer = calloc(image->buffer_view->size, sizeof(char));
                             memcpy(g_mesh->image->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
                             g_mesh->image->size = image->buffer_view->size;
@@ -294,9 +299,14 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         }
                         else if(image->buffer_view->buffer != NULL)
                         {
-                            int size = strlen(glTF->name) + strlen(image->name);
+                            char *name_point = image->name;
+
+                            if(name_point == NULL)
+                                name_point = image->buffer_view->name;
+
+                            int size = strlen(glTF->name) + strlen(name_point);
                             g_mesh->normal->path = calloc( size + 1, sizeof(char));
-                            ToolsAddStrings(g_mesh->normal->path, size, glTF->name, image->name);
+                            ToolsAddStrings(g_mesh->normal->path, size, glTF->name, name_point);
                             g_mesh->normal->buffer = calloc(image->buffer_view->size, sizeof(char));
                             memcpy(g_mesh->normal->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
                             g_mesh->normal->size = image->buffer_view->size;
@@ -322,9 +332,15 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
                         }
                         else if(image->buffer_view->buffer != NULL)
                         {
-                            int size = strlen(glTF->name) + strlen(image->name);
+
+                            char *name_point = image->name;
+
+                            if(name_point == NULL)
+                                name_point = image->buffer_view->name;
+
+                            int size = strlen(glTF->name) + strlen(name_point);
                             g_mesh->specular->path = calloc( size + 1, sizeof(char));
-                            ToolsAddStrings(g_mesh->specular->path, size, glTF->name, image->name);
+                            ToolsAddStrings(g_mesh->specular->path, size, glTF->name, name_point);
                             g_mesh->specular->buffer = calloc(image->buffer_view->size, sizeof(char));
                             memcpy(g_mesh->specular->buffer, image->buffer_view->buffer->data + image->buffer_view->offset, image->buffer_view->size);
                             g_mesh->specular->size = image->buffer_view->size;
