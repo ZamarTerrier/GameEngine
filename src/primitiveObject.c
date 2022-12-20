@@ -36,7 +36,7 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
             InitPlane3D(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
             break;
         case ENGINE_PRIMITIVE3D_CUBE :
-            Cubesphere(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, 2, 10);
+            GraphicsObjectSetVertex(&go->graphObj, cubeVert, 24, cubeIndx, 36);
             break;
         case ENGINE_PRIMITIVE3D_CUBESPHERE :
             Cubesphere(&go->graphObj.shape.vParam, &go->graphObj.shape.iParam, csParam->radius, csParam->verperrow);
@@ -115,7 +115,6 @@ void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *pa
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting.drawType = 0;
     setting.fromFile = 0;
-
     GameObject3DAddSettingPipeline(go, &setting);
 
     setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;

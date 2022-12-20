@@ -131,9 +131,31 @@ vec3 ClosestPtPointTriangle3D(vec3 p, vec3 p0, vec3 p1, vec3 p2){
     float w = vc * denom;
 
     return v3_add(p0, v3_add(v3_muls(ab, v), v3_muls(ac, w)));
-
 }
 
+int IntersectionSpherePlane(void *obj1, void *obj2, float *distance, float *depth, vec3 *dir)
+{
+    InterPlaneParam *plane = obj1;
+    InterSphereParam *sphere = obj2;
+
+    float dist = v3_dot(sphere->center, plane->normal) - v3_dot(plane->normal, plane->position);
+
+    if(dist <= sphere->radius * sphere->radius)
+    {
+        *distance = dist;
+        *depth = (sphere->radius * sphere->radius) - dist ;
+        *dir = plane->normal;
+        return true;
+    }
+
+    dir->x = 0;
+    dir->y = 0;
+    dir->z = 0;
+
+    *depth = 0;
+
+    return false;
+}
 
 float SqDistPointAABB(vec3 pos, void *obj)
 {
@@ -369,9 +391,10 @@ int IntersectionCapsuleCapsule(void *obj1, void *obj2, float *dist, float *depth
     return dist2 <= radius * radius;
 }
 
-int IntersectionAABBPlane(void *obj, vec3 n, float d)
+int IntersectionAABBPlane(void *obj1, void *obj2, float *dist, float *depth, vec3 *dir)
 {
-    InterAABBParam* box = (InterAABBParam *)obj;
+    InterAABBParam* box = (InterAABBParam *)obj1;
+    InterPlaneParam* plane = (InterAABBParam *)obj2;
 
     vec3 max = {box->position.x + box->size, box->position.y + box->size, box->position.z + box->size};
     vec3 min = {box->position.x - box->size, box->position.y - box->size, box->position.z - box->size};
@@ -380,9 +403,12 @@ int IntersectionAABBPlane(void *obj, vec3 n, float d)
     vec3 c = v3_muls(v3_add(max, min), 0.5f); // Compute AABB center
     vec3 e = v3_sub(max, c); // Compute positive extents
     // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-    float r = e.x*fabs(n.x) + e.y*fabs(n.y) + e.z*fabs(n.z);
+    float r = e.x*fabs(plane->normal.x) + e.y*fabs(plane->normal.y) + e.z*fabs(plane->normal.z);
     // Compute distance of box center from plane
-    float s = v3_dot(n, c) - d;
+    float s = v3_dot(plane->normal, c) - v3_dot(plane->normal, plane->position);
+
+    *dist = s;
+    *dir = plane->normal;
     // Intersection occurs when distance s falls within [-r,+r] interval
     return fabs(s) <= r;
 }
@@ -473,7 +499,9 @@ int IntersectionTriangleAABB(vec3 v0, vec3 v1, vec3 v2, void *obj, float *dist, 
     // Test separating axis corresponding to triangle face normal (category 2)
     vec3 n;
     float d;
-    n = v3_cross(f0, f1);
-    d = v3_dot(n, v0);
-    return IntersectionAABBPlane(obj, n, d);
+    InterPlaneParam plane;
+    plane.normal = v3_cross(f0, f1);
+    plane.position = v0;
+
+    return IntersectionAABBPlane(obj, &plane, dist, depth, dir);
 }
