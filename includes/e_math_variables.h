@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     float x;
     float y;
@@ -43,5 +48,9 @@ typedef struct{
 typedef struct{
     float m[16];
 } mat4_p;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_MATH_VARIABLES_H

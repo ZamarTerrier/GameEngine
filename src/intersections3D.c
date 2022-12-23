@@ -143,8 +143,8 @@ int IntersectionSpherePlane(void *obj1, void *obj2, float *distance, float *dept
     if(dist <= sphere->radius * sphere->radius)
     {
         *distance = dist;
-        *depth = (sphere->radius * sphere->radius) - dist ;
-        *dir = plane->normal;
+        *depth = (sphere->radius) - dist;
+        *dir = v3_muls(plane->normal, -1);
         return true;
     }
 
@@ -175,6 +175,26 @@ float SqDistPointAABB(vec3 pos, void *obj)
         if (v > max[i]) sqDist += (v - max[i]) * (v - max[i]);
     }
     return sqDist;
+}
+
+void ClosestPtPointAABB(vec3 pos, void *obj, vec3 *res)
+{
+    InterAABBParam *box = (InterAABBParam *) obj;
+    vec3 up = {box->position.x + box->size, box->position.y + box->size, box->position.z + box->size};
+    vec3 down = {box->position.x - box->size, box->position.y - box->size, box->position.z - box->size};
+
+    float *p = &pos;
+    float *max = &up;
+    float *min = &down;
+    float *q = res;
+
+    for(int i=0; i < 3; i++)
+    {
+        float v = p[i];
+        if(v < min[i]) v = min[i];
+        if(v > max[i]) v = max[i];
+        q[i] = v;
+    }
 }
 
 int IntersectionSphereTriangle(vec3 sPos, float r, vec3 p0, vec3 p1, vec3 p2, vec3 *resPos, float *dist, float *depth, vec3 *dir)
@@ -324,9 +344,13 @@ int IntersectionSphereAABB(void *obj1, void *obj2, float *dist, float *depth, ve
     InterSphereParam *sph = (InterSphereParam *)obj1;
     InterAABBParam *box = (InterAABBParam *)obj2;
 
-    float sqDist = SqDistPointAABB(sph->center, box);
+    vec3 point;
 
-    vec3 v = v3_sub(box->position, sph->center);
+    ClosestPtPointAABB(sph->center, box, &point);
+
+    float sqDist = v3_distance(point, sph->center);
+
+    vec3 v = v3_sub(point, sph->center);
 
     *dist = sqDist;
     *dir = v3_muls(v3_norm(v), -1);
@@ -408,6 +432,7 @@ int IntersectionAABBPlane(void *obj1, void *obj2, float *dist, float *depth, vec
     float s = v3_dot(plane->normal, c) - v3_dot(plane->normal, plane->position);
 
     *dist = s;
+    *depth = r - s;
     *dir = plane->normal;
     // Intersection occurs when distance s falls within [-r,+r] interval
     return fabs(s) <= r;
@@ -505,3 +530,4 @@ int IntersectionTriangleAABB(vec3 v0, vec3 v1, vec3 v2, void *obj, float *dist, 
 
     return IntersectionAABBPlane(obj, &plane, dist, depth, dir);
 }
+

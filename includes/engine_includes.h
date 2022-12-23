@@ -10,7 +10,15 @@
 
 #define MAX_BONES 128
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifndef __cplusplus
+
 typedef enum { false, true} bool;
+#endif
 
 typedef struct ChildStack{
     struct ChildStack* before;
@@ -196,5 +204,9 @@ typedef struct EISurfaceCapabilitiesKHR {
     uint32_t         supportedCompositeAlpha;
     uint32_t                supportedUsageFlags;
 } EISurfaceCapabilitiesKHR;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

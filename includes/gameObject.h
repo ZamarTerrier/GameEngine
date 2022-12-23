@@ -3,6 +3,11 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct {
     void *InitPoint;
     void *UpdatePoint;
@@ -25,5 +30,9 @@ void GameObjectDraw(GameObject* go);
 void GameObjectClean(GameObject* go);
 void GameObjectRecreate(GameObject* go);
 void GameObjectDestroy(GameObject* go);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GAMEOBJECT_H

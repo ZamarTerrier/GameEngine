@@ -3,6 +3,11 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     uint32_t* code;
     size_t size;
@@ -69,5 +74,9 @@ typedef struct{
     ShaderBuffer** descriptors;
     uint32_t descrCount;
 } localParam;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GRAPHICSITEMS_H
