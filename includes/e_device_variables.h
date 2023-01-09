@@ -5,6 +5,11 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     uint32_t graphicsFamily;
     uint32_t presentFamily;
@@ -22,5 +27,9 @@ typedef struct{
     uint32_t* presentModes;
     uint32_t sizeModes;
 } SwapChainSupportDetails;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_DEVICE_VARIABLES_H

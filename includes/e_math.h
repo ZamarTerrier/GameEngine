@@ -3,14 +3,23 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define min( a, b ) ((a) < (b) ? (a) : (b))
 #define max( a, b ) ((a) > (b) ? (a) : (b))
+
+#define INTR_EPS 1E-6
+
+extern vec3 e_vec3_origin;
 
 extern mat4 edenMat;
 
 float lerp(float a, float b, float t);
-
 float clamp(float a, float d1, float d2);
+int get_sig(float val);
 
 mat3 rotateX(float theta);
 // Rotation matrix around the Y axis.
@@ -62,6 +71,9 @@ float  v3_angle_between(vec3 a, vec3 b);
 bool v3_equal(vec3 a, vec3 b);
 vec3 v3_lerp(vec3 a, vec3 b, float t);
 vec3 v3_slerp(vec3 start, vec3 end, float percent);
+vec3 v3_to(vec3 from, vec3 to, float t);
+float v3_point_segment_dist(const vec3 *P, const vec3 *x0, const vec3 *b, vec3 *witness);
+float v3_point_tri_dist(const vec3 *P, const vec3 *x0, const vec3 *B, const vec3 *C, vec3 *witness);
 
 vec4  v4_add(vec4 a, vec4 b) ;
 vec4  v4_sub(vec4 a, vec4 b) ;
@@ -101,5 +113,8 @@ mat4 m4_perspective(float vertical_field_of_view_in_deg, float near_view_distanc
 mat4 mat4_colmnsf(float m00, float m10, float m20, float m30, float m01, float m11, float m21, float m31, float m02, float m12, float m22, float m32, float m03, float m13, float m23, float m33);
 mat4 mat4_rowsf(float m00, float m10, float m20, float m30, float m01, float m11, float m21, float m31, float m02, float m12, float m22, float m32, float m03, float m13, float m23, float m33);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_MATH_H

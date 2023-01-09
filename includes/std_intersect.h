@@ -21,6 +21,10 @@ typedef struct{
     float radius;
 } InterSphereParam;
 
+typedef struct{
+    vec3 position;
+    vec3 normal;
+} InterPlaneParam;
 
 typedef struct{
     vec2 position;

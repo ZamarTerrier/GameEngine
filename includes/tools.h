@@ -8,6 +8,11 @@
 
 #include "e_resource.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void* beginSingleTimeCommands();
 
 void endSingleTimeCommands(void* commandBuffer);
@@ -46,5 +51,9 @@ int ToolsStr32BitLength(uint32_t *text);
 int ToolsStringToUInt32(uint32_t *dest, const char *src);
 
 void* ToolsLoadImageFromFile(size_t* len, char *filepath);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TOOLS_H

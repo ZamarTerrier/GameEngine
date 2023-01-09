@@ -3,6 +3,11 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define ENGINE_RELEASE                0
 #define ENGINE_PRESS                  1
 #define ENGINE_REPEAT                 2
@@ -193,5 +198,10 @@ void EngineDraw(void* obj);
 void EngineUpdateUniformBuffer();
 
 void EngineCleanUp();
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -26,6 +26,7 @@ typedef struct{
     char dynamicState;
     EPViewport viewport;
     EIRect2D scissor;
+    uint32_t drawWay;
 } PipelineSetting;
 
 #endif // E_PIPELINE_VARIABLES_H

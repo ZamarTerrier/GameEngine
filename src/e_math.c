@@ -4,6 +4,8 @@
 
 #include "e_resource.h"
 
+vec3 e_vec3_origin = { 0, 0, 0};
+
 mat4 edenMat= {1, 0, 0, 0,
                0, 1, 0, 0,
                0, 0, 1, 0,
@@ -16,6 +18,17 @@ float clamp(float a, float d1, float d2){
   float res = min(max(a, d1), d2);
 
   return res;
+}
+
+int get_sig(float val)
+{
+
+    if (val < INTR_EPS){
+        return 0;
+    }else if (val < 0){
+        return -1;
+    }
+    return 1;
 }
 
 mat3 rotateX(float theta) {
@@ -218,6 +231,140 @@ float  v3_dot   (vec3 a, vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
 bool v3_equal(vec3 a, vec3 b) { return (a.x == b.x) & (a.y == b.y) & (a.z == b.z); }
 vec3 v3_lerp(vec3 a, vec3 b, float t) { return (vec3){lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t)}; }
 
+float v3_point_segment_dist(const vec3 *P, const vec3 *x0, const vec3 *b, vec3 *witness)
+{
+    // The computation comes from solving equation of segment:
+    //      S(t) = x0 + t.d
+    //          where - x0 is initial point of segment
+    //                - d is direction of segment from x0 (|d| > 0)
+    //                - t belongs to <0, 1> interval
+    //
+    // Than, distance from a segment to some point P can be expressed:
+    //      D(t) = |x0 + t.d - P|^2
+    //          which is distance from any point on segment. Minimization
+    //          of this function brings distance from P to segment.
+    // Minimization of D(t) leads to simple quadratic equation that's
+    // solving is straightforward.
+    //
+    // Bonus of this method is witness point for free.
+
+    float dist, t;
+    vec3 d, a;
+
+    // direction of segment
+    d = v3_sub(*b, *x0);
+
+    // precompute vector from P to x0
+    a = v3_sub(*x0, *P);
+
+    t  = -1.0f * v3_dot(a, d);
+    t /= v3_length(d);
+
+    if (t < 0 || t < INTR_EPS){
+        dist = v3_distance(*x0, *P);
+    if (witness)
+        *witness = *x0;
+    }else if (t > 1 || t == 1){
+        dist = v3_distance(*b, *P);
+        if (witness)
+            *witness = *b;
+    }else{
+        if (witness){
+            *witness = d;
+            *witness = v3_muls(*witness, t);
+            *witness = v3_add(*witness, *x0);
+            dist = v3_distance(*witness, *P);
+        }else{
+        // recycling variables
+            d = v3_muls(d, t);
+            d = v3_add(d, a);
+            dist = v3_length(d);
+        }
+    }
+
+    return dist;
+}
+
+float v3_point_tri_dist(const vec3 *P, const vec3 *x0, const vec3 *B, const vec3 *C, vec3 *witness)
+{
+    // Computation comes from analytic expression for triangle (x0, B, C)
+    //      T(s, t) = x0 + s.d1 + t.d2, where d1 = B - x0 and d2 = C - x0 and
+    // Then equation for distance is:
+    //      D(s, t) = | T(s, t) - P |^2
+    // This leads to minimization of quadratic function of two variables.
+    // The solution from is taken only if s is between 0 and 1, t is
+    // between 0 and 1 and t + s < 1, otherwise distance from segment is
+    // computed.
+
+    vec3 d1, d2, a;
+    float u, v, w, p, q, r, d;
+    float s, t, dist, dist2;
+    vec3 witness2;
+
+    d1 = v3_sub(*B, *x0);
+    d2 = v3_sub(*C, *x0);
+    a =  v3_sub(*x0, *P);
+
+    u = v3_dot(a, a);
+    v = v3_dot(d1, d1);
+    w = v3_dot(d2, d2);
+    p = v3_dot(a, d1);
+    q = v3_dot(a, d2);
+    r = v3_dot(d1, d2);
+
+    d = w * v - r * r;
+    if (d < INTR_EPS){
+        // To avoid division by zero for zero (or near zero) area triangles
+        s = t = -1.;
+    }else{
+        s = (q * r - w * p) / d;
+        t = (-s * r - q) / w;
+    }
+
+    if ((s < INTR_EPS || s > 0)
+        && (s == 1 || s < 1)
+        && (t < INTR_EPS || t > 0)
+        && (t == 1 || t < 1)
+        && (t + s == 1 || t + s < 1)){
+
+    if (witness){
+        d1 = v3_muls(d1, s);
+        d2 = v3_muls(d2, t);
+        *witness = *x0;
+        *witness = v3_add(*witness, d1);
+        *witness = v3_add(*witness, d2);
+
+        dist = v3_distance(*witness, *P);
+    }else{
+        dist  = s * s * v;
+        dist += t * t * w;
+        dist += 2.f * s * t * r;
+        dist += 2.f * s * p;
+        dist += 2.f * t * q;
+        dist += u;
+    }
+    }else{
+        dist = v3_point_segment_dist(P, x0, B, witness);
+
+        dist2 = v3_point_segment_dist(P, x0, C, &witness2);
+        if (dist2 < dist){
+            dist = dist2;
+            if (witness)
+                *witness = witness2;
+        }
+
+        dist2 = v3_point_segment_dist(P, B, C, &witness2);
+        if (dist2 < dist){
+            dist = dist2;
+            if (witness)
+                *witness = witness2;
+        }
+    }
+
+    return dist;
+}
+
+
 vec3 v3_slerp(vec3 start, vec3 end, float percent)
 {
   float dot = v3_dot(start, end);
@@ -232,6 +379,22 @@ vec3 v3_slerp(vec3 start, vec3 end, float percent)
   // Orthonormal basis
   // The final result.
   return v3_add(v3_muls(start, cos(theta)), v3_muls(RelativeVec, sin(theta)));
+}
+
+vec3 v3_to(vec3 from, vec3 to, float t)
+{
+    vec3 result;
+
+    if(from.x != to.x)
+        result.x = from.x < to.x ? result.x + t : result.x - t;
+
+    if(from.y != to.y)
+        result.y = from.y < to.y ? result.y + t : result.y - t;
+
+    if(from.z != to.z)
+        result.z = from.z < to.z ? result.z + t : result.z - t;
+
+    return result;
 }
 
 vec4  v4_add(vec4 a, vec4 b) { return (vec4){a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w}; }

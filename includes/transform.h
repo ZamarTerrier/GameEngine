@@ -3,6 +3,11 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     vec2 position;
     vec2 positionOrig;
@@ -58,5 +63,9 @@ vec3 Transform3DGetScale(struct GameObject3D* go);
 void Transform3DSetRotateT(Transform3D* transform, float x, float y, float z);
 void Transform3DSetRotate(struct GameObject3D* go, float x, float y, float z);
 vec3 Transform3DGetRotate(struct GameObject3D* go);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TRANSFORM_H

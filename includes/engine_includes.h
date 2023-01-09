@@ -8,9 +8,17 @@
 
 #include "e_math_variables.h"
 
-#define MAX_BONES 64
+#define MAX_BONES 128
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifndef __cplusplus
 
 typedef enum { false, true} bool;
+#endif
 
 typedef struct ChildStack{
     struct ChildStack* before;
@@ -168,7 +176,7 @@ typedef struct{
 } LightBuffer3D;
 
 typedef struct{
-    mat4 mats[MAX_BONES];
+    mat4 mats[MAX_BONES] __attribute__ ((aligned (16)));
     int size __attribute__ ((aligned (16)));
 } InvMatrixsBuffer;
 
@@ -196,5 +204,9 @@ typedef struct EISurfaceCapabilitiesKHR {
     uint32_t         supportedCompositeAlpha;
     uint32_t                supportedUsageFlags;
 } EISurfaceCapabilitiesKHR;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

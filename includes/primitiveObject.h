@@ -5,6 +5,11 @@
 
 #include "gameObject3D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 enum PrimitiveObjectType{
     ENGINE_PRIMITIVE3D_LINE,
     ENGINE_PRIMITIVE3D_TRIANGLE,
@@ -53,6 +58,10 @@ typedef struct{
     int stackCount;
 } ConeParam;
 
-void PrimitiveObjectInit(GameObject3D *go, DrawParam dParam, char type, void *params);
+void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PRIMITIVEOBJECT_H

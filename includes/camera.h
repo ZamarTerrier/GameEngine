@@ -5,6 +5,11 @@
 
 #include "e_resource.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     vec2 position;
     vec2 rotation;
@@ -36,5 +41,9 @@ void setViewScale2D(float x, float y);
 void setViewScale(float x, float y, float z);
 
 void destroyCameras();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // CAMERA_H

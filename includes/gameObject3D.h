@@ -5,7 +5,11 @@
 #include "graphicsObject.h"
 #include "transform.h"
 
-typedef struct{
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+typedef struct GameObject3D{
     GameObject self;
     GraphicsObject graphObj;
     Transform3D transform;
@@ -32,5 +36,10 @@ void GameObject3DCreateDrawItems(GraphicsObject* go);
 
 //Описание вертекса
 EIVertexInputBindingDescription GameObject3DGetBindingDescription();
+
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif // GAMEOBJECT3D_H
