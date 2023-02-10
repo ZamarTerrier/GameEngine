@@ -9,6 +9,11 @@
 #include "graphicsObject.h"
 #include "transform.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     GraphicsObject graphObj;    
     GameObjectImage *diffuse;
@@ -51,5 +56,9 @@ void ModelSetSelCameraEnable(void *obj, bool enable);
 void ModelSetSomeViewport(ModelObject3D* mo, float x, float y, float height, float width);
 
 void ModelDefaultInit(ModelStruct *model, DrawParam *dParam);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MODELS_H

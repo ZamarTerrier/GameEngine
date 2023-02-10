@@ -3,6 +3,11 @@
 
 #include "e_widget_entry.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     EWidgetEntry entry;
     float textHeight;
@@ -10,5 +15,10 @@ typedef struct{
 
 void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent);
 void EntryAreaUpdateLine();
+void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_ENTRY_AREA_H

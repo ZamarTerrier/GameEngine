@@ -73,7 +73,7 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     if(wt->widget.position.y + (wt->tData.font.fontSize * 2) < parentPos.y)
         wt->widget.visible  = false;
     else
-        wt->widget.visible  = true;;
+        wt->widget.visible  = true;
 
     settings[0]->scissor.offset.x = parentPos.x * WIDTH;
 
@@ -268,5 +268,12 @@ void TextWidgetSetText(EWidgetText* wt, const char* text)
 
     ToolsStringToUInt32(buff, text);
 
-    return TextImageSetText(buff, &wt->widget.go, &wt->tData);
+    TextImageSetText(buff, &wt->widget.go, &wt->tData);
+
+    return;
+}
+
+void TextWidgetGetText(EWidgetText* wt, char* dest)
+{
+    ToolsUInt32ToString(dest, wt->tData.text);
 }

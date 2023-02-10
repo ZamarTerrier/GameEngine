@@ -13,6 +13,8 @@
 
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params){
 
+    memset(po, 0, sizeof(PrimitiveObject));
+
     GameObject3DInit(po);
 
     PlaneParam *pParam = (PlaneParam *)params;

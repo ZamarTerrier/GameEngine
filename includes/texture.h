@@ -8,6 +8,11 @@
 #include "e_resource.h"
 #include "tools.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void TextureCreate( void *texture, GameObjectImage *image, bool from_file);
 
 int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_file);
@@ -41,5 +46,9 @@ void ImageAddTexture(localParam *local, GameObjectImage *image);
 void changeTexture(localParam *local, int elem, const char* source, int size);
 
 void ImageDestroyTexture(Texture2D* texture);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TEXTURE_H

@@ -12,6 +12,11 @@
 #include "pipeline.h"
 #include "texture.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     GameObject self;
     GraphicsObject graphObj;
@@ -32,5 +37,9 @@ void GameObject2DCreateDrawItems(GameObject2D* go);
 EIVertexInputBindingDescription GameObject2DGetBindingDescription();
 
 vec2 GameObject2DGetSize(GameObject2D* go);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GAMEOBJECT2D_H

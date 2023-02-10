@@ -4,6 +4,11 @@
 #include "engine_includes.h"
 #include "graphicsItems.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     localParam local;
     GraphicItems gItems;
@@ -26,5 +31,9 @@ void GraphicsObjectClean(GraphicsObject* graphObj);
 void GraphicsObjectDestroy(GraphicsObject* graphObj);
 
 void GraphicsObjectSetShadersPath(GraphicsObject* graphOb, const char* vert, const char* frag);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GRAPHICSOBJECT_H

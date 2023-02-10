@@ -5,6 +5,11 @@
 #include "e_widget_button.h"
 #include "e_widget_list.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     EWidget widget;
     EWidgetButton button;
@@ -17,5 +22,9 @@ typedef struct{
 
 void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent);
 void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_COMBOBOX_H

@@ -3,6 +3,11 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     void *textureImage;
     void *textureImageMemory;
@@ -21,5 +26,9 @@ typedef struct{
     void *pixels;
     Texture2D *texture;
 } engine_buffered_image;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_TEXTURE_VARIABLES_H

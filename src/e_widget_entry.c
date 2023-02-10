@@ -221,7 +221,7 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
-    Transform2DSetPosition(&entry->text, 0, 25 - (25 / fontSize) );
+    Transform2DSetPosition(&entry->text, 0, 10 + (fontSize * 2) );
 
     entry->currPos = 0;
 
@@ -246,6 +246,23 @@ char *EntryWidgetGetText(EWidgetEntry *entry)
 }
 
 void EntryWidgetSetText(EWidgetEntry *entry, char *text)
+{
+    EWidgetText *temp = WidgetFindChild(&entry->widget, entry->curr_texts)->node;
+
+    memset(entry->buffers[entry->curr_line], 0, BUFFER_SIZE);
+
+    int len = strlen(text);
+    for(int i=0;i < len;i++)
+    {
+        entry->buffers[entry->curr_line][i] = text[i];
+    }
+
+    entry->currPos = len;
+
+    TextWidgetSetText(temp, entry->buffers[entry->curr_line]);
+}
+
+void EntryWidgetSetTextW(EWidgetEntry *entry, uint32_t *text)
 {
     EWidgetText *temp = WidgetFindChild(&entry->widget, entry->curr_texts)->node;
 

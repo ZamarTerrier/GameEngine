@@ -39,7 +39,7 @@ EIVertexInputBindingDescription GameObject3DGetBindingDescription();
 
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif // GAMEOBJECT3D_H

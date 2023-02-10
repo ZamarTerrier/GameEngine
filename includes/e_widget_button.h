@@ -8,6 +8,11 @@
 
 #include <wchar.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     EWidget widget;
     EWidgetText text;
@@ -17,5 +22,9 @@ typedef struct{
 void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent);
 void ButtonWidgetSetText(EWidgetButton *button, const char *text);
 void ButtonWidgetSetColor(EWidgetButton *button, vec4 color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_BUTTON_H

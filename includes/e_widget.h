@@ -5,6 +5,11 @@
 
 #include "gameObject2D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum{
     GUI_TRIGGER_MOUSE_PRESS,
     GUI_TRIGGER_MOUSE_RELEASE,
@@ -93,5 +98,9 @@ void WidgetRecreate(EWidget *widget);
 void WidgetEventsPipe(EWidget *widget);
 void WidgetDraw(EWidget *widget);
 void WidgetDestroy(EWidget * widget);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_H

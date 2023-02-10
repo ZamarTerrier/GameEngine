@@ -21,7 +21,7 @@ EWidgetText *EntryAreaWidgetMakeAnotherText(EWidgetEntryArea * area)
 
     EWidgetText *text = calloc(1, sizeof(EWidgetText));
     TextWidgetInit(text, area->entry.text.tData.font.fontSize, NULL, &area->entry.widget);
-    Transform2DSetPosition(text, 0, area->entry.text.tData.font.fontSize * 2 * area->entry.num_texts);
+    Transform2DSetPosition(text, 0, (area->entry.text.tData.font.fontSize * 3 * area->entry.num_texts));
 
 }
 void EntryAreaWidgetMakeAnotherLine(EWidgetEntryArea * area)
@@ -139,17 +139,23 @@ void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src)
 
     char *point = &area->entry.buffers[area->entry.curr_line][area->entry.currPos];
 
-
-    int iter = 0;
+    int iter = 0, curr_line = area->entry.curr_line, text_width = 0;
     for(int i=0;i < size;i++)
     {
         point[iter] = src[i];
 
+        curr_line = area->entry.curr_line;
+
         area->entry.currPos ++;
         iter ++;
 
+        int some1 = area->textHeight;
+        int some2 = area->entry.height;
+
         EWidgetText *text = WidgetFindChild(&area->entry.widget, area->entry.curr_line)->node;
         TextWidgetSetText(text, area->entry.buffers[area->entry.curr_line]);
+
+        text_width = text->tData.textWidth;
 
         if((text->tData.textWidth >= area->entry.width || point[iter - 1] == '\n') && area->textHeight < area->entry.height)
         {
@@ -253,7 +259,7 @@ void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent)
     entry->entry.widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->entry.text, fontSize, NULL, &entry->entry.widget);
-    Transform2DSetPosition(&entry->entry.text, 0, fontSize * 2);
+    Transform2DSetPosition(&entry->entry.text, 0, fontSize * 3);
     entry->entry.num_texts = 1;
     entry->entry.curr_texts = 0;
 
