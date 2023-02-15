@@ -21,6 +21,8 @@ typedef struct GameObject3D{
     bool selfCamera;
 } GameObject3D;
 
+void GameObject3DApplyVertexes(GameObject3D* go);
+void GameObject3DRebuildVertexes(GameObject3D* go);
 void GameObject3DDefaultUpdate(GameObject3D* go);
 void GameObject3DDefaultDraw(GameObject3D* go);
 void GameObject3DClean(GameObject3D* go);
@@ -32,11 +34,6 @@ void GameObject3DInit(GameObject3D *go);
 void GameObject3DEnableLight(GameObject3D *go, bool enable);
 
 void GameObject3DAddSettingPipeline(GameObject3D* go, void *setting);
-void GameObject3DCreateDrawItems(GraphicsObject* go);
-
-//Описание вертекса
-EIVertexInputBindingDescription GameObject3DGetBindingDescription();
-
 
 #ifdef __cplusplus
 }

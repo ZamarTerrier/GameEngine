@@ -69,7 +69,7 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
     range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
     Transform2DSetScale(&range->line, size_x, 2);
     Transform2DSetPosition(&range->line, 0, size_y - 4);
-    range->line.active = false;
+    range->line.widget_flags &= ~(ENGINE_FLAG_WIDGET_ACTIVE);
 
     range->widget.color = (vec4){0.7, 0.7, 0.7, 0.0};
     range->widget.transparent = 0.0f;

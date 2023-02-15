@@ -45,16 +45,48 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
 }
 
+void GameObject2DApplyVertexes(GameObject2D* go)
+{
+    if(go->graphObj.shape.vParam.verticesSize > 0)
+        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
+
+    if(go->graphObj.shape.iParam.indexesSize > 0)
+        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
+}
+
+void GameObject2DRebuildVertexes(GameObject2D* go)
+{
+    vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+    vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+    vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
+    vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
+
+    go->graphObj.shape.vParam.vertexBuffer = NULL;
+    go->graphObj.shape.vParam.vertexBufferMemory = NULL;
+    go->graphObj.shape.iParam.indexBuffer = NULL;
+    go->graphObj.shape.iParam.indexBufferMemory = NULL;
+
+    if(go->graphObj.shape.vParam.verticesSize > 0)
+        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
+
+    if(go->graphObj.shape.iParam.indexesSize > 0)
+        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
+}
+
 void GameObject2DDefaultDraw(GameObject2D* go){
 
-    if(go->graphObj.shape.rebuild)
+    /*if(go->graphObj.shape.rebuild)
     {
-
-        vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
-        vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
 
         vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
         vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+        vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
+        vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
+
+        go->graphObj.shape.vParam.vertexBuffer = NULL;
+        go->graphObj.shape.vParam.vertexBufferMemory = NULL;
+        go->graphObj.shape.iParam.indexBuffer = NULL;
+        go->graphObj.shape.iParam.indexBufferMemory = NULL;
 
         if(go->graphObj.shape.vParam.verticesSize > 0){
             BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
@@ -65,12 +97,12 @@ void GameObject2DDefaultDraw(GameObject2D* go){
         }
 
         go->graphObj.shape.rebuild = false;
-    }
+    }*/
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -96,12 +128,11 @@ void GameObject2DDefaultDraw(GameObject2D* go){
 void GameObject2DAddSettingPipeline(GameObject2D* go, void *arg){
     PipelineSetting* setting = arg;
 
-    go->graphObj.gItems.settingsCount++;
-    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting *));
 
-    PipelineSetting** settings = go->graphObj.gItems.settings;
-    settings[go->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
-    memcpy(settings[go->graphObj.gItems.settingsCount - 1], setting, sizeof(PipelineSetting));
+    PipelineSetting* settings = go->graphObj.gItems.settings;
+    memcpy(&settings[go->graphObj.gItems.settingsCount], setting, sizeof(PipelineSetting));
+
+    go->graphObj.gItems.settingsCount++;
 
 }
 
@@ -119,37 +150,26 @@ void GameObject2DClean(GameObject2D* go){
 
 void GameObject2DRecreate(GameObject2D* go){
 
-    PipelineSetting **settings = (PipelineSetting *)go->graphObj.gItems.settings;
+    PipelineSetting *settings = (PipelineSetting *)go->graphObj.gItems.settings;
 
     for(int i=0; i < go->graphObj.gItems.settingsCount;i++)
     {
-        settings[i]->scissor.offset.x = 0;
-        settings[i]->scissor.offset.y = 0;
-        settings[i]->scissor.extent.height = HEIGHT;
-        settings[i]->scissor.extent.width = WIDTH;
-        settings[i]->viewport.x = 0;
-        settings[i]->viewport.y = 0;
-        settings[i]->viewport.height = HEIGHT;
-        settings[i]->viewport.width = WIDTH;
+        settings[i].scissor.offset.x = 0;
+        settings[i].scissor.offset.y = 0;
+        settings[i].scissor.extent.height = HEIGHT;
+        settings[i].scissor.extent.width = WIDTH;
+        settings[i].viewport.x = 0;
+        settings[i].viewport.y = 0;
+        settings[i].viewport.height = HEIGHT;
+        settings[i].viewport.width = WIDTH;
     }
 
     BuffersRecreateUniform(&go->graphObj.local);
-    GameObject2DCreateDrawItems(go);
+    GraphicsObjectCreateDrawItems(&go->graphObj);
     PipelineCreateGraphics(&go->graphObj);
     Transform2DReposition(go);
     Transform2DRescale(go);
 
-}
-
-//Описание вертекса
-EIVertexInputBindingDescription GameObject2DGetBindingDescription() {
-    EIVertexInputBindingDescription bindingDescription = {};
-
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex2D);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    return bindingDescription;
 }
 
 void GameObject2DDestroy(GameObject2D* go){
@@ -176,7 +196,7 @@ void GameObject2DInit(GameObject2D* go)
     GameObjectSetDestroyFunc(go, (void *)GameObject2DDestroy);
 
     Transform2DInit(&go->transform);
-    GraphicsObject2DInit(&go->graphObj);
+    GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_2D_OBJECT);
 }
 
 vec2 GameObject2DGetSize(GameObject2D* go)

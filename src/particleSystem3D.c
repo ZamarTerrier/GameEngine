@@ -17,18 +17,6 @@
 
 #include "e_math.h"
 
-
-//Описание вертекса
-EIVertexInputBindingDescription Particle3DGetBindingDescription() {
-    EIVertexInputBindingDescription bindingDescription = {};
-
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(ParticleVertex3D);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    return bindingDescription;
-}
-
 void Particle3DFind(ParticleObject3D *particle){
 
     for(int i=0; i < particle->num_parts; i++)
@@ -102,9 +90,9 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -133,7 +121,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -170,7 +158,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
     Transform3DInit(&particle->go.transform);
-    GraphicsObjectParticle3DInit(&particle->go.graphObj);
+    GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
 
     particle->go.graphObj.gItems.perspective = true;
     particle->go.enable_light = false;
@@ -195,7 +183,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     ImageAddTexture(&particle->go.graphObj.local, particle->go.diffuse);
 
-    GameObject3DCreateDrawItems(&particle->go.graphObj);
+    GraphicsObjectCreateDrawItems(&particle->go.graphObj);
 
     PipelineSetting setting;
 
@@ -203,6 +191,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_3D_PARTICLE;
         setting.vertShader = &_binary_shaders_particle_vert3D_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert3D_spv_size);
         setting.fragShader = &_binary_shaders_particle_frag3D_spv_start;

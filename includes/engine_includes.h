@@ -10,6 +10,13 @@
 
 #define MAX_BONES 128
 
+#define MAX_FONTS 32
+#define MAX_IMAGES 32
+#define MAX_PIPELINES 64
+#define MAX_UNIFORMS 10
+
+#define MAX_GUI_CALLBACKS 25
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -19,6 +26,28 @@ extern "C"
 
 typedef enum { false, true} bool;
 #endif
+
+typedef enum{
+    ENGINE_TYPE_GUI_WIDGET_OBJECT,
+    ENGINE_TYPE_GUI_WINDOW_WIDGET_OBJECT,
+    ENGINE_TYPE_TEXT_OBJECT,
+    ENGINE_TYPE_SPRITE_OBJECT,
+    ENGINE_TYPE_LINE_OBJECT,
+    ENGINE_TYPE_PRIMITIVE_OBJECT,
+    ENGINE_TYPE_PRIMITIVE_OBJECT_LINE,
+    ENGINE_TYPE_MODEL_OBJECT,
+    ENGINE_TYPE_PROJECT_PLANE,
+    ENGINE_TYPE_2D_PARTICLE,
+    ENGINE_TYPE_3D_PARTICLE
+} ObjectType;
+
+typedef enum{
+    ENGINE_VERTEX_TYPE_2D_OBJECT,
+    ENGINE_VERTEX_TYPE_3D_OBJECT,
+    ENGINE_VERTEX_TYPE_MODEL_OBJECT,
+    ENGINE_VERTEX_TYPE_2D_PARTICLE,
+    ENGINE_VERTEX_TYPE_3D_PARTICLE,
+} VertexType;
 
 typedef struct ChildStack{
     struct ChildStack* before;
@@ -94,6 +123,19 @@ typedef struct {
     vec4 joints;
     vec4 weight;
 } ModelVertex3D;
+
+typedef struct FontCache{
+    char path[2048];
+    void *cdata;
+    void *info;
+    void *texture;
+} FontCache;
+
+typedef struct PipelineCache{
+    void *GraphicsPipeline;
+    void *GraphicsPipelineLayout;
+    void *setting;
+} PipelineCache;
 
 typedef struct EIVertexInputBindingDescription {
     uint32_t             binding;

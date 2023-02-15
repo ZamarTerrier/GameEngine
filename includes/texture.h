@@ -13,9 +13,13 @@ extern "C"
 {
 #endif
 
-void TextureCreate( void *texture, GameObjectImage *image, bool from_file);
+void TextureCreateEmpty(Texture2D *texture);
 
-int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_file);
+Texture2D *TextureFindTexture(char *image);
+
+void TextureCreate( ShaderBuffer *descriptor, GameObjectImage *image, bool from_file);
+
+int TextureImageCreate(GameObjectImage *image, ShaderBuffer *descriptor, bool from_file);
 
 void createTextureImageView() ;
 

@@ -14,7 +14,7 @@ typedef struct{
     EWidget widget;
 } EWidgetImage;
 
-void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent);
+void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent);
 
 #ifdef __cplusplus
 }

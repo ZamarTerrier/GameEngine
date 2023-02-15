@@ -43,12 +43,22 @@ void ImageCreateEmpty(void** image, void** imageMemory) {
     vkBindImageMemory(e_device, *image, *imageMemory, 0);
 }
 
-void TextureCreate(void *texture, GameObjectImage *image, bool from_file){
+void TextureCreate(ShaderBuffer *descriptor, GameObjectImage *image, bool from_file){
 
-    int res = TextureImageCreate(image, texture, from_file);
+    int res = TextureImageCreate(image, descriptor, from_file);
 
-    createTextureImageView(texture);
-    createTextureSampler(texture);
+    if(res)
+    {
+        engine_buffered_image *images = e_var_images;
+
+        createTextureImageView(&images[e_var_num_images].texture);
+        createTextureSampler(&images[e_var_num_images].texture);
+
+        descriptor->texture = &images[e_var_num_images].texture;
+
+        e_var_num_images ++;
+    }else
+        return;
 
 }
 
@@ -59,7 +69,6 @@ void TextureCreateEmpty(Texture2D *texture)
     VkDeviceMemory stagingBufferMemory;
 
     BuffersCreate(40000, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-
 
     char some_data[40000];
     memset(some_data, 0, 40000);
@@ -79,111 +88,84 @@ void TextureCreateEmpty(Texture2D *texture)
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
 }
 
-int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_file) {
+Texture2D *TextureFindTexture(char *path)
+{
+    if(path == NULL)
+        return NULL;
+
+    engine_buffered_image *buff_images = e_var_images;
+
+    char *temp;
+    for(int i=0;i < e_var_num_images;i++)
+    {
+        temp = buff_images[i].path;
+        if(strstr(temp, path))
+            return &buff_images[i].texture;
+    }
+
+    return NULL;
+}
+
+int TextureImageCreate(GameObjectImage *image, ShaderBuffer *descriptor, bool from_file) {
+
+    engine_buffered_image *images = e_var_images;
 
     if(image == NULL)
     {
-        TextureCreateEmpty(texture);
+        descriptor->texture = &images[0].texture;
         return 0;
     }
 
     if(image->path == NULL && image->buffer == NULL)
     {
-        TextureCreateEmpty(texture);
+        descriptor->texture = &images[0].texture;
         return 0;
     }
 
     int texWidth, texHeight, texChannels;
 
-    bool find = false;
     stbi_uc *pixels;
+
+    Texture2D *temp_tex;
 
     if(from_file)
     {
-        engine_buffered_image *images = e_var_images;
 
-        for(int i=0; i < e_var_num_images;i++)
+        temp_tex = TextureFindTexture(image->path);
+
+        if(temp_tex != NULL)
         {
-            if(ToolsCmpStrings(images[i].path, image->path))
-            {
-                pixels = images[i].pixels;
-                texWidth = images[i].texWidth;
-                texHeight = images[i].texHeight;
-                texChannels = images[i].texChannels;
-                texture->textureImage = images[i].texture->textureImage;
-                texture->textureImageMemory = images[i].texture->textureImageMemory;
-                texture->linked = true;
-                return 1;
-
-                find = true;
-            }
+            descriptor->texture = temp_tex;
+            return 0;
         }
 
-        if(!find)
-        {
-            pixels = stbi_load(image->path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        pixels = stbi_load(image->path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-            e_var_num_images++;
-
-            images = e_var_images;
-
-            int len = strlen(image->path);
-            images[e_var_num_images - 1].path = calloc(len + 1, sizeof(char));
-            memcpy(images[e_var_num_images - 1].path, image->path, len);
-            images[e_var_num_images - 1].path[len] = '\0';
-            images[e_var_num_images - 1].texWidth = texWidth;
-            images[e_var_num_images - 1].texChannels = texChannels;
-            images[e_var_num_images - 1].texHeight = texHeight;
-            images[e_var_num_images - 1].pixels = pixels;
-            images[e_var_num_images - 1].texture = texture;
-        }
+        int len = strlen(image->path);
+        memset(images[e_var_num_images].path, 0, 2048);
+        memcpy(images[e_var_num_images].path, image->path, len);
     }
     else
     {
+        temp_tex = TextureFindTexture(image->path);
 
-        engine_buffered_image *images = e_var_images;
-
-        for(int i=0; i < e_var_num_images;i++)
+        if(temp_tex != NULL)
         {
-            if(ToolsCmpStrings(images[i].path, image->path))
-            {
-                pixels = images[i].pixels;
-                texWidth = images[i].texWidth;
-                texHeight = images[i].texHeight;
-                texChannels = images[i].texChannels;
-                texture->textureImage = images[i].texture->textureImage;
-                texture->textureImageMemory = images[i].texture->textureImageMemory;
-                texture->linked = true;
-                return 1;
-
-                find = true;
-            }
+            descriptor->texture = temp_tex;
+            return 0;
         }
 
-        if(!find)
-        {
-            pixels = stbi_load_from_memory(image->buffer, image->size, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        pixels = stbi_load_from_memory(image->buffer, image->size, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-            e_var_num_images++;
-
-            images = e_var_images;
-
-            int len = strlen(image->path);
-            images[e_var_num_images - 1].path = calloc(len + 1, sizeof(char));
-            memcpy(images[e_var_num_images - 1].path, image->path, len);
-            images[e_var_num_images - 1].path[len] = '\0';
-            images[e_var_num_images - 1].texWidth = texWidth;
-            images[e_var_num_images - 1].texChannels = texChannels;
-            images[e_var_num_images - 1].texHeight = texHeight;
-            images[e_var_num_images - 1].pixels = pixels;
-            images[e_var_num_images - 1].texture = texture;
-        }
+        int len = strlen(image->path);
+        memset(images[e_var_num_images].path, 0, 2048);
+        memcpy(images[e_var_num_images].path, image->path, len);
     }
 
     VkDeviceSize imageSize = texWidth * texHeight * sizeof(float);
 
-    texture->texHeight = texHeight;
-    texture->texWidth = texWidth;
+    images[e_var_num_images].texture.texHeight = texHeight;
+    images[e_var_num_images].texture.texWidth = texWidth;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -193,7 +175,7 @@ int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_fil
     if (!pixels) {
         printf("failed to load texture image!");
 
-        TextureCreateEmpty(texture);
+        descriptor->texture = &images[0].texture;
 
         return 0;
     }
@@ -204,19 +186,16 @@ int TextureImageCreate(GameObjectImage *image, Texture2D *texture, bool from_fil
     memcpy(data, pixels, imageSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    createImage( texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
+    createImage( texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &images[e_var_num_images].texture.textureImage, &images[e_var_num_images].texture.textureImageMemory);
 
-
-    transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingBuffer, texture->textureImage, texWidth, texHeight);
-    transitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    texture->linked = false;
+    transitionImageLayout(images[e_var_num_images].texture.textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    copyBufferToImage(stagingBuffer, images[e_var_num_images].texture.textureImage, texWidth, texHeight);
+    transitionImageLayout(images[e_var_num_images].texture.textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
-    return 0;
+    return 1;
 }
 
 void createTextureImageView(Texture2D *texture) {
@@ -461,35 +440,35 @@ void copyImage(void *cmdBuffer, void *srcImageId, void * dstImageId, uint32_t wi
 
 void ImageAddTexture(localParam *local, GameObjectImage *image){
 
-    local->descrCount ++;
+    if(local->descrCount + 1 > MAX_UNIFORMS)
+    {
+        printf("Слишком много декрипторов!\n");
+        return;
+    }
 
-    local->descriptors = (ShaderBuffer **) realloc(local->descriptors, local->descrCount * sizeof(ShaderBuffer*));
-
-    local->descriptors[local->descrCount - 1] = calloc(1, sizeof(ShaderBuffer));
-    ShaderBuffer *descriptor = local->descriptors[local->descrCount - 1];
+    ShaderBuffer *descriptor = &local->descriptors[local->descrCount];
 
     descriptor->image = image;
-
-    descriptor->texture = calloc(1, sizeof(Texture2D));
 
     if(image != NULL)
     {
         if(descriptor->image->size > 0)
-            TextureCreate(descriptor->texture, descriptor->image, 0);
+            TextureCreate(descriptor, descriptor->image, 0);
         else
-            TextureCreate(descriptor->texture, descriptor->image, 1);
+            TextureCreate(descriptor, descriptor->image, 1);
 
         Texture2D * texture = descriptor->texture;
         image->imgHeight = texture->texHeight;
         image->imgWidth = texture->texWidth;
     }else
-        TextureCreate(descriptor->texture, descriptor->image, 0);
+        TextureCreate(descriptor, descriptor->image, 0);
 
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+    local->descrCount ++;
 }
 
 
@@ -507,12 +486,8 @@ void changeTexture(localParam *local, int elem, const char* source, int size){
 
 void ImageDestroyTexture(Texture2D* texture){
 
-    if(!texture->linked)
-    {
-        vkDestroyImage(e_device, texture->textureImage, NULL);
-        vkFreeMemory(e_device, texture->textureImageMemory, NULL);
-    }
-
+    vkDestroyImage(e_device, texture->textureImage, NULL);
+    vkFreeMemory(e_device, texture->textureImageMemory, NULL);
     vkDestroySampler(e_device, texture->textureSampler, NULL);
     vkDestroyImageView(e_device, texture->textureImageView, NULL);
 

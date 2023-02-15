@@ -41,8 +41,19 @@ typedef enum{
     GUI_TYPE_COMBOBOX,
     GUI_TYPE_ENTRY,
     GUI_TYPE_RANGE,
+    GUI_TYPE_IMAGE,
     GUI_TYPE_WINDOW
 } TypeEnum;
+
+typedef enum{
+    ENGINE_FLAG_WIDGET_IN = 0x1,
+    ENGINE_FLAG_WIDGET_WAS_IN = 0x2,
+    ENGINE_FLAG_WIDGET_OUT = 0x4,
+    ENGINE_FLAG_WIDGET_WAS_OUT = 0x8,
+    ENGINE_FLAG_WIDGET_ACTIVE = 0x16,
+    ENGINE_FLAG_WIDGET_VISIBLE = 0x32,
+    ENGINE_FLAG_WIDGET_SELF_VISIBLE = 0x64,
+} EngineWidgetFlag;
 
 typedef struct{
     void* func;
@@ -66,7 +77,7 @@ typedef struct EWidget{
     struct ChildStack* child;
     struct ChildStack* first;
     struct ChildStack* last;
-    bool in, was_in, out, was_out, active, visible, self_visible;
+    uint32_t widget_flags;
     TypeEnum type;
     CallbackStack callbacks;
 } EWidget;

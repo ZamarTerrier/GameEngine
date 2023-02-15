@@ -144,9 +144,9 @@ void WindowWidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -155,6 +155,8 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
     GameObject2DInit(&widget->go);
 
     GraphicsObjectSetVertex(&widget->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+
+    GameObject2DApplyVertexes(widget);
 
     GameObjectSetUpdateFunc(&widget->go, (void *)WindowWidgetUniformUpdate);
 
@@ -177,7 +179,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     ImageAddTexture(&widget->go.graphObj.local, widget->go.image);
 
-    GameObject2DCreateDrawItems(&widget->go);
+    GraphicsObjectCreateDrawItems(&widget->go.graphObj);
 
     PipelineSetting setting = {};
 
@@ -185,6 +187,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_GUI_WINDOW_WIDGET_OBJECT;
         setting.vertShader = &_binary_shaders_gui_widget_window_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_window_vert_spv_size);
         setting.fragShader = &_binary_shaders_gui_widget_window_frag_spv_start;
@@ -200,9 +203,10 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
     widget->parent = NULL;
     widget->child = NULL;
 
-    widget->in = widget->was_in = widget->was_out = widget->out = false;
+    widget->widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE;
 
-    widget->callbacks.stack = (CallbackStruct *) calloc(0, sizeof(CallbackStruct));
+    widget->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
+    widget->callbacks.size = 0;
 
     PipelineCreateGraphics(&widget->go.graphObj);
 
@@ -211,9 +215,6 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     widget->color = (vec4){1, 1, 1, 1.0};
     widget->transparent = 1.0f;
-    widget->visible = true;
-
-    widget->active = true;
 }
 
 void InitName(EWidget* widget, uint32_t* name, DrawParam *dParam, EWidget *parent)

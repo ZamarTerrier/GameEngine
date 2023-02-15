@@ -43,8 +43,6 @@ typedef struct{
     uint32_t obj_size;
 } ModelObject3D;
 
-EIVertexInputBindingDescription ModelObject3DGetBindingDescription();
-
 void ModelDefaultDraw(ModelObject3D* mo);
 void ModelDefaultUpdate(ModelObject3D* mo);
 void ModelClean(ModelObject3D* mo);

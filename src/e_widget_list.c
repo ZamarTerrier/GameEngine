@@ -89,21 +89,20 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         list->widget.child = child->next;
         free(child);
 
-    }else{
+    }else if(child->before != NULL){
         WidgetDestroy(child->node);
         free(child->node);
         child->node = NULL;
 
-        void *temp = child->before;
-
-        if(temp != 0x0);
-        {
-            child->before->next = NULL;
-            list->widget.last = child->before;
-        }
+        child->before->next = NULL;
+        list->widget.last = child->before;
 
         free(child);
-        child = NULL;
+
+    }else{
+        free(list->widget.child);
+        list->widget.last = NULL;
+        list->widget.child = NULL;
     }
 
      list->size--;

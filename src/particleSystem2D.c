@@ -92,9 +92,9 @@ void Particle2DDefaultUpdate(ParticleObject2D* particle){
     tbo.rotation = particle->go.transform.rotation;
     tbo.scale = particle->go.transform.scale;
 
-    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
+    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
     memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -123,7 +123,7 @@ void Particle2DDefaultDraw(GameObject2D* go){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -160,7 +160,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
     particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
 
     Transform3DInit(&particle->go.transform);
-    GraphicsObjectParticle2DInit(&particle->go.graphObj);
+    GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_2D_PARTICLE);
 
     particle->go.graphObj.gItems.perspective = true;
 
@@ -182,7 +182,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
 
     ImageAddTexture(&particle->go.graphObj.local, particle->go.image);
 
-    GameObject3DCreateDrawItems(&particle->go.graphObj);
+    GraphicsObjectCreateDrawItems(&particle->go.graphObj);
 
     PipelineSetting setting;
 
@@ -190,6 +190,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_2D_PARTICLE;
         setting.vertShader = &_binary_shaders_particle_vert2D_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert2D_spv_size);
         setting.fragShader = &_binary_shaders_particle_frag2D_spv_start;

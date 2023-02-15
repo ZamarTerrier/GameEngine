@@ -22,7 +22,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     }
 
 
-    PipelineSetting **settings =  img->widget.go.graphObj.gItems.settings;
+    PipelineSetting *settings =  img->widget.go.graphObj.gItems.settings;
 
     vec2 parentPos = {0, 0};
 
@@ -71,18 +71,25 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 
     }
 
-    settings[0]->scissor.offset.x = parentPos.x * WIDTH;
+    settings[0].scissor.offset.x = parentPos.x * WIDTH;
 
-    if(settings[0]->scissor.offset.x < 0)
-        settings[0]->scissor.offset.x = 0;
+    if(settings[0].scissor.offset.x < 0)
+        settings[0].scissor.offset.x = 0;
 
-    settings[0]->scissor.offset.y = parentPos.y * HEIGHT;
+    settings[0].scissor.offset.y = parentPos.y * HEIGHT;
 
-    if(settings[0]->scissor.offset.y < 0)
-        settings[0]->scissor.offset.y = 0;
+    if(settings[0].scissor.offset.y < 0)
+        settings[0].scissor.offset.y = 0;
 
-    settings[0]->scissor.extent.height = parentSize.y * 2 * HEIGHT;
-    settings[0]->scissor.extent.width = parentSize.x * 2 * WIDTH;
+    settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
+
+    if(settings[0].scissor.extent.height > 2000)
+        settings[0].scissor.extent.height = 0;
+
+    settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
+
+    if(settings[0].scissor.extent.width > 2000)
+        settings[0].scissor.extent.width = 0;
 
     ShaderBuffer* sBuffer = img->widget.go.graphObj.local.descriptors;
 
@@ -108,52 +115,88 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 
 }
 
+void ImageWidgetCreateQuad(EWidgetImage *wi)
+{
+    Vertex2D *verts = calloc(4, sizeof(Vertex2D));
 
-void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
+    float size = 0.5f;
+
+    verts[0].position.x = -size;
+    verts[0].position.y = -size;
+    verts[0].texCoord.x = 0;
+    verts[0].texCoord.y = 0;
+
+    verts[1].position.x = size;
+    verts[1].position.y = -size;
+    verts[1].texCoord.x = 1.0f;
+    verts[1].texCoord.y = 0;
+
+    verts[2].position.x = size;
+    verts[2].position.y = size;
+    verts[2].texCoord.x = 1.0f;
+    verts[2].texCoord.y = 1.0f;
+
+    verts[3].position.x = -size;
+    verts[3].position.y = size;
+    verts[3].texCoord.x = 0;
+    verts[3].texCoord.y = 1.0f;
+
+    for(int i=0;i < 4;i++)
+    {
+        verts[i].color = (vec3){ 1, 1, 1};
+    }
+
+    uint32_t *tIndx = calloc(6, sizeof(uint32_t));
+
+    uint32_t indx[] = {
+      0, 1, 2, 2, 3, 0
+    };
+
+    memcpy(tIndx, indx, 6 * sizeof(uint32_t));
+
+    GraphicsObjectSetVertex(&wi->widget.go.graphObj, verts, 4, tIndx, 6);
+}
+
+
+void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
 
     GameObject2DInit(img);
+
+    GameObjectSetUpdateFunc(&img->widget.go, (void *)ImageWidgetUpdateUniformBufferDefault);
+
     memcpy(img->widget.go.name, "Widget_Image", 10);
 
-    GraphicsObjectSetVertex(&img->widget.go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    img->widget.type = GUI_TYPE_IMAGE;
 
-    GameObjectSetUpdateFunc(img, (void *)ImageWidgetUpdateUniformBufferDefault);
+    ImageWidgetCreateQuad(img);
 
-    GraphicsObjectSetShadersPath(&img->widget.go.graphObj, dParam.vertShader, dParam.fragShader);
+    GameObject2DApplyVertexes(img);
 
-    BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(Transform2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     img->widget.go.image = calloc(1, sizeof(GameObjectImage));
 
-    if(strlen(dParam.diffuse) != 0)
+    if(strlen(image_path) != 0)
     {
-        int len = strlen(dParam.diffuse);
+        int len = strlen(image_path);
         img->widget.go.image->path = calloc(len + 1, sizeof(char));
-        memcpy(img->widget.go.image->path, dParam.diffuse, len);
+        memcpy(img->widget.go.image->path, image_path, len);
         img->widget.go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
     }
 
-    if(strlen(dParam.specular) != 0)
-    {
-        int len = strlen(dParam.specular);
-        img->widget.go.image->path = calloc(len + 1, sizeof(char));
-        memcpy(img->widget.go.image->path, dParam.specular, len);
-        img->widget.go.image->path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
-    }
+    ImageAddTexture(&img->widget.go.graphObj.local, img->widget.go.image);
 
+    GraphicsObjectCreateDrawItems(&img->widget.go.graphObj);
 
-    GameObject2DCreateDrawItems(img);
-
-    PipelineSetting setting = {};
+    PipelineSetting setting;
 
     PipelineSettingSetDefault(&img->widget.go.graphObj, &setting);
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_SPRITE_OBJECT;
         setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
         setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
@@ -161,20 +204,21 @@ void ImageWidgetInit(EWidgetImage *img, DrawParam dParam, EWidget *parent){
         setting.fromFile = 0;
     }
 
-    GameObject2DAddSettingPipeline(img, &setting);
+    GameObject2DAddSettingPipeline(&img->widget.go, &setting);
+
+    PipelineCreateGraphics(&img->widget.go.graphObj);
 
     img->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
     img->widget.offset.x = 0;
     img->widget.offset.y = 0;
     img->widget.transparent = 1.0f;
-    img->widget.visible = true;
 
     WidgetSetParent(&img->widget, parent);
 
-    img->widget.in = img->widget.was_in = img->widget.was_out = img->widget.out = false;
+    img->widget.widget_flags = ENGINE_FLAG_WIDGET_VISIBLE;
 
-    img->widget.callbacks.stack = (CallbackStruct *) calloc(0, sizeof(CallbackStruct));
+    img->widget.callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
+    img->widget.callbacks.size = 0;
 
-    PipelineCreateGraphics(&img->widget.go.graphObj);
 }

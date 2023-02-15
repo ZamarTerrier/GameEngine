@@ -16,7 +16,7 @@ void TopMenuWidgetFocus(EWidget *widget, void *entry, void *args)
         child = WidgetFindChild(menu, iter)->node;
 
         if(child->type == GUI_TYPE_LIST)
-            child->visible = false;
+            child->widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
     }
 }
 
@@ -34,10 +34,13 @@ void ToggleMenu(EWidget *widget, void *entry, EWidgetList *list)
         child = WidgetFindChild(menu, iter)->node;
 
         if(child->type == GUI_TYPE_LIST && child != list)
-            child->visible = false;
+            child->widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
     }
 
-    list->widget.visible = !list->widget.visible ? true : false;
+    if(!(list->widget.widget_flags & ENGINE_FLAG_WIDGET_VISIBLE))
+        list->widget.widget_flags |= ENGINE_FLAG_WIDGET_VISIBLE;
+    else
+        list->widget.widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
 }
 
 void TopMenuWidgetResize(EWidgetTopMenu *top_menu)
@@ -113,7 +116,7 @@ EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char
     vec2 pos = Transform2DGetPosition(top_menu->list[top_menu->num_elems - 1].button);
     Transform2DSetPosition(l_menu, pos.x, 40);
     EWidgetButton *button = ListWidgetAddItem(l_menu, name);
-    l_menu->widget.visible = false;
+    l_menu->widget.widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
     top_menu->list[num_menu].list = l_menu;
     WidgetConnect(top_menu->list[top_menu->num_elems - 1].button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);
     WidgetConnect(button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);

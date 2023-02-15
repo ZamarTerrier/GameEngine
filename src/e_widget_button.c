@@ -18,6 +18,7 @@ void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
 
 void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
+
     WidgetInit(button, NULL, parent);
     memcpy(button->widget.go.name, "Button", 6);
 
@@ -32,6 +33,16 @@ void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
     WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_PRESS, ButtonWidgetPress, NULL);
     WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_RELEASE, ButtonWidgetRelease, NULL);
 
+}
+
+void ButtonWidgetSetImage(EWidgetButton *button, char *path)
+{
+    ImageWidgetInit(&button->image, path, button);
+
+    Transform2DSetScale(&button->image, 64, 64);
+    Transform2DSetPosition(&button->image, 0, 0);
+
+    Transform2DSetPosition(&button->text, 9 * 6.0f, 9 * 4.0f);
 }
 
 void ButtonWidgetSetText(EWidgetButton *button, const char *text){

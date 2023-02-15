@@ -11,6 +11,7 @@
 #include "engine.h"
 
 #include "pipeline.h"
+#include "buffers.h"
 
 #include "e_resource.h"
 
@@ -43,9 +44,9 @@ void WidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
     MaskObjectBuffer mbo = {};
 
@@ -72,9 +73,9 @@ void WidgetUniformUpdate(EWidget *ew){
         mbo.size = 0;
     }
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -136,6 +137,8 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
+    GameObject2DApplyVertexes(ew);
+
     GameObjectSetUpdateFunc(&ew->go, (void *)WidgetUniformUpdate);
 
     if(dParam != NULL)
@@ -158,7 +161,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     ImageAddTexture(&ew->go.graphObj.local, ew->go.image);
 
-    GameObject2DCreateDrawItems(&ew->go);
+    GraphicsObjectCreateDrawItems(&ew->go.graphObj);
 
     PipelineSetting setting = {};
 
@@ -166,6 +169,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_GUI_WIDGET_OBJECT;
         setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
         setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
@@ -180,42 +184,54 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     ew->offset.x = 0;
     ew->offset.y = 0;
     ew->transparent = 1.0f;
-    ew->visible = true;
 
     WidgetSetParent(ew, parent);
 
-    ew->in = ew->was_in = ew->was_out = ew->out = false;
+    ew->widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE;
 
-    ew->callbacks.stack = (CallbackStruct *) calloc(0, sizeof(CallbackStruct));
+    ew->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
+    ew->callbacks.size = 0;
 
     PipelineCreateGraphics(&ew->go.graphObj);
-
-    ew->active = true;
 }
 
 void WidgetConnect(EWidget* widget, int trigger, void* callback, void* args){
+
+    if(widget->callbacks.size + 1 >= MAX_GUI_CALLBACKS)
+    {
+        printf("Слишком много калбэков!\n");
+        return;
+    }
+
+    widget->callbacks.stack[widget->callbacks.size].args = args;
+    widget->callbacks.stack[widget->callbacks.size].func = callback;
+    widget->callbacks.stack[widget->callbacks.size].trigger = trigger;
+
     widget->callbacks.size ++;
-    widget->callbacks.stack = (CallbackStruct *) realloc(widget->callbacks.stack, widget->callbacks.size * sizeof(CallbackStruct));
-    widget->callbacks.stack[widget->callbacks.size - 1].args = args;
-    widget->callbacks.stack[widget->callbacks.size - 1].func = callback;
-    widget->callbacks.stack[widget->callbacks.size - 1].trigger = trigger;
 }
 
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
-    for(int i=0;i < widget->callbacks.size;i++)
+    int c_size = widget->callbacks.size;
+
+    CallbackStruct *stack = calloc(c_size, sizeof(CallbackStruct));
+    memcpy(stack, widget->callbacks.stack, c_size * sizeof(CallbackStruct));
+
+    for(int i=0;i < c_size;i++)
     {
-        if(widget->callbacks.stack[i].trigger == trigger)
+        if(stack[i].trigger == trigger)
         {
-            void(*func)(EWidget *widget, void *, void*) = widget->callbacks.stack[i].func;
-            func(widget, entry,  widget->callbacks.stack[i].args);
+            void(*func)(EWidget *widget, void *, void*) = stack[i].func;
+            func(widget, entry,  stack[i].args);
         }
     }
+
+    free(stack);
 }
 
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
 
-    if(!widget->active || !widget->visible)
+    if(!(widget->widget_flags & ENGINE_FLAG_WIDGET_ACTIVE) || !(widget->widget_flags & ENGINE_FLAG_WIDGET_VISIBLE))
         return NULL;
 
     double xpos, ypos;
@@ -238,7 +254,7 @@ EWidget* WidgetCheckMouseInner(EWidget* widget){
 
                 if(res != NULL)
                 {
-                    widget->out = true;
+                    widget->widget_flags |= ENGINE_FLAG_WIDGET_OUT;
                     return res;
                 }
             }
@@ -249,7 +265,7 @@ EWidget* WidgetCheckMouseInner(EWidget* widget){
         return widget;
     }
 
-    widget->out = true;
+    widget->widget_flags |= ENGINE_FLAG_WIDGET_OUT;
     return NULL;
 }
 
@@ -263,13 +279,13 @@ void WidgetEventsPipe(EWidget* widget)
 
     if(e_var_sellected != NULL)
     {
-        e_var_sellected->in = true;
+        widget->widget_flags |= ENGINE_FLAG_WIDGET_IN;
 
-        if(e_var_sellected->was_out && !e_var_sellected->was_in)
+        if((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) && !(e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN))
             WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_IN, NULL);
-        else if(!e_var_sellected->was_out && e_var_sellected->was_in)
+        else if(!(e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) && (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN))
             WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_OUT, NULL);
-        else if(!e_var_sellected->was_out && e_var_sellected->was_in)
+        else if(!(e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT)&& (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN))
             WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_STAY, NULL);
 
         if(e_var_leftMouse && e_var_wasReleased)
@@ -296,10 +312,12 @@ void WidgetEventsPipe(EWidget* widget)
         {
             WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_RELEASE, NULL);
             e_var_wasReleased = true;
+        }else
+        {
+            e_var_sellected->widget_flags = (((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) | (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_OUT)) |
+                    ((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN) | (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_IN)));
         }
 
-        e_var_sellected->was_out = e_var_sellected->out;
-        e_var_sellected->was_in = e_var_sellected->in;
     }
 
     int state = glfwGetMouseButton(e_window, GLFW_MOUSE_BUTTON_LEFT);
@@ -317,7 +335,7 @@ void WidgetEventsPipe(EWidget* widget)
 
 void WidgetDraw(EWidget * widget)
 {
-    if(!widget->visible)
+    if(!(widget->widget_flags & ENGINE_FLAG_WIDGET_VISIBLE))
         return;
 
     ChildStack *child = widget->child;
@@ -342,7 +360,7 @@ void WidgetRecreate(EWidget * widget){
     }
 }
 
-void WidgetDestroy(EWidget * widget){
+void WidgetDestroy(EWidget *widget){
     ChildStack *child = widget->child;
     ChildStack *lastChild;
     while(child != NULL)
@@ -354,6 +372,5 @@ void WidgetDestroy(EWidget * widget){
     }
     GameObjectDestroy(widget);
 
-    if(widget->callbacks.size > 0)
-        free(widget->callbacks.stack);
+    free(widget->callbacks.stack);
 }

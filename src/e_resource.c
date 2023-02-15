@@ -262,6 +262,35 @@ EIVertexInputAttributeDescription particle3DAttributeDescription[] = {
         .offset = offsetof(ParticleVertex3D, color) }
 };
 
+EIVertexInputBindingDescription Bind2DDescription = {
+    .binding = 0,
+    .stride = sizeof(Vertex2D),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription Bind3DDescription = {
+    .binding = 0,
+    .stride = sizeof(Vertex3D),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription BindModel3DDescription = {
+    .binding = 0,
+    .stride = sizeof(ModelVertex3D),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription BindParticle2DDescription = {
+    .binding = 0,
+    .stride = sizeof(ParticleVertex2D),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription BindParticle3DDescription = {
+    .binding = 0,
+    .stride = sizeof(ParticleVertex3D),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
 
 const FontIndexes fontIndexes[] ={
     { 1025, 0xD081 },//Ё
@@ -333,6 +362,7 @@ const FontIndexes fontIndexes[] ={
 };
 
 uint32_t imageIndex;
+
 uint32_t extensionCount = 0;
 uint32_t imagesCount = 0;
 uint32_t glfwExtensionCount = 0;
@@ -352,3 +382,12 @@ int e_var_num_images = 0;
 
 void **e_var_lights = NULL;
 int e_var_num_lights = 0;
+
+PipelineCache *e_var_pipelines = NULL;
+uint32_t e_var_num_pipelines = 0;
+
+FontCache *e_var_fonts = NULL;
+uint32_t e_var_num_fonts = 0;
+
+int define_font_loaded = 0;
+
