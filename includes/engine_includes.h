@@ -28,6 +28,7 @@ typedef enum { false, true} bool;
 #endif
 
 typedef enum{
+    ENGINE_TYPE_PAINTER_OBJECT,
     ENGINE_TYPE_GUI_WIDGET_OBJECT,
     ENGINE_TYPE_GUI_WINDOW_WIDGET_OBJECT,
     ENGINE_TYPE_TEXT_OBJECT,

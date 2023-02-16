@@ -9,8 +9,7 @@
 
 void Transform2DInit(Transform2D* transform){
 
-    transform->position.x = transform->positionOrig.x = 0;
-    transform->position.y = transform->positionOrig.y = 0;
+    memset(transform, 0, sizeof(Transform2D));
 
     transform->scale.x = 1;
     transform->scale.y = 1;
@@ -18,32 +17,17 @@ void Transform2DInit(Transform2D* transform){
     transform->scaleOrig.x = WIDTH;
     transform->scaleOrig.y = HEIGHT;
 
-    transform->img.origin.x = 0;
-    transform->img.origin.y = 0;
-
-    transform->img.offset.x = 0;
-    transform->img.offset.y = 0;
-
     transform->img.scale.x = 1;
     transform->img.scale.y = 1;
 }
 
 void Transform3DInit(Transform3D* transform){
 
-    transform->position.x = 0;
-    transform->position.y = 0;
-    transform->position.z = 0;
-
-    transform->rotation.x = 0;
-    transform->rotation.y = 0;
-    transform->rotation.z = 0;
+    memset(transform, 0, sizeof(Transform3D));
 
     transform->scale.x = 1;
     transform->scale.y = 1;
     transform->scale.z = 1;
-
-    transform->img.offset.x = 0;
-    transform->img.offset.y = 0;
 
     transform->img.scale.x = 1;
     transform->img.scale.y = 1;

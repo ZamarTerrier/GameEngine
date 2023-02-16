@@ -55,6 +55,7 @@ void TextDataSetTextSize(TextData* tData, float size);
 void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData);
 
 void TextObjectSetText(const uint32_t* text, TextObject* to);
+void TextObjectSetTextU8(TextObject* to, const char* text);
 
 #ifdef __cplusplus
 }

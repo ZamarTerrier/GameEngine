@@ -2,6 +2,9 @@
 
 #include "vulkan/vulkan.h"
 
+#include "buffers.h"
+#include "graphicsItems.h"
+
 #include "e_math.h"
 #include "pipeline.h"
 
@@ -194,13 +197,13 @@ void TextWidgetAddTexture(EWidgetText *wt){
 
 void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent){
 
+    memcpy(wt->widget.go.name, "Widget_Text", 10);
+
     GameObject2DInit(wt);
 
     GameObjectSetUpdateFunc(wt, (void *)TextWidgetUpdateUniformBufferDefault);
     GameObjectSetDrawFunc(wt, (void *)TextWidgetDrawDefault);
     GameObjectSetRecreateFunc(wt, (void *)TextWidgettRecreate);
-
-    memcpy(wt->widget.go.name, "Widget_Text", 10);
 
     if(dParam != NULL)
     {
@@ -217,7 +220,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
     BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextWidgetAddTexture(wt);
 
-    GameObject2DCreateDrawItems(wt);
+    GraphicsObjectCreateDrawItems(&wt->widget.go.graphObj);
 
     PipelineSetting setting = {};
 

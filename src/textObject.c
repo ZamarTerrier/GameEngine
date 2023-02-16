@@ -46,7 +46,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descr
 
     FontCache *fonts = e_var_fonts;
 
-    VkDeviceSize bufferSize = tData->font.fontWidth * tData->font.fontHeight; //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
+    VkDeviceSize bufferSize = tData->font.fontWidth * tData->font.fontHeight * sizeof(Vertex2D); //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
 
     char *some_file_path = tData->font.fontpath;
     int font_len = strlen(some_file_path);
@@ -200,23 +200,14 @@ void TextObjectAddTexture(TextObject* to){
 
     ShaderBuffer *descriptor = &to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount];
 
-    descriptor->texture = (Texture2D *) calloc(1, sizeof(Texture2D));
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor->image = NULL;
 
     TextImageMakeTexture(&to->go, &to->textData, descriptor);
 
     to->go.graphObj.local.descrCount ++;
-}
-
-
-void TextObjectAddSettingPipeline(TextObject* to, PipelineSetting setting){
-    PipelineSetting* settings = (PipelineSetting *) to->go.graphObj.gItems.settings;
-
-    memcpy(&settings[to->go.graphObj.gItems.settingsCount], &setting, sizeof(PipelineSetting));
-
-    to->go.graphObj.gItems.settingsCount++;
 }
 
 void TextObjectUpdateUniformBufferDefault(TextObject* to) {
@@ -263,6 +254,9 @@ void TextObjectDrawDefault(TextObject* to)
 }
 
 void TextDataSetFontPath(TextData* tData, const char* path){
+
+    if(path == NULL)
+        return;
 
     int len = strlen(path);
 
@@ -367,6 +361,16 @@ void TextObjectSetText(const uint32_t* text, TextObject* to)
     TextImageSetText(text, &to->go, &to->textData);
 }
 
+void TextObjectSetTextU8(TextObject* to, const char* text)
+{
+    uint32_t size = strlen(text);
+    uint32_t buff[size + 1];
+
+    ToolsStringToUInt32(buff, text);
+
+    TextImageSetText(buff, &to->go, &to->textData);
+}
+
 void TextObjectRecreate(TextObject* to){
 
     PipelineSetting **settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
@@ -401,14 +405,13 @@ void TextDataInit(TextData *tData, int fontSize, char* fontPath){
 
 void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 {
+    memcpy(to->go.name, "Object_Text", 10);
 
     GameObject2DInit(to);
 
     GameObjectSetUpdateFunc(to, (void *)TextObjectUpdateUniformBufferDefault);
     GameObjectSetDrawFunc(to, (void *)TextObjectDrawDefault);
     GameObjectSetRecreateFunc(to, (void *)TextObjectRecreate);
-
-    Transform2DSetPosition(to, 0.0f, 0.0f);
 
     //Загружаем шрифт и настраеваем его на работу
     TextDataInit(&to->textData, fontSize, fontPath);
@@ -417,6 +420,8 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextObjectAddTexture(to);
+
+    GraphicsObjectCreateDrawItems(&to->go.graphObj);
 
     PipelineSetting setting;
 
@@ -434,11 +439,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-    TextObjectAddSettingPipeline(to, setting);
+    GameObject2DAddSettingPipeline(to, &setting);
 
-    GraphicsObjectCreateDrawItems(&to->go.graphObj);
-
-    GraphicsObject *graph = &to->go.graphObj;
-
-    PipelineCreateGraphics(graph);
+    PipelineCreateGraphics(&to->go.graphObj);
 }
