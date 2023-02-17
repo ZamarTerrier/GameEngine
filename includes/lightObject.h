@@ -3,6 +3,11 @@
 
 #include "engine_includes.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum{
     ENGINE_LIGHT_TYPE_DIRECTIONAL,
     ENGINE_LIGHT_TYPE_POINT,
@@ -37,5 +42,9 @@ void LightObjectSetDiffuseColor(LightObject *lo, float r, float g, float b);
 void LightObjectSetSpecularColor(LightObject *lo, float r, float g, float b);
 
 void LightObjectDraw(LightObject *lo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LIGHTOBJECT_H

@@ -6,6 +6,10 @@
 #include "e_widget.h"
 #include "e_widget_text.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 typedef struct{
     EWidget widget;
@@ -28,5 +32,9 @@ void WindowWidgetHide(EWidgetWindow *ww);
 void WindowWidgetUpdate(EWidgetWindow *ww);
 void WindowWidgetDraw(EWidgetWindow *ww);
 void WindowWidgetDestroy(EWidgetWindow *ww);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_WINDOW_H

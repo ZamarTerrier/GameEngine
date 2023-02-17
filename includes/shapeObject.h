@@ -3,6 +3,11 @@
 
 #include "gameObject2D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     vec2 position;
     vec2 direction;
@@ -39,5 +44,9 @@ typedef struct{
 } ShapeObject;
 
 void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *param);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SHAPEOBJECT_H

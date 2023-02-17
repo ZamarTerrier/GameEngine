@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "e_texture_variables.h"
+
 #include "debuger.h"
 #include "device.h"
 
@@ -85,8 +87,22 @@ void EngineInitVulkan(){
     e_var_lights = calloc(0, sizeof(LightObject *));
     e_var_num_lights = 0;
 
-    e_var_images = calloc(1000, sizeof(engine_buffered_image));
+    e_var_images = calloc(MAX_IMAGES, sizeof(engine_buffered_image));
     e_var_num_images = 0;
+
+    e_var_fonts = calloc(MAX_FONTS, sizeof(FontCache));
+    e_var_num_fonts = 0;
+
+    e_var_pipelines = calloc(MAX_PIPELINES, sizeof(PipelineCache));
+    e_var_num_pipelines = 0;
+
+    engine_buffered_image *images = e_var_images;
+    TextureCreateEmpty(&images[e_var_num_images].texture);
+    createTextureImageView(&images[e_var_num_images].texture);
+    createTextureSampler(&images[e_var_num_images].texture);
+    char *text = "Null texture";
+    memcpy(images[e_var_num_images].path, text, strlen(text));
+    e_var_num_images ++;
 }
 
 void EngineInitSystem(int width, int height, const char* name){
@@ -486,19 +502,43 @@ void EngineCleanUp(){
 
     vkDestroyCommandPool(e_device, commandPool, NULL);
 
+    PipelineCache *cachedPipelines = e_var_pipelines;
+    for(int i=0;i < e_var_num_pipelines; i++){
+        vkDestroyPipeline(e_device, cachedPipelines[i].GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, cachedPipelines[i].GraphicsPipelineLayout, NULL);
+    }
+
+    free(e_var_pipelines);
+    e_var_pipelines = NULL;
+
+    if(e_var_num_fonts > 0)
+    {
+        FontCache *fonts = e_var_fonts;
+
+        for(int i=0; i < e_var_num_fonts;i++)
+        {
+            free(fonts[i].cdata);
+            free(fonts[i].info);
+            ImageDestroyTexture(fonts[i].texture);
+            free(fonts[i].texture);
+        }
+    }
+
+    free(e_var_fonts);
+    e_var_fonts = NULL;
+
     if(e_var_num_images > 0)
     {
         engine_buffered_image *images = e_var_images;
 
         for(int i=0; i < e_var_num_images;i++)
         {
-            free(images[i].path);
-            free(images[i].pixels);
+            ImageDestroyTexture(&images[i].texture);
         }
-
     }
 
     free(e_var_images);
+    e_var_images = NULL;
 
     vkDestroyDevice(e_device, NULL);
 
@@ -520,5 +560,4 @@ void EngineCleanUp(){
         free(lights);
         e_var_num_lights = 0;
     }
-
 }

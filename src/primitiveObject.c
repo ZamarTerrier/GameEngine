@@ -11,6 +11,45 @@
 #include "texture.h"
 #include "pipeline.h"
 
+void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
+{
+    po->go.diffuse = calloc(1, sizeof(GameObjectImage));
+    po->go.specular = calloc(1, sizeof(GameObjectImage));
+    po->go.normal = calloc(1, sizeof(GameObjectImage));
+
+    if(dParam == NULL)
+        return;
+
+    if(strlen(dParam->diffuse) != 0)
+    {
+        int len = strlen(dParam->diffuse);
+        po->go.diffuse->path = calloc(len + 1, sizeof(char));
+        memcpy(po->go.diffuse->path, dParam->diffuse, len);
+        po->go.diffuse->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    if(strlen(dParam->specular) != 0)
+    {
+        int len = strlen(dParam->specular);
+        po->go.specular->path = calloc(len + 1, sizeof(char));
+        memcpy(po->go.specular->path, dParam->specular, len);
+        po->go.specular->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+
+    if(strlen(dParam->normal) != 0)
+    {
+        int len = strlen(dParam->normal);
+        po->go.normal->path = calloc(len + 1, sizeof(char));
+        memcpy(po->go.normal->path, dParam->normal, len);
+        po->go.normal->path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+}
+
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params){
 
     GameObject3DInit(po);
@@ -58,6 +97,8 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
             break;
     }
 
+    GameObject3DApplyVertexes(po);
+
     GraphicsObjectSetShadersPath(&po->go.graphObj, dParam.vertShader, dParam.fragShader);
 
     po->go.graphObj.local.descrCount = 0;
@@ -65,49 +106,19 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     BuffersAddUniformObject(&po->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&po->go.graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    po->go.diffuse = calloc(1, sizeof(GameObjectImage));
-    po->go.specular = calloc(1, sizeof(GameObjectImage));
-    po->go.normal = calloc(1, sizeof(GameObjectImage));
-
-    if(strlen(dParam.diffuse) != 0)
-    {
-        int len = strlen(dParam.diffuse);
-        po->go.diffuse->path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.diffuse->path, dParam.diffuse, len);
-        po->go.diffuse->path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
+    PrimitiveObjectInitTexture(po, &dParam);
 
     ImageAddTexture(&po->go.graphObj.local, po->go.diffuse);
-
-    if(strlen(dParam.specular) != 0)
-    {
-        int len = strlen(dParam.specular);
-        po->go.specular->path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.specular->path, dParam.specular, len);
-        po->go.specular->path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
     ImageAddTexture(&po->go.graphObj.local, po->go.specular);
-
-    if(strlen(dParam.normal) != 0)
-    {
-        int len = strlen(dParam.normal);
-        po->go.normal->path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.normal->path, dParam.normal, len);
-        po->go.normal->path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
     ImageAddTexture(&po->go.graphObj.local, po->go.normal);
 
-    GameObject3DCreateDrawItems(&po->go.graphObj);
+    GraphicsObjectCreateDrawItems(&po->go.graphObj);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&po->go.graphObj, &setting);
 
+    setting.obj_type = ENGINE_TYPE_PRIMITIVE_OBJECT;
     setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
     setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
     setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
@@ -117,6 +128,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     setting.fromFile = 0;
     GameObject3DAddSettingPipeline(po, &setting);
 
+    setting.obj_type = ENGINE_TYPE_PRIMITIVE_OBJECT_LINE;
     setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
     setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_line_vert_spv_size);
     setting.fragShader = &_binary_shaders_3d_object_line_frag_spv_start;
@@ -126,7 +138,6 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     setting.fromFile = 0;
 
     GameObject3DAddSettingPipeline(po, &setting);
-
 
     PipelineCreateGraphics(&po->go.graphObj);
 

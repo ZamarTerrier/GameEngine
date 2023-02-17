@@ -143,8 +143,8 @@ int IntersectionSpherePlane(void *obj1, void *obj2, float *distance, float *dept
     if(dist <= sphere->radius * sphere->radius)
     {
         *distance = dist;
-        *depth = (sphere->radius) - dist;
-        *dir = v3_muls(plane->normal, -1);
+        *depth = (sphere->radius  * sphere->radius) - dist;
+        *dir = v3_muls(plane->normal, -*depth);
         return true;
     }
 

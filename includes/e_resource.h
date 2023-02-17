@@ -69,11 +69,19 @@ extern const uint32_t projPlaneIndx[];
 extern const char* validationLayers[];
 extern const char* deviceExtensions[];
 
+//Список атрибутов для вершины
 extern EIVertexInputAttributeDescription planeAttributeDescription[];
 extern EIVertexInputAttributeDescription cubeAttributeDescription[];
 extern EIVertexInputAttributeDescription modelAttributeDescription[];
 extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
 extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
+
+//Описатель самой вершины
+extern EIVertexInputBindingDescription Bind2DDescription;
+extern EIVertexInputBindingDescription Bind3DDescription;
+extern EIVertexInputBindingDescription BindModel3DDescription;
+extern EIVertexInputBindingDescription BindParticle2DDescription;
+extern EIVertexInputBindingDescription BindParticle3DDescription;
 
 typedef struct{
     uint32_t FindLetter;
@@ -102,6 +110,14 @@ extern int e_var_num_images;
 
 extern void **e_var_lights;
 extern int e_var_num_lights;
+
+extern PipelineCache *e_var_pipelines;
+extern uint32_t e_var_num_pipelines;
+
+extern FontCache *e_var_fonts;
+extern uint32_t e_var_num_fonts;
+
+extern int define_font_loaded;
 
 extern char _binary_shaders_model_frag_spv_end;
 extern int _binary_shaders_model_frag_spv_size;
@@ -158,6 +174,13 @@ extern char _binary_shaders_gui_widget_frag_spv_start;
 extern char _binary_shaders_gui_widget_vert_spv_end;
 extern int _binary_shaders_gui_widget_vert_spv_size;
 extern char _binary_shaders_gui_widget_vert_spv_start;
+
+extern char _binary_shaders_gui_painter_frag_spv_end;
+extern int _binary_shaders_gui_painter_frag_spv_size;
+extern char _binary_shaders_gui_painter_frag_spv_start;
+extern char _binary_shaders_gui_painter_vert_spv_end;
+extern int _binary_shaders_gui_painter_vert_spv_size;
+extern char _binary_shaders_gui_painter_vert_spv_start;
 
 extern char _binary_shaders_gui_widget_window_frag_spv_end;
 extern int _binary_shaders_gui_widget_window_frag_spv_size;

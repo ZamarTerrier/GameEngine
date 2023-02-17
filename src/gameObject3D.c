@@ -30,9 +30,9 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
     memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device, go->graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
 
     LightBuffer3D lbo = {};
@@ -85,33 +85,41 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
     lbo.light_react = go->enable_light;
 
-    vkMapMemory(e_device, go->graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+    vkMapMemory(e_device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
     memcpy(data, &lbo, sizeof(lbo));
-    vkUnmapMemory(e_device, go->graphObj.local.descriptors[1]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
+void GameObject3DApplyVertexes(GameObject3D* go)
+{
+    if(go->graphObj.shape.vParam.verticesSize > 0)
+        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex3D));
+
+    if(go->graphObj.shape.iParam.indexesSize > 0)
+        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
+}
+
+void GameObject3DRebuildVertexes(GameObject3D* go)
+{
+    vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
+    vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
+    vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
+    vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
+
+    go->graphObj.shape.vParam.vertexBuffer = NULL;
+    go->graphObj.shape.vParam.vertexBufferMemory = NULL;
+    go->graphObj.shape.iParam.indexBuffer = NULL;
+    go->graphObj.shape.iParam.indexBufferMemory = NULL;
+
+    if(go->graphObj.shape.vParam.verticesSize > 0)
+        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
+
+    if(go->graphObj.shape.iParam.indexesSize > 0)
+        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
+}
+
 void GameObject3DDefaultDraw(GameObject3D* go){
-
-    if(go->graphObj.shape.rebuild)
-    {
-
-        vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
-        vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
-
-        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
-
-        if(go->graphObj.shape.vParam.verticesSize > 0){
-            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex3D));
-        }
-
-        if(go->graphObj.shape.iParam.indexesSize > 0){
-            BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
-        }
-
-        go->graphObj.shape.rebuild = false;
-    }
 
     int count = go->wired ? 2 : 1;
 
@@ -119,7 +127,7 @@ void GameObject3DDefaultDraw(GameObject3D* go){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 
-        PipelineSetting *settings = go->graphObj.gItems.settings[i];
+        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -148,22 +156,10 @@ void GameObject3DDefaultDraw(GameObject3D* go){
 void GameObject3DAddSettingPipeline(GameObject3D* go, void *arg){
     PipelineSetting* setting = arg;
 
+    PipelineSetting* settings = go->graphObj.gItems.settings;
+    memcpy(&settings[go->graphObj.gItems.settingsCount], setting, sizeof(PipelineSetting));
+
     go->graphObj.gItems.settingsCount++;
-    go->graphObj.gItems.settings = realloc(go->graphObj.gItems.settings, go->graphObj.gItems.settingsCount * sizeof(PipelineSetting *));
-
-    //go->graphObj.gItems.settings[go->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
-
-    PipelineSetting** settings = go->graphObj.gItems.settings;
-    settings[go->graphObj.gItems.settingsCount - 1] = calloc(1, sizeof(PipelineSetting));
-    memcpy(settings[go->graphObj.gItems.settingsCount - 1], setting, sizeof(PipelineSetting));
-
-}
-
-void GameObject3DCreateDrawItems(GraphicsObject* graphObj){
-
-    createDescriptorSetLayout(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
-    createDescriptorPool(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
-    createDescriptorSets(&graphObj->gItems, &graphObj->local);
 
 }
 
@@ -173,36 +169,24 @@ void GameObject3DClean(GameObject3D* go){
 
 void GameObject3DRecreate(GameObject3D* go){
 
-    PipelineSetting **settings = (PipelineSetting *)go->graphObj.gItems.settings;
+    PipelineSetting *settings = (PipelineSetting *)go->graphObj.gItems.settings;
 
     for(int i=0; i < go->graphObj.gItems.settingsCount;i++)
     {
-        settings[i]->scissor.offset.x = 0;
-        settings[i]->scissor.offset.y = 0;
-        settings[i]->scissor.extent.height = HEIGHT;
-        settings[i]->scissor.extent.width = WIDTH;
-        settings[i]->viewport.x = 0;
-        settings[i]->viewport.y = 0;
-        settings[i]->viewport.height = HEIGHT;
-        settings[i]->viewport.width = WIDTH;
+        settings[i].scissor.offset.x = 0;
+        settings[i].scissor.offset.y = 0;
+        settings[i].scissor.extent.height = HEIGHT;
+        settings[i].scissor.extent.width = WIDTH;
+        settings[i].viewport.x = 0;
+        settings[i].viewport.y = 0;
+        settings[i].viewport.height = HEIGHT;
+        settings[i].viewport.width = WIDTH;
     }
 
     BuffersRecreateUniform(&go->graphObj.local);
-    GameObject3DCreateDrawItems(&go->graphObj);
+    GraphicsObjectCreateDrawItems(&go->graphObj);
     PipelineCreateGraphics(&go->graphObj);
 }
-
-//Описание вертекса
-EIVertexInputBindingDescription GameObject3DGetBindingDescription() {
-    EIVertexInputBindingDescription bindingDescription = {};
-
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex3D);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    return bindingDescription;
-}
-
 
 void GameObject3DDestroy(GameObject3D* go){
 
@@ -248,13 +232,8 @@ void GameObject3DInit(GameObject3D *go){
     GameObjectSetRecreateFunc(go, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(go, (void *)GameObject3DDestroy);
 
-    go->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
-    go->graphObj.local.descrCount = 0;
-    go->graphObj.gItems.settings = (PipelineSetting **) calloc(2, sizeof(PipelineSetting *));
-    go->graphObj.gItems.settingsCount = 0;
-
     Transform3DInit(&go->transform);
-    GraphicsObject3DInit(&go->graphObj);
+    GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_3D_OBJECT);
 
     go->graphObj.gItems.perspective = true;
 

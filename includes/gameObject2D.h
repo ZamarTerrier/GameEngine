@@ -12,6 +12,11 @@
 #include "pipeline.h"
 #include "texture.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     GameObject self;
     GraphicsObject graphObj;
@@ -20,6 +25,9 @@ typedef struct{
     char name[256];
 } GameObject2D;
 
+void GameObject2DApplyVertexes(GameObject2D* go);
+void GameObject2DRebuildVertexes(GameObject2D* go);
+
 void GameObject2DInit(GameObject2D* go);
 void GameObject2DClean(GameObject2D* go);
 void GameObject2DRecreate(GameObject2D* go);
@@ -27,10 +35,10 @@ void GameObject2DDestroy(GameObject2D* go);
 
 void GameObject2DAddSettingPipeline(GameObject2D* go, void *setting);
 
-void GameObject2DCreateDrawItems(GameObject2D* go);
-
-EIVertexInputBindingDescription GameObject2DGetBindingDescription();
-
 vec2 GameObject2DGetSize(GameObject2D* go);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GAMEOBJECT2D_H

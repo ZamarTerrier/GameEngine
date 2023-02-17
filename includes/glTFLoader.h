@@ -5,6 +5,11 @@
 
 #include "model_include.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     float time;
     vec3 vector3;
@@ -57,5 +62,9 @@ typedef struct{
 
 void Load3DglTFNextFrame(void *ptr, float time, int num_animation);
 void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam *dParam);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GLTFLOADER_H

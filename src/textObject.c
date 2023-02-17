@@ -18,15 +18,101 @@
 
 int fontResizer = 7;
 
-void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *texturePoint){
+FontCache *TextFontFind(char *path)
+{
+    if(path == NULL)
+        return NULL;
 
-    tData->font.info = (stbtt_fontinfo *) calloc(1, sizeof(stbtt_fontinfo));
-    tData->font.cdata = (stbtt_bakedchar *) calloc(1106, sizeof(stbtt_fontinfo));
+    FontCache *buff_fonts = e_var_fonts;
+
+    for(int i=0;i < e_var_num_fonts;i++)
+    {
+        if(strstr(buff_fonts[i].path, path))
+            return &buff_fonts[i];
+    }
+
+    return NULL;
+}
+
+void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descriptor){
+
+    if(e_var_num_fonts + 1 >= MAX_FONTS)
+    {
+        printf("Превышен лимит по созданию Шрифтов!\n");
+        return;
+    }
+
+    FontCache *temp_tex;
+
+    FontCache *fonts = e_var_fonts;
+
+    VkDeviceSize bufferSize = tData->font.fontWidth * tData->font.fontHeight * sizeof(Vertex2D); //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
+
+    char *some_file_path = tData->font.fontpath;
+    int font_len = strlen(some_file_path);
+
+    char name_font[] = "define_font";
+
+    if(font_len > 0)
+    {
+        temp_tex = TextFontFind(tData->font.fontpath);
+
+        if(temp_tex != NULL)
+        {
+            descriptor->texture = temp_tex->texture;
+            tData->font.info = temp_tex->info;
+            tData->font.cdata = temp_tex->cdata;
+
+            //--------------------
+            //Создаем буфер вершин для плоскости
+            BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+
+            return;
+        }
+
+        int len = strlen(tData->font.fontpath);
+        memset(fonts[e_var_num_fonts].path, 0, 2048);
+        memcpy(fonts[e_var_num_fonts].path, tData->font.fontpath, len);
+
+    }
+    else if(define_font_loaded)
+    {
+        temp_tex = TextFontFind(name_font);
+
+        if(temp_tex != NULL)
+        {
+            descriptor->texture = temp_tex->texture;
+            tData->font.info = temp_tex->info;
+            tData->font.cdata = temp_tex->cdata;
+
+            //--------------------
+            //Создаем буфер вершин для плоскости
+            BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+            return;
+        }else
+            exit(1);
+
+    }else{
+
+        int len = strlen(name_font);
+        memset(fonts[e_var_num_fonts].path, 0, 2048);
+        memcpy(fonts[e_var_num_fonts].path, name_font, len);
+
+        define_font_loaded = 1;
+    }
+
+    fonts[e_var_num_fonts].info = (stbtt_fontinfo *) calloc(1, sizeof(stbtt_fontinfo));
+    fonts[e_var_num_fonts].cdata = (stbtt_bakedchar *) calloc(1106, sizeof(stbtt_fontinfo));
+
+    tData->font.cdata = fonts[e_var_num_fonts].cdata;
+    tData->font.info = fonts[e_var_num_fonts].info;
 
     unsigned char ttf_buffer[1<<20];
     unsigned char temp_bitmap[tData->font.fontWidth * tData->font.fontHeight];
 
-    if(strlen(tData->font.fontpath ) > 0)
+    //-------------------
+    //Создаем текстуру шрифта
+    if(font_len > 0)
     {
 
         FILE *file = fopen(tData->font.fontpath, "rb");
@@ -37,48 +123,52 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *textureP
 
             fclose(file);
 
-            stbtt_InitFont(tData->font.info , ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
+            stbtt_InitFont(fonts[e_var_num_fonts].info , ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
+            stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, fonts[e_var_num_fonts].cdata); // no guarantee this fits!
         }else
-            stbtt_InitFont(tData->font.info , &_binary_fonts_RobotoBlack_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_RobotoBlack_ttf_start,0));
-    }else
-        stbtt_InitFont(tData->font.info , &_binary_fonts_RobotoBlack_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_RobotoBlack_ttf_start,0));
-
-    //--------------------
-    //Создаем буфер вершин для плоскости
-    VkDeviceSize bufferSize = tData->font.fontWidth * tData->font.fontHeight; //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
+        {
+            stbtt_InitFont(fonts[e_var_num_fonts].info , &_binary_fonts_RobotoBlack_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_RobotoBlack_ttf_start,0));
+            stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, fonts[e_var_num_fonts].cdata); // no guarantee this fits!
+        }
+    }else{
+        stbtt_InitFont(fonts[e_var_num_fonts].info , &_binary_fonts_RobotoBlack_ttf_start, stbtt_GetFontOffsetForIndex(&_binary_fonts_RobotoBlack_ttf_start,0));
+        stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, fonts[e_var_num_fonts].cdata); // no guarantee this fits!
+    }
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
-    //-------------------
-    //Создаем текстуру шрифта
-
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
-    if(strlen(tData->font.fontpath) > 0)
-        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, tData->font.cdata); // no guarantee this fits!
-    else
-        stbtt_BakeFontBitmap(&_binary_fonts_RobotoBlack_ttf_start, 0, 32.0, temp_bitmap, tData->font.fontWidth, tData->font.fontHeight, 0, 1106, tData->font.cdata); // no guarantee this fits!
+    //--------------------
+    //Создаем буфер вершин для плоскости
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
 
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, temp_bitmap, tData->font.fontWidth * tData->font.fontHeight);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    createImage(tData->font.fontWidth, tData->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texturePoint->textureImage, &texturePoint->textureImageMemory);
+    fonts[e_var_num_fonts].texture = calloc(1, sizeof(Texture2D));
 
-    transitionImageLayout(texturePoint->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingBuffer, texturePoint->textureImage, tData->font.fontWidth, tData->font.fontHeight);
-    transitionImageLayout(texturePoint->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    Texture2D *texture = fonts[e_var_num_fonts].texture;
+
+    createImage(tData->font.fontWidth, tData->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
+
+    transitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    copyBufferToImage(stagingBuffer, texture->textureImage, tData->font.fontWidth, tData->font.fontHeight);
+    transitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
+    texture->textureImageView = createImageView(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    texturePoint->textureImageView = createImageView(texturePoint->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    createTextureSampler(fonts[e_var_num_fonts].texture);
 
-    createTextureSampler(texturePoint);
+    descriptor->texture = fonts[e_var_num_fonts].texture;
+
+    e_var_num_fonts ++;
 
 }
 
@@ -90,10 +180,10 @@ void TextObjectRecreateUniform(TextObject *to){
     int count = to->go.graphObj.local.descrCount;
 
     for(int i=0;i < count;i++){
-        if(to->go.graphObj.local.descriptors[i]->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
-            to->go.graphObj.local.descriptors[i]->uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
-            to->go.graphObj.local.descriptors[i]->uniform->size = to->go.graphObj.local.descriptors[i]->buffsize;
-            BuffersCreateUniform(to->go.graphObj.local.descriptors[i]->uniform, i);
+        if(to->go.graphObj.local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+            to->go.graphObj.local.descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
+            to->go.graphObj.local.descriptors[i].uniform->size = to->go.graphObj.local.descriptors[i].buffsize;
+            BuffersCreateUniform(to->go.graphObj.local.descriptors[i].uniform, i);
         }
         else
         {
@@ -108,31 +198,16 @@ void TextObjectRecreateUniform(TextObject *to){
 
 void TextObjectAddTexture(TextObject* to){
 
-    to->go.graphObj.local.descrCount ++;
+    ShaderBuffer *descriptor = &to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount];
 
-    to->go.graphObj.local.descriptors = (ShaderBuffer **) realloc(to->go.graphObj.local.descriptors, to->go.graphObj.local.descrCount * sizeof(ShaderBuffer*));
-
-    to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1] = calloc(1, sizeof(ShaderBuffer));
-    ShaderBuffer *descriptor = to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount - 1];
-
-    descriptor->texture = (Texture2D *) calloc(1, sizeof(Texture2D));
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor->image = NULL;
 
-    TextImageMakeTexture(&to->go, &to->textData, descriptor->texture);
-}
+    TextImageMakeTexture(&to->go, &to->textData, descriptor);
 
-
-void TextObjectAddSettingPipeline(TextObject* to, PipelineSetting setting){
-    PipelineSetting* settings;
-
-    to->go.graphObj.gItems.settingsCount++;
-    to->go.graphObj.gItems.settings = realloc(to->go.graphObj.gItems.settings, to->go.graphObj.gItems.settingsCount * sizeof(PipelineSetting));
-
-    settings = (PipelineSetting *) to->go.graphObj.gItems.settings;
-
-    memcpy(&settings[to->go.graphObj.gItems.settingsCount - 1], &setting, sizeof(PipelineSetting));
+    to->go.graphObj.local.descrCount ++;
 }
 
 void TextObjectUpdateUniformBufferDefault(TextObject* to) {
@@ -141,7 +216,6 @@ void TextObjectUpdateUniformBufferDefault(TextObject* to) {
         return;
 
     void* data;
-
 
     Camera2D* cam = (Camera2D*) cam2D;
 
@@ -165,7 +239,7 @@ void TextObjectDrawDefault(TextObject* to)
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.graphicsPipeline[i]);
         vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelineLayout[i], 0, 1, &to->go.graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
 
-        PipelineSetting *settings = to->go.graphObj.gItems.settings[i];
+        PipelineSetting *settings = &to->go.graphObj.gItems.settings[i];
 
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -180,6 +254,9 @@ void TextObjectDrawDefault(TextObject* to)
 }
 
 void TextDataSetFontPath(TextData* tData, const char* path){
+
+    if(path == NULL)
+        return;
 
     int len = strlen(path);
 
@@ -284,6 +361,16 @@ void TextObjectSetText(const uint32_t* text, TextObject* to)
     TextImageSetText(text, &to->go, &to->textData);
 }
 
+void TextObjectSetTextU8(TextObject* to, const char* text)
+{
+    uint32_t size = strlen(text);
+    uint32_t buff[size + 1];
+
+    ToolsStringToUInt32(buff, text);
+
+    TextImageSetText(buff, &to->go, &to->textData);
+}
+
 void TextObjectRecreate(TextObject* to){
 
     PipelineSetting **settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
@@ -318,14 +405,13 @@ void TextDataInit(TextData *tData, int fontSize, char* fontPath){
 
 void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 {
+    memcpy(to->go.name, "Object_Text", 10);
 
     GameObject2DInit(to);
 
     GameObjectSetUpdateFunc(to, (void *)TextObjectUpdateUniformBufferDefault);
     GameObjectSetDrawFunc(to, (void *)TextObjectDrawDefault);
     GameObjectSetRecreateFunc(to, (void *)TextObjectRecreate);
-
-    Transform2DSetPosition(to, 0.0f, 0.0f);
 
     //Загружаем шрифт и настраеваем его на работу
     TextDataInit(&to->textData, fontSize, fontPath);
@@ -335,12 +421,15 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     TextObjectAddTexture(to);
 
+    GraphicsObjectCreateDrawItems(&to->go.graphObj);
+
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&to->go.graphObj, &setting);
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_TEXT_OBJECT;
         setting.vertShader = &_binary_shaders_text_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
         setting.fragShader = &_binary_shaders_text_frag_spv_start;
@@ -350,8 +439,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-    TextObjectAddSettingPipeline(to, setting);
+    GameObject2DAddSettingPipeline(to, &setting);
 
-    GameObject2DCreateDrawItems(to);
     PipelineCreateGraphics(&to->go.graphObj);
 }

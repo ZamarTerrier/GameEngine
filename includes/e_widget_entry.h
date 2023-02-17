@@ -4,6 +4,11 @@
 #include "e_widget.h"
 #include "e_widget_text.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     EWidget widget;
     EWidgetText text;
@@ -25,5 +30,9 @@ void EntryWidgetCharacterCallback(void* window, uint32_t codepoint);
 void EntryWidgetKeyCallback(void* window,  int key, int scancode, int action, int mods);
 char *EntryWidgetGetText(EWidgetEntry *entry);
 void EntryWidgetSetText(EWidgetEntry *entry, char *text);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_ENTRY_H

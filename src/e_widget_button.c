@@ -1,27 +1,35 @@
 #include "e_widget_button.h"
 
 
-void ButtonWidgetPress(EWidget *widget, void* entry, void *arg){
+int ButtonWidgetPress(EWidget *widget, void* entry, void *arg){
     EWidgetButton *button = (EWidgetButton *)widget;
 
-    button->widget.color = (vec4){ button->selfColor.x - 0.2f, button->selfColor.y - 0.2f, button->selfColor.z - 0.2f, button->selfColor.w };
+    button->widget.color.x = button->selfColor.x - 0.2f;
+    button->widget.color.y = button->selfColor.y - 0.2f;
+    button->widget.color.z = button->selfColor.z - 0.2f;
+    button->widget.color.w = button->selfColor.w;
+
+    return 0;
 }
 
-void ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
+int ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
 
     EWidgetButton *button = (EWidgetButton *)widget;
 
     button->widget.color = button->selfColor;
 
     WidgetConfirmTrigger(widget, GUI_TRIGGER_BUTTON_PRESS, NULL);
+
+    return 0;
 }
 
 void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
-    WidgetInit(button, NULL, parent);
     memcpy(button->widget.go.name, "Button", 6);
 
     button->widget.type = GUI_TYPE_BUTTON;
+
+    WidgetInit(button, NULL, parent);
     button->selfColor = button->widget.color = (vec4){ 1, 1, 1, 1};
 
     TextWidgetInit(&button->text, 9, NULL, &button->widget);
@@ -34,10 +42,22 @@ void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
 }
 
+void ButtonWidgetSetImage(EWidgetButton *button, char *path)
+{
+    ImageWidgetInit(&button->image, path, button);
+
+    Transform2DSetScale(&button->image, 64, 64);
+    Transform2DSetPosition(&button->image, 0, 0);
+
+    Transform2DSetPosition(&button->text, 9 * 6.0f, 9 * 4.0f);
+}
+
 void ButtonWidgetSetText(EWidgetButton *button, const char *text){
     TextWidgetSetText(&button->text, text);
 }
 
-void ButtonWidgetSetColor(EWidgetButton *button, vec4 color){
-    button->selfColor = button->widget.color = color;
+void ButtonWidgetSetColor(EWidgetButton *button, float r, float g, float b){
+    button->selfColor.x = button->widget.color.x = r;
+    button->selfColor.y = button->widget.color.y = g;
+    button->selfColor.z = button->widget.color.z = b;
 }

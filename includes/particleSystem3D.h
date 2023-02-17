@@ -5,6 +5,11 @@
 
 #include "gameObject3D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct {
     vec2 mouse;
     float time;
@@ -28,9 +33,14 @@ typedef struct{
     int num_parts;
 } ParticleObject3D;
 
-EIVertexInputBindingDescription Particle3DGetBindingDescription();
+void GameObject3DApplyVertexes(GameObject3D* go);
+void GameObject3DRebuildVertexes(GameObject3D* go);
 
 void Particle3DInit(ParticleObject3D* particle, DrawParam dParam);
 void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, float speed, float gravity, float life);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PARTICLESYSTEM3D_H

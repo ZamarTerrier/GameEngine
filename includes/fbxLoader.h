@@ -6,6 +6,11 @@
 
 #include "models.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct viewer_node_anim {
     float time_begin;
     float framerate;
@@ -68,3 +73,7 @@ typedef struct{
 
 void Load3DFBXNextFrame(ModelObject3D *mo);
 void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam);
+
+#ifdef __cplusplus
+}
+#endif

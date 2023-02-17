@@ -8,7 +8,7 @@
 
 vec2 e_var_mouse, e_var_temp, e_var_tscale ;
 
-void WindowWidgetSetSize(EWidgetWindow* window, float x, float y)
+int WindowWidgetSetSize(EWidgetWindow* window, float x, float y)
 {
 
     Transform2DSetScale(&window->top, x, y);
@@ -21,9 +21,11 @@ void WindowWidgetSetSize(EWidgetWindow* window, float x, float y)
     y -= 14;
     x -= 4;
     Transform2DSetScale(&window->widget, x, y);
+
+    return 0;
 }
 
-void WindowWidgetPress(EWidget* widget, void* entry, void* args)
+int WindowWidgetPress(EWidget* widget, void* entry, void* args)
 {
 
     double xpos, ypos;
@@ -34,9 +36,11 @@ void WindowWidgetPress(EWidget* widget, void* entry, void* args)
 
     e_var_temp = Transform2DGetPosition(widget);
     e_var_tscale = Transform2DGetScale(widget);
+
+    return 0;
 }
 
-void WindowWidgetMove(EWidget* widget, void* entry, void* args)
+int WindowWidgetMove(EWidget* widget, void* entry, void* args)
 {
 
     EWidgetWindow *window = (EWidgetWindow *)args;
@@ -68,16 +72,21 @@ void WindowWidgetMove(EWidget* widget, void* entry, void* args)
         Transform2DSetPosition(widget, te.x, te.y);
     }
 
+    return 0;
 }
 
-void WindowWidgetCloseButton(EWidget* widget, void* entry, void *arg){
+int WindowWidgetCloseButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
 
     window->show = false;
+
+    WidgetConfirmTrigger(window, GUI_TRIGGER_WINDOW_CLOSE, NULL);
+
+    return 0;
 }
 
-void WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
+int WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
 
@@ -102,9 +111,10 @@ void WindowWidgetResizeButton(EWidget* widget, void* entry, void *arg){
 
     WindowWidgetSetSize(window, WIDTH, HEIGHT);
 
+    return 0;
 }
 
-void WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
+int WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
 
     EWidgetWindow *window = (EWidgetWindow *)arg;
 
@@ -125,6 +135,7 @@ void WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
     WindowWidgetSetSize(window, 100, 12);
     Transform2DSetPosition(&widget->parent->go, 20, (HEIGHT * 2) - 40);
 
+    return 0;
 }
 
 void WindowWidgetUniformUpdate(EWidget *ew){
@@ -144,9 +155,9 @@ void WindowWidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
+    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
     memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0]->uniform->uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
@@ -155,6 +166,8 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
     GameObject2DInit(&widget->go);
 
     GraphicsObjectSetVertex(&widget->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+
+    GameObject2DApplyVertexes(widget);
 
     GameObjectSetUpdateFunc(&widget->go, (void *)WindowWidgetUniformUpdate);
 
@@ -177,7 +190,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     ImageAddTexture(&widget->go.graphObj.local, widget->go.image);
 
-    GameObject2DCreateDrawItems(&widget->go);
+    GraphicsObjectCreateDrawItems(&widget->go.graphObj);
 
     PipelineSetting setting = {};
 
@@ -185,6 +198,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_GUI_WINDOW_WIDGET_OBJECT;
         setting.vertShader = &_binary_shaders_gui_widget_window_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_window_vert_spv_size);
         setting.fragShader = &_binary_shaders_gui_widget_window_frag_spv_start;
@@ -200,9 +214,10 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
     widget->parent = NULL;
     widget->child = NULL;
 
-    widget->in = widget->was_in = widget->was_out = widget->out = false;
+    widget->widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE;
 
-    widget->callbacks.stack = (CallbackStruct *) calloc(0, sizeof(CallbackStruct));
+    widget->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
+    widget->callbacks.size = 0;
 
     PipelineCreateGraphics(&widget->go.graphObj);
 
@@ -211,9 +226,6 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     widget->color = (vec4){1, 1, 1, 1.0};
     widget->transparent = 1.0f;
-    widget->visible = true;
-
-    widget->active = true;
 }
 
 void InitName(EWidget* widget, uint32_t* name, DrawParam *dParam, EWidget *parent)
@@ -269,10 +281,10 @@ void InitHide(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
 void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dParam, vec2 position)
 {
+    memcpy(ww->top.go.name, "Widget_Window", 12);
+    ww->widget.type = GUI_TYPE_WINDOW;
 
     InitTop(&ww->top, dParam, size, position);
-    memcpy(ww->top.go.name, "Widget_Window", 12);
-
     InitName(&ww->name, name, dParam, &ww->top);
     InitBot(&ww->widget, dParam, size, &ww->top);
 
@@ -299,10 +311,14 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dPara
 
 void WindowWidgetShow(EWidgetWindow *ww){
     ww->show = true;
+
+    WidgetConfirmTrigger(ww, GUI_TRIGGER_WINDOW_OPEN, NULL);
 }
 
 void WindowWidgetHide(EWidgetWindow *ww){
     ww->show = false;
+
+    WidgetConfirmTrigger(ww, GUI_TRIGGER_WINDOW_CLOSE, NULL);
 }
 
 void WindowWidgetUpdate(EWidgetWindow *ww){

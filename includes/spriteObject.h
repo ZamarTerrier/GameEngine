@@ -3,6 +3,11 @@
 
 #include "gameObject2D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     vec3 color;
     char texturePath[256];
@@ -15,5 +20,9 @@ typedef struct{
 } SpriteObject;
 
 void SpriteObjectInit(SpriteObject *go, SpriteParam sParam);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SPRITEOBJECT_H

@@ -2,21 +2,13 @@
 
 int max_size = 2;
 
-void ListWidgetPressItem(EWidget *widget, void *entry, int id){
+int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 
     EWidgetList *list = widget->parent;
 
     WidgetConfirmTrigger(list, GUI_TRIGGER_LIST_PRESS_ITEM, id);
-}
 
-void ListWidgetScrollAction(EWidget *widget, float *diff, EWidgetList *list)
-{
-
-    vec2 size = Transform2DGetScale(list);
-
-    float y = 0 - size.y * *diff;
-
-    Transform2DSetPosition(list, 0, y);
+    return -1;
 }
 
 void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
@@ -25,16 +17,12 @@ void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
     memcpy(list->widget.go.name, "Widget_List", 11);
     list->widget.type = GUI_TYPE_LIST;
     list->widget.color = (vec4){ 0.4, 0.4, 0.4, 1.0};
+    list->widget.transparent = 0.0f;
 
     list->size_x = size_x;
     list->size_y = size_y;
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y);
-
-    ScrollWidgetInit(&list->scroll, NULL, &list->widget);
-    Transform2DSetScale(&list->scroll, 20, 100);
-    Transform2DSetPosition(&list->scroll, list->size_x * 2 - 40, 0);
-    WidgetConnect(&list->scroll, GUI_TRIGGER_SCROLL_CHANGE, ListWidgetScrollAction, list);
 }
 
 void ListWidgetSetColor(EWidgetList *list, vec4 color){
@@ -57,28 +45,21 @@ EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text){
     EWidgetButton *item = (EWidgetButton *) calloc(1, sizeof(EWidgetButton));
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
-    vec2 scale = Transform2DGetScale(list);
-    Transform2DSetScale(&list->scroll, 20, scale.y);
     ButtonWidgetInit(item, text, &list->widget);
-    ButtonWidgetSetColor(item, list->widget.color);
+    ButtonWidgetSetColor(item, list->widget.color.x, list->widget.color.y, list->widget.color.z);
     TextWidgetSetText(&item->text, text);
+
+    item->widget.transparent = 0.5f;
 
     WidgetConnect(item, GUI_TRIGGER_BUTTON_PRESS, ListWidgetPressItem, list->size -1);
 
     for(int i=0;i < list->size;i++)
     {
-         ChildStack *child = WidgetFindChild(&list->widget, i + 1);
+         ChildStack *child = WidgetFindChild(&list->widget, i);
 
          Transform2DSetPosition(child->node, 0, i * (list->size_y * 2));
-         Transform2DSetScale(child->node, list->size_x - 20, list->size_y);
+         Transform2DSetScale(child->node, list->size_x, list->size_y);
     }
-
-    vec2 s1 = Transform2DGetScale(&list->widget);
-    vec2 s2 = Transform2DGetScale(list->widget.parent);
-
-    float razn = s2.y / s1.y * 100;
-
-    ScrollWidgetSetScrollSize(&list->scroll, razn);
 
     return item;
 }
@@ -88,7 +69,7 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
     if(num + 1 > list->size)
         return;
 
-    ChildStack *child = WidgetFindChild(&list->widget, num + 1);
+    ChildStack *child = WidgetFindChild(&list->widget, num);
 
     if(child->next != NULL && child->before != NULL)
     {
@@ -112,22 +93,33 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         list->widget.child = child->next;
         free(child);
 
-    }else{
+    }else if(child->before != NULL){
         WidgetDestroy(child->node);
         free(child->node);
         child->node = NULL;
 
-        if(child->before != NULL);
-        {
-            child->before->next = NULL;
-            list->widget.last = child->before;
-        }
+        child->before->next = NULL;
+        list->widget.last = child->before;
 
         free(child);
-        child = NULL;
+
+    }else{
+        if(list->widget.child->node != NULL)
+        {
+            WidgetDestroy(list->widget.child->node);
+            free(list->widget.child->node);
+            list->widget.child->node = NULL;
+        }
+
+        if(list->widget.child != NULL)
+        {
+            free(list->widget.child);
+            list->widget.last = NULL;
+            list->widget.child = NULL;
+        }
     }
 
-     list->size--;
+    list->size--;
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
 
@@ -138,6 +130,6 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         EWidget* widget = child->node;
         widget->callbacks.stack[2].args = i;
         Transform2DSetPosition(child->node, 0, i * (list->size_y * 2));
-        Transform2DSetScale(child->node, list->size_x - 20, list->size_y);
+        Transform2DSetScale(child->node, list->size_x, list->size_y);
     }
 }

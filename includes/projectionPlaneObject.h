@@ -5,6 +5,11 @@
 
 #include "gameObject2D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     GameObject2D go;
 } ProjectionPlaneObject;
@@ -16,5 +21,9 @@ typedef struct{
 } ProjDataBuffer;
 
 void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PROJECTIONPLANEOBJECT_H

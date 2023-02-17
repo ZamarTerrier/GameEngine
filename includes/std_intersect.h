@@ -5,6 +5,11 @@
 
 #include "e_math.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     vec3 position;
     float radius;
@@ -74,5 +79,9 @@ typedef enum{
     FoundIntersection,
     StillEvolving
 }EvolveResult;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // STD_INTERSECT_H

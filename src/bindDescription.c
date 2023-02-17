@@ -7,17 +7,17 @@
 #include "e_texture_variables.h"
 
 //Создаем параметры дескриптора
-void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer** descriptors, size_t count) {
+void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer* descriptors, size_t count) {
 
     VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding *) calloc(count, sizeof(VkDescriptorSetLayoutBinding));
 
     for(int i=0;i<count;i++)
     {
         bindings[i].binding = i;
-        bindings[i].descriptorType = descriptors[i]->descrType;
+        bindings[i].descriptorType = descriptors[i].descrType;
         bindings[i].descriptorCount = 1;
         bindings[i].pImmutableSamplers = NULL;
-        bindings[i].stageFlags = descriptors[i]->stageflag;
+        bindings[i].stageFlags = descriptors[i].stageflag;
     }
 
     VkDescriptorSetLayoutCreateInfo layoutInfo = {};
@@ -31,12 +31,12 @@ void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer** descriptors, siz
     }
 }
 //Создаем пулл дескрипторов для шейдера
-void createDescriptorPool(GraphicItems* gi, ShaderBuffer** descriptors, size_t count) {
+void createDescriptorPool(GraphicItems* gi, ShaderBuffer* descriptors, size_t count) {
 
     VkDescriptorPoolSize* poolSizes = (VkDescriptorPoolSize *) calloc(count, sizeof(VkDescriptorPoolSize));
     for(int i=0;i < count; i++)
     {
-        poolSizes[i].type = descriptors[i]->descrType;
+        poolSizes[i].type = descriptors[i].descrType;
         poolSizes[i].descriptorCount = imagesCount;
     }
 
@@ -45,6 +45,7 @@ void createDescriptorPool(GraphicItems* gi, ShaderBuffer** descriptors, size_t c
     poolInfo.poolSizeCount = count;
     poolInfo.pPoolSizes = poolSizes;
     poolInfo.maxSets = imagesCount;
+    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
     if (vkCreateDescriptorPool(e_device, &poolInfo, NULL, &gi->descriptorPool) != VK_SUCCESS) {
         printf("failed to create descriptor pool!");
@@ -80,9 +81,9 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
     for(int j=0;j < params->descrCount;j++)
     {
 
-        if(params->descriptors[j]->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        if(params->descriptors[j].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
             sUniforms++;
-        else if(params->descriptors[j]->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+        else if(params->descriptors[j].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
             sImages++;
     }
 
@@ -97,7 +98,7 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
 
         for(int j=0;j < params->descrCount;j++)
         {
-            ShaderBuffer *descriptor = params->descriptors[j];
+            ShaderBuffer *descriptor = &params->descriptors[j];
             if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
                 //Дескриптор Юнибафферов
                     unisize ++;

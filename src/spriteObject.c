@@ -55,6 +55,8 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     SpriteObjectCreateQuad(so);
 
+    GameObject2DApplyVertexes(so);
+
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
@@ -67,10 +69,11 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
         memcpy(so->go.image->path, sParam.texturePath, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        ImageAddTexture(&so->go.graphObj.local, so->go.image);
     }
 
-    GameObject2DCreateDrawItems(so);
+    ImageAddTexture(&so->go.graphObj.local, so->go.image);
+
+    GraphicsObjectCreateDrawItems(&so->go.graphObj);
 
     PipelineSetting setting;
 
@@ -78,6 +81,7 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
+        setting.obj_type = ENGINE_TYPE_SPRITE_OBJECT;
         setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
         setting.fragShader = &_binary_shaders_sprite_frag_spv_start;

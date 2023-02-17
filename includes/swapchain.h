@@ -7,6 +7,11 @@
 #include "texture.h"
 #include "tools.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -21,5 +26,9 @@ EIExtent2D chooseSwapExtent(const EISurfaceCapabilitiesKHR capabilities);
 void createSwapChain();
 
 void createImageViews();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SWAPCHAIN_H

@@ -4,6 +4,11 @@
 #include "e_widget.h"
 #include "e_widget_text.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef struct{
     EWidget widget;
     EWidget range;
@@ -16,5 +21,9 @@ typedef struct{
 void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min, float max, EWidget *parent);
 void RangeWidgetSetValueDestin(EWidgetRange *range, float *val_dest);
 void RangeWidgetSetValue(EWidgetRange *range, float val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_RANGE_H

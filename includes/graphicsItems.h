@@ -19,7 +19,7 @@ typedef struct{
     void** graphicsPipeline;
     void** pipelineLayout;
     uint32_t pipelineCount;
-    void** settings;
+    void* settings;
     uint32_t settingsCount;
     void* descriptorPool;
     bool perspective;
@@ -34,16 +34,16 @@ typedef struct{
 } vertexParam;
 
 typedef struct{
-    uint32_t* indices;
     void* indexBuffer;
     void* indexBufferMemory;
     uint32_t indexesSize;
+    uint32_t* indices;
 } indexParam;
 
 typedef struct{
     char vertShader[256];
     char fragShader[256];
-    EIVertexInputBindingDescription bindingDescription;
+    EIVertexInputBindingDescription* bindingDescription;
     EIVertexInputAttributeDescription* attr;
     size_t countAttr;
 } aboutShader;
@@ -57,7 +57,7 @@ typedef struct{
 typedef struct{
     void** uniformBuffers;
     void** uniformBuffersMemory;
-    uint64_t size;
+    uint32_t size;
 } UniformStruct;
 
 typedef struct{
@@ -66,12 +66,12 @@ typedef struct{
     uint32_t descrType;
     uint32_t stageflag;
     uint32_t size;
-    uint64_t buffsize;
+    uint32_t buffsize;
     GameObjectImage *image;
 } ShaderBuffer;
 
 typedef struct{
-    ShaderBuffer** descriptors;
+    ShaderBuffer* descriptors;
     uint32_t descrCount;
 } localParam;
 

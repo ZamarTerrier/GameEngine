@@ -11,10 +11,19 @@
 #include "tools.h"
 #include "bindDesciption.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *setting);
 
 void PipelineCreateGraphics(GraphicsObject* graphObj);
 
 void PipelineCreateRenderPass();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PIPELINE_H

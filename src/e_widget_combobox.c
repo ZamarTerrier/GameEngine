@@ -1,6 +1,6 @@
 #include "e_widget_combobox.h"
 
-void ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
+int ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
 
     EWidgetCombobox *cmb = (EWidgetCombobox *)widget->parent;
 
@@ -14,9 +14,11 @@ void ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
     }
 
     WidgetConfirmTrigger(cmb, GUI_TRIGGER_COMBOBOX_PRESS, NULL);
+
+    return 0;
 }
 
-void ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
+int ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
 
     EWidgetCombobox *cmb = (EWidgetCombobox *) widget->parent->parent;
     EWidgetButton *butt = (EWidgetButton *)widget;
@@ -34,6 +36,8 @@ void ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
     }
 
     WidgetConfirmTrigger(cmb, GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM, id);
+
+    return 0;
 }
 
 void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
@@ -41,7 +45,7 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
     WidgetInit(&combobox->widget, NULL, parent);
     memcpy(combobox->widget.go.name, "Combobox", 8);
     ButtonWidgetInit(&combobox->button, " ", &combobox->widget);
-    ButtonWidgetSetColor(&combobox->button, (vec4){0.4, 0.4, 0.4, 1.0});
+    ButtonWidgetSetColor(&combobox->button, 0.4, 0.4, 0.4);
 
     combobox->widget.type = GUI_TYPE_COMBOBOX;
     combobox->size_x = 100;

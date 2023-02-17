@@ -5,6 +5,11 @@
 
 #include "gameObject2D.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum{
     GUI_TRIGGER_MOUSE_PRESS,
     GUI_TRIGGER_MOUSE_RELEASE,
@@ -18,11 +23,14 @@ typedef enum{
     GUI_TRIGGER_COMBOBOX_PRESS,
     GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM,
     GUI_TRIGGER_LIST_PRESS_ITEM,
+    GUI_TRIGGER_MENU_PRESS_ITEM,
     GUI_TRIGGER_ENTRY_CHAR_INPUT,
     GUI_TRIGGER_ENTRY_UPDATE,
     GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT,
     GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT,
     GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT,
+    GUI_TRIGGER_WINDOW_OPEN,
+    GUI_TRIGGER_WINDOW_CLOSE,
     GUI_TRIGGER_RANGE_CHANGE,
     GUI_TRIGGER_SCROLL_CHANGE,
     GUI_TRIGGER_ROLLER_MOVE,
@@ -33,11 +41,25 @@ typedef enum{
     GUI_TYPE_TEXT,
     GUI_TYPE_BUTTON,
     GUI_TYPE_LIST,
+    GUI_TYPE_SCROLL,
+    GUI_TYPE_MENU,
     GUI_TYPE_COMBOBOX,
     GUI_TYPE_ENTRY,
+    GUI_TYPE_ENTRY_AREA,
     GUI_TYPE_RANGE,
+    GUI_TYPE_IMAGE,
     GUI_TYPE_WINDOW
 } TypeEnum;
+
+typedef enum{
+    ENGINE_FLAG_WIDGET_IN = 0x1,
+    ENGINE_FLAG_WIDGET_WAS_IN = 0x2,
+    ENGINE_FLAG_WIDGET_OUT = 0x4,
+    ENGINE_FLAG_WIDGET_WAS_OUT = 0x8,
+    ENGINE_FLAG_WIDGET_ACTIVE = 0x16,
+    ENGINE_FLAG_WIDGET_VISIBLE = 0x32,
+    ENGINE_FLAG_WIDGET_SELF_VISIBLE = 0x64,
+} EngineWidgetFlag;
 
 typedef struct{
     void* func;
@@ -61,7 +83,7 @@ typedef struct EWidget{
     struct ChildStack* child;
     struct ChildStack* first;
     struct ChildStack* last;
-    bool in, was_in, out, was_out, active, visible, self_visible;
+    uint32_t widget_flags;
     TypeEnum type;
     CallbackStack callbacks;
 } EWidget;
@@ -84,14 +106,23 @@ typedef struct{
     int size;
 } MaskObjectBuffer;
 
- ChildStack * WidgetFindChild(EWidget* widget, int num);
+
+typedef int(*widget_callback)(EWidget *widget, void *, void*);
+
+int WidgetFindIdChild(EWidget* widget);
+ChildStack * WidgetFindChild(EWidget* widget, int num);
+
 void WidgetSetParent(EWidget* ew, EWidget* parent);
 void WidgetInit(EWidget *ew, DrawParam *dParam, EWidget *parent);
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
-void WidgetConnect(EWidget *widget, int trigger, void* callback, void *args);
+void WidgetConnect(EWidget *widget, int trigger, widget_callback callback, void *args);
 void WidgetRecreate(EWidget *widget);
 void WidgetEventsPipe(EWidget *widget);
 void WidgetDraw(EWidget *widget);
 void WidgetDestroy(EWidget * widget);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // E_WIDGET_H

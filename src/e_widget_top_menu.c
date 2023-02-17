@@ -2,42 +2,113 @@
 
 #include "e_widget_button.h"
 
-void TopMenuWidgetFocus(EWidget *widget, void *entry, void *args)
+int TopMenuWidgetFocus(EWidget *widget, void *entry, void *args)
 {
-    EWidget *menu = widget;
+    EWidget *menu= widget;
+
+    if(menu->type != GUI_TYPE_MENU)
+    {
+        menu = menu->parent;
+
+        while(menu->type != GUI_TYPE_MENU)
+        {
+            menu = menu->parent;
+
+            if(menu == NULL)
+                return;
+        }
+    }
 
     int iter = 0;
-    EWidget *child = WidgetFindChild(menu, iter)->node;
-    EWidget *last = NULL;
+    ChildStack *child = WidgetFindChild(menu, iter);
+    EWidget *temp_w;
 
-    while (last != child) {
+    while (child != NULL) {
+
+        temp_w = child->node;
+
+        if(temp_w->type == GUI_TYPE_LIST)
+            temp_w->widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
+
+        child = WidgetFindChild(menu, iter);
+
         iter ++;
-        last = child;
-        child = WidgetFindChild(menu, iter)->node;
-
-        if(child->type == GUI_TYPE_LIST)
-            child->visible = false;
     }
+
+    return 0;
 }
 
-void ToggleMenu(EWidget *widget, void *entry, EWidgetList *list)
+int ToggleMenu(EWidget *widget, void *entry, EWidgetList *list)
 {
-    EWidget *menu = widget->parent->parent;
+    EWidget *menu = widget->parent;
 
-    int iter = 0;
-    EWidget *child = WidgetFindChild(menu, iter)->node;
-    EWidget *last = NULL;
+    while(menu->type != GUI_TYPE_MENU)
+    {
+        menu = menu->parent;
 
-    while (last != child) {
-        iter ++;
-        last = child;
-        child = WidgetFindChild(menu, iter)->node;
-
-        if(child->type == GUI_TYPE_LIST && child != list)
-            child->visible = false;
+        if(menu == NULL)
+            return;
     }
 
-    list->widget.visible = !list->widget.visible ? true : false;
+    int iter = 0;
+    ChildStack *child = WidgetFindChild(menu, iter);
+    EWidget *temp_w;
+
+    while (child != NULL) {
+
+        temp_w = child->node;
+
+        if(temp_w->type == GUI_TYPE_LIST && temp_w != list)
+            temp_w->widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
+
+        child = WidgetFindChild(menu, iter);
+
+        iter ++;
+    }
+
+    if(!(list->widget.widget_flags & ENGINE_FLAG_WIDGET_VISIBLE))
+        list->widget.widget_flags |= ENGINE_FLAG_WIDGET_VISIBLE;
+    else
+        list->widget.widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
+
+    return 0;
+}
+
+int MenuPressItem(EWidget *widget, int id, void *arg)
+{
+    EWidget *menu = widget->parent;
+
+    while(menu->type != GUI_TYPE_MENU)
+    {
+        menu = menu->parent;
+
+        if(menu == NULL)
+            return;
+    }
+
+    int iter = 0;
+    ChildStack *child = WidgetFindChild(menu, iter);
+    EWidget *temp_w;
+
+    while (child != NULL) {
+
+        temp_w = child->node;
+
+        if(temp_w->type == GUI_TYPE_LIST)
+            temp_w->widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
+
+        child = WidgetFindChild(menu, iter);
+
+        iter ++;
+    }
+
+    MenuData data;
+    data.num_menu = WidgetFindIdChild(widget) - 1;
+    data.elem_id = id;
+
+    WidgetConfirmTrigger(menu, GUI_TRIGGER_MENU_PRESS_ITEM, &data);
+
+    return 0;
 }
 
 void TopMenuWidgetResize(EWidgetTopMenu *top_menu)
@@ -60,8 +131,11 @@ void TopMenuWidgetResize(EWidgetTopMenu *top_menu)
 
 void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window)
 {
-    WidgetInit(&top_menu->widget, NULL, window);
     memcpy(top_menu->widget.go.name, "Widget_Menu", 10);
+
+    top_menu->widget.type = GUI_TYPE_MENU;
+
+    WidgetInit(&top_menu->widget, NULL, window);
     WidgetInit(&top_menu->top, NULL, &top_menu->widget);
     top_menu->widget.transparent = 0.0f;
     top_menu->window = window;
@@ -89,14 +163,15 @@ int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name)
     return top_menu->num_elems - 1;
 }
 
-EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name)
+void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name)
 {
+    EWidgetButton *button;
+
     if(top_menu->list[num_menu].list != NULL)
     {
-        EWidgetButton *button = ListWidgetAddItem(top_menu->list[num_menu].list, name);
-        WidgetConnect(button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[num_menu].list);
+        button = ListWidgetAddItem(top_menu->list[num_menu].list, name);
 
-        return button;
+        return top_menu->list[num_menu].list;
     }
 
     EWidgetList *l_menu = calloc(1, sizeof(EWidgetList));
@@ -110,12 +185,16 @@ EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char
 
     ListWidgetInit(l_menu, 110, 20, point);
     ListWidgetSetColor(l_menu, (vec4){ 0.6, 0.6, 0.6, 1.0});
+
     vec2 pos = Transform2DGetPosition(top_menu->list[top_menu->num_elems - 1].button);
     Transform2DSetPosition(l_menu, pos.x, 40);
-    EWidgetButton *button = ListWidgetAddItem(l_menu, name);
-    l_menu->widget.visible = false;
+    l_menu->widget.widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
     top_menu->list[num_menu].list = l_menu;
+
+    button = ListWidgetAddItem(top_menu->list[num_menu].list, name);
+
+    WidgetConnect(top_menu->list[top_menu->num_elems - 1].list, GUI_TRIGGER_LIST_PRESS_ITEM, MenuPressItem, NULL);
     WidgetConnect(top_menu->list[top_menu->num_elems - 1].button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);
-    WidgetConnect(button, GUI_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);
-    return button;
+
+    return top_menu->list[num_menu].list;
 }

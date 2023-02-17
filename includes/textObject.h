@@ -11,6 +11,10 @@
 #include <wchar.h> //"Широкие" многобайтовые символы и их ввод-вывод
 #include <wctype.h> //"Классификация" широких символов
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define TEXTOVERLAY_MAX_CHAR_COUNT 2048
@@ -37,7 +41,7 @@ typedef struct{
     TextData textData;
 } TextObject;
 
-void TextImageMakeTexture(GameObject2D *go, TextData *tData, Texture2D *texturePoint);
+void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descriptor);
 
 void TextObjectMakeLastText(TextObject *to);
 
@@ -51,5 +55,10 @@ void TextDataSetTextSize(TextData* tData, float size);
 void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData);
 
 void TextObjectSetText(const uint32_t* text, TextObject* to);
+void TextObjectSetTextU8(TextObject* to, const char* text);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TEXTOBJECT_H

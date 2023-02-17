@@ -9,7 +9,7 @@
 
 bool e_ctrl_press = false, e_c_press = false, e_v_press = false, e_pasted = false, e_copied = false;
 
-void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
+int EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
 
     EWidgetEntry *temp = widget;
 
@@ -37,9 +37,11 @@ void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
     }
 
     TextWidgetSetText(text, temp->buffers[temp->curr_line]);
+
+    return 0;
 }
 
-void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
+int EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     EWidgetEntry *temp = widget;
 
@@ -95,9 +97,11 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
         e_pasted = true;
     }
+
+    return 0;
 }
 
-void EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
+int EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
     EWidgetEntry *temp = widget;
 
     if(key == GLFW_KEY_BACKSPACE)
@@ -121,6 +125,8 @@ void EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
 
         temp->buffers[temp->curr_line][temp->currPos] = 0;
     }
+
+    return 0;
 }
 
 void EntryWidgetCharacterCallback(void* arg, uint32_t codepoint)
@@ -129,6 +135,7 @@ void EntryWidgetCharacterCallback(void* arg, uint32_t codepoint)
             return;
 
     WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_CHAR_INPUT, codepoint);
+
 }
 
 void EntryWidgetKeyCallback(void* arg,  int key, int scancode, int action, int mods)
@@ -168,16 +175,16 @@ void EntryWidgetKeyCallback(void* arg,  int key, int scancode, int action, int m
         WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, key);
     else if(action == GLFW_RELEASE)
         WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT, key);
-
 }
 
-void EntryWidgetPress(EWidget *widget, void *entry, void *arg){
+int EntryWidgetPress(EWidget *widget, void *entry, void *arg){
 
     e_var_current_entry = (EWidget *)widget;
 
+    return 0;
 }
 
-void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
+int EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
 
     EWidgetEntry *temp = widget;
 
@@ -186,6 +193,8 @@ void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
     EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
 
     TextWidgetSetText(text, temp->buffers[temp->curr_line]);
+
+    return 0;
 }
 
 void EntryUpdateLine(){
@@ -221,7 +230,7 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
-    Transform2DSetPosition(&entry->text, 0, 25 - (25 / fontSize) );
+    Transform2DSetPosition(&entry->text, 0, 10 + (fontSize * 2) );
 
     entry->currPos = 0;
 
@@ -246,6 +255,23 @@ char *EntryWidgetGetText(EWidgetEntry *entry)
 }
 
 void EntryWidgetSetText(EWidgetEntry *entry, char *text)
+{
+    EWidgetText *temp = WidgetFindChild(&entry->widget, entry->curr_texts)->node;
+
+    memset(entry->buffers[entry->curr_line], 0, BUFFER_SIZE);
+
+    int len = strlen(text);
+    for(int i=0;i < len;i++)
+    {
+        entry->buffers[entry->curr_line][i] = text[i];
+    }
+
+    entry->currPos = len;
+
+    TextWidgetSetText(temp, entry->buffers[entry->curr_line]);
+}
+
+void EntryWidgetSetTextW(EWidgetEntry *entry, uint32_t *text)
 {
     EWidgetText *temp = WidgetFindChild(&entry->widget, entry->curr_texts)->node;
 
