@@ -9,7 +9,7 @@
 
 bool e_ctrl_press = false, e_c_press = false, e_v_press = false, e_pasted = false, e_copied = false;
 
-void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
+int EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
 
     EWidgetEntry *temp = widget;
 
@@ -37,9 +37,11 @@ void EntryWidgetCharInput(EWidget* widget, uint32_t codepoint, void *arg){
     }
 
     TextWidgetSetText(text, temp->buffers[temp->curr_line]);
+
+    return 0;
 }
 
-void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
+int EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     EWidgetEntry *temp = widget;
 
@@ -95,9 +97,11 @@ void EntryWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
         e_pasted = true;
     }
+
+    return 0;
 }
 
-void EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
+int EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
     EWidgetEntry *temp = widget;
 
     if(key == GLFW_KEY_BACKSPACE)
@@ -121,6 +125,8 @@ void EntryWidgetKeyRepeatInput(EWidget* widget, int key, void *arg){
 
         temp->buffers[temp->curr_line][temp->currPos] = 0;
     }
+
+    return 0;
 }
 
 void EntryWidgetCharacterCallback(void* arg, uint32_t codepoint)
@@ -129,6 +135,7 @@ void EntryWidgetCharacterCallback(void* arg, uint32_t codepoint)
             return;
 
     WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_CHAR_INPUT, codepoint);
+
 }
 
 void EntryWidgetKeyCallback(void* arg,  int key, int scancode, int action, int mods)
@@ -168,16 +175,16 @@ void EntryWidgetKeyCallback(void* arg,  int key, int scancode, int action, int m
         WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, key);
     else if(action == GLFW_RELEASE)
         WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT, key);
-
 }
 
-void EntryWidgetPress(EWidget *widget, void *entry, void *arg){
+int EntryWidgetPress(EWidget *widget, void *entry, void *arg){
 
     e_var_current_entry = (EWidget *)widget;
 
+    return 0;
 }
 
-void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
+int EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
 
     EWidgetEntry *temp = widget;
 
@@ -186,6 +193,8 @@ void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
     EWidgetText *text = WidgetFindChild(&temp->widget, temp->curr_texts)->node;
 
     TextWidgetSetText(text, temp->buffers[temp->curr_line]);
+
+    return 0;
 }
 
 void EntryUpdateLine(){

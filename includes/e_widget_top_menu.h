@@ -21,6 +21,11 @@ typedef struct{
 } LinkedButtonList;
 
 typedef struct{
+    int num_menu;
+    int elem_id;
+} MenuData;
+
+typedef struct{
     EWidget widget;
     EWidget top;
     EWidgetWindow *window;
@@ -31,7 +36,7 @@ typedef struct{
 void TopMenuWidgetResize(EWidgetTopMenu *top_menu);
 void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window);
 int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name);
-EWidgetButton *TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name);
+void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name);
 
 #ifdef __cplusplus
 }

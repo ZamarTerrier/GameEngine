@@ -52,7 +52,6 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
             graphObj->aShader.countAttr = 3;
             graphObj->shape.rebuild = true;
             break;
-
     }
 }
 

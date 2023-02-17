@@ -6,7 +6,7 @@
 
 vec2 roller_mouse;
 
-void RollerMousePress(EWidget *widget, void *entry, void *args)
+int RollerMousePress(EWidget *widget, void *entry, void *args)
 {
     EWidgetRoller *roller = widget;
 
@@ -17,9 +17,11 @@ void RollerMousePress(EWidget *widget, void *entry, void *args)
     roller_mouse.y = ypos;
 
     roller->stable_val = *roller->source;
+
+    return 0;
 }
 
-void RollerMouseMove(EWidget *widget, void *entry, void *args)
+int RollerMouseMove(EWidget *widget, void *entry, void *args)
 {
     EWidgetRoller *roller = widget;
 
@@ -36,6 +38,8 @@ void RollerMouseMove(EWidget *widget, void *entry, void *args)
     roller->move_val = roller->stable_val + te.y;
 
     WidgetConfirmTrigger(roller, GUI_TRIGGER_ROLLER_MOVE, &roller->move_val);
+
+    return 0;
 }
 
 void RollerWidgetInit(EWidgetRoller *roller, EWidget *parent)

@@ -23,7 +23,7 @@ typedef struct{
 
 void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent);
 void ButtonWidgetSetText(EWidgetButton *button, const char *text);
-void ButtonWidgetSetColor(EWidgetButton *button, vec4 color);
+void ButtonWidgetSetColor(EWidgetButton *button, float r, float g, float b);
 void ButtonWidgetSetImage(EWidgetButton *button, char *image_path);
 
 #ifdef __cplusplus

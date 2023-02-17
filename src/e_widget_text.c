@@ -199,6 +199,8 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
 
     memcpy(wt->widget.go.name, "Widget_Text", 10);
 
+    wt->widget.type = GUI_TYPE_TEXT;
+
     GameObject2DInit(wt);
 
     GameObjectSetUpdateFunc(wt, (void *)TextWidgetUpdateUniformBufferDefault);

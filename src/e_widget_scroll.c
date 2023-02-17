@@ -6,7 +6,7 @@
 
 vec2 scroll_mouse, scroll_temp;
 
-void ScrollWidgetPress(EWidgetScroll *widget, void* entry, void* args){
+int ScrollWidgetPress(EWidgetScroll *widget, void* entry, void* args){
 
     double xpos, ypos;
 
@@ -15,9 +15,11 @@ void ScrollWidgetPress(EWidgetScroll *widget, void* entry, void* args){
     scroll_mouse.y = ypos;
 
     scroll_temp = Transform2DGetPosition(widget);
+
+    return 0;
 }
 
-void ScrollWidgetMove(EWidget* widget, void* entry, EWidgetScroll* scroll){
+int ScrollWidgetMove(EWidget* widget, void* entry, EWidgetScroll* scroll){
 
     vec2 te, te2;
     double xpos, ypos;
@@ -47,10 +49,14 @@ void ScrollWidgetMove(EWidget* widget, void* entry, EWidgetScroll* scroll){
     Transform2DSetPosition(widget, te.x, te.y);
 
     WidgetConfirmTrigger(scroll, GUI_TRIGGER_SCROLL_CHANGE, &diff);
+
+    return 0;
 }
 
 void ScrollWidgetInit(EWidgetScroll *scroll, uint32_t width, uint32_t height, DrawParam *dParam, EWidget *parent)
 {
+    scroll->widget.type = GUI_TYPE_SCROLL;
+
     WidgetInit(scroll, dParam, parent);
     scroll->widget.color = (vec4){1.0f, 1.0f, 1.0f, 1.0f};
     Transform2DSetScale(scroll, width, height);
@@ -59,7 +65,6 @@ void ScrollWidgetInit(EWidgetScroll *scroll, uint32_t width, uint32_t height, Dr
 
     WidgetInit(&scroll->scroll, dParam, scroll);
     scroll->scroll.color = (vec4){1.0f, 0.0f, 0.0f, 1.0f};
-
 
     Transform2DSetScale(&scroll->scroll, 20, 20);
     Transform2DSetPosition(&scroll->scroll, width * 2 - 40, 0);
@@ -74,16 +79,11 @@ void ScrollWidgetUpdate(EWidgetScroll *scroll, void *list)
 
     vec2 mySize = Transform2DGetScale(scroll);
 
-    float razn = mySize.y / ((some_list->size_y * some_list->size) - mySize.y);
+    float razn = mySize.y / (some_list->size_y * some_list->size);
 
-    float result = mySize.y * razn / 2;
+    scroll->scroll_size = razn < 1 ? mySize.y * razn : mySize.y;
 
-    if(result > mySize.y)
-        result = mySize.y;
-
-    scroll->scroll_size = result;
-
-    Transform2DSetScale(&scroll->scroll, 20, result);
+    Transform2DSetScale(&scroll->scroll, 20, scroll->scroll_size);
 }
 
 void ScrollWidgetSetScrollSize(EWidgetScroll *scroll, float percent)

@@ -17,6 +17,8 @@
 
 #define MAX_GUI_CALLBACKS 25
 
+#define MAX_WIDGETS_TRASH 200
+
 #ifdef __cplusplus
 extern "C"
 {

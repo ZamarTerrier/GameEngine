@@ -113,7 +113,26 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
     }
 }
 
- ChildStack * WidgetFindChild(EWidget* widget, int num)
+int WidgetFindIdChild(EWidget* widget)
+{
+    EWidget *parent = widget->parent;
+
+    ChildStack *child = parent->child;
+    int counter = 0;
+
+    while(child != NULL && child->node != widget)
+    {
+        counter ++;
+        child = child->next;
+    }
+
+    if(child == NULL && counter == 0)
+        return -1;
+
+    return counter;
+}
+
+ChildStack * WidgetFindChild(EWidget* widget, int num)
 {
     ChildStack *child = widget->child;
     int counter = 0;
@@ -125,15 +144,20 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
             counter ++;
             child = child->next;
         }
+
+        if(counter != num)
+            return NULL;
     }
 
     return child;
 }
 
 void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
-    GameObject2DInit(&ew->go);
 
     memcpy(ew->go.name, "Widget", 6);
+
+    GameObject2DInit(&ew->go);
+
 
     GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
@@ -187,7 +211,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     WidgetSetParent(ew, parent);
 
-    ew->widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE;
+    ew->widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE | ENGINE_FLAG_WIDGET_SELF_VISIBLE;
 
     ew->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
     ew->callbacks.size = 0;
@@ -195,7 +219,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     PipelineCreateGraphics(&ew->go.graphObj);
 }
 
-void WidgetConnect(EWidget* widget, int trigger, void* callback, void* args){
+void WidgetConnect(EWidget* widget, int trigger, widget_callback callback, void* args){
 
     if(widget->callbacks.size + 1 >= MAX_GUI_CALLBACKS)
     {
@@ -211,23 +235,20 @@ void WidgetConnect(EWidget* widget, int trigger, void* callback, void* args){
 }
 
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry){
-    int c_size = widget->callbacks.size;
+    int res = 0;
 
-    CallbackStruct *stack = calloc(c_size, sizeof(CallbackStruct));
-    memcpy(stack, widget->callbacks.stack, c_size * sizeof(CallbackStruct));
-
-    for(int i=0;i < c_size;i++)
+    for(int i=0;i < widget->callbacks.size;i++)
     {
-        if(stack[i].trigger == trigger)
+        if(widget->callbacks.stack[i].trigger == trigger)
         {
-            void(*func)(EWidget *widget, void *, void*) = stack[i].func;
-            func(widget, entry,  stack[i].args);
+            widget_callback temp = widget->callbacks.stack[i].func;
+            res = temp(widget, entry,  widget->callbacks.stack[i].args);
+
+            if(res < 0)
+                return;
         }
     }
-
-    free(stack);
 }
-
 
 EWidget* WidgetCheckMouseInner(EWidget* widget){
 

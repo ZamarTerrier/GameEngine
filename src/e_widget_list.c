@@ -2,11 +2,13 @@
 
 int max_size = 2;
 
-void ListWidgetPressItem(EWidget *widget, void *entry, int id){
+int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 
     EWidgetList *list = widget->parent;
 
     WidgetConfirmTrigger(list, GUI_TRIGGER_LIST_PRESS_ITEM, id);
+
+    return -1;
 }
 
 void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
@@ -44,8 +46,10 @@ EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text){
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
     ButtonWidgetInit(item, text, &list->widget);
-    ButtonWidgetSetColor(item, list->widget.color);
+    ButtonWidgetSetColor(item, list->widget.color.x, list->widget.color.y, list->widget.color.z);
     TextWidgetSetText(&item->text, text);
+
+    item->widget.transparent = 0.5f;
 
     WidgetConnect(item, GUI_TRIGGER_BUTTON_PRESS, ListWidgetPressItem, list->size -1);
 
@@ -100,12 +104,22 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         free(child);
 
     }else{
-        free(list->widget.child);
-        list->widget.last = NULL;
-        list->widget.child = NULL;
+        if(list->widget.child->node != NULL)
+        {
+            WidgetDestroy(list->widget.child->node);
+            free(list->widget.child->node);
+            list->widget.child->node = NULL;
+        }
+
+        if(list->widget.child != NULL)
+        {
+            free(list->widget.child);
+            list->widget.last = NULL;
+            list->widget.child = NULL;
+        }
     }
 
-     list->size--;
+    list->size--;
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
 

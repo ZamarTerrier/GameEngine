@@ -23,11 +23,14 @@ typedef enum{
     GUI_TRIGGER_COMBOBOX_PRESS,
     GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM,
     GUI_TRIGGER_LIST_PRESS_ITEM,
+    GUI_TRIGGER_MENU_PRESS_ITEM,
     GUI_TRIGGER_ENTRY_CHAR_INPUT,
     GUI_TRIGGER_ENTRY_UPDATE,
     GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT,
     GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT,
     GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT,
+    GUI_TRIGGER_WINDOW_OPEN,
+    GUI_TRIGGER_WINDOW_CLOSE,
     GUI_TRIGGER_RANGE_CHANGE,
     GUI_TRIGGER_SCROLL_CHANGE,
     GUI_TRIGGER_ROLLER_MOVE,
@@ -38,8 +41,11 @@ typedef enum{
     GUI_TYPE_TEXT,
     GUI_TYPE_BUTTON,
     GUI_TYPE_LIST,
+    GUI_TYPE_SCROLL,
+    GUI_TYPE_MENU,
     GUI_TYPE_COMBOBOX,
     GUI_TYPE_ENTRY,
+    GUI_TYPE_ENTRY_AREA,
     GUI_TYPE_RANGE,
     GUI_TYPE_IMAGE,
     GUI_TYPE_WINDOW
@@ -100,11 +106,16 @@ typedef struct{
     int size;
 } MaskObjectBuffer;
 
- ChildStack * WidgetFindChild(EWidget* widget, int num);
+
+typedef int(*widget_callback)(EWidget *widget, void *, void*);
+
+int WidgetFindIdChild(EWidget* widget);
+ChildStack * WidgetFindChild(EWidget* widget, int num);
+
 void WidgetSetParent(EWidget* ew, EWidget* parent);
 void WidgetInit(EWidget *ew, DrawParam *dParam, EWidget *parent);
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
-void WidgetConnect(EWidget *widget, int trigger, void* callback, void *args);
+void WidgetConnect(EWidget *widget, int trigger, widget_callback callback, void *args);
 void WidgetRecreate(EWidget *widget);
 void WidgetEventsPipe(EWidget *widget);
 void WidgetDraw(EWidget *widget);

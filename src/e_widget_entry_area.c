@@ -186,7 +186,8 @@ void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src)
         }
     }
 }
-void EntryAreaWidgetKeyPressInput(EWidget* widget, int key, void *arg){
+
+int EntryAreaWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     EWidgetEntryArea *temp = widget;
 
@@ -225,7 +226,7 @@ void EntryAreaWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
         temp->entry.currPos = 0;
 
-        return;
+        return 0;
     }
 
     if(e_ctrl_press == true && e_v_press == true && !e_pasted)
@@ -240,12 +241,16 @@ void EntryAreaWidgetKeyPressInput(EWidget* widget, int key, void *arg){
 
     EWidgetText *text = WidgetFindChild(&temp->entry.widget, temp->entry.curr_texts)->node;
     TextWidgetSetText(text, temp->entry.buffers[temp->entry.curr_line]);
+
+    return 0;
 }
 
-void EntryAreaWidgetKeyRepeatInput(EWidget* widget, int key, void *arg)
+int EntryAreaWidgetKeyRepeatInput(EWidget* widget, int key, void *arg)
 {
     if(key == GLFW_KEY_BACKSPACE)
         EntryAreaWidgetMakeDelete(widget);
+
+    return 0;
 }
 
 void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent){
@@ -256,6 +261,9 @@ void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent)
         fontSize = 2;
 
     WidgetInit(&entry->entry.widget, NULL, parent);
+
+    entry->entry.widget.type = GUI_TYPE_ENTRY_AREA;
+
     entry->entry.widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->entry.text, fontSize, NULL, &entry->entry.widget);
