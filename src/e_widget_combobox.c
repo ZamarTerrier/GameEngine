@@ -18,12 +18,22 @@ int ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
     return 0;
 }
 
-int ComboboxWidgetPressSub(EWidget* widget, void* entry, int id){
+int ComboboxWidgetPressSub(EWidget* widget, int id, void *arg){
 
-    EWidgetCombobox *cmb = (EWidgetCombobox *) widget->parent->parent;
-    EWidgetButton *butt = (EWidgetButton *)widget;
+    EWidgetList *list = widget;
+    EWidgetCombobox *cmb = (EWidgetCombobox *) widget->parent;
 
-    TextImageSetText(butt->text.tData.text, &cmb->button.text.widget, &cmb->button.text.tData);
+    ChildStack *child = WidgetFindChild(list, id);
+
+    if(child == NULL)
+        return;
+
+    EWidgetButton *butt = child->node;
+
+    char *temp[1024];
+    TextWidgetGetText(&butt->text, temp);
+
+    TextObjectSetTextU8(&cmb->button.text, temp);
     cmb->currId = id;
 
     if(!cmb->show)
@@ -57,6 +67,7 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 
     ListWidgetInit(&combobox->list, combobox->size_x, combobox->size_y, &combobox->widget);
     WidgetConnect(&combobox->button, GUI_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  NULL);
+    WidgetConnect(&combobox->list, GUI_TRIGGER_LIST_PRESS_ITEM, ComboboxWidgetPressSub,  NULL);
 
     Transform2DSetPosition(&combobox->list, 0, combobox->size_y * 2);
     combobox->show = false;
@@ -65,8 +76,6 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 
 void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text){
     EWidgetButton *butt = ListWidgetAddItem(&combobox->list, text);
-
-    WidgetConnect(butt, GUI_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressSub,  combobox->list.size - 1);
 
     Transform2DSetScale(&combobox->list, combobox->size_x, (combobox->list.size + 1) * combobox->size_y);
 }
