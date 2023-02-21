@@ -3,7 +3,6 @@
 
 #include "engine_includes.h"
 
-#include "e_resource.h"
 #include "texture.h"
 #include "tools.h"
 

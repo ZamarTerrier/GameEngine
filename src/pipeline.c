@@ -4,6 +4,9 @@
 
 #include "e_pipeline_variables.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
     PipelineSetting *setting = arg;
@@ -303,5 +306,8 @@ void PipelineCreateRenderPass() {
         printf("failed to create render pass!");
         exit(1);
     }
+
+    free(dependency);
+    dependency = NULL;
 }
 

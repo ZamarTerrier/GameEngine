@@ -8,7 +8,9 @@
 #include "buffers.h"
 #include "texture.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_descriptors.h"
+#include "e_resource_engine.h"
 
 void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
 {
@@ -26,43 +28,64 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
             graphObj->aShader.bindingDescription = &Bind2DDescription;
             graphObj->aShader.attr = planeAttributeDescription;
             graphObj->aShader.countAttr = 3;
-            graphObj->shape.rebuild = true;
             break;
         case ENGINE_VERTEX_TYPE_3D_OBJECT:
             graphObj->aShader.bindingDescription = &Bind3DDescription;
             graphObj->aShader.attr = cubeAttributeDescription;
             graphObj->aShader.countAttr = 4;
-            graphObj->shape.rebuild = true;
             break;
         case ENGINE_VERTEX_TYPE_MODEL_OBJECT:
             graphObj->aShader.bindingDescription = &BindModel3DDescription;
             graphObj->aShader.attr = modelAttributeDescription;
             graphObj->aShader.countAttr = 6;
-            graphObj->shape.rebuild = true;
             break;
         case ENGINE_TYPE_2D_PARTICLE:
             graphObj->aShader.bindingDescription = &BindParticle2DDescription;
             graphObj->aShader.attr = particle2DAttributeDescription;
             graphObj->aShader.countAttr = 3;
-            graphObj->shape.rebuild = true;
             break;
         case ENGINE_TYPE_3D_PARTICLE:
             graphObj->aShader.bindingDescription = &BindParticle3DDescription;
             graphObj->aShader.attr = particle3DAttributeDescription;
             graphObj->aShader.countAttr = 3;
-            graphObj->shape.rebuild = true;
             break;
     }
+
+    graphObj->shape.init = false;
+}
+
+void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t type_v_size, uint32_t type_i_size)
+{
+    graphObj->shape.vParam.typeSize = type_v_size;
+    graphObj->shape.iParam.typeSize = type_i_size;
 }
 
 void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount){
 
-    graphObj->shape.vParam.vertices = vert;
-    graphObj->shape.vParam.verticesSize = vertCount;
-    graphObj->shape.iParam.indices = inx;
-    graphObj->shape.iParam.indexesSize = indxCount;
-    graphObj->shape.rebuild = true;
+    if(!graphObj->shape.init)
+    {
+        BuffersCreateVertex(&graphObj->shape.vParam, 0);
+        BuffersCreateIndex(&graphObj->shape.iParam, 0);
+        graphObj->shape.init = true;
+    }
 
+    if(vert != NULL)
+    {
+        graphObj->shape.vParam.vertices = vert;
+        graphObj->shape.vParam.verticesSize = vertCount;
+    }
+
+    if(inx != NULL)
+    {
+        graphObj->shape.iParam.indices = inx;
+        graphObj->shape.iParam.indexesSize = indxCount;
+    }
+
+    if(graphObj->shape.vParam.verticesSize > 0)
+        BuffersUpdateVertex(&graphObj->shape.vParam);
+
+    if(graphObj->shape.iParam.indexesSize > 0)
+        BuffersUpdateIndex(&graphObj->shape.iParam);
 }
 
 void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
@@ -94,14 +117,19 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
 
         ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-
+            //descriptor->texture = NULL;
         }
-        else{
+        else
+        {
             for (int j = 0; j < imagesCount; j++) {
                 ShaderBuffer *desriptor = &graphObj->local.descriptors[i];
                 vkDestroyBuffer(e_device, desriptor->uniform->uniformBuffers[j], NULL);
                 vkFreeMemory(e_device, desriptor->uniform->uniformBuffersMemory[j], NULL);
             }
+            free(descriptor->uniform->uniformBuffers);
+            descriptor->uniform->uniformBuffers = NULL;
+            free(descriptor->uniform->uniformBuffersMemory);
+            descriptor->uniform->uniformBuffersMemory = NULL;
             free(descriptor->uniform);
             descriptor->uniform = NULL;
         }
@@ -126,17 +154,13 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
     vkDestroyBuffer(e_device, graphObj->shape.iParam.indexBuffer, NULL);
     vkFreeMemory(e_device, graphObj->shape.iParam.indexBufferMemory, NULL);
-    //free(graphObj->shape.iParam.indices);
     graphObj->shape.iParam.indexBuffer = NULL;
     graphObj->shape.iParam.indexBufferMemory = NULL;
-    graphObj->shape.iParam.indices = NULL;
 
     vkDestroyBuffer(e_device, graphObj->shape.vParam.vertexBuffer, NULL);
     vkFreeMemory(e_device, graphObj->shape.vParam.vertexBufferMemory, NULL);
-    //free(graphObj->shape.vParam.vertices);
     graphObj->shape.vParam.vertexBuffer = NULL;
     graphObj->shape.vParam.vertexBufferMemory = NULL;
-    graphObj->shape.vParam.vertices = NULL;
 
     for(int i=0;i < graphObj->local.descrCount;i++)
     {
@@ -148,6 +172,10 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
                 vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
                 vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
             }
+            free(descriptor->uniform->uniformBuffers);
+            descriptor->uniform->uniformBuffers = NULL;
+            free(descriptor->uniform->uniformBuffersMemory);
+            descriptor->uniform->uniformBuffersMemory = NULL;
             free(descriptor->uniform);
             descriptor->uniform = NULL;
         }

@@ -2,6 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 bool checkDeviceExtensionSupport(void* arg) {
 
     VkPhysicalDevice *device = arg;
@@ -11,11 +14,11 @@ bool checkDeviceExtensionSupport(void* arg) {
     VkExtensionProperties* availableExtensions = (VkExtensionProperties*) calloc( extensionCount, sizeof(VkExtensionProperties));
     vkEnumerateDeviceExtensionProperties(*device, NULL, &extensionCount, availableExtensions);
 
-    const char** requiredExtensions = (const char**) calloc(DEVEXTSIZE, sizeof(char*));
+    const char** requiredExtensions = (const char**) calloc(num_dev_extensions, sizeof(char*));
 
     for(int i=0;i<extensionCount;i++)
     {
-        for(int j=0;j<DEVEXTSIZE;j++)
+        for(int j=0;j<num_dev_extensions;j++)
         {
             if(strcmp(deviceExtensions[j], availableExtensions[i].extensionName) == 0)
             {
@@ -27,7 +30,7 @@ bool checkDeviceExtensionSupport(void* arg) {
 
     bool empty = true;
 
-    for(int i=0;i<DEVEXTSIZE;i++)
+    for(int i=0;i<num_dev_extensions;i++)
     {
         if(requiredExtensions[i] != NULL)
             empty = false;
@@ -121,11 +124,11 @@ void createLogicalDevice() {
     createInfo.pQueueCreateInfos = queueCreateInfos;
     createInfo.queueCreateInfoCount = 1;
     createInfo.pEnabledFeatures = &deviceFeatures;
-    createInfo.enabledExtensionCount = DEVEXTSIZE;
+    createInfo.enabledExtensionCount = num_dev_extensions;
     createInfo.ppEnabledExtensionNames = deviceExtensions;
 
     if (enableValidationLayers) {
-        createInfo.enabledLayerCount = VALIDSIZE;
+        createInfo.enabledLayerCount = num_valid_layers;
         createInfo.ppEnabledLayerNames = validationLayers;
     } else {
         createInfo.enabledLayerCount = 0;

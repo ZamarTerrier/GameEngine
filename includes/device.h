@@ -3,7 +3,6 @@
 
 #include "engine_includes.h"
 
-#include "e_resource.h"
 #include "swapchain.h"
 #include "tools.h"
 

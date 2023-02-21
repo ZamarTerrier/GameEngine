@@ -4,11 +4,15 @@
 #include <vulkan/vulkan.h>
 
 #include "e_math.h"
-#include "e_resource.h"
 
 #include "tools.h"
 
 #include "camera.h"
+
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_shapes.h"
+#include "e_resource_export.h"
 
 void ProjectionPlaneUpdate(GameObject2D *go){
 
@@ -30,9 +34,10 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GameObject2DInit(go);
 
+    GraphicsObjectSetVertexSize(&go->graphObj, sizeof(Vertex2D), sizeof(uint32_t));
     GraphicsObjectSetVertex(&go->graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
-    GameObject2DApplyVertexes(go);
+    GameObject2DSetLinkedShape(go);
 
     GameObjectSetUpdateFunc(go, (void *)ProjectionPlaneUpdate);
 

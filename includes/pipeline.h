@@ -7,7 +7,6 @@
 
 #include "graphicsObject.h"
 
-#include "e_resource.h"
 #include "tools.h"
 #include "bindDesciption.h"
 

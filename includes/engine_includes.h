@@ -12,12 +12,10 @@
 
 #define MAX_FONTS 32
 #define MAX_IMAGES 32
-#define MAX_PIPELINES 64
+#define MAX_PIPELINES 10
 #define MAX_UNIFORMS 10
 
 #define MAX_GUI_CALLBACKS 25
-
-#define MAX_WIDGETS_TRASH 200
 
 #ifdef __cplusplus
 extern "C"
@@ -249,6 +247,11 @@ typedef struct EISurfaceCapabilitiesKHR {
     uint32_t         supportedCompositeAlpha;
     uint32_t                supportedUsageFlags;
 } EISurfaceCapabilitiesKHR;
+
+typedef struct{
+    uint32_t FindLetter;
+    uint16_t IndexLetter;
+} FontIndexes;
 
 #ifdef __cplusplus
 }

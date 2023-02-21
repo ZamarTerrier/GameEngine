@@ -6,6 +6,8 @@
 
 #include "e_texture_variables.h"
 
+#include "e_resource_engine.h"
+
 //Создаем параметры дескриптора
 void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer* descriptors, size_t count) {
 
@@ -29,6 +31,9 @@ void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer* descriptors, size
         printf("failed to create descriptor set layout!");
         exit(1);
     }
+
+    free(bindings);
+    bindings = NULL;
 }
 //Создаем пулл дескрипторов для шейдера
 void createDescriptorPool(GraphicItems* gi, ShaderBuffer* descriptors, size_t count) {
@@ -51,6 +56,9 @@ void createDescriptorPool(GraphicItems* gi, ShaderBuffer* descriptors, size_t co
         printf("failed to create descriptor pool!");
         exit(1);
     }
+
+    free(poolSizes);
+    poolSizes = NULL;
 }
 //Создаем сами дескрипторы
 void createDescriptorSets(GraphicItems* gi, localParam* params) {
@@ -134,6 +142,8 @@ void createDescriptorSets(GraphicItems* gi, localParam* params) {
     }
     //--------------------------------------
 
+    free(descriptorWrites);
+    descriptorWrites = NULL;
     free(bufferInfos);
     bufferInfos = NULL;
     free(imageInfos);

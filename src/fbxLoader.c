@@ -12,6 +12,10 @@
 
 #include "ufbx.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 size_t clamp_sz(size_t a, size_t min_a, size_t max_a) { return min(max(a, min_a), max_a); }
 
 mat4 ufbx_to_mat4(ufbx_matrix m) {
@@ -419,15 +423,8 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
 
           mo->nodes[i].models->graphObj.gItems.perspective = true;
 
+          GraphicsObjectSetVertexSize(&mo->nodes[i].models->graphObj, sizeof(ModelVertex3D), sizeof(uint32_t));
           GraphicsObjectSetVertex(&mo->nodes[i].models->graphObj, fbx->meshes[i].verts, fbx->meshes[i].num_verts, fbx->meshes[i].indices, fbx->meshes[i].num_indices);
-
-          if(fbx->meshes[i].num_verts > 0){
-              BufferCreateVertex(&mo->nodes[i].models->graphObj.shape.vParam, sizeof(ModelVertex3D));
-          }
-
-          if(fbx->meshes[i].num_indices > 0){
-              BuffersCreateIndex(&mo->nodes[i].models->graphObj.shape.iParam, sizeof(uint32_t));
-          }
 
           ModelDefaultInit(mo->nodes[i].models, dParam);
 

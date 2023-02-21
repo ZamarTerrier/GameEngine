@@ -1,11 +1,12 @@
 #include "transform.h"
 
-#include "e_resource.h"
-
 #include "e_math.h"
 
 #include "gameObject2D.h"
 #include "gameObject3D.h"
+
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
 
 void Transform2DInit(Transform2D* transform){
 

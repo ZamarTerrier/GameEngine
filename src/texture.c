@@ -6,6 +6,9 @@
 
 #include "stb_image.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 void ImageCreateEmpty(void** image, void** imageMemory) {
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

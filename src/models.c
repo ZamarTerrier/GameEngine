@@ -16,6 +16,10 @@
 #include "objLoader.h"
 #include "fbxLoader.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 //Описание вертекса
 EIVertexInputBindingDescription ModelObject3DGetBindingDescription() {
     EIVertexInputBindingDescription bindingDescription = {};

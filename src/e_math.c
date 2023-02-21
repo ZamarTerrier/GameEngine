@@ -2,7 +2,8 @@
 
 #include "math.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
 
 vec3 e_vec3_origin = { 0, 0, 0};
 

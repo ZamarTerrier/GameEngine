@@ -24,7 +24,8 @@
 
 #include "camera.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
 
 typedef struct{
     GameObject** go;
@@ -236,8 +237,12 @@ void EngineCleanupSwapChain() {
     for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyFramebuffer(e_device, swapChainFramebuffers[i], NULL);
     }
+    free(swapChainFramebuffers);
+    swapChainFramebuffers = NULL;
 
     vkFreeCommandBuffers(e_device, commandPool, imagesCount, commandBuffers);
+    free(commandBuffers);
+    commandBuffers = NULL;
 
     int temp = objs.count;
 
@@ -252,6 +257,8 @@ void EngineCleanupSwapChain() {
     for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyImageView(e_device, swapChainImageViews[i], NULL);
     }
+    free(swapChainImageViews);
+    swapChainImageViews = NULL;
 
     vkDestroySwapchainKHR(e_device, swapChain, NULL);
 

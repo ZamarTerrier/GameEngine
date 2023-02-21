@@ -3,9 +3,11 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "e_resource.h"
-
 #include "tools.h"
+
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 bool e_ctrl_press = false, e_c_press = false, e_v_press = false, e_pasted = false, e_copied = false;
 
@@ -134,7 +136,7 @@ void EntryWidgetCharacterCallback(void* arg, uint32_t codepoint)
     if(e_var_current_entry == NULL)
             return;
 
-    WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_CHAR_INPUT, codepoint);
+    WidgetConfirmTrigger(e_var_current_entry, ENGINE_WIDGET_TRIGGER_ENTRY_CHAR_INPUT, codepoint);
 
 }
 
@@ -170,11 +172,11 @@ void EntryWidgetKeyCallback(void* arg,  int key, int scancode, int action, int m
     }
 
     if(action == GLFW_PRESS)
-        WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT, key);
+        WidgetConfirmTrigger(e_var_current_entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_PRESS_INPUT, key);
     else if(action == GLFW_REPEAT)
-        WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, key);
+        WidgetConfirmTrigger(e_var_current_entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_REPEAT_INPUT, key);
     else if(action == GLFW_RELEASE)
-        WidgetConfirmTrigger(e_var_current_entry, GUI_TRIGGER_ENTRY_KEY_RELEASE_INPUT, key);
+        WidgetConfirmTrigger(e_var_current_entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_RELEASE_INPUT, key);
 }
 
 int EntryWidgetPress(EWidget *widget, void *entry, void *arg){
@@ -214,10 +216,22 @@ void EntryUpdateLine(){
 
     TextWidgetSetText(text, temp->buffers[temp->curr_line]);
 
-    WidgetConfirmTrigger(temp, GUI_TRIGGER_ENTRY_UPDATE, NULL);
+    WidgetConfirmTrigger(temp, ENGINE_WIDGET_TRIGGER_ENTRY_UPDATE, NULL);
+}
+
+int EntryWidgetDestroyDefault(EWidgetEntry *entry)
+{
+    GameObject2DDestroy(entry);
+
+    for(int i=0; i < entry->num_lines;i++)
+    {
+        free(entry->buffers[i]);
+    }
+    free(entry->buffers);
 }
 
 void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
+
 
     if(fontSize > 16)
         fontSize = 16;
@@ -225,8 +239,12 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
         fontSize = 2;
 
     WidgetInit(&entry->widget, NULL, parent);
+
+    GameObjectSetDestroyFunc(entry, (void *)EntryWidgetDestroyDefault);
+
     memcpy(entry->widget.go.name, "Entry", 5);
-    entry->widget.type = GUI_TYPE_ENTRY;
+    entry->widget.type = ENGINE_WIDGET_TYPE_ENTRY;
+
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
@@ -240,12 +258,12 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
     entry->num_lines = 1;
     entry->curr_line = 0;
 
-    WidgetConnect(entry, GUI_TRIGGER_MOUSE_PRESS, EntryWidgetPress, NULL);
-    WidgetConnect(entry, GUI_TRIGGER_WIDGET_UNFOCUS, EntryWidgetUnfocus, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, EntryWidgetPress, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_WIDGET_UNFOCUS, EntryWidgetUnfocus, NULL);
 
-    WidgetConnect(entry, GUI_TRIGGER_ENTRY_CHAR_INPUT, EntryWidgetCharInput, NULL);
-    WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT, EntryWidgetKeyPressInput, NULL);
-    WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, EntryWidgetKeyRepeatInput, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_ENTRY_CHAR_INPUT, EntryWidgetCharInput, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_PRESS_INPUT, EntryWidgetKeyPressInput, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_REPEAT_INPUT, EntryWidgetKeyRepeatInput, NULL);
 
 }
 

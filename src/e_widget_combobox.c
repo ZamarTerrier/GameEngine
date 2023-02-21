@@ -13,7 +13,7 @@ int ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
         Transform2DSetScale(&cmb->widget, cmb->size_x, cmb->size_y);
     }
 
-    WidgetConfirmTrigger(cmb, GUI_TRIGGER_COMBOBOX_PRESS, NULL);
+    WidgetConfirmTrigger(cmb, ENGINE_WIDGET_TRIGGER_COMBOBOX_PRESS, NULL);
 
     return 0;
 }
@@ -45,7 +45,7 @@ int ComboboxWidgetPressSub(EWidget* widget, int id, void *arg){
         Transform2DSetScale(&cmb->widget, cmb->size_x, cmb->size_y);
     }
 
-    WidgetConfirmTrigger(cmb, GUI_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM, id);
+    WidgetConfirmTrigger(cmb, ENGINE_WIDGET_TRIGGER_COMBOBOX_CHANGE_SELLECTED_ITEM, id);
 
     return 0;
 }
@@ -53,11 +53,13 @@ int ComboboxWidgetPressSub(EWidget* widget, int id, void *arg){
 void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 
     WidgetInit(&combobox->widget, NULL, parent);
+
     memcpy(combobox->widget.go.name, "Combobox", 8);
+    combobox->widget.type = ENGINE_WIDGET_TYPE_COMBOBOX;
+
     ButtonWidgetInit(&combobox->button, " ", &combobox->widget);
     ButtonWidgetSetColor(&combobox->button, 0.4, 0.4, 0.4);
 
-    combobox->widget.type = GUI_TYPE_COMBOBOX;
     combobox->size_x = 100;
     combobox->size_y = 30;
     combobox->currId = -1;
@@ -66,8 +68,8 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
     Transform2DSetScale(&combobox->button, combobox->size_x, combobox->size_y);
 
     ListWidgetInit(&combobox->list, combobox->size_x, combobox->size_y, &combobox->widget);
-    WidgetConnect(&combobox->button, GUI_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  NULL);
-    WidgetConnect(&combobox->list, GUI_TRIGGER_LIST_PRESS_ITEM, ComboboxWidgetPressSub,  NULL);
+    WidgetConnect(&combobox->button, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  NULL);
+    WidgetConnect(&combobox->list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, ComboboxWidgetPressSub,  NULL);
 
     Transform2DSetPosition(&combobox->list, 0, combobox->size_y * 2);
     combobox->show = false;
@@ -77,5 +79,6 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
 void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text){
     EWidgetButton *butt = ListWidgetAddItem(&combobox->list, text);
 
+    butt->widget.widget_flags |= ENGINE_FLAG_WIDGET_ALLOCATED;
     Transform2DSetScale(&combobox->list, combobox->size_x, (combobox->list.size + 1) * combobox->size_y);
 }

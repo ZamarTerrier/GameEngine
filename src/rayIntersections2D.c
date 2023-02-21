@@ -4,6 +4,8 @@
 
 #include "gameObject2D.h"
 
+#include "e_resource_data.h"
+
 int IntersectRayCircle(InterRay2DParam *ray, InterCircleParam *circle, float *t, vec2 *q)
 {
     vec2 ac = v2_sub(circle->center, ray->position);

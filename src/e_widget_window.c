@@ -6,6 +6,11 @@
 
 #include "engine.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_shapes.h"
+#include "e_resource_export.h"
+
 vec2 e_var_mouse, e_var_temp, e_var_tscale ;
 
 int WindowWidgetSetSize(EWidgetWindow* window, float x, float y)
@@ -81,7 +86,7 @@ int WindowWidgetCloseButton(EWidget* widget, void* entry, void *arg){
 
     window->show = false;
 
-    WidgetConfirmTrigger(window, GUI_TRIGGER_WINDOW_CLOSE, NULL);
+    WidgetConfirmTrigger(window, ENGINE_WIDGET_TRIGGER_WINDOW_CLOSE, NULL);
 
     return 0;
 }
@@ -165,9 +170,10 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     GameObject2DInit(&widget->go);
 
+    GraphicsObjectSetVertexSize(&widget->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
     GraphicsObjectSetVertex(&widget->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
-    GameObject2DApplyVertexes(widget);
+    GameObject2DSetLinkedShape(widget);
 
     GameObjectSetUpdateFunc(&widget->go, (void *)WindowWidgetUniformUpdate);
 
@@ -241,6 +247,9 @@ void InitBot(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
 
+    memcpy(widget->go.name, "Widget_Window", 12);
+    widget->type = ENGINE_WIDGET_TYPE_WINDOW;
+
     vec2 botSize = size;
     botSize.y -= 14;
     botSize.x -= 4;
@@ -281,9 +290,6 @@ void InitHide(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
 void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dParam, vec2 position)
 {
-    memcpy(ww->top.go.name, "Widget_Window", 12);
-    ww->widget.type = GUI_TYPE_WINDOW;
-
     InitTop(&ww->top, dParam, size, position);
     InitName(&ww->name, name, dParam, &ww->top);
     InitBot(&ww->widget, dParam, size, &ww->top);
@@ -295,14 +301,14 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dPara
     InitResize(&ww->resize, dParam, size, &ww->top);
     InitHide(&ww->hide, dParam, size, &ww->top);
 
-    WidgetConnect(&ww->top, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetPress, NULL);
-    WidgetConnect(&ww->top, GUI_TRIGGER_MOUSE_MOVE, WindowWidgetMove, ww);
+    WidgetConnect(&ww->top, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, WindowWidgetPress, NULL);
+    WidgetConnect(&ww->top, ENGINE_WIDGET_TRIGGER_MOUSE_MOVE, WindowWidgetMove, ww);
 
-    WidgetConnect(&ww->close, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetCloseButton, ww);
-    WidgetConnect(&ww->resize, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetResizeButton, ww);
-    WidgetConnect(&ww->hide, GUI_TRIGGER_MOUSE_PRESS, WindowWidgetHideButton, ww);
+    WidgetConnect(&ww->close, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, WindowWidgetCloseButton, ww);
+    WidgetConnect(&ww->resize, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, WindowWidgetResizeButton, ww);
+    WidgetConnect(&ww->hide, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, WindowWidgetHideButton, ww);
 
-    ww->top.type = GUI_TYPE_WINDOW;
+    ww->top.type = ENGINE_WIDGET_TYPE_WINDOW;
     ww->show = true;
     ww->wasHide = false;
     ww->wasResize = false;
@@ -312,13 +318,13 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dPara
 void WindowWidgetShow(EWidgetWindow *ww){
     ww->show = true;
 
-    WidgetConfirmTrigger(ww, GUI_TRIGGER_WINDOW_OPEN, NULL);
+    WidgetConfirmTrigger(ww, ENGINE_WIDGET_TRIGGER_WINDOW_OPEN, NULL);
 }
 
 void WindowWidgetHide(EWidgetWindow *ww){
     ww->show = false;
 
-    WidgetConfirmTrigger(ww, GUI_TRIGGER_WINDOW_CLOSE, NULL);
+    WidgetConfirmTrigger(ww, ENGINE_WIDGET_TRIGGER_WINDOW_CLOSE, NULL);
 }
 
 void WindowWidgetUpdate(EWidgetWindow *ww){

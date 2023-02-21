@@ -18,18 +18,18 @@ int ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
 
     button->widget.color = button->selfColor;
 
-    WidgetConfirmTrigger(widget, GUI_TRIGGER_BUTTON_PRESS, NULL);
+    WidgetConfirmTrigger(widget, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, NULL);
 
     return 0;
 }
 
 void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
-    memcpy(button->widget.go.name, "Button", 6);
-
-    button->widget.type = GUI_TYPE_BUTTON;
-
     WidgetInit(button, NULL, parent);
+
+    memcpy(button->widget.go.name, "Button", 6);
+    button->widget.type = ENGINE_WIDGET_TYPE_BUTTON;
+
     button->selfColor = button->widget.color = (vec4){ 1, 1, 1, 1};
 
     TextWidgetInit(&button->text, 9, NULL, &button->widget);
@@ -37,8 +37,8 @@ void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
 
     Transform2DSetPosition(&button->text, 0, 9 * 4.0f);
 
-    WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_PRESS, ButtonWidgetPress, NULL);
-    WidgetConnect(&button->widget, GUI_TRIGGER_MOUSE_RELEASE, ButtonWidgetRelease, NULL);
+    WidgetConnect(&button->widget, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, ButtonWidgetPress, NULL);
+    WidgetConnect(&button->widget, ENGINE_WIDGET_TRIGGER_MOUSE_RELEASE, ButtonWidgetRelease, NULL);
 
 }
 

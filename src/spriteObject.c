@@ -7,6 +7,10 @@
 #include "pipeline.h"
 #include "buffers.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 void SpriteObjectCreateQuad(SpriteObject *so)
 {
     Vertex2D *verts = calloc(4, sizeof(Vertex2D));
@@ -53,9 +57,9 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     GameObject2DInit(so);
 
-    SpriteObjectCreateQuad(so);
+    GraphicsObjectSetVertexSize(&so->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
 
-    GameObject2DApplyVertexes(so);
+    SpriteObjectCreateQuad(so);
 
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);

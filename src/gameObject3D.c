@@ -12,6 +12,10 @@
 
 #include "e_math.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 void GameObject3DDefaultUpdate(GameObject3D* go) {
 
     if(go->graphObj.local.descriptors == NULL)
@@ -89,34 +93,6 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     memcpy(data, &lbo, sizeof(lbo));
     vkUnmapMemory(e_device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
-}
-
-void GameObject3DApplyVertexes(GameObject3D* go)
-{
-    if(go->graphObj.shape.vParam.verticesSize > 0)
-        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex3D));
-
-    if(go->graphObj.shape.iParam.indexesSize > 0)
-        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
-}
-
-void GameObject3DRebuildVertexes(GameObject3D* go)
-{
-    vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-    vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
-    vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
-    vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
-
-    go->graphObj.shape.vParam.vertexBuffer = NULL;
-    go->graphObj.shape.vParam.vertexBufferMemory = NULL;
-    go->graphObj.shape.iParam.indexBuffer = NULL;
-    go->graphObj.shape.iParam.indexBufferMemory = NULL;
-
-    if(go->graphObj.shape.vParam.verticesSize > 0)
-        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
-
-    if(go->graphObj.shape.iParam.indexesSize > 0)
-        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
 }
 
 void GameObject3DDefaultDraw(GameObject3D* go){
@@ -221,8 +197,21 @@ void GameObject3DDestroy(GameObject3D* go){
 
         free(go->normal);
     }
+
+    if(!go->graphObj.shape.linked)
+    {
+        if(go->graphObj.shape.vParam.verticesSize)
+            free(go->graphObj.shape.vParam.vertices);
+
+        if(go->graphObj.shape.iParam.indexesSize)
+            free(go->graphObj.shape.iParam.indices);
+    }
 }
 
+void GameObject3DSetLinkedShape(GameObject3D *go)
+{
+    go->graphObj.shape.linked = true;
+}
 
 void GameObject3DInit(GameObject3D *go){
 
@@ -237,6 +226,7 @@ void GameObject3DInit(GameObject3D *go){
 
     go->graphObj.gItems.perspective = true;
 
+    go->graphObj.shape.linked = false;
     go->enable_light = false;
     go->wired = false;
 }

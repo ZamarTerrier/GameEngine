@@ -1,6 +1,6 @@
 #include "lightObject.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
 
 void LightObjectInit(LightObject *lo, ELightType type)
 {

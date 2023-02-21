@@ -4,9 +4,10 @@
 
 #include "gameObject2D.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 void BuffersCreateFramebuffers() {
-    free(swapChainFramebuffers);
-    swapChainFramebuffers = NULL;
     swapChainFramebuffers = (VkFramebuffer*) calloc(imagesCount, sizeof(VkFramebuffer));
 
     for (int i=0;i<imagesCount;i++) {
@@ -29,6 +30,7 @@ void BuffersCreateFramebuffers() {
             exit(1);
         }
     }
+
 }
 
 void BuffersCreateCommandPool() {
@@ -47,8 +49,6 @@ void BuffersCreateCommandPool() {
 }
 
 void BuffersCreateCommand(){
-    free(commandBuffers);
-    commandBuffers = NULL;
     commandBuffers = (VkCommandBuffer *) calloc(imagesCount, sizeof(VkCommandBuffer));
 
 
@@ -65,19 +65,31 @@ void BuffersCreateCommand(){
 
 }
 
-void BufferCreateVertex(vertexParam* vert, uint32_t size) {
+void BuffersCreateVertex(vertexParam* vert, uint32_t overdrive) {
 
     //Выделение памяти
+    VkDeviceSize bufferSize;
 
-    vert->typeSize = size;
+    if(!overdrive)
+        bufferSize = vert->typeSize * MAX_VERTEX_COUNT;
+    else
+        bufferSize = vert->typeSize * overdrive;
 
-    VkDeviceSize bufferSize = size * vert->verticesSize;
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+}
+
+void BuffersUpdateVertex(vertexParam* vert) {
+
+    if(vert->verticesSize >= MAX_VERTEX_COUNT)
+        return;
+
+    //Изменение памяти
+    VkDeviceSize bufferSize = vert->typeSize * vert->verticesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
 
     //-------------
     //Перенос данных в буфер
@@ -96,15 +108,29 @@ void BufferCreateVertex(vertexParam* vert, uint32_t size) {
 
 }
 
-void BuffersCreateIndex(indexParam* ind, uint32_t type_size) {
+void BuffersCreateIndex(indexParam* ind, uint32_t overdrive) {
 
-    VkDeviceSize bufferSize = type_size * ind->indexesSize;
+    VkDeviceSize bufferSize;
+
+    if(!overdrive)
+        bufferSize = ind->typeSize * MAX_INDEX_COUNT;
+    else
+        bufferSize = ind->typeSize * overdrive;
+
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
+}
+
+void BuffersUpdateIndex(indexParam* ind)
+{
+    if(ind->indexesSize >= MAX_INDEX_COUNT)
+        return;
+
+    VkDeviceSize bufferSize = ind->typeSize * ind->indexesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
 
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);

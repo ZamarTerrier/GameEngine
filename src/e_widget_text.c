@@ -8,6 +8,10 @@
 #include "e_math.h"
 #include "pipeline.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
 
     void* data;
@@ -183,6 +187,9 @@ void TextWidgettRecreate(EWidgetText* wt){
 
 void TextWidgetAddTexture(EWidgetText *wt){
 
+    if(wt->widget.go.graphObj.local.descrCount + 1 > MAX_UNIFORMS)
+        return;
+
     ShaderBuffer *descriptor = &wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount];
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -199,7 +206,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
 
     memcpy(wt->widget.go.name, "Widget_Text", 10);
 
-    wt->widget.type = GUI_TYPE_TEXT;
+    wt->widget.type = ENGINE_WIDGET_TYPE_TEXT;
 
     GameObject2DInit(wt);
 
@@ -241,7 +248,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
 
     GameObject2DAddSettingPipeline(wt, &setting);
 
-    wt->widget.type = GUI_TYPE_TEXT;
+    wt->widget.type = ENGINE_WIDGET_TYPE_TEXT;
     wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
     wt->widget.offset.x = 0;

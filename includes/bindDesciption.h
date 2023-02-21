@@ -4,8 +4,6 @@
 #include "engine_includes.h"
 #include "graphicsItems.h"
 
-#include "e_resource.h"
-
 void createDescriptorSetLayout(GraphicItems* gi, ShaderBuffer* descriptors, size_t count);
 
 void createDescriptorPool(GraphicItems* gi, ShaderBuffer* descriptors, size_t count) ;

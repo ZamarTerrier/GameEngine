@@ -21,13 +21,13 @@ typedef struct GameObject3D{
     bool selfCamera;
 } GameObject3D;
 
-void GameObject3DApplyVertexes(GameObject3D* go);
-void GameObject3DRebuildVertexes(GameObject3D* go);
 void GameObject3DDefaultUpdate(GameObject3D* go);
 void GameObject3DDefaultDraw(GameObject3D* go);
 void GameObject3DClean(GameObject3D* go);
 void GameObject3DRecreate(GameObject3D* go);
 void GameObject3DDestroy(GameObject3D* go);
+
+void GameObject3DSetLinkedShape(GameObject3D *go);
 
 void GameObject3DInit(GameObject3D *go);
 

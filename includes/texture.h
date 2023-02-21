@@ -5,7 +5,6 @@
 
 #include "e_texture_variables.h"
 
-#include "e_resource.h"
 #include "tools.h"
 
 #ifdef __cplusplus

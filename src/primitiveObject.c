@@ -6,10 +6,14 @@
 
 #include "camera.h"
 
-#include "e_resource.h"
 #include "buffers.h"
 #include "texture.h"
 #include "pipeline.h"
+
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_shapes.h"
+#include "e_resource_export.h"
 
 void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
 {
@@ -60,44 +64,65 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     ConeParam *cParam = (ConeParam *)params;    
     TerrainParam *tParam = (TerrainParam *)params;
 
+    GraphicsObjectSetVertexSize(&po->go.graphObj, sizeof(Vertex3D), sizeof(uint32_t));
+
+    int builded = false;
+
     switch(type)
     {
         case ENGINE_PRIMITIVE3D_LINE :
             GraphicsObjectSetVertex(&po->go.graphObj, lineVert, 2, NULL, 0);
+            GameObject3DSetLinkedShape(po);
             break;
         case ENGINE_PRIMITIVE3D_TRIANGLE :
             GraphicsObjectSetVertex(&po->go.graphObj, triVert, 3, triIndx, 3);
+            GameObject3DSetLinkedShape(po);
             break;
         case ENGINE_PRIMITIVE3D_QUAD :
             GraphicsObjectSetVertex(&po->go.graphObj, quadVert, 4, quadIndx, 6);
+            GameObject3DSetLinkedShape(po);
             break;
         case ENGINE_PRIMITIVE3D_PLANE :
             InitPlane3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
+            builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CUBE :
             GraphicsObjectSetVertex(&po->go.graphObj, cubeVert, 24, cubeIndx, 36);
+            GameObject3DSetLinkedShape(po);
             break;
         case ENGINE_PRIMITIVE3D_CUBESPHERE :
             Cubesphere(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, csParam->radius, csParam->verperrow);
+            builded = true;
             break;
         case ENGINE_PRIMITIVE3D_ICOSPHERE :
             IcoSphereGenerator(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius);
+            builded = true;
             break;
         case ENGINE_PRIMITIVE3D_SPHERE :
             SphereGenerator3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CONE :
             ConeGenerator(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, cParam->height, cParam->sectorCount, cParam->stackCount);
+            builded = true;
             break;
         case ENGINE_PRIMITIVE3D_SKYBOX:
             SphereGenerator3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            builded = true;
             break;
         case ENGINE_PRIMITIVE3D_TERRAIN:
             InitTerrain3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, tParam->rows, tParam->colmns, tParam->cell_step);
+            builded = true;
             break;
     }
 
-    GameObject3DApplyVertexes(po);
+    if(builded)
+    {
+        BuffersCreateVertex(&po->go.graphObj.shape.vParam, po->go.graphObj.shape.vParam.verticesSize);
+        BuffersCreateIndex(&po->go.graphObj.shape.iParam, po->go.graphObj.shape.iParam.indexesSize);
+        BuffersUpdateVertex(&po->go.graphObj.shape.vParam);
+        BuffersUpdateIndex(&po->go.graphObj.shape.iParam);
+    }
 
     GraphicsObjectSetShadersPath(&po->go.graphObj, dParam.vertShader, dParam.fragShader);
 
