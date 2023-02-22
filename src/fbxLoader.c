@@ -327,7 +327,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
           mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
           mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-          mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+          mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
           mbo.proj.m[1][1] *= -1;
 
           vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);

@@ -20,7 +20,7 @@ typedef struct{
     int size_y;
 } EWidgetCombobox;
 
-void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent);
+void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, EWidget *parent);
 void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text);
 
 #ifdef __cplusplus

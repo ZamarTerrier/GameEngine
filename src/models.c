@@ -87,7 +87,7 @@ void ModelDefaultUpdate(ModelObject3D* mo){
 
             mbo.model = mo->nodes[i].model;
             mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-            mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+            mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
             mbo.proj.m[1][1] *= -1;
 
 
@@ -281,7 +281,6 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_MODEL_OBJECT;
         setting.vertShader = &_binary_shaders_model_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
         setting.fragShader = &_binary_shaders_model_frag_spv_start;

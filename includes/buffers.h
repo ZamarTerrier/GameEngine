@@ -5,8 +5,8 @@
 
 #include "tools.h"
 
-#define MAX_VERTEX_COUNT 8192
-#define MAX_INDEX_COUNT 24576
+#define MAX_VERTEX_COUNT 65536
+#define MAX_INDEX_COUNT MAX_VERTEX_COUNT * 3
 
 void BuffersCreateFramebuffers();
 
@@ -14,10 +14,10 @@ void BuffersCreateCommandPool();
 
 void BuffersCreateCommand();
 
-void BuffersCreateVertex(vertexParam* vert, uint32_t overdrive);
+void BuffersCreateVertex(vertexParam* vert);
 void BuffersUpdateVertex(vertexParam* vert);
 
-void BuffersCreateIndex(indexParam* ind, uint32_t overdrive);
+void BuffersCreateIndex(indexParam* ind);
 void BuffersUpdateIndex(indexParam* ind);
 
 void BuffersCreateUniform(UniformStruct* uniform, int size);

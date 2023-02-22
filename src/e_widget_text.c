@@ -237,7 +237,6 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_TEXT_OBJECT;
         setting.vertShader = &_binary_shaders_text_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
         setting.fragShader = &_binary_shaders_text_frag_spv_start;

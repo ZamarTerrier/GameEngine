@@ -83,7 +83,13 @@ void ScrollWidgetUpdate(EWidgetScroll *scroll, void *list)
 
     float razn = mySize.y / (some_list->size_y * some_list->size);
 
-    scroll->scroll_size = razn < 1 ? mySize.y * razn : mySize.y;
+    if(razn < 1){
+        scroll->scroll_size = mySize.y * razn;
+        scroll->scroll.widget_flags |= (ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE);
+    }else{
+        scroll->scroll.widget_flags &= ~(ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE);
+        scroll->scroll_size = mySize.y;
+    }
 
     Transform2DSetScale(&scroll->scroll, 20, scroll->scroll_size);
 }

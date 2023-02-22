@@ -68,7 +68,6 @@ void PainterObjectInit(EPainter *painter)
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_PAINTER_OBJECT;
         setting.vertShader = &_binary_shaders_gui_painter_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_gui_painter_vert_spv_size);
         setting.fragShader = &_binary_shaders_gui_painter_frag_spv_start;

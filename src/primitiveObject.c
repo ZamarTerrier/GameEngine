@@ -54,9 +54,21 @@ void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
 
 }
 
+void PrimitiveObjectDestroy(PrimitiveObject *po)
+{
+    GameObject3DDestroy(po);
+
+    free(po->params);
+    po->params = NULL;
+}
+
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params){
 
     GameObject3DInit(po);
+
+    GameObjectSetDestroyFunc(po, (void *)PrimitiveObjectDestroy);
+
+    po->type = type;
 
     PlaneParam *pParam = (PlaneParam *)params;
     SphereParam *sParam = (SphereParam *)params;
@@ -68,6 +80,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     int builded = false;
 
+    po->params = NULL;
     switch(type)
     {
         case ENGINE_PRIMITIVE3D_LINE :
@@ -84,6 +97,8 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
             break;
         case ENGINE_PRIMITIVE3D_PLANE :
             InitPlane3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
+            po->params = calloc(1, sizeof(PlaneParam));
+            memcpy(po->params, params, sizeof(PlaneParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CUBE :
@@ -92,39 +107,48 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
             break;
         case ENGINE_PRIMITIVE3D_CUBESPHERE :
             Cubesphere(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, csParam->radius, csParam->verperrow);
+            po->params = calloc(1, sizeof(CubeSphereParam));
+            memcpy(po->params, params, sizeof(CubeSphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_ICOSPHERE :
             IcoSphereGenerator(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius);
-            builded = true;
+            po->params = calloc(1, sizeof(SphereParam));
+            memcpy(po->params, params, sizeof(SphereParam));
             break;
         case ENGINE_PRIMITIVE3D_SPHERE :
             SphereGenerator3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            po->params = calloc(1, sizeof(SphereParam));
+            memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CONE :
             ConeGenerator(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, cParam->height, cParam->sectorCount, cParam->stackCount);
+            po->params = calloc(1, sizeof(ConeParam));
+            memcpy(po->params, params, sizeof(ConeParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_SKYBOX:
             SphereGenerator3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            po->params = calloc(1, sizeof(SphereParam));
+            memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_TERRAIN:
             InitTerrain3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, tParam->rows, tParam->colmns, tParam->cell_step);
+            po->params = calloc(1, sizeof(TerrainParam));
+            memcpy(po->params, params, sizeof(TerrainParam));
             builded = true;
             break;
     }
 
     if(builded)
     {
-        BuffersCreateVertex(&po->go.graphObj.shape.vParam, po->go.graphObj.shape.vParam.verticesSize);
-        BuffersCreateIndex(&po->go.graphObj.shape.iParam, po->go.graphObj.shape.iParam.indexesSize);
+        BuffersCreateVertex(&po->go.graphObj.shape.vParam);
+        BuffersCreateIndex(&po->go.graphObj.shape.iParam);
         BuffersUpdateVertex(&po->go.graphObj.shape.vParam);
         BuffersUpdateIndex(&po->go.graphObj.shape.iParam);
     }
-
-    GraphicsObjectSetShadersPath(&po->go.graphObj, dParam.vertShader, dParam.fragShader);
 
     po->go.graphObj.local.descrCount = 0;
 
@@ -143,26 +167,39 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     PipelineSettingSetDefault(&po->go.graphObj, &setting);
 
-    setting.obj_type = ENGINE_TYPE_PRIMITIVE_OBJECT;
-    setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
-    setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
-    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    setting.drawType = 0;
-    setting.fromFile = 0;
-    GameObject3DAddSettingPipeline(po, &setting);
+    if(strlen(dParam.fragShader) > 0 && strlen(dParam.vertShader) > 0)
+    {
+        GraphicsObjectSetShadersPath(&po->go.graphObj, dParam.vertShader, dParam.fragShader);
 
-    setting.obj_type = ENGINE_TYPE_PRIMITIVE_OBJECT_LINE;
-    setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_line_vert_spv_size);
-    setting.fragShader = &_binary_shaders_3d_object_line_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_line_frag_spv_size);
-    setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    setting.drawType = 0;
-    setting.fromFile = 0;
+        setting.vertShader = dParam.vertShader;
+        setting.sizeVertShader = 0;
+        setting.fragShader = dParam.fragShader;
+        setting.sizeFragShader = 0;
+        setting.topology = dParam.topology;
+        setting.drawType = dParam.drawType;
+        setting.fromFile = 1;
+        GameObject3DAddSettingPipeline(po, &setting);
+    }else{
 
-    GameObject3DAddSettingPipeline(po, &setting);
+        setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
+        setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
+        setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        setting.drawType = 0;
+        setting.fromFile = 0;
+        GameObject3DAddSettingPipeline(po, &setting);
+
+        setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_line_vert_spv_size);
+        setting.fragShader = &_binary_shaders_3d_object_line_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_line_frag_spv_size);
+        setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        setting.drawType = 0;
+        setting.fromFile = 0;
+        GameObject3DAddSettingPipeline(po, &setting);
+
+    }
 
     PipelineCreateGraphics(&po->go.graphObj);
 

@@ -52,6 +52,7 @@ void TextDataSetFontPath(TextData* tData, const char* path);
 void TextDataSetTextColor(TextData* tData, vec3 color);
 void TextDataSetTextSize(TextData* tData, float size);
 
+void TextImageClearText(GameObject2D* go, TextData *tData);
 void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData);
 
 void TextObjectSetTextU32(TextObject* to, const uint32_t* text);

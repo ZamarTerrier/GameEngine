@@ -91,7 +91,7 @@ QueueFamilyIndices findQueueFamilies(void* arg) {
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, NULL);
 
-    VkQueueFamilyProperties* queueFamilies = (VkQueueFamilyProperties*) malloc(sizeof(VkQueueFamilyProperties) * queueFamilyCount);
+    VkQueueFamilyProperties* queueFamilies = (VkQueueFamilyProperties*) calloc(queueFamilyCount, sizeof(VkQueueFamilyProperties));
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
 
 

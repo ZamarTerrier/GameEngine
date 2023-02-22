@@ -647,7 +647,7 @@ void DefaultglTFUpdate(ModelObject3D *mo)
               vec3 cRot = { 0, 0, -180};
               mbo.view = m4_look_at(cPos, v3_add(cPos, cRot), cameraUp);
           }
-          mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+          mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
           mbo.proj.m[1][1] *= -1;
 
           vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);

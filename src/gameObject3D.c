@@ -31,7 +31,7 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
     mbo.model = go->transform.model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+    mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
     vkMapMemory(e_device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
@@ -97,9 +97,7 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
 
 void GameObject3DDefaultDraw(GameObject3D* go){
 
-    int count = go->wired ? 2 : 1;
-
-    for(int i=0; i < count; i++){//go->graphObj.gItems.pipelineCount; i++){
+    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){//go->graphObj.gItems.pipelineCount; i++){
 
         vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
 

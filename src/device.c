@@ -72,7 +72,7 @@ void pickPhysicalDevice() {
         exit(1);
     }
 
-    VkPhysicalDevice* devices = (VkPhysicalDevice *) malloc(sizeof(VkPhysicalDevice) * deviceCount);
+    VkPhysicalDevice* devices = (VkPhysicalDevice *) calloc(deviceCount, sizeof(VkPhysicalDevice));
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
 
     VkPhysicalDevice tDevice;

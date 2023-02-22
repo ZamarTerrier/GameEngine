@@ -460,7 +460,7 @@ void ImageAddTexture(localParam *local, GameObjectImage *image){
         else
             TextureCreate(descriptor, descriptor->image, 1);
 
-        Texture2D * texture = descriptor->texture;
+        Texture2D *texture = descriptor->texture;
         image->imgHeight = texture->texHeight;
         image->imgWidth = texture->texWidth;
     }else

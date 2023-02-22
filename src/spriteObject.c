@@ -85,7 +85,6 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_SPRITE_OBJECT;
         setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
         setting.fragShader = &_binary_shaders_sprite_frag_spv_start;

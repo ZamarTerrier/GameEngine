@@ -90,7 +90,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
 
     mbo.model = m4_translate_mat_add(m4_mult(m4_scale_mat(particle->go.transform.scale), m4_rotation_matrix(particle->go.transform.rotation)), particle->go.transform.position);
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
+    mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
     vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
@@ -181,7 +181,6 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_3D_PARTICLE;
         setting.vertShader = &_binary_shaders_particle_vert3D_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert3D_spv_size);
         setting.fragShader = &_binary_shaders_particle_frag3D_spv_start;

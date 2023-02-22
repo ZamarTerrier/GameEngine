@@ -6,6 +6,18 @@ int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 
     EWidgetList *list = widget->parent;
 
+    EWidgetButton *button;
+
+    for(int i=0;i < list->size;i++)
+    {
+        button = WidgetFindChild(list, i)->node;
+        button->widget.color = button->selfColor;
+    }
+
+    button = widget;
+
+    button->widget.color.x = 0.6;
+
     WidgetConfirmTrigger(list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, id);
 
     return -1;

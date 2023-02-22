@@ -24,9 +24,6 @@ int e_var_num_images = 0;
 void **e_var_lights = NULL;
 int e_var_num_lights = 0;
 
-PipelineCache *e_var_pipelines = NULL;
-uint32_t e_var_num_pipelines = 0;
-
 FontCache *e_var_fonts = NULL;
 uint32_t e_var_num_fonts = 0;
 

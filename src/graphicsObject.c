@@ -39,12 +39,12 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
             graphObj->aShader.attr = modelAttributeDescription;
             graphObj->aShader.countAttr = 6;
             break;
-        case ENGINE_TYPE_2D_PARTICLE:
+        case ENGINE_VERTEX_TYPE_2D_PARTICLE:
             graphObj->aShader.bindingDescription = &BindParticle2DDescription;
             graphObj->aShader.attr = particle2DAttributeDescription;
             graphObj->aShader.countAttr = 3;
             break;
-        case ENGINE_TYPE_3D_PARTICLE:
+        case ENGINE_VERTEX_TYPE_3D_PARTICLE:
             graphObj->aShader.bindingDescription = &BindParticle3DDescription;
             graphObj->aShader.attr = particle3DAttributeDescription;
             graphObj->aShader.countAttr = 3;
@@ -64,8 +64,8 @@ void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount
 
     if(!graphObj->shape.init)
     {
-        BuffersCreateVertex(&graphObj->shape.vParam, 0);
-        BuffersCreateIndex(&graphObj->shape.iParam, 0);
+        BuffersCreateVertex(&graphObj->shape.vParam);
+        BuffersCreateIndex(&graphObj->shape.iParam);
         graphObj->shape.init = true;
     }
 
@@ -138,6 +138,11 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
 
 void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
+    for(int i=0;i < graphObj->gItems.pipelineCount;i++)
+    {
+        vkDestroyPipeline(e_device, graphObj->gItems.graphicsPipeline[i], NULL);
+        vkDestroyPipelineLayout(e_device, graphObj->gItems.pipelineLayout[i], NULL);
+    }
     free(graphObj->gItems.settings);
     free(graphObj->gItems.graphicsPipeline);
     free(graphObj->gItems.pipelineLayout);

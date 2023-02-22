@@ -108,7 +108,7 @@ void createInstance(){
         createInfo.pNext = NULL;
     }
 
-    const char** glfwExtensions = getRequiredExtensions(glfwExtensions);
+    const char** glfwExtensions = getRequiredExtensions();
 
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
@@ -118,6 +118,7 @@ void createInstance(){
         exit(1);
     }
 
+    free(glfwExtensions);
 }
 
 void createSurface() {

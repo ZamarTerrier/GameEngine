@@ -65,15 +65,18 @@ void BuffersCreateCommand(){
 
 }
 
-void BuffersCreateVertex(vertexParam* vert, uint32_t overdrive) {
+void BuffersCreateVertex(vertexParam* vert) {
+
+    if(vert->verticesSize >= MAX_VERTEX_COUNT)
+    {
+        printf("Очень много вершин!\n");
+        return;
+    }
 
     //Выделение памяти
     VkDeviceSize bufferSize;
 
-    if(!overdrive)
-        bufferSize = vert->typeSize * MAX_VERTEX_COUNT;
-    else
-        bufferSize = vert->typeSize * overdrive;
+    bufferSize = vert->typeSize * MAX_VERTEX_COUNT;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
 }
@@ -81,7 +84,10 @@ void BuffersCreateVertex(vertexParam* vert, uint32_t overdrive) {
 void BuffersUpdateVertex(vertexParam* vert) {
 
     if(vert->verticesSize >= MAX_VERTEX_COUNT)
+    {
+        printf("Очень много вершин!\n");
         return;
+    }
 
     //Изменение памяти
     VkDeviceSize bufferSize = vert->typeSize * vert->verticesSize;
@@ -108,22 +114,27 @@ void BuffersUpdateVertex(vertexParam* vert) {
 
 }
 
-void BuffersCreateIndex(indexParam* ind, uint32_t overdrive) {
+void BuffersCreateIndex(indexParam* ind) {
 
-    VkDeviceSize bufferSize;
 
-    if(!overdrive)
-        bufferSize = ind->typeSize * MAX_INDEX_COUNT;
-    else
-        bufferSize = ind->typeSize * overdrive;
+    if(ind->typeSize >= MAX_INDEX_COUNT)
+    {
+        printf("Очень много индексов!\n");
+        return;
+    }
+
+    VkDeviceSize bufferSize = ind->typeSize * MAX_INDEX_COUNT;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
 }
 
 void BuffersUpdateIndex(indexParam* ind)
 {
-    if(ind->indexesSize >= MAX_INDEX_COUNT)
+    if(ind->typeSize >= MAX_INDEX_COUNT)
+    {
+        printf("Очень много индексов!\n");
         return;
+    }
 
     VkDeviceSize bufferSize = ind->typeSize * ind->indexesSize;
 

@@ -277,11 +277,28 @@ void TextDataSetTextSize(TextData* tData, float size){
     tData->font.fontSize = size;
 }
 
+void TextImageClearText(GameObject2D* go, TextData *tData)
+{
+    memset(tData->text, 0, sizeof(uint32_t) * BUFFER_SIZE);
+
+    Vertex2D* mapped = NULL;
+
+    vkMapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
+
+    memset(mapped, 0, BUFFER_SIZE * 4 * sizeof(Vertex2D));
+
+    vkUnmapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory);
+    mapped = NULL;
+}
+
 void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     int len = 0;
 
     if(text[len] == 0)
+    {
+        TextImageClearText(go, tData);
         return;
+    }
 
     len = ToolsStr32BitLength(text);
 
@@ -437,7 +454,6 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_TEXT_OBJECT;
         setting.vertShader = &_binary_shaders_text_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
         setting.fragShader = &_binary_shaders_text_frag_spv_start;

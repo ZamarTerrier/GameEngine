@@ -1,8 +1,6 @@
 #include "e_widget_combobox.h"
 
-int ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
-
-    EWidgetCombobox *cmb = (EWidgetCombobox *)widget->parent;
+int ComboboxWidgetPressMain(EWidget* widget, void* entry, EWidgetCombobox *cmb){
 
     if(!cmb->show)
     {
@@ -18,10 +16,9 @@ int ComboboxWidgetPressMain(EWidget* widget, void* entry, void *arg){
     return 0;
 }
 
-int ComboboxWidgetPressSub(EWidget* widget, int id, void *arg){
+int ComboboxWidgetPressSub(EWidget* widget, int id, EWidgetCombobox *cmb){
 
     EWidgetList *list = widget;
-    EWidgetCombobox *cmb = (EWidgetCombobox *) widget->parent;
 
     ChildStack *child = WidgetFindChild(list, id);
 
@@ -30,10 +27,12 @@ int ComboboxWidgetPressSub(EWidget* widget, int id, void *arg){
 
     EWidgetButton *butt = child->node;
 
-    char *temp[1024];
+    char temp[1024];
+
     TextWidgetGetText(&butt->text, temp);
 
-    TextObjectSetTextU8(&cmb->button.text, temp);
+    ButtonWidgetSetText(&cmb->button, temp);
+
     cmb->currId = id;
 
     if(!cmb->show)
@@ -50,7 +49,7 @@ int ComboboxWidgetPressSub(EWidget* widget, int id, void *arg){
     return 0;
 }
 
-void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
+void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, EWidget *parent){
 
     WidgetInit(&combobox->widget, NULL, parent);
 
@@ -60,16 +59,16 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, EWidget *parent){
     ButtonWidgetInit(&combobox->button, " ", &combobox->widget);
     ButtonWidgetSetColor(&combobox->button, 0.4, 0.4, 0.4);
 
-    combobox->size_x = 100;
-    combobox->size_y = 30;
+    combobox->size_x = scale.x;
+    combobox->size_y = scale.y;
     combobox->currId = -1;
 
     Transform2DSetScale(&combobox->widget, combobox->size_x, combobox->size_y);
     Transform2DSetScale(&combobox->button, combobox->size_x, combobox->size_y);
 
     ListWidgetInit(&combobox->list, combobox->size_x, combobox->size_y, &combobox->widget);
-    WidgetConnect(&combobox->button, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  NULL);
-    WidgetConnect(&combobox->list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, ComboboxWidgetPressSub,  NULL);
+    WidgetConnect(&combobox->button, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  combobox);
+    WidgetConnect(&combobox->list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, ComboboxWidgetPressSub,  combobox);
 
     Transform2DSetPosition(&combobox->list, 0, combobox->size_y * 2);
     combobox->show = false;

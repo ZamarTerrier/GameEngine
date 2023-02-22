@@ -24,9 +24,6 @@ extern int e_var_num_images;
 extern void **e_var_lights;
 extern int e_var_num_lights;
 
-extern PipelineCache *e_var_pipelines;
-extern uint32_t e_var_num_pipelines;
-
 extern FontCache *e_var_fonts;
 extern uint32_t e_var_num_fonts;
 

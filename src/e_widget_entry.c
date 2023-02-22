@@ -207,7 +207,7 @@ void EntryUpdateLine(){
     EWidgetEntry *temp = e_var_current_entry;
 
     vec2 scale = Transform2DGetScale(temp);
-    temp->width = scale.x * 1.5f;
+    temp->width = scale.x * 1.5f * (9 / temp->text.tData.font.fontSize);
     temp->height = scale.y * 2.5f;
 
     temp->buffers[temp->curr_line][temp->currPos] = L'|';
@@ -287,6 +287,13 @@ void EntryWidgetSetText(EWidgetEntry *entry, char *text)
     entry->currPos = len;
 
     TextWidgetSetText(temp, entry->buffers[entry->curr_line]);
+}
+
+void EntryWidgetCleartext(EWidgetEntry *entry)
+{
+    memset(entry->buffers[entry->curr_line], 0, BUFFER_SIZE);
+
+    TextImageClearText(&entry->text, &entry->text.tData);
 }
 
 void EntryWidgetSetTextW(EWidgetEntry *entry, uint32_t *text)
