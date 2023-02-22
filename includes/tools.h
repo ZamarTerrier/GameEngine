@@ -6,8 +6,6 @@
 
 #include "e_device_variables.h"
 
-#include "e_resource.h"
-
 #ifdef __cplusplus
 extern "C"
 {

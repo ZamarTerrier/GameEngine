@@ -37,7 +37,7 @@ int RollerMouseMove(EWidget *widget, void *entry, void *args)
 
     roller->move_val = roller->stable_val + te.y;
 
-    WidgetConfirmTrigger(roller, GUI_TRIGGER_ROLLER_MOVE, &roller->move_val);
+    WidgetConfirmTrigger(roller, ENGINE_WIDGET_TRIGGER_ROLLER_MOVE, &roller->move_val);
 
     return 0;
 }
@@ -45,10 +45,14 @@ int RollerMouseMove(EWidget *widget, void *entry, void *args)
 void RollerWidgetInit(EWidgetRoller *roller, EWidget *parent)
 {
     WidgetInit(roller, NULL, parent);
+
+    memcpy(roller->widget.go.name, "Widget_Roller", 11);
+    roller->widget.type = ENGINE_WIDGET_TYPE_ROLLER;
+
     roller->widget.color = (vec4){ 0.6, 0, 0, 1.0};
     roller->source = NULL;
-    WidgetConnect(roller, GUI_TRIGGER_MOUSE_PRESS, RollerMousePress, NULL);
-    WidgetConnect(roller, GUI_TRIGGER_MOUSE_MOVE, RollerMouseMove, NULL);
+    WidgetConnect(roller, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, RollerMousePress, NULL);
+    WidgetConnect(roller, ENGINE_WIDGET_TRIGGER_MOUSE_MOVE, RollerMouseMove, NULL);
 }
 
 void RollerWidgetSetSource(EWidgetRoller *roller, float *source)

@@ -6,7 +6,10 @@
 
 #include "buffers.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_shapes.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 PaintDrawFunc some_func;
 
@@ -44,14 +47,15 @@ void PainterObjectUniformUpdate(EPainter *painter)
 void PainterObjectInit(EPainter *painter)
 {
     memset(painter, 0, sizeof(EPainter));
-    memcpy(painter->go.name, "Widget", 6);
+    memcpy(painter->go.name, "Painter", 7);
 
     GameObject2DInit(painter);
     GameObjectSetUpdateFunc(painter, (void *)PainterObjectUniformUpdate);
 
+    GraphicsObjectSetVertexSize(&painter->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
     GraphicsObjectSetVertex(&painter->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
-    GameObject2DApplyVertexes(painter);
+    GameObject2DSetLinkedShape(painter);
 
     BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(PainterBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
     BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(DrawObjectsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -64,7 +68,6 @@ void PainterObjectInit(EPainter *painter)
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_PAINTER_OBJECT;
         setting.vertShader = &_binary_shaders_gui_painter_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_gui_painter_vert_spv_size);
         setting.fragShader = &_binary_shaders_gui_painter_frag_spv_start;

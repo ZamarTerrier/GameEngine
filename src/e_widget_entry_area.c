@@ -5,7 +5,9 @@
 
 #include "engine.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 extern void EntryWidgetPress(EWidget *widget, void *entry, void *arg);
 extern void EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg);
@@ -21,6 +23,7 @@ EWidgetText *EntryAreaWidgetMakeAnotherText(EWidgetEntryArea * area)
 
     EWidgetText *text = calloc(1, sizeof(EWidgetText));
     TextWidgetInit(text, area->entry.text.tData.font.fontSize, NULL, &area->entry.widget);
+    text->widget.widget_flags |= ENGINE_FLAG_WIDGET_ALLOCATED;
     Transform2DSetPosition(text, 0, (area->entry.text.tData.font.fontSize * 3 * area->entry.num_texts));
 
 }
@@ -139,7 +142,8 @@ void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src)
 
     char *point = &area->entry.buffers[area->entry.curr_line][area->entry.currPos];
 
-    int iter = 0, curr_line = area->entry.curr_line, text_width = 0;
+    int iter = 0, curr_line = area->entry.curr_line;
+
     for(int i=0;i < size;i++)
     {
         point[iter] = src[i];
@@ -152,10 +156,10 @@ void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src)
         int some1 = area->textHeight;
         int some2 = area->entry.height;
 
-        EWidgetText *text = WidgetFindChild(&area->entry.widget, area->entry.curr_line)->node;
-        TextWidgetSetText(text, area->entry.buffers[area->entry.curr_line]);
+        ChildStack *child = WidgetFindChild(&area->entry.widget, area->entry.curr_line);
 
-        text_width = text->tData.textWidth;
+        EWidgetText *text = child->node;
+        TextWidgetSetText(text, area->entry.buffers[area->entry.curr_line]);
 
         if((text->tData.textWidth >= area->entry.width || point[iter - 1] == '\n') && area->textHeight < area->entry.height)
         {
@@ -253,6 +257,7 @@ int EntryAreaWidgetKeyRepeatInput(EWidget* widget, int key, void *arg)
     return 0;
 }
 
+
 void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent){
 
     if(fontSize > 16)
@@ -262,7 +267,10 @@ void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent)
 
     WidgetInit(&entry->entry.widget, NULL, parent);
 
-    entry->entry.widget.type = GUI_TYPE_ENTRY_AREA;
+    GameObjectSetDestroyFunc(entry, (void *)EntryWidgetDestroyDefault);
+
+    memcpy(entry->entry.widget.go.name, "Entry_Area", 10);
+    entry->entry.widget.type = ENGINE_WIDGET_TYPE_ENTRY_AREA;
 
     entry->entry.widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
@@ -280,11 +288,11 @@ void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent)
     entry->entry.curr_line = 0;
     entry->entry.currPos = 0;
 
-    WidgetConnect(entry, GUI_TRIGGER_MOUSE_PRESS, EntryWidgetPress, NULL);
-    WidgetConnect(entry, GUI_TRIGGER_WIDGET_UNFOCUS, EntryWidgetUnfocus, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, EntryWidgetPress, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_WIDGET_UNFOCUS, EntryWidgetUnfocus, NULL);
 
-    WidgetConnect(entry, GUI_TRIGGER_ENTRY_CHAR_INPUT, EntryWidgetCharInput, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_ENTRY_CHAR_INPUT, EntryWidgetCharInput, NULL);
 
-    WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_PRESS_INPUT, EntryAreaWidgetKeyPressInput, NULL);
-    WidgetConnect(entry, GUI_TRIGGER_ENTRY_KEY_REPEAT_INPUT, EntryAreaWidgetKeyRepeatInput, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_PRESS_INPUT, EntryAreaWidgetKeyPressInput, NULL);
+    WidgetConnect(entry, ENGINE_WIDGET_TRIGGER_ENTRY_KEY_REPEAT_INPUT, EntryAreaWidgetKeyRepeatInput, NULL);
 }

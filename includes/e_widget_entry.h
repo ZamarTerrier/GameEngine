@@ -24,6 +24,8 @@ typedef struct{
 
 extern bool e_ctrl_press, e_c_press, e_v_press, e_pasted;
 
+int EntryWidgetDestroyDefault(EWidgetEntry *entry);
+
 void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent);
 void EntryUpdateLine();
 void EntryWidgetCharacterCallback(void* window, uint32_t codepoint);

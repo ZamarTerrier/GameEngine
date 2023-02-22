@@ -3,8 +3,6 @@
 
 #include "engine_includes.h"
 
-#include "e_resource.h"
-
 typedef struct EdDebugUtilsMessengerCreateInfoEXT {
     uint32_t                                sType;
     const void*                             pNext;

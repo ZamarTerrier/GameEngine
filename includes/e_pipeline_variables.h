@@ -15,7 +15,6 @@ typedef struct EPViewport {
 } EPViewport;
 
 typedef struct{
-    uint32_t obj_type;
     char poligonMode;
     char topology;
     char* vertShader;

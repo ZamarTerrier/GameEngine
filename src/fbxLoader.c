@@ -12,6 +12,10 @@
 
 #include "ufbx.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 size_t clamp_sz(size_t a, size_t min_a, size_t max_a) { return min(max(a, min_a), max_a); }
 
 mat4 ufbx_to_mat4(ufbx_matrix m) {
@@ -323,7 +327,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
           mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
           mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-          mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+          mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
           mbo.proj.m[1][1] *= -1;
 
           vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
@@ -419,15 +423,8 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
 
           mo->nodes[i].models->graphObj.gItems.perspective = true;
 
+          GraphicsObjectSetVertexSize(&mo->nodes[i].models->graphObj, sizeof(ModelVertex3D), sizeof(uint32_t));
           GraphicsObjectSetVertex(&mo->nodes[i].models->graphObj, fbx->meshes[i].verts, fbx->meshes[i].num_verts, fbx->meshes[i].indices, fbx->meshes[i].num_indices);
-
-          if(fbx->meshes[i].num_verts > 0){
-              BufferCreateVertex(&mo->nodes[i].models->graphObj.shape.vParam, sizeof(ModelVertex3D));
-          }
-
-          if(fbx->meshes[i].num_indices > 0){
-              BuffersCreateIndex(&mo->nodes[i].models->graphObj.shape.iParam, sizeof(uint32_t));
-          }
 
           ModelDefaultInit(mo->nodes[i].models, dParam);
 

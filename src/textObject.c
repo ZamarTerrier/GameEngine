@@ -12,9 +12,11 @@
 
 #include "gameObject2D.h"
 
-#include "e_resource.h"
-
 #include "stb_truetype.h"
+
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 int fontResizer = 7;
 
@@ -46,7 +48,11 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descr
 
     FontCache *fonts = e_var_fonts;
 
-    VkDeviceSize bufferSize = tData->font.fontWidth * tData->font.fontHeight * sizeof(Vertex2D); //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
+    VkDeviceSize bufferSize, vertBufferSize;
+
+    bufferSize = tData->font.fontWidth * tData->font.fontHeight; //TEXTOVERLAY_MAX_CHAR_COUNT *  sizeof(Vertex2D) * sizeof(float);
+
+    vertBufferSize = BUFFER_SIZE * 4 * sizeof(Vertex2D);
 
     char *some_file_path = tData->font.fontpath;
     int font_len = strlen(some_file_path);
@@ -65,7 +71,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descr
 
             //--------------------
             //Создаем буфер вершин для плоскости
-            BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
 
             return;
         }
@@ -87,7 +93,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descr
 
             //--------------------
             //Создаем буфер вершин для плоскости
-            BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
             return;
         }else
             exit(1);
@@ -187,16 +193,16 @@ void TextObjectRecreateUniform(TextObject *to){
         }
         else
         {
-            /*ImageDestroyTexture(to->go.graphObj.local.descriptors[i].texture);
-            free(to->go.graphObj.local.descriptors[i].texture);
-            //to->go.graphObj.local.descriptors[i].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-            TextImageMakeTexture(&to->go, &to->textData, to->go.graphObj.local.descriptors[i].texture);*/
+            //TextImageMakeTexture(&to->go, &to->textData, &to->go.graphObj.local.descriptors[i]);
         }
     }
 
 }
 
 void TextObjectAddTexture(TextObject* to){
+
+    if(to->go.graphObj.local.descrCount + 1 > MAX_UNIFORMS)
+        return;
 
     ShaderBuffer *descriptor = &to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount];
 
@@ -271,22 +277,41 @@ void TextDataSetTextSize(TextData* tData, float size){
     tData->font.fontSize = size;
 }
 
+void TextImageClearText(GameObject2D* go, TextData *tData)
+{
+    memset(tData->text, 0, sizeof(uint32_t) * BUFFER_SIZE);
+
+    Vertex2D* mapped = NULL;
+
+    vkMapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
+
+    memset(mapped, 0, BUFFER_SIZE * 4 * sizeof(Vertex2D));
+
+    vkUnmapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory);
+    mapped = NULL;
+}
+
 void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     int len = 0;
 
     if(text[len] == 0)
+    {
+        TextImageClearText(go, tData);
+        return;
+    }
+
+    len = ToolsStr32BitLength(text);
+
+    if(len >= BUFFER_SIZE)
         return;
 
-    while(text[len] != 0)
-        len++;
-
-    len++;
+    len ++;
 
     uint32_t buffer[len];
 
     memcpy(buffer, text, sizeof(uint32_t) * len);
 
-    memset(tData->text, 0, BUFFER_SIZE * BUFFER_SIZE * sizeof(uint32_t));
+    memset(tData->text, 0, BUFFER_SIZE * sizeof(uint32_t));
     memcpy(tData->text, buffer, len * sizeof(uint32_t));
 
     Vertex2D* mapped = NULL;
@@ -295,8 +320,8 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     vkMapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
     tData->font.numLetters = 0;
 
-    float  mulX  = tData->font.fontSize / WIDTH / fontResizer;
-    float  mulY  = tData->font.fontSize / HEIGHT / fontResizer;
+    float mulX = tData->font.fontSize / WIDTH / fontResizer;
+    float mulY = tData->font.fontSize / HEIGHT / fontResizer;
 
     float x = 0.0f;
     float y = 0.0f;
@@ -356,7 +381,7 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
 
 }
 
-void TextObjectSetText(const uint32_t* text, TextObject* to)
+void TextObjectSetTextU32(TextObject* to, const uint32_t* text)
 {
     TextImageSetText(text, &to->go, &to->textData);
 }
@@ -373,23 +398,24 @@ void TextObjectSetTextU8(TextObject* to, const char* text)
 
 void TextObjectRecreate(TextObject* to){
 
-    PipelineSetting **settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
+    PipelineSetting *settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
 
     for(int i=0; i < to->go.graphObj.gItems.settingsCount;i++)
     {
-        settings[i]->scissor.offset.x = 0;
-        settings[i]->scissor.offset.y = 0;
-        settings[i]->scissor.extent.height = HEIGHT;
-        settings[i]->scissor.extent.width = WIDTH;
-        settings[i]->viewport.x = 0;
-        settings[i]->viewport.y = 0;
-        settings[i]->viewport.height = HEIGHT;
-        settings[i]->viewport.width = WIDTH;
+        settings[i].scissor.offset.x = 0;
+        settings[i].scissor.offset.y = 0;
+        settings[i].scissor.extent.height = HEIGHT;
+        settings[i].scissor.extent.width = WIDTH;
+        settings[i].viewport.x = 0;
+        settings[i].viewport.y = 0;
+        settings[i].viewport.height = HEIGHT;
+        settings[i].viewport.width = WIDTH;
     }
 
     TextObjectRecreateUniform(to);
-    GameObject2DCreateDrawItems(to);
+    GraphicsObjectCreateDrawItems(&to->go.graphObj);
     PipelineCreateGraphics(&to->go.graphObj);
+    Transform2DReposition(to);
     TextObjectMakeLastText(to);
 }
 
@@ -398,7 +424,6 @@ void TextDataInit(TextData *tData, int fontSize, char* fontPath){
     tData->font.fontWidth = 512;
     tData->font.fontHeight = 512;
     tData->font.fontSize = fontSize;
-
 
     TextDataSetFontPath(tData, fontPath);
 }
@@ -429,7 +454,6 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_TEXT_OBJECT;
         setting.vertShader = &_binary_shaders_text_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
         setting.fragShader = &_binary_shaders_text_frag_spv_start;

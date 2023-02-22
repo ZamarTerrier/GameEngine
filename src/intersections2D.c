@@ -4,6 +4,10 @@
 
 #include "math.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 GJKObject gjkObject;
 
 vec2 perpendicular (vec2 v) { vec2 p = { v.y, -v.x }; return p; }

@@ -11,6 +11,10 @@
 
 #include "e_pipeline_variables.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
+
 void GameObject2DDefaultUpdate(GameObject2D* go) {
 
     if(go->graphObj.local.descriptors == NULL)
@@ -43,34 +47,6 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
     memcpy(data, &ibo, sizeof(ibo));
     vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
-}
-
-void GameObject2DApplyVertexes(GameObject2D* go)
-{
-    if(go->graphObj.shape.vParam.verticesSize > 0)
-        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
-
-    if(go->graphObj.shape.iParam.indexesSize > 0)
-        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
-}
-
-void GameObject2DRebuildVertexes(GameObject2D* go)
-{
-    vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-    vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
-    vkDestroyBuffer(e_device, go->graphObj.shape.iParam.indexBuffer, NULL);
-    vkFreeMemory(e_device, go->graphObj.shape.iParam.indexBufferMemory, NULL);
-
-    go->graphObj.shape.vParam.vertexBuffer = NULL;
-    go->graphObj.shape.vParam.vertexBufferMemory = NULL;
-    go->graphObj.shape.iParam.indexBuffer = NULL;
-    go->graphObj.shape.iParam.indexBufferMemory = NULL;
-
-    if(go->graphObj.shape.vParam.verticesSize > 0)
-        BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(Vertex2D));
-
-    if(go->graphObj.shape.iParam.indexesSize > 0)
-        BuffersCreateIndex(&go->graphObj.shape.iParam, sizeof(uint32_t));
 }
 
 void GameObject2DDefaultDraw(GameObject2D* go){
@@ -126,6 +102,10 @@ void GameObject2DDefaultDraw(GameObject2D* go){
 }
 
 void GameObject2DAddSettingPipeline(GameObject2D* go, void *arg){
+
+    if(go->graphObj.gItems.settingsCount + 1 > MAX_UNIFORMS)
+        return;
+
     PipelineSetting* setting = arg;
 
 
@@ -185,6 +165,20 @@ void GameObject2DDestroy(GameObject2D* go){
 
         free(go->image);
     }
+
+    if(!go->graphObj.shape.linked)
+    {
+        if(go->graphObj.shape.vParam.verticesSize)
+            free(go->graphObj.shape.vParam.vertices);
+
+        if(go->graphObj.shape.iParam.indexesSize)
+            free(go->graphObj.shape.iParam.indices);
+    }
+}
+
+void GameObject2DSetLinkedShape(GameObject2D *go)
+{
+    go->graphObj.shape.linked = true;
 }
 
 void GameObject2DInit(GameObject2D* go)
@@ -197,6 +191,8 @@ void GameObject2DInit(GameObject2D* go)
 
     Transform2DInit(&go->transform);
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_2D_OBJECT);
+
+    go->graphObj.shape.linked = false;
 }
 
 vec2 GameObject2DGetSize(GameObject2D* go)

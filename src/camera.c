@@ -1,6 +1,6 @@
 #include "camera.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
 
 void Camera2DInit(Camera2D *cam){
 

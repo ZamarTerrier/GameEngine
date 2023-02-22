@@ -1,0 +1,18 @@
+#ifndef E_RESOURCE_DESCRIPTORS_H
+#define E_RESOURCE_DESCRIPTORS_H
+
+#include "engine_includes.h"
+
+extern EIVertexInputAttributeDescription planeAttributeDescription[];
+extern EIVertexInputAttributeDescription cubeAttributeDescription[];
+extern EIVertexInputAttributeDescription modelAttributeDescription[];
+extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
+extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
+
+extern EIVertexInputBindingDescription Bind2DDescription;
+extern EIVertexInputBindingDescription Bind3DDescription;
+extern EIVertexInputBindingDescription BindModel3DDescription;
+extern EIVertexInputBindingDescription BindParticle2DDescription;
+extern EIVertexInputBindingDescription BindParticle3DDescription;
+
+#endif // E_RESOURCE_DESCRIPTORS_H

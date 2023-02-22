@@ -2,7 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 #include "e_math.h"
 
@@ -165,12 +167,11 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
     GameObjectSetUpdateFunc(&img->widget.go, (void *)ImageWidgetUpdateUniformBufferDefault);
 
     memcpy(img->widget.go.name, "Widget_Image", 10);
+    img->widget.type = ENGINE_WIDGET_TYPE_IMAGE;
 
-    img->widget.type = GUI_TYPE_IMAGE;
+    GraphicsObjectSetVertexSize(&img->widget.go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
 
     ImageWidgetCreateQuad(img);
-
-    GameObject2DApplyVertexes(img);
 
     BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -196,7 +197,6 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_SPRITE_OBJECT;
         setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
         setting.fragShader = &_binary_shaders_sprite_frag_spv_start;

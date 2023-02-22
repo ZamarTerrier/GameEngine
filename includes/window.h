@@ -3,7 +3,6 @@
 
 #include "engine_includes.h"
 #include "debuger.h"
-#include "e_resource.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -18,6 +18,9 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 int frameCurr = 0;
 
 void QuatToAngleAxis(vec4 q, float *outAngleDegrees, vec3 *axis) {
@@ -644,7 +647,7 @@ void DefaultglTFUpdate(ModelObject3D *mo)
               vec3 cRot = { 0, 0, -180};
               mbo.view = m4_look_at(cPos, v3_add(cPos, cRot), cameraUp);
           }
-          mbo.proj = m4_perspective(45.0f, 0.01f, 1000.0f);
+          mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
           mbo.proj.m[1][1] *= -1;
 
           vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
@@ -924,15 +927,8 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
 
                       model->graphObj.gItems.perspective = true;
 
+                      GraphicsObjectSetVertexSize(&model->graphObj, sizeof(ModelVertex3D), sizeof(uint32_t));
                       GraphicsObjectSetVertex(&model->graphObj, mesh->verts, mesh->num_verts, mesh->indices, mesh->num_indices);
-
-                      if(mesh->num_verts > 0){
-                          BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(ModelVertex3D));
-                      }
-
-                      if(mesh->num_indices > 0){
-                          BuffersCreateIndex(&model->graphObj.shape.iParam, sizeof(uint32_t));
-                      }
 
                       ModelDefaultInit(model, dParam);
                   }

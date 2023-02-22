@@ -6,6 +6,9 @@
 
 #include "stb_image.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 void ImageCreateEmpty(void** image, void** imageMemory) {
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -457,7 +460,7 @@ void ImageAddTexture(localParam *local, GameObjectImage *image){
         else
             TextureCreate(descriptor, descriptor->image, 1);
 
-        Texture2D * texture = descriptor->texture;
+        Texture2D *texture = descriptor->texture;
         image->imgHeight = texture->texHeight;
         image->imgWidth = texture->texWidth;
     }else

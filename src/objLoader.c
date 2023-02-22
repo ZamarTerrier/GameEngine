@@ -329,13 +329,9 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam *dParam){
   for(int i=0; i < model->graphObj.shape.iParam.indexesSize;i++)
       model->graphObj.shape.iParam.indices[i] = i;
 
-  if(model->graphObj.shape.vParam.verticesSize > 0){
-      BufferCreateVertex(&model->graphObj.shape.vParam, sizeof(ModelVertex3D));
-  }
+  GraphicsObjectSetVertexSize(&model->graphObj, sizeof(ModelVertex3D), sizeof(uint32_t));
+  GraphicsObjectSetVertex(&model->graphObj, model->graphObj.shape.vParam.vertices, model->graphObj.shape.vParam.verticesSize, model->graphObj.shape.iParam.indices, model->graphObj.shape.iParam.indexesSize);
 
-  if(model->graphObj.shape.iParam.indexesSize > 0){
-      BuffersCreateIndex(&model->graphObj.shape.iParam, sizeof(uint32_t));
-  }
 
   if(dParam != NULL)
   {

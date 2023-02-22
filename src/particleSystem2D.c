@@ -9,6 +9,9 @@
 
 #include <e_math.h>
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 //Описание вертекса
 EIVertexInputBindingDescription Particle2DGetBindingDescription() {
@@ -81,7 +84,7 @@ void Particle2DDefaultUpdate(ParticleObject2D* particle){
         verts[i].size = particle->particles[i].scale;
     }
 
-    GraphicsObjectSetVertex(&particle->go.graphObj, vParam->vertices, particle->num_parts, NULL, 0);
+    BuffersUpdateVertex(vParam);
 
     Camera3D* cam = (Camera3D*) cam3D;
     void* data;
@@ -102,22 +105,6 @@ void Particle2DDefaultDraw(GameObject2D* go){
 
     if(go->graphObj.shape.vParam.verticesSize == 0)
         return;
-
-    if(go->graphObj.shape.rebuild)
-    {
-
-        vkDeviceWaitIdle(e_device);
-
-        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
-
-
-        if(go->graphObj.shape.vParam.verticesSize > 0){
-            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(ParticleVertex2D));
-        }
-
-        go->graphObj.shape.rebuild = false;
-    }
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
 
@@ -157,10 +144,13 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
     GameObjectSetRecreateFunc(particle, (void *)GameObject2DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject2DDestroy);
 
-    particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+    particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(MAX_UNIFORMS, sizeof(ShaderBuffer));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_2D_PARTICLE);
+
+    GraphicsObjectSetVertexSize(&particle->go.graphObj, sizeof(ParticleVertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&particle->go.graphObj, NULL, 0, NULL, 0);
 
     particle->go.graphObj.gItems.perspective = true;
 
@@ -190,7 +180,6 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_2D_PARTICLE;
         setting.vertShader = &_binary_shaders_particle_vert2D_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert2D_spv_size);
         setting.fragShader = &_binary_shaders_particle_frag2D_spv_start;

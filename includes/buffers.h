@@ -3,8 +3,10 @@
 
 #include "engine_includes.h"
 
-#include "e_resource.h"
 #include "tools.h"
+
+#define MAX_VERTEX_COUNT 65536
+#define MAX_INDEX_COUNT MAX_VERTEX_COUNT * 3
 
 void BuffersCreateFramebuffers();
 
@@ -12,9 +14,11 @@ void BuffersCreateCommandPool();
 
 void BuffersCreateCommand();
 
-void BufferCreateVertex(vertexParam* vert, uint32_t size);
+void BuffersCreateVertex(vertexParam* vert);
+void BuffersUpdateVertex(vertexParam* vert);
 
-void BuffersCreateIndex(indexParam* arg, uint32_t type_size);
+void BuffersCreateIndex(indexParam* ind);
+void BuffersUpdateIndex(indexParam* ind);
 
 void BuffersCreateUniform(UniformStruct* uniform, int size);
 

@@ -7,6 +7,10 @@
 
 #include "e_math.h"
 
+#include "e_resource_data.h"
+#include "e_resource_export.h"
+#include "e_resource_engine.h"
+
 void ShapeObjectDefaultUpdate(GameObject2D* go) {
 
     if(go->graphObj.local.descriptors == NULL)
@@ -246,6 +250,8 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
 
     GameObjectSetUpdateFunc(so, (void *)ShapeObjectDefaultUpdate);
 
+    GraphicsObjectSetVertexSize(&so->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
+
     switch(type)
     {
         case ENGINE_SHAPE_OBJECT_LINE:
@@ -264,8 +270,6 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
             printf("Error Shape Type!\n");
             break;
     }
-
-    GameObject2DApplyVertexes(so);
 
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -301,7 +305,6 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_SPRITE_OBJECT;
         setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
         setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
@@ -311,7 +314,6 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
 
     if(type == ENGINE_SHAPE_OBJECT_LINE)
     {
-        setting.obj_type = ENGINE_TYPE_LINE_OBJECT;
         setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
         setting.drawType = 1;
     }

@@ -24,7 +24,8 @@
 
 #include "camera.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
 
 typedef struct{
     GameObject** go;
@@ -80,9 +81,10 @@ void EngineInitVulkan(){
     EngineCreateSyncobjects();
 
     objs.go = (GameObject **) calloc(0, sizeof(GameObject*));
+    objs.count = 0;
+
     charCallbacks = (e_charCallback *) calloc(0, sizeof(e_charCallback));
     keyCallbacks = (e_keyCallback *) calloc(0, sizeof(e_keyCallback));
-    objs.count = 0;
 
     e_var_lights = calloc(0, sizeof(LightObject *));
     e_var_num_lights = 0;
@@ -92,9 +94,6 @@ void EngineInitVulkan(){
 
     e_var_fonts = calloc(MAX_FONTS, sizeof(FontCache));
     e_var_num_fonts = 0;
-
-    e_var_pipelines = calloc(MAX_PIPELINES, sizeof(PipelineCache));
-    e_var_num_pipelines = 0;
 
     engine_buffered_image *images = e_var_images;
     TextureCreateEmpty(&images[e_var_num_images].texture);
@@ -236,8 +235,12 @@ void EngineCleanupSwapChain() {
     for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyFramebuffer(e_device, swapChainFramebuffers[i], NULL);
     }
+    free(swapChainFramebuffers);
+    swapChainFramebuffers = NULL;
 
     vkFreeCommandBuffers(e_device, commandPool, imagesCount, commandBuffers);
+    free(commandBuffers);
+    commandBuffers = NULL;
 
     int temp = objs.count;
 
@@ -252,6 +255,9 @@ void EngineCleanupSwapChain() {
     for (size_t i = 0; i < imagesCount; i++) {
         vkDestroyImageView(e_device, swapChainImageViews[i], NULL);
     }
+    free(swapChainImages);
+    free(swapChainImageViews);
+    swapChainImageViews = NULL;
 
     vkDestroySwapchainKHR(e_device, swapChain, NULL);
 
@@ -500,16 +506,19 @@ void EngineCleanUp(){
         vkDestroyFence(e_device, inFlightFences[i], NULL);
     }
 
+    free(renderFinishedSemaphores);
+    free(imageAvailableSemaphores);
+    free(inFlightFences);
+    free(imagesInFlight);
+
     vkDestroyCommandPool(e_device, commandPool, NULL);
 
-    PipelineCache *cachedPipelines = e_var_pipelines;
-    for(int i=0;i < e_var_num_pipelines; i++){
-        vkDestroyPipeline(e_device, cachedPipelines[i].GraphicsPipeline, NULL);
-        vkDestroyPipelineLayout(e_device, cachedPipelines[i].GraphicsPipelineLayout, NULL);
-    }
 
-    free(e_var_pipelines);
-    e_var_pipelines = NULL;
+    if(objs.count > 0)
+    {
+        free(objs.go);
+        objs.go = NULL;
+    }
 
     if(e_var_num_fonts > 0)
     {
@@ -540,6 +549,13 @@ void EngineCleanUp(){
     free(e_var_images);
     e_var_images = NULL;
 
+    if(e_var_num_lights > 0)
+    {
+        free(e_var_lights);
+        e_var_lights = NULL;
+        e_var_num_lights = 0;
+    }
+
     vkDestroyDevice(e_device, NULL);
 
     if (enableValidationLayers) {
@@ -553,11 +569,4 @@ void EngineCleanUp(){
 
     glfwTerminate();
 
-    if(e_var_num_lights > 0)
-    {
-        LightObject *lights = e_var_lights;
-
-        free(lights);
-        e_var_num_lights = 0;
-    }
 }

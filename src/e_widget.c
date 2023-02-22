@@ -13,7 +13,10 @@
 #include "pipeline.h"
 #include "buffers.h"
 
-#include "e_resource.h"
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_shapes.h"
+#include "e_resource_export.h"
 
 bool e_var_wasReleased = true, e_var_leftMouse = false;
 
@@ -64,6 +67,9 @@ void WidgetUniformUpdate(EWidget *ew){
             mbo.objs[iter].size = v2_sub(parent->go.transform.scale, v2_divs(offset, 2));
             iter ++;
             parent = parent->parent;
+
+            if(iter >= MAX_WIDGET_MASKS)
+                break;
         }
 
         mbo.size = iter;
@@ -156,12 +162,14 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     memcpy(ew->go.name, "Widget", 6);
 
+    ew->type = ENGINE_WIDGET_TYPE_WIDGET;
+
     GameObject2DInit(&ew->go);
 
-
+    GraphicsObjectSetVertexSize(&ew->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
     GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
 
-    GameObject2DApplyVertexes(ew);
+    GameObject2DSetLinkedShape(ew);
 
     GameObjectSetUpdateFunc(&ew->go, (void *)WidgetUniformUpdate);
 
@@ -193,7 +201,6 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_GUI_WIDGET_OBJECT;
         setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
         setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
@@ -303,40 +310,40 @@ void WidgetEventsPipe(EWidget* widget)
         widget->widget_flags |= ENGINE_FLAG_WIDGET_IN;
 
         if((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) && !(e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN))
-            WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_IN, NULL);
+            WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_MOUSE_IN, NULL);
         else if(!(e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) && (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN))
-            WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_OUT, NULL);
+            WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_MOUSE_OUT, NULL);
         else if(!(e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT)&& (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN))
-            WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_STAY, NULL);
+            WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_MOUSE_STAY, NULL);
 
         if(e_var_leftMouse && e_var_wasReleased)
         {
             if(e_var_current_entry != e_var_sellected)
                 e_var_current_entry = NULL;
 
-            WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_PRESS, NULL);
+            WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, NULL);
             e_var_wasReleased = false;
 
             if(e_var_last_sellected != e_var_sellected){
 
                 if(e_var_last_sellected != NULL)
-                    WidgetConfirmTrigger(e_var_last_sellected, GUI_TRIGGER_WIDGET_UNFOCUS, NULL);
+                    WidgetConfirmTrigger(e_var_last_sellected, ENGINE_WIDGET_TRIGGER_WIDGET_UNFOCUS, NULL);
 
-                WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_WIDGET_FOCUS, NULL);
+                WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_WIDGET_FOCUS, NULL);
             }
 
             e_var_last_sellected = e_var_sellected;
         }
         else if(e_var_leftMouse)
-            WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_MOVE, NULL);
+            WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_MOUSE_MOVE, NULL);
         else if(!e_var_leftMouse && !e_var_wasReleased)
         {
-            WidgetConfirmTrigger(e_var_sellected, GUI_TRIGGER_MOUSE_RELEASE, NULL);
+            WidgetConfirmTrigger(e_var_sellected, ENGINE_WIDGET_TRIGGER_MOUSE_RELEASE, NULL);
             e_var_wasReleased = true;
         }else
         {
-            e_var_sellected->widget_flags = (((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) | (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_OUT)) |
-                    ((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN) | (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_IN)));
+            e_var_sellected->widget_flags |= (((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_OUT) | (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_OUT)) | \
+                                            ((e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_WAS_IN) | (e_var_sellected->widget_flags & ENGINE_FLAG_WIDGET_IN)));
         }
 
     }
@@ -394,4 +401,7 @@ void WidgetDestroy(EWidget *widget){
     GameObjectDestroy(widget);
 
     free(widget->callbacks.stack);
+
+    if((widget->widget_flags & ENGINE_FLAG_WIDGET_ALLOCATED))
+        free(widget);
 }

@@ -48,16 +48,18 @@ int ScrollWidgetMove(EWidget* widget, void* entry, EWidgetScroll* scroll){
 
     Transform2DSetPosition(widget, te.x, te.y);
 
-    WidgetConfirmTrigger(scroll, GUI_TRIGGER_SCROLL_CHANGE, &diff);
+    WidgetConfirmTrigger(scroll, ENGINE_WIDGET_TRIGGER_SCROLL_CHANGE, &diff);
 
     return 0;
 }
 
 void ScrollWidgetInit(EWidgetScroll *scroll, uint32_t width, uint32_t height, DrawParam *dParam, EWidget *parent)
 {
-    scroll->widget.type = GUI_TYPE_SCROLL;
-
     WidgetInit(scroll, dParam, parent);
+
+    memcpy(scroll->widget.go.name, "Widget_Scroll", 11);
+    scroll->widget.type = ENGINE_WIDGET_TYPE_SCROLL;
+
     scroll->widget.color = (vec4){1.0f, 1.0f, 1.0f, 1.0f};
     Transform2DSetScale(scroll, width, height);
 
@@ -69,8 +71,8 @@ void ScrollWidgetInit(EWidgetScroll *scroll, uint32_t width, uint32_t height, Dr
     Transform2DSetScale(&scroll->scroll, 20, 20);
     Transform2DSetPosition(&scroll->scroll, width * 2 - 40, 0);
 
-    WidgetConnect(&scroll->scroll, GUI_TRIGGER_MOUSE_PRESS, ScrollWidgetPress, scroll);
-    WidgetConnect(&scroll->scroll, GUI_TRIGGER_MOUSE_MOVE, ScrollWidgetMove, scroll);
+    WidgetConnect(&scroll->scroll, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, ScrollWidgetPress, scroll);
+    WidgetConnect(&scroll->scroll, ENGINE_WIDGET_TRIGGER_MOUSE_MOVE, ScrollWidgetMove, scroll);
 }
 
 void ScrollWidgetUpdate(EWidgetScroll *scroll, void *list)
@@ -81,7 +83,13 @@ void ScrollWidgetUpdate(EWidgetScroll *scroll, void *list)
 
     float razn = mySize.y / (some_list->size_y * some_list->size);
 
-    scroll->scroll_size = razn < 1 ? mySize.y * razn : mySize.y;
+    if(razn < 1){
+        scroll->scroll_size = mySize.y * razn;
+        scroll->scroll.widget_flags |= (ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE);
+    }else{
+        scroll->scroll.widget_flags &= ~(ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE);
+        scroll->scroll_size = mySize.y;
+    }
 
     Transform2DSetScale(&scroll->scroll, 20, scroll->scroll_size);
 }

@@ -12,12 +12,12 @@
 
 #define MAX_FONTS 32
 #define MAX_IMAGES 32
-#define MAX_PIPELINES 64
+#define MAX_PIPELINES 50
 #define MAX_UNIFORMS 10
 
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_WIDGETS_TRASH 200
+#define MAX_CAMERA_VIEW_DISTANCE 1000
 
 #ifdef __cplusplus
 extern "C"
@@ -28,21 +28,6 @@ extern "C"
 
 typedef enum { false, true} bool;
 #endif
-
-typedef enum{
-    ENGINE_TYPE_PAINTER_OBJECT,
-    ENGINE_TYPE_GUI_WIDGET_OBJECT,
-    ENGINE_TYPE_GUI_WINDOW_WIDGET_OBJECT,
-    ENGINE_TYPE_TEXT_OBJECT,
-    ENGINE_TYPE_SPRITE_OBJECT,
-    ENGINE_TYPE_LINE_OBJECT,
-    ENGINE_TYPE_PRIMITIVE_OBJECT,
-    ENGINE_TYPE_PRIMITIVE_OBJECT_LINE,
-    ENGINE_TYPE_MODEL_OBJECT,
-    ENGINE_TYPE_PROJECT_PLANE,
-    ENGINE_TYPE_2D_PARTICLE,
-    ENGINE_TYPE_3D_PARTICLE
-} ObjectType;
 
 typedef enum{
     ENGINE_VERTEX_TYPE_2D_OBJECT,
@@ -249,6 +234,11 @@ typedef struct EISurfaceCapabilitiesKHR {
     uint32_t         supportedCompositeAlpha;
     uint32_t                supportedUsageFlags;
 } EISurfaceCapabilitiesKHR;
+
+typedef struct{
+    uint32_t FindLetter;
+    uint16_t IndexLetter;
+} FontIndexes;
 
 #ifdef __cplusplus
 }

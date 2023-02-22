@@ -6,7 +6,19 @@ int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 
     EWidgetList *list = widget->parent;
 
-    WidgetConfirmTrigger(list, GUI_TRIGGER_LIST_PRESS_ITEM, id);
+    EWidgetButton *button;
+
+    for(int i=0;i < list->size;i++)
+    {
+        button = WidgetFindChild(list, i)->node;
+        button->widget.color = button->selfColor;
+    }
+
+    button = widget;
+
+    button->widget.color.x = 0.6;
+
+    WidgetConfirmTrigger(list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, id);
 
     return -1;
 }
@@ -14,8 +26,10 @@ int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
 
     WidgetInit(list, NULL, parent);
+
     memcpy(list->widget.go.name, "Widget_List", 11);
-    list->widget.type = GUI_TYPE_LIST;
+    list->widget.type = ENGINE_WIDGET_TYPE_LIST;
+
     list->widget.color = (vec4){ 0.4, 0.4, 0.4, 1.0};
     list->widget.transparent = 0.0f;
 
@@ -34,7 +48,7 @@ void ListWidgetSetColor(EWidgetList *list, vec4 color){
          ChildStack *child = WidgetFindChild(&list->widget, i);
          EWidgetButton *widget = (EWidgetButton *)child->node;
 
-        widget->selfColor =  widget->widget.color = color;
+        widget->selfColor = widget->widget.color = color;
     }
 }
 
@@ -46,12 +60,13 @@ EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text){
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
     ButtonWidgetInit(item, text, &list->widget);
+    item->widget.widget_flags |= ENGINE_FLAG_WIDGET_ALLOCATED;
     ButtonWidgetSetColor(item, list->widget.color.x, list->widget.color.y, list->widget.color.z);
     TextWidgetSetText(&item->text, text);
 
     item->widget.transparent = 0.5f;
 
-    WidgetConnect(item, GUI_TRIGGER_BUTTON_PRESS, ListWidgetPressItem, list->size -1);
+    WidgetConnect(item, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, ListWidgetPressItem, list->size -1);
 
     for(int i=0;i < list->size;i++)
     {
@@ -77,7 +92,6 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         ChildStack *before = child->before;
 
         WidgetDestroy(child->node);
-        free(child->node);
         child->node = NULL;
 
         free(child);
@@ -86,7 +100,6 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
 
     }else if(child->next != NULL){
         WidgetDestroy(child->node);
-        free(child->node);
         child->node = NULL;
 
         child->next->before = NULL;
@@ -95,7 +108,6 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
 
     }else if(child->before != NULL){
         WidgetDestroy(child->node);
-        free(child->node);
         child->node = NULL;
 
         child->before->next = NULL;
@@ -107,7 +119,6 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         if(list->widget.child->node != NULL)
         {
             WidgetDestroy(list->widget.child->node);
-            free(list->widget.child->node);
             list->widget.child->node = NULL;
         }
 

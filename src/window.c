@@ -3,6 +3,9 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 bool checkValidationLayerSupport(){
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -12,7 +15,7 @@ bool checkValidationLayerSupport(){
 
     bool layerFound;
 
-    for(int i=0; i < VALIDSIZE; i++)
+    for(int i=0; i < num_valid_layers; i++)
     {
         layerFound = false;
 
@@ -93,7 +96,7 @@ void createInstance(){
 
     VkDebugUtilsMessengerCreateInfoEXT debugInfo;
     if(enableValidationLayers){
-        createInfo.enabledLayerCount = VALIDSIZE;
+        createInfo.enabledLayerCount = num_valid_layers;
         createInfo.ppEnabledLayerNames = validationLayers;
 
         populateDebugMessengerCreateInfo(&debugInfo);
@@ -105,7 +108,7 @@ void createInstance(){
         createInfo.pNext = NULL;
     }
 
-    const char** glfwExtensions = getRequiredExtensions(glfwExtensions);
+    const char** glfwExtensions = getRequiredExtensions();
 
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
@@ -115,6 +118,7 @@ void createInstance(){
         exit(1);
     }
 
+    free(glfwExtensions);
 }
 
 void createSurface() {

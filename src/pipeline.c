@@ -4,6 +4,9 @@
 
 #include "e_pipeline_variables.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
     PipelineSetting *setting = arg;
@@ -26,38 +29,7 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
     setting->drawWay = VK_FRONT_FACE_CLOCKWISE;
 }
 
-PipelineCache *PipelineFindExist(PipelineSetting *settings)
-{
-    PipelineSetting *temp;
-
-    for(int i=0;i < e_var_num_pipelines;i++)
-    {
-        temp = e_var_pipelines[i].setting;
-
-        if(temp == NULL)
-            continue;
-
-        if(settings->obj_type != temp->obj_type)
-            continue;
-
-        if(settings->obj_type != temp->obj_type || settings->poligonMode != temp->poligonMode ||
-            settings->topology != temp->topology || settings->drawWay != temp->drawWay)
-            continue;
-
-        return &e_var_pipelines[i];
-
-    }
-
-    return NULL;
-}
-
 void PipelineCreateGraphics(GraphicsObject* graphObj){
-
-    if(e_var_num_pipelines + 1 >= MAX_PIPELINES)
-    {
-        printf("Превышен лимит по созданию Пайплайнов!\n");
-        return;
-    }
 
     PipelineSetting *settings = graphObj->gItems.settings;
 
@@ -69,20 +41,9 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
 
         PipelineSetting *setting = &settings[i];
 
-        PipelineCache *cachedPipeline = PipelineFindExist(setting);
-
-        if(cachedPipeline != NULL)
-        {
-            graphObj->gItems.pipelineLayout[i] = cachedPipeline->GraphicsPipelineLayout;
-            graphObj->gItems.graphicsPipeline[i] = cachedPipeline->GraphicsPipeline;
-
-            continue;
-        }
-
         //Шейдеры
         shader vertShaderCode;
         shader fragShaderCode;
-
 
         if(setting->fromFile)
         {
@@ -178,7 +139,7 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptorSetLayout; // Optional
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
-        if (vkCreatePipelineLayout(e_device, &pipelineLayoutInfo, NULL, &e_var_pipelines[e_var_num_pipelines].GraphicsPipelineLayout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(e_device, &pipelineLayoutInfo, NULL, &graphObj->gItems.pipelineLayout[i]) != VK_SUCCESS) {
             printf("failed to create pipeline layout!");
             exit(1);
         }
@@ -210,22 +171,16 @@ void PipelineCreateGraphics(GraphicsObject* graphObj){
         pipelineInfo.pMultisampleState = &multisampling;
         pipelineInfo.pColorBlendState = &colorBlending;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = e_var_pipelines[e_var_num_pipelines].GraphicsPipelineLayout;
+        pipelineInfo.layout = graphObj->gItems.pipelineLayout[i];
         pipelineInfo.renderPass = renderPass;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.pDepthStencilState = &depthStencil;
 
-        if (vkCreateGraphicsPipelines(e_device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &e_var_pipelines[e_var_num_pipelines].GraphicsPipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(e_device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &graphObj->gItems.graphicsPipeline[i]) != VK_SUCCESS) {
             printf("failed to create graphics pipeline!");
             exit(1);
         }      
-
-        graphObj->gItems.graphicsPipeline[i] = e_var_pipelines[e_var_num_pipelines].GraphicsPipeline;
-        graphObj->gItems.pipelineLayout[i] = e_var_pipelines[e_var_num_pipelines].GraphicsPipelineLayout;
-        e_var_pipelines[e_var_num_pipelines].setting = setting;
-
-        e_var_num_pipelines ++;
 
         //-----------------------
 
@@ -303,5 +258,8 @@ void PipelineCreateRenderPass() {
         printf("failed to create render pass!");
         exit(1);
     }
+
+    free(dependency);
+    dependency = NULL;
 }
 

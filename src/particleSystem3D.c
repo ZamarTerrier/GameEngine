@@ -9,13 +9,16 @@
 
 #include "camera.h"
 #include "pipeline.h"
-#include "e_resource.h"
 #include "buffers.h"
 #include "texture.h"
 
 #include "transform.h"
 
 #include "e_math.h"
+
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+#include "e_resource_export.h"
 
 void Particle3DFind(ParticleObject3D *particle){
 
@@ -77,7 +80,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
         verts[i].size = particle->particles[i].scale;
     }
 
-    GraphicsObjectSetVertex(&particle->go.graphObj, vParam->vertices, particle->num_parts, NULL, 0);
+    BuffersUpdateVertex(vParam);
 
     Camera3D* cam = (Camera3D*) cam3D;
     void* data;
@@ -87,7 +90,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
 
     mbo.model = m4_translate_mat_add(m4_mult(m4_scale_mat(particle->go.transform.scale), m4_rotation_matrix(particle->go.transform.rotation)), particle->go.transform.position);
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(45.0f, 0.01f, 100.0f);
+    mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
     vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
@@ -100,22 +103,6 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
     if(go->graphObj.shape.vParam.verticesSize == 0)
         return;
-
-    if(go->graphObj.shape.rebuild)
-    {
-
-        vkDeviceWaitIdle(e_device);
-
-        vkDestroyBuffer(e_device, go->graphObj.shape.vParam.vertexBuffer, NULL);
-        vkFreeMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, NULL);
-
-
-        if(go->graphObj.shape.vParam.verticesSize > 0){
-            BufferCreateVertex(&go->graphObj.shape.vParam, sizeof(ParticleVertex3D));
-        }
-
-        go->graphObj.shape.rebuild = false;
-    }
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
 
@@ -155,10 +142,13 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     GameObjectSetRecreateFunc(particle, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject3DDestroy);
 
-    particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+    particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(MAX_UNIFORMS, sizeof(ShaderBuffer));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
+
+    GraphicsObjectSetVertexSize(&particle->go.graphObj, sizeof(ParticleVertex3D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&particle->go.graphObj, NULL, 0, NULL, 0);
 
     particle->go.graphObj.gItems.perspective = true;
     particle->go.enable_light = false;
@@ -191,7 +181,6 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
-        setting.obj_type = ENGINE_TYPE_3D_PARTICLE;
         setting.vertShader = &_binary_shaders_particle_vert3D_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert3D_spv_size);
         setting.fragShader = &_binary_shaders_particle_frag3D_spv_start;

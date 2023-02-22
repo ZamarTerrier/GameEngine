@@ -56,7 +56,7 @@ int RangeWidgetMove(EWidget* widget, void* entry, void* args){
 
     Transform2DSetPosition(widget, te.x, te.y);
 
-    WidgetConfirmTrigger(range, GUI_TRIGGER_RANGE_CHANGE, &val);
+    WidgetConfirmTrigger(range, ENGINE_WIDGET_TRIGGER_RANGE_CHANGE, &val);
 
     return 0;
 }
@@ -65,11 +65,13 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
 
     DrawParam param = {};
     WidgetInit(&range->widget, NULL, parent);
-    memcpy(range->widget.go.name, "Widget_Range", 11);
+
+    memcpy(range->widget.go.name, "Widget_Range", 10);
+    range->widget.type = ENGINE_WIDGET_TYPE_RANGE;
+
     WidgetInit(&range->line, NULL, &range->widget);
     WidgetInit(&range->range, NULL, &range->widget);
 
-    range->widget.type = GUI_TYPE_RANGE;
     range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
     Transform2DSetScale(&range->line, size_x, 2);
     Transform2DSetPosition(&range->line, 0, size_y - 4);
@@ -87,8 +89,8 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
     Transform2DSetScale(&range->range, 10, size_y);
     Transform2DSetPosition(&range->range, 0, 0);
 
-    WidgetConnect(&range->range, GUI_TRIGGER_MOUSE_PRESS, RangeWidgetPress, NULL);
-    WidgetConnect(&range->range, GUI_TRIGGER_MOUSE_MOVE, RangeWidgetMove, range);
+    WidgetConnect(&range->range, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, RangeWidgetPress, NULL);
+    WidgetConnect(&range->range, ENGINE_WIDGET_TRIGGER_MOUSE_MOVE, RangeWidgetMove, range);
 }
 
 void RangeWidgetSetValueDestin(EWidgetRange *range, float *val_dest)

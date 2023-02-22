@@ -4,6 +4,9 @@
 
 #include "e_device_variables.h"
 
+#include "e_resource_data.h"
+#include "e_resource_engine.h"
+
 void querySwapChainSupport(void* arg, SwapChainSupportDetails* details) {
 
     VkPhysicalDevice *device = arg;

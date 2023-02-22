@@ -36,6 +36,7 @@ typedef struct{
 typedef struct{
     void* indexBuffer;
     void* indexBufferMemory;
+    uint32_t typeSize;
     uint32_t indexesSize;
     uint32_t* indices;
 } indexParam;
@@ -51,7 +52,8 @@ typedef struct{
 typedef struct{
     indexParam iParam;
     vertexParam vParam;
-    bool rebuild;
+    bool linked;
+    bool init;
 } Shape;
 
 typedef struct{

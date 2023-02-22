@@ -28,6 +28,8 @@ enum PrimitiveObjectType{
 
 typedef struct{
     GameObject3D go;
+    void *params;
+    uint32_t type;
 } PrimitiveObject;
 
 typedef struct{

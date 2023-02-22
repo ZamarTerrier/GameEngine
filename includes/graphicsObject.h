@@ -19,6 +19,7 @@ typedef struct{
 
 void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type);
 
+void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t type_v_size, uint32_t type_i_size);
 void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount);
 
 void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj);
