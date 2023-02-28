@@ -170,7 +170,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    ImageAddTexture(&particle->go.graphObj.local, particle->go.image);
+    TextureImageAdd(&particle->go.graphObj.local, particle->go.image, 0, 0);
 
     GraphicsObjectCreateDrawItems(&particle->go.graphObj);
 

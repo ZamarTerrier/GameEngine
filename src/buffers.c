@@ -65,7 +65,24 @@ void BuffersCreateCommand(){
 
 }
 
-void BuffersCreateVertex(vertexParam* vert) {
+int BuffersCreateVertex(vertexParam* vert) {
+    //Выделение памяти
+    VkDeviceSize bufferSize;
+
+    bufferSize = vert->typeSize * vert->verticesSize;
+
+    if(bufferSize == 0)
+        return 1;
+
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+
+    vert->bufferSize = bufferSize;
+    vert->extend = false;
+
+    return 0;
+}
+
+int BuffersCreateVertexInst(vertexParam* vert) {
 
     if(vert->verticesSize >= MAX_VERTEX_COUNT)
     {
@@ -79,30 +96,44 @@ void BuffersCreateVertex(vertexParam* vert) {
     bufferSize = vert->typeSize * MAX_VERTEX_COUNT;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+
+    vert->bufferSize = bufferSize;
+    vert->extend = true;
+
+    return 0;
 }
 
-void BuffersUpdateVertex(vertexParam* vert) {
-
-    if(vert->verticesSize >= MAX_VERTEX_COUNT)
-    {
-        printf("Очень много вершин!\n");
-        return;
-    }
-
-    //Изменение памяти
-    VkDeviceSize bufferSize = vert->typeSize * vert->verticesSize;
+int BuffersUpdateVertex(vertexParam* vert) {
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
+    VkDeviceSize bufferSize ;
+
+    bufferSize = vert->typeSize * vert->verticesSize;
+
+    if(!vert->extend){
+        if(bufferSize != vert->bufferSize)
+            return;
+    }
+    else{
+        if(vert->verticesSize >= MAX_VERTEX_COUNT)
+        {
+            printf("Очень много вершин!\n");
+            return;
+        }
+    }
+
+    if(vert->extend)
+        if(bufferSize != vert->bufferSize)
+            return;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
-    //-------------
-    //Перенос данных в буфер
-
+    //Изменение памяти
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, vert->vertices, (size_t) bufferSize);
+    memset(data, 0, vert->bufferSize);
+    memcpy(data, vert->vertices, (size_t) bufferSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
     //-------------
@@ -112,10 +143,28 @@ void BuffersUpdateVertex(vertexParam* vert) {
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
+    if(vert->extend)
+        vert->bufferSize = bufferSize;
+
+    return 0;
 }
 
-void BuffersCreateIndex(indexParam* ind) {
+int BuffersCreateIndex(indexParam* ind) {
 
+    VkDeviceSize bufferSize = ind->typeSize * ind->indexesSize;
+
+    if(bufferSize == 0)
+        return 1;
+
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
+
+    ind->bufferSize = bufferSize;
+    ind->extend = false;
+
+    return 0;
+}
+
+int BuffersCreateIndexInst(indexParam* ind) {
 
     if(ind->typeSize >= MAX_INDEX_COUNT)
     {
@@ -126,25 +175,40 @@ void BuffersCreateIndex(indexParam* ind) {
     VkDeviceSize bufferSize = ind->typeSize * MAX_INDEX_COUNT;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
+
+    ind->bufferSize = bufferSize;
+    ind->extend = true;
+
+    return 0;
 }
 
-void BuffersUpdateIndex(indexParam* ind)
+int BuffersUpdateIndex(indexParam* ind)
 {
-    if(ind->typeSize >= MAX_INDEX_COUNT)
-    {
-        printf("Очень много индексов!\n");
-        return;
-    }
-
-    VkDeviceSize bufferSize = ind->typeSize * ind->indexesSize;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
+
+    VkDeviceSize bufferSize;
+
+    bufferSize = ind->typeSize * ind->indexesSize;
+
+    if(!ind->extend){
+        if(bufferSize != ind->bufferSize)
+            return;
+    }
+    else{
+        if(ind->indexesSize >= MAX_INDEX_COUNT)
+        {
+            printf("Очень много индексов!\n");
+            return;
+        }
+    }
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memset(data, 0, ind->bufferSize);
     memcpy(data, ind->indices, (size_t) bufferSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
@@ -152,6 +216,11 @@ void BuffersUpdateIndex(indexParam* ind)
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
+
+    if(ind->extend)
+        ind->bufferSize = bufferSize;
+
+    return 0;
 }
 
 void BuffersCreateUniform(UniformStruct* uniform, int size) {

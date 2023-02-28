@@ -73,8 +73,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     PlaneParam *pParam = (PlaneParam *)params;
     SphereParam *sParam = (SphereParam *)params;
     CubeSphereParam *csParam = (CubeSphereParam *)params;
-    ConeParam *cParam = (ConeParam *)params;    
-    TerrainParam *tParam = (TerrainParam *)params;
+    ConeParam *cParam = (ConeParam *)params;
 
     GraphicsObjectSetVertexSize(&po->go.graphObj, sizeof(Vertex3D), sizeof(uint32_t));
 
@@ -135,9 +134,9 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_TERRAIN:
-            InitTerrain3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, tParam->rows, tParam->colmns, tParam->cell_step);
-            po->params = calloc(1, sizeof(TerrainParam));
-            memcpy(po->params, params, sizeof(TerrainParam));
+            InitPlane3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
+            po->params = calloc(1, sizeof(PlaneParam));
+            memcpy(po->params, params, sizeof(PlaneParam));
             builded = true;
             break;
     }
@@ -157,9 +156,14 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     PrimitiveObjectInitTexture(po, &dParam);
 
-    ImageAddTexture(&po->go.graphObj.local, po->go.diffuse);
-    ImageAddTexture(&po->go.graphObj.local, po->go.specular);
-    ImageAddTexture(&po->go.graphObj.local, po->go.normal);
+    if(type == ENGINE_PRIMITIVE3D_TERRAIN)
+        TextureImageAdd(&po->go.graphObj.local,  NULL, pParam->texture_width, pParam->texture_height);
+    else
+        TextureImageAdd(&po->go.graphObj.local,  po->go.diffuse, 0, 0);
+
+
+    TextureImageAdd(&po->go.graphObj.local, po->go.specular, 0, 0);
+    TextureImageAdd(&po->go.graphObj.local, po->go.normal, 0, 0);
 
     GraphicsObjectCreateDrawItems(&po->go.graphObj);
 
@@ -205,4 +209,23 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
         Transform3DSetScale(po, -500, -500, -500);
+}
+
+void *PrimitiveObjectGetVertex(PrimitiveObject *po)
+{
+    return &po->go.graphObj.shape.vParam;
+}
+
+void PrimitiveObjectDiffuseTextureSetData(PrimitiveObject *po, void *data, uint32_t size_data, uint32_t offset)
+{
+    ShaderBuffer *descriprots = po->go.graphObj.local.descriptors;
+
+    TextureUpdate(&descriprots[2], data, size_data, offset);
+}
+
+void PrimitiveObjectDiffuseSetTexture(PrimitiveObject *po, const char *path)
+{
+    ShaderBuffer *descriprots = po->go.graphObj.local.descriptors;
+
+    TextureSetTexture(&descriprots[2], path);
 }

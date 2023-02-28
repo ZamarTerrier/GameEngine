@@ -69,7 +69,7 @@ EIExtent2D chooseSwapExtent(const EISurfaceCapabilitiesKHR capabilities) {
     }
 }
 
-void createSwapChain() {
+void SwapChainCreate() {
 
     SwapChainSupportDetails swapChainSupport;
 
@@ -127,12 +127,12 @@ void createSwapChain() {
 
 }
 
-void createImageViews() {
+void SwapChainCreateImageViews() {
 
     swapChainImageViews = (VkImageView *) calloc(imagesCount, sizeof(VkImageView));
 
     for (size_t i = 0; i < imagesCount; i++) {
-        swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        swapChainImageViews[i] = TextureCreateImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
 }

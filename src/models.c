@@ -267,9 +267,9 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
     BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    ImageAddTexture(&model->graphObj.local, model->diffuse);
-    ImageAddTexture(&model->graphObj.local, model->specular);
-    ImageAddTexture(&model->graphObj.local, model->normal);
+    TextureImageAdd(&model->graphObj.local, model->diffuse, 0, 0);
+    TextureImageAdd(&model->graphObj.local, model->specular, 0, 0);
+    TextureImageAdd(&model->graphObj.local, model->normal, 0, 0);
 
     GraphicsObjectCreateDrawItems(&model->graphObj);
 

@@ -75,7 +75,7 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    ImageAddTexture(&so->go.graphObj.local, so->go.image);
+    TextureImageAdd(&so->go.graphObj.local, so->go.image, 0, 0);
 
     GraphicsObjectCreateDrawItems(&so->go.graphObj);
 

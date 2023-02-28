@@ -14,11 +14,13 @@ void BuffersCreateCommandPool();
 
 void BuffersCreateCommand();
 
-void BuffersCreateVertex(vertexParam* vert);
-void BuffersUpdateVertex(vertexParam* vert);
+int BuffersCreateVertexInst(vertexParam* vert);
+int BuffersCreateVertex(vertexParam* vert);
+int BuffersUpdateVertex(vertexParam* vert);
 
-void BuffersCreateIndex(indexParam* ind);
-void BuffersUpdateIndex(indexParam* ind);
+int BuffersCreateIndexInst(indexParam* ind);
+int BuffersCreateIndex(indexParam* ind);
+int BuffersUpdateIndex(indexParam* ind);
 
 void BuffersCreateUniform(UniformStruct* uniform, int size);
 

@@ -9,12 +9,22 @@ extern "C"
 #endif
 
 typedef struct{
+    char *path;
+    char *buffer;
+    char *data;
+    uint32_t buff_size;
+    uint32_t texWidth;
+    uint32_t texHeight;
+    uint32_t texChannels;
+} ImageFileData;
+
+typedef struct{
     void *textureImage;
     void *textureImageMemory;
     void *textureImageView;
     void *textureSampler;
-    int texWidth;
-    int texHeight;
+    ImageFileData image_data;
+    bool generated;
 } Texture2D;
 
 typedef struct{

@@ -24,6 +24,8 @@
 
 #include "camera.h"
 
+#include "tools.h"
+
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
@@ -71,11 +73,11 @@ void EngineInitVulkan(){
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
-    createSwapChain();
-    createImageViews();
+    SwapChainCreate();
+    SwapChainCreateImageViews();
     PipelineCreateRenderPass();
     BuffersCreateCommandPool();
-    createDepthResources();
+    ToolsCreateDepthResources();
     BuffersCreateFramebuffers();
     BuffersCreateCommand();
     EngineCreateSyncobjects();
@@ -96,9 +98,9 @@ void EngineInitVulkan(){
     e_var_num_fonts = 0;
 
     engine_buffered_image *images = e_var_images;
-    TextureCreateEmpty(&images[e_var_num_images].texture);
-    createTextureImageView(&images[e_var_num_images].texture);
-    createTextureSampler(&images[e_var_num_images].texture);
+    TextureCreateEmptyDefault(&images[e_var_num_images].texture);
+    TextureCreateTextureImageView(&images[e_var_num_images].texture);
+    TextureCreateSampler(&images[e_var_num_images].texture);
     char *text = "Null texture";
     memcpy(images[e_var_num_images].path, text, strlen(text));
     e_var_num_images ++;
@@ -286,10 +288,10 @@ void EnginereRecreateSwapChain() {
 
     EngineCleanupSwapChain();
 
-    createSwapChain();
-    createImageViews();
+    SwapChainCreate();
+    SwapChainCreateImageViews();
     PipelineCreateRenderPass();
-    createDepthResources();
+    ToolsCreateDepthResources();
     int temp = 0;
 
     while(temp < objs.count)
@@ -438,8 +440,8 @@ void EngineDrawFrame(){
 
 
     VkClearValue* clearColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
-    clearColor->color.float32[0] = 0.3f;
-    clearColor->color.float32[1] = 0.0f;
+    clearColor->color.float32[0] = 0.8f;
+    clearColor->color.float32[1] = 0.1f;
     clearColor->color.float32[2] = 0.1f;
     clearColor->color.float32[3] = 1.0f;
     VkClearValue* depthColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));

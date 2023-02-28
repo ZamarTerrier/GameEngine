@@ -62,12 +62,7 @@ void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t type_v_size,
 
 void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount){
 
-    if(!graphObj->shape.init)
-    {
-        BuffersCreateVertex(&graphObj->shape.vParam);
-        BuffersCreateIndex(&graphObj->shape.iParam);
-        graphObj->shape.init = true;
-    }
+    int res = 0;
 
     if(vert != NULL)
     {
@@ -79,6 +74,19 @@ void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount
     {
         graphObj->shape.iParam.indices = inx;
         graphObj->shape.iParam.indexesSize = indxCount;
+    }
+
+    if(!graphObj->shape.init)
+    {
+        res = BuffersCreateVertex(&graphObj->shape.vParam);
+        if(res)
+            return;
+
+        res = BuffersCreateIndex(&graphObj->shape.iParam);
+        if(res)
+            return;
+
+        graphObj->shape.init = true;
     }
 
     if(graphObj->shape.vParam.verticesSize > 0)
@@ -171,6 +179,14 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
     {
         ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+            Texture2D *texture = descriptor->texture;
+
+            if(texture->generated)
+            {
+                ImageDestroyTexture(texture);
+                free(descriptor->texture);
+            }
+
             descriptor->texture = NULL;
         }else{
             for (int j = 0; j < imagesCount; j++) {
