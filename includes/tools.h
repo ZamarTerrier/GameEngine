@@ -23,12 +23,16 @@ shader readFile(const char* filename);
 
 void* createShaderModule(shader shdr);
 
-void InitPlane3D(vertexParam *vParam, indexParam *iParam,int rows, int colmns);
-void InitTerrain3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns, int cell_step);
+void InitPlane3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns);
 int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
 void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount);
 int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius);
 int Cubesphere(vertexParam *vParam, indexParam *iParam, float radius,int vertexCountPerRow);
+
+void ToolsCreateDepthResources();
+void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout);
+void ToolsCopyBufferToImage(void* buffer, void* image, uint32_t width, uint32_t height);
+void ToolsCopyImage(void* cmdBuffer, void* srcImageId, void* dstImageId, uint32_t width, uint32_t height);
 
 float dot_grad(int hash, float xf);
 float dot_grad2(int hash, float xf, float yf);

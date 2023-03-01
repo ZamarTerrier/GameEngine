@@ -22,9 +22,9 @@ uint32_t chooseSwapPresentMode(const void** availablePresentModes, uint32_t size
 
 EIExtent2D chooseSwapExtent(const EISurfaceCapabilitiesKHR capabilities);
 
-void createSwapChain();
+void SwapChainCreate();
 
-void createImageViews();
+void SwapChainCreateImageViews();
 
 #ifdef __cplusplus
 }

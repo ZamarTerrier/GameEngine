@@ -30,6 +30,8 @@ typedef struct{
     void* vertexBufferMemory;
     uint32_t typeSize;
     uint32_t verticesSize;
+    uint32_t bufferSize;
+    bool extend;
     void* vertices;
 } vertexParam;
 
@@ -38,6 +40,8 @@ typedef struct{
     void* indexBufferMemory;
     uint32_t typeSize;
     uint32_t indexesSize;
+    uint32_t bufferSize;
+    bool extend;
     uint32_t* indices;
 } indexParam;
 

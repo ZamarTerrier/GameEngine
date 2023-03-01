@@ -7,46 +7,37 @@
 
 #include "tools.h"
 
+#define EMPTY_IMAGE_WIDTH 100
+#define EMPTY_IMAGE_HEIGHT 100
+
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-void TextureCreateEmpty(Texture2D *texture);
+int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
+
+int ImageLoadFile(ImageFileData *data, uint32_t from_file);
 
 Texture2D *TextureFindTexture(char *image);
 
-void TextureCreate( ShaderBuffer *descriptor, GameObjectImage *image, bool from_file);
+void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, void** image, void** imageMemory);
 
 int TextureImageCreate(GameObjectImage *image, ShaderBuffer *descriptor, bool from_file);
 
-void createTextureImageView() ;
+void* TextureCreateImageView(void* image, uint32_t format, uint32_t aspectFlags);
 
-void createImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, void** image, void** imageMemory);
+void TextureCreateSampler(Texture2D *texture);
 
-void* createImageView(void* image, uint32_t format, uint32_t aspectFlags);
+ShaderBuffer *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height);
 
-void createTextureSampler(Texture2D *texture);
+void TextureCreate( ShaderBuffer *descriptor, GameObjectImage *image, bool from_file);
+void TextureCreateSpecific(ShaderBuffer *descriptor, uint32_t width, uint32_t height);
 
-void createDepthResources() ;
+void TextureUpdate(ShaderBuffer *descriptor, void *in_data, uint32_t size_data, uint32_t offset);
 
-bool hasStencilComponent(uint32_t format);
-
-uint32_t findDepthFormat();
-
-uint32_t findSupportedFormat(const uint32_t* candidates, size_t countCandidates, uint32_t tiling, uint32_t features);
-
-void createDepthResources();
-
-void transitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout);
-
-void copyBufferToImage(void* buffer, void* image, uint32_t width, uint32_t height);
-
-void copyImage(void* cmdBuffer, void* srcImageId, void* dstImageId, uint32_t width, uint32_t height);
-
-void ImageAddTexture(localParam *local, GameObjectImage *image);
-
-void changeTexture(localParam *local, int elem, const char* source, int size);
+void TextureSetTexture(ShaderBuffer *descriptor, const char* path);
 
 void ImageDestroyTexture(Texture2D* texture);
 

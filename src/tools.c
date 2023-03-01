@@ -5,6 +5,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "texture.h"
+
 #include "e_math.h"
 
 #include "e_resource_data.h"
@@ -206,72 +208,6 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
         k1 = i * (sectorCount + 1);     // beginning of current stack
         k2 = k1 +  sectorCount + 1 ;      // beginning of next stack
         for(j=0; j < sectorCount; ++j, ++k1, ++k2){
-
-            iParam->indices[it] = k1 + 1;
-            iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1;
-            it +=3;
-
-            iParam->indices[it] = k1 + 1;
-            iParam->indices[it + 1] = k2 + 1;
-            iParam->indices[it + 2] = k2;
-
-            it +=3;
-
-
-        }
-    }
-}
-
-void InitTerrain3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns, int cell_step){
-
-    if(rows < 4)
-        rows = 4;
-
-    if(colmns < 4)
-        colmns = 4;
-
-    vec3 pos = {0 , 0, 0};
-    vec3 col = {0.3 , 0.1, 0.11};
-
-    int i, j;
-
-    vParam->verticesSize = ((rows + 1) * (colmns + 1)) * 2;
-
-    vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
-
-    int vIter = 0;
-
-    Vertex3D *verts = vParam->vertices;
-
-    for(i=0; i <= rows;i++){
-        for(j=0; j <= colmns;j++){
-
-            vIter = i * colmns + (i > 0 ? j + i : j);
-
-            pos.x = 0.5 * i;
-            pos.z = 0.5 * j;
-
-            verts[vIter].position = pos;
-            verts[vIter].color = (vec3){1.0f, 1.0f, 1.0f};
-            verts[vIter].normal = (vec3){0,1,0};
-
-
-            verts[vIter].texCoord = (vec2){(float)i / (colmns / cell_step), (float)j / (rows / cell_step)};
-
-        }
-    }
-
-    iParam->indexesSize = (rows * rows) * 2 * 6 + 6;
-
-    iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
-
-    int k1, k2, it = 0, tt = 0;
-
-    for(i=0; i < rows;i++){
-        k1 = i * (rows + 1);     // beginning of current stack
-        k2 = k1 +  rows + 1 ;      // beginning of next stack
-        for(j=0; j < rows; ++j, ++k1, ++k2){
 
             iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
@@ -1139,6 +1075,155 @@ void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, 
             it +=3;
         }
     }
+
+}
+
+bool hasStencilComponent(uint32_t format) {
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+uint32_t findSupportedFormat(const uint32_t* candidates, size_t countCandidates, uint32_t tiling, uint32_t features) {
+
+    for (int i=0;i < countCandidates;i++) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(e_physicalDevice, candidates[i], &props);
+
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return candidates[i];
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return candidates[i];
+        }
+    }
+
+}
+
+uint32_t findDepthFormat() {
+
+    VkFormat formats[] = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
+
+    return findSupportedFormat( formats, 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+}
+
+void ToolsCreateDepthResources() {
+    VkFormat depthFormat = findDepthFormat();
+
+    TextureCreateImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &depthImage, &depthImageMemory);
+    depthImageView = TextureCreateImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+    ToolsTransitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+}
+
+
+void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout) {
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+    VkPipelineStageFlags sourceStage;
+    VkPipelineStageFlags destinationStage;
+
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+
+    if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+        if (hasStencilComponent(format)) {
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+    } else {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    } else {
+        printf("Failed to transition image layout from 0x%X to 0x%X", oldLayout, newLayout);
+        exit(1);
+    }
+
+    vkCmdPipelineBarrier(
+                commandBuffer,
+                sourceStage, destinationStage,
+                0,
+                0, NULL,
+                0, NULL,
+                1, &barrier
+                );
+
+    endSingleTimeCommands(commandBuffer);
+}
+
+void ToolsCopyBufferToImage(void *buffer, void *image, uint32_t width, uint32_t height) {
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+    VkBufferImageCopy region = {};
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset.x = 0;
+    region.imageOffset.y = 0;
+    region.imageOffset.z = 0;
+    region.imageExtent.width = width;
+    region.imageExtent.height = height;
+    region.imageExtent.depth = 1;
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+
+    vkCmdCopyBufferToImage( commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    endSingleTimeCommands(commandBuffer);
+}
+
+void ToolsCopyImage(void *cmdBuffer, void *srcImageId, void * dstImageId, uint32_t width, uint32_t height)
+{
+
+    VkImageSubresourceLayers subResource = {};
+    subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subResource.baseArrayLayer = 0;
+    subResource.layerCount = 1;
+    subResource.mipLevel = 0;
+
+    VkImageCopy region = {};
+    region.srcOffset.x = 0;
+    region.srcOffset.y = 0;
+    region.srcOffset.z = 0;
+    region.srcSubresource = subResource;
+    region.dstOffset.x = 0;
+    region.dstOffset.y = 0;
+    region.dstOffset.z = 0;
+    region.dstSubresource = subResource;
+    region.extent.width = width;
+    region.extent.height = height;
+    region.extent.depth = 1;
+
+    vkCmdCopyImage( cmdBuffer, srcImageId, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImageId, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, &region);
 
 }
 

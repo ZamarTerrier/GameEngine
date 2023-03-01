@@ -159,18 +159,18 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descr
 
     Texture2D *texture = fonts[e_var_num_fonts].texture;
 
-    createImage(tData->font.fontWidth, tData->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
+    TextureCreateImage(tData->font.fontWidth, tData->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &texture->textureImage, &texture->textureImageMemory);
 
-    transitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingBuffer, texture->textureImage, tData->font.fontWidth, tData->font.fontHeight);
-    transitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, tData->font.fontWidth, tData->font.fontHeight);
+    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
-    texture->textureImageView = createImageView(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    texture->textureImageView = TextureCreateImageView(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    createTextureSampler(fonts[e_var_num_fonts].texture);
+    TextureCreateSampler(fonts[e_var_num_fonts].texture);
 
     descriptor->texture = fonts[e_var_num_fonts].texture;
 

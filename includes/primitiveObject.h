@@ -46,13 +46,9 @@ typedef struct{
 typedef struct{
     int sectorCount;
     int stackCount;
+    uint32_t texture_width;
+    uint32_t texture_height;
 } PlaneParam;
-
-typedef struct{
-    int rows;
-    int colmns;
-    int cell_step;
-} TerrainParam;
 
 typedef struct{
     float height;
@@ -61,6 +57,9 @@ typedef struct{
 } ConeParam;
 
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params);
+void *PrimitiveObjectGetVertex(PrimitiveObject *po);
+void PrimitiveObjectDiffuseTextureSetData(PrimitiveObject *po, void *data, uint32_t size_data, uint32_t offset);
+void PrimitiveObjectDiffuseSetTexture(PrimitiveObject *po, const char *path);
 
 #ifdef __cplusplus
 }
