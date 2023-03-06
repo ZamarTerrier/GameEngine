@@ -260,8 +260,8 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
                         if(image->uri != NULL)
                         {
+                            memset(g_mesh->image->path , 0, 256);
                             int size = strlen(glTF->path) + strlen(image->uri);
-                            g_mesh->image->path = calloc( size + 1, sizeof(char));
                             ToolsAddStrings(g_mesh->image->path, size, glTF->path, image->uri);
                             g_mesh->image->size = 0;
                             //g_mesh->image->buffer = ToolsLoadImageFromFile(&g_mesh->image->size, buff);
@@ -921,7 +921,7 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
                           }
                       }
 
-                      model->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+                      model->graphObj.local.descriptors = (ShaderDescriptor *) calloc(0, sizeof(ShaderDescriptor));
 
                       GraphicsObjectInit(&model->graphObj, ENGINE_VERTEX_TYPE_MODEL_OBJECT);
 

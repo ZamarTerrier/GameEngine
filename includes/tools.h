@@ -24,6 +24,7 @@ shader readFile(const char* filename);
 void* createShaderModule(shader shdr);
 
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns);
+void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param);
 int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
 void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount);
 int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius);
@@ -47,6 +48,7 @@ float noise2D(float x, float y);
 float sinWithRange(float value, float minV, float range);
 float cosWithRange(float value, float minV, float range);
 
+char *ToolsMakeString(char *s1, char *s2);
 void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2);
 bool ToolsCmpStrings(char *in, char *s1);
 int ToolsStr32BitLength(uint32_t *text);

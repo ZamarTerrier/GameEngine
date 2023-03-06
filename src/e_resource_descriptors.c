@@ -100,7 +100,7 @@ EIVertexInputAttributeDescription particle3DAttributeDescription[] = {
     {
         .binding = 0,
         .location = 0,
-        .format = VK_FORMAT_R32G32_SFLOAT,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = offsetof(ParticleVertex3D, position) },
     {
         .binding = 0,
@@ -112,6 +112,24 @@ EIVertexInputAttributeDescription particle3DAttributeDescription[] = {
         .location = 2,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = offsetof(ParticleVertex3D, color) }
+};
+
+EIVertexInputAttributeDescription TerrainAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TerrainVertex, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TerrainVertex, normal) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(TerrainVertex, texCoord) },
 };
 
 EIVertexInputBindingDescription Bind2DDescription = {
@@ -143,3 +161,10 @@ EIVertexInputBindingDescription BindParticle3DDescription = {
     .stride = sizeof(ParticleVertex3D),
     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
 };
+
+EIVertexInputBindingDescription BindTerrainDescription = {
+    .binding = 0,
+    .stride = sizeof(TerrainVertex),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+

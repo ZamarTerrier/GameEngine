@@ -196,7 +196,7 @@ Texture2D *TextureFindTexture(char *path)
     return NULL;
 }
 
-int TextureImageCreate(GameObjectImage *image, ShaderBuffer *descriptor, bool from_file) {
+int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, bool from_file) {
 
     Texture2D *temp_tex;
 
@@ -360,7 +360,23 @@ void TextureCreateSampler(Texture2D *texture) {
     }
 }
 
-ShaderBuffer *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height){
+void TextureArrayInit(localParam *local, uint32_t size)
+{
+    if(local->descrCount + 1 > MAX_UNIFORMS)
+    {
+        printf("Слишком много декрипторов!\n");
+        return;
+    }
+
+    ShaderDescriptor *descriptor = &local->descriptors[local->descrCount];
+
+    descriptor->descrType = ENGINE_DESCRIPTOR_TYPE_IMAGE_SAMPLER;
+    descriptor->descrCount = 0;
+    descriptor->size = 1;
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+}
+
+ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height){
 
     if(local->descrCount + 1 > MAX_UNIFORMS)
     {
@@ -368,7 +384,7 @@ ShaderBuffer *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_
         return;
     }
 
-    ShaderBuffer *descriptor = &local->descriptors[local->descrCount];
+    ShaderDescriptor *descriptor = &local->descriptors[local->descrCount];
 
     descriptor->image = image;
 
@@ -387,6 +403,7 @@ ShaderBuffer *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_
 
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor->descrCount = 1;
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
 
@@ -395,7 +412,7 @@ ShaderBuffer *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_
     return &local->descriptors[local->descrCount - 1];
 }
 
-void TextureCreate(ShaderBuffer *descriptor, GameObjectImage *image, bool from_file){
+void TextureCreate(ShaderDescriptor *descriptor, GameObjectImage *image, bool from_file){
 
     int res = TextureImageCreate(image, descriptor, from_file);
 
@@ -418,7 +435,7 @@ void TextureCreate(ShaderBuffer *descriptor, GameObjectImage *image, bool from_f
 
 }
 
-void TextureCreateSpecific(ShaderBuffer *descriptor, uint32_t width, uint32_t height)
+void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t width, uint32_t height)
 {
     descriptor->texture = calloc(1, sizeof(Texture2D));
 
@@ -434,7 +451,7 @@ void TextureCreateSpecific(ShaderBuffer *descriptor, uint32_t width, uint32_t he
 
 }
 
-void TextureUpdate(ShaderBuffer *descriptor, void *in_data, uint32_t size_data, uint32_t offset)
+void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset)
 {
     Texture2D *texture = descriptor->texture;
 
@@ -460,7 +477,7 @@ void TextureUpdate(ShaderBuffer *descriptor, void *in_data, uint32_t size_data, 
 }
 
 
-void TextureSetTexture(ShaderBuffer *descriptor, const char* path){
+void TextureSetTexture(ShaderDescriptor *descriptor, const char* path){
 
     ImageDestroyTexture(descriptor->texture);
 

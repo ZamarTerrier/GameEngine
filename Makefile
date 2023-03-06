@@ -71,6 +71,8 @@ BINFILES += bin/shaders/gui/widget_frag.o \
     bin/shaders/3d_object/line_vert.o \
     bin/shaders/particle/frag2D.o \
     bin/shaders/particle/vert2D.o \
+    bin/shaders/terrain/frag.o \
+    bin/shaders/terrain/vert.o \
     bin/shaders/particle/frag3D.o \
     bin/shaders/particle/vert3D.o \
     bin/fonts/fantazer-normal.o \

@@ -144,7 +144,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
     GameObjectSetRecreateFunc(particle, (void *)GameObject2DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject2DDestroy);
 
-    particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(MAX_UNIFORMS, sizeof(ShaderBuffer));
+    particle->go.graphObj.local.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_2D_PARTICLE);
@@ -157,7 +157,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
     particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex2D));
     particle->particles = (Particle2D*) calloc(particle->num_parts, sizeof(Particle2D));
 
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
 
     particle->go.image = calloc(1, sizeof(GameObjectImage));
 

@@ -15,7 +15,7 @@
 void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
 {
     //10 возможных дескрипторов
-    graphObj->local.descriptors = (ShaderBuffer *) calloc(MAX_UNIFORMS, sizeof(ShaderBuffer));
+    graphObj->local.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
     graphObj->local.descrCount = 0;
 
     //10 возможных настроек для рендеринга
@@ -47,6 +47,11 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
         case ENGINE_VERTEX_TYPE_3D_PARTICLE:
             graphObj->aShader.bindingDescription = &BindParticle3DDescription;
             graphObj->aShader.attr = particle3DAttributeDescription;
+            graphObj->aShader.countAttr = 3;
+            break;
+        case ENGINE_VERTEX_TYPE_TERRAIN:
+            graphObj->aShader.bindingDescription = &BindTerrainDescription;
+            graphObj->aShader.attr = TerrainAttributeDescription;
             graphObj->aShader.countAttr = 3;
             break;
     }
@@ -123,14 +128,14 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
     for(int i=0;i< graphObj->local.descrCount;i++)
     {
 
-        ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
+        ShaderDescriptor *descriptor = &graphObj->local.descriptors[i];
         if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             //descriptor->texture = NULL;
         }
         else
         {
             for (int j = 0; j < imagesCount; j++) {
-                ShaderBuffer *desriptor = &graphObj->local.descriptors[i];
+                ShaderDescriptor *desriptor = &graphObj->local.descriptors[i];
                 vkDestroyBuffer(e_device, desriptor->uniform->uniformBuffers[j], NULL);
                 vkFreeMemory(e_device, desriptor->uniform->uniformBuffersMemory[j], NULL);
             }
@@ -177,7 +182,7 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
     for(int i=0;i < graphObj->local.descrCount;i++)
     {
-        ShaderBuffer *descriptor = &graphObj->local.descriptors[i];
+        ShaderDescriptor *descriptor = &graphObj->local.descriptors[i];
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             Texture2D *texture = descriptor->texture;
 

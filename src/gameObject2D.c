@@ -24,7 +24,7 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
 
     Camera2D* cam = (Camera2D*) cam2D;
 
-    ShaderBuffer* sBuffer = go->graphObj.local.descriptors;
+    ShaderDescriptor* sBuffer = go->graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 

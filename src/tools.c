@@ -5,6 +5,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "terrain_object.h"
+
 #include "texture.h"
 
 #include "e_math.h"
@@ -208,6 +210,68 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
         k1 = i * (sectorCount + 1);     // beginning of current stack
         k2 = k1 +  sectorCount + 1 ;      // beginning of next stack
         for(j=0; j < sectorCount; ++j, ++k1, ++k2){
+
+            iParam->indices[it] = k1 + 1;
+            iParam->indices[it + 1] = k2;
+            iParam->indices[it + 2] = k1;
+            it +=3;
+
+            iParam->indices[it] = k1 + 1;
+            iParam->indices[it + 1] = k2 + 1;
+            iParam->indices[it + 2] = k2;
+
+            it +=3;
+
+
+        }
+    }
+}
+
+void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
+
+    TerrainParam *tParam = param;
+
+    vec3 pos = {0 , 0, 0};
+    vec3 col = {0.3 , 0.1, 0.11};
+
+    int i, j;
+
+    vParam->verticesSize = ((tParam->columns + 1) * (tParam->rows + 1)) * 2;
+
+    vParam->vertices = calloc(vParam->verticesSize, sizeof(TerrainVertex));
+
+    int vIter = 0;
+
+    TerrainVertex *verts = vParam->vertices;
+
+    for(i=0; i <= tParam->columns;i++){
+        for(j=0; j <= tParam->rows;j++){
+
+            vIter = i * tParam->rows + (i > 0 ? j + i : j);
+
+            pos.x = 0.5 * i;
+            pos.y = 0;
+            pos.z = 0.5 * j;
+
+            verts[vIter].position = pos;
+            verts[vIter].normal = (vec3){0,1,0};
+
+
+            verts[vIter].texCoord = (vec2){(float)i / tParam->rows, (float)j / tParam->columns};
+
+        }
+    }
+
+    iParam->indexesSize = (tParam->columns * tParam->rows) * 2 * 6 + 6;
+
+    iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
+
+    int k1, k2, it = 0, tt = 0;
+
+    for(i=0; i < tParam->columns;i++){
+        k1 = i * (tParam->rows + 1);     // beginning of current stack
+        k2 = k1 +  tParam->rows + 1 ;      // beginning of next stack
+        for(j=0; j < tParam->rows; ++j, ++k1, ++k2){
 
             iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
@@ -1334,6 +1398,21 @@ float sinWithRange(float value, float minV, float range){
 
 float cosWithRange(float value, float minV, float range){
     return ((fabs(cos(value)) + 1) / 2 * range) + minV;
+}
+
+char *ToolsMakeString(char *s1, char *s2)
+{
+
+    int len = strlen(s1);
+    int len2 = strlen(s2);
+
+    char* out = calloc(len + len2 + 1, sizeof(char));
+
+    memcpy(out, s1, len);
+    memcpy(out + len, s2, len2);
+    memset(out + len + len2, 0, 1);
+
+    return out;
 }
 
 void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2){

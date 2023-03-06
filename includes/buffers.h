@@ -30,7 +30,7 @@ void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** bu
 
 void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size);
 
-void BuffersAddUniformObject(localParam* param, uint64_t size, uint32_t type, uint32_t flags);
+void BuffersAddUniformObject(localParam* param, uint64_t size, uint32_t flags);
 void BuffersRecreateUniform(localParam* param);
 
 #endif // BUFFERS_H

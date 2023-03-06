@@ -417,7 +417,7 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
           mo->nodes[i].models = calloc(1, sizeof(ModelStruct));
           mo->nodes[i].num_models = 1;
 
-          mo->nodes[i].models->graphObj.local.descriptors = (ShaderBuffer *) calloc(0, sizeof(ShaderBuffer));
+          mo->nodes[i].models->graphObj.local.descriptors = (ShaderDescriptor *) calloc(0, sizeof(ShaderDescriptor));
 
           GraphicsObjectInit(&mo->nodes[i].models->graphObj, ENGINE_VERTEX_TYPE_MODEL_OBJECT);
 
