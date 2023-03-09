@@ -9,6 +9,7 @@ extern EIVertexInputAttributeDescription modelAttributeDescription[];
 extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
 extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
 extern EIVertexInputAttributeDescription TerrainAttributeDescription[];
+extern EIVertexInputAttributeDescription SkyAttributeDescription[];
 
 extern EIVertexInputBindingDescription Bind2DDescription;
 extern EIVertexInputBindingDescription Bind3DDescription;
@@ -16,5 +17,6 @@ extern EIVertexInputBindingDescription BindModel3DDescription;
 extern EIVertexInputBindingDescription BindParticle2DDescription;
 extern EIVertexInputBindingDescription BindParticle3DDescription;
 extern EIVertexInputBindingDescription BindTerrainDescription;
+extern EIVertexInputBindingDescription BindSkyDescription;
 
 #endif // E_RESOURCE_DESCRIPTORS_H

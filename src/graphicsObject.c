@@ -54,6 +54,11 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
             graphObj->aShader.attr = TerrainAttributeDescription;
             graphObj->aShader.countAttr = 3;
             break;
+        case ENGINE_VERTEX_TYPE_SKY:
+            graphObj->aShader.bindingDescription = &BindSkyDescription;
+            graphObj->aShader.attr = SkyAttributeDescription;
+            graphObj->aShader.countAttr = 2;
+            break;
     }
 
     graphObj->shape.init = false;

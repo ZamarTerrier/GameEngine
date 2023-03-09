@@ -36,6 +36,7 @@ typedef enum{
     ENGINE_VERTEX_TYPE_2D_PARTICLE,
     ENGINE_VERTEX_TYPE_3D_PARTICLE,
     ENGINE_VERTEX_TYPE_TERRAIN,
+    ENGINE_VERTEX_TYPE_SKY,
 } VertexType;
 
 typedef struct ChildStack{
@@ -109,6 +110,11 @@ typedef struct {
     vec3 normal;
     vec2 texCoord;
 } TerrainVertex;
+
+typedef struct{
+    vec2 position;
+    vec2 texture_uv;
+} SkyVertex;
 
 typedef struct {
     vec3 position;

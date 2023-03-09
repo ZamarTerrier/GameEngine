@@ -50,43 +50,6 @@ int ImageLoadFile(ImageFileData *data, uint32_t from_file)
     return 0;
 }
 
-void ImageCreateEmptyDefault(void** image, void** imageMemory) {
-    VkImageCreateInfo imageInfo = {};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = EMPTY_IMAGE_WIDTH;
-    imageInfo.extent.height = EMPTY_IMAGE_HEIGHT;
-    imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    if (vkCreateImage(e_device, &imageInfo, NULL, image) != VK_SUCCESS) {
-        printf("failed to create image!");
-        exit(-1);
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(e_device, *image, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    if (vkAllocateMemory(e_device, &allocInfo, NULL, imageMemory) != VK_SUCCESS) {
-        printf("failed to allocate image memory!");
-        exit(-1);
-    }
-
-    vkBindImageMemory(e_device, *image, *imageMemory, 0);
-}
-
 void ImageCreateEmpty(Texture2D *texture) {
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -96,7 +59,7 @@ void ImageCreateEmpty(Texture2D *texture) {
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1;
     imageInfo.arrayLayers = 1;
-    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageInfo.format = texture->textureType;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -129,6 +92,10 @@ void TextureCreateEmptyDefault(Texture2D *texture)
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
+    texture->textureType = VK_FORMAT_R8G8B8A8_SRGB;
+    texture->image_data.texWidth = EMPTY_IMAGE_WIDTH;
+    texture->image_data.texHeight = EMPTY_IMAGE_HEIGHT;
+
     VkDeviceSize bufferSize = EMPTY_IMAGE_HEIGHT * EMPTY_IMAGE_WIDTH * 4;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
@@ -141,11 +108,11 @@ void TextureCreateEmptyDefault(Texture2D *texture)
     memcpy(data, some_data, bufferSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    ImageCreateEmptyDefault(&texture->textureImage, &texture->textureImageMemory);
+    ImageCreateEmpty(texture);
 
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, EMPTY_IMAGE_WIDTH, EMPTY_IMAGE_HEIGHT);
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
@@ -170,9 +137,9 @@ void TextureCreateEmpty(Texture2D *texture)
 
     ImageCreateEmpty(texture);
 
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
@@ -234,6 +201,7 @@ int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, boo
     memset(images[e_var_num_images].path, 0, 2048);
     memcpy(images[e_var_num_images].path, image->path, len);
     images[e_var_num_images].texture.image_data = fileData;
+    images[e_var_num_images].texture.textureType = VK_FORMAT_R8G8B8A8_SRGB;
 
     VkDeviceSize imageSize = fileData.texWidth * fileData.texHeight * sizeof(float);
 
@@ -256,11 +224,12 @@ int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, boo
     memcpy(data, fileData.data, imageSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    TextureCreateImage( fileData.texWidth, fileData.texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &images[e_var_num_images].texture.textureImage, &images[e_var_num_images].texture.textureImageMemory);
+    TextureCreateImage( fileData.texWidth, fileData.texHeight, images[e_var_num_images].texture.textureType, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &images[e_var_num_images].texture.textureImage, &images[e_var_num_images].texture.textureImageMemory);
 
-    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ToolsCopyBufferToImage(stagingBuffer, images[e_var_num_images].texture.textureImage, fileData.texWidth, fileData.texHeight);
-    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
@@ -269,7 +238,7 @@ int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, boo
 }
 
 void TextureCreateTextureImageView(Texture2D *texture) {
-    texture->textureImageView = TextureCreateImageView(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+    texture->textureImageView = TextureCreateImageView(texture->textureImage, texture->textureType, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, void** image, void** imageMemory) {
@@ -334,8 +303,11 @@ void TextureCreateSampler(Texture2D *texture) {
 
     VkSamplerCreateInfo samplerInfo = {};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    if(texture->textureType == VK_FORMAT_R8G8B8A8_SRGB)
+    {
+        samplerInfo.magFilter = VK_FILTER_LINEAR;
+        samplerInfo.minFilter = VK_FILTER_LINEAR;
+    }
     samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -444,6 +416,7 @@ void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t width, uint32_
     texture->generated = true;
     texture->image_data.texWidth = width;
     texture->image_data.texHeight = height;
+    texture->textureType = VK_FORMAT_R8G8B8A8_UINT;
 
     TextureCreateEmpty(texture);
     TextureCreateTextureImageView(texture);
@@ -468,9 +441,9 @@ void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_da
     memcpy(data + offset, in_data, size_data);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);

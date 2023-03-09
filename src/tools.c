@@ -174,7 +174,7 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
 
     int i, j;
 
-    vParam->verticesSize = ((stackCount + 1) * (sectorCount + 1)) * 2;
+    vParam->verticesSize = (stackCount + 1) * (sectorCount + 1);
 
     vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
 
@@ -200,7 +200,7 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
         }
     }
 
-    iParam->indexesSize = (stackCount * sectorCount) * 2 * 6 + 6;
+    iParam->indexesSize = (stackCount * sectorCount) * 6 + 6;
 
     iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
 
@@ -211,18 +211,16 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
         k2 = k1 +  sectorCount + 1 ;      // beginning of next stack
         for(j=0; j < sectorCount; ++j, ++k1, ++k2){
 
-            iParam->indices[it] = k1 + 1;
+            iParam->indices[it] = k1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1;
+            iParam->indices[it + 2] = k1 + 1;
             it +=3;
 
-            iParam->indices[it] = k1 + 1;
+            iParam->indices[it] = k2;
             iParam->indices[it + 1] = k2 + 1;
-            iParam->indices[it + 2] = k2;
+            iParam->indices[it + 2] = k1 + 1;
 
             it +=3;
-
-
         }
     }
 }
@@ -236,7 +234,7 @@ void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
 
     int i, j;
 
-    vParam->verticesSize = ((tParam->columns + 1) * (tParam->rows + 1)) * 2;
+    vParam->verticesSize = (tParam->columns + 1) * (tParam->rows + 1);
 
     vParam->vertices = calloc(vParam->verticesSize, sizeof(TerrainVertex));
 
@@ -262,7 +260,7 @@ void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
         }
     }
 
-    iParam->indexesSize = (tParam->columns * tParam->rows) * 2 * 6 + 6;
+    iParam->indexesSize = (tParam->columns * tParam->rows) * 6 + 6;
 
     iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
 
@@ -273,14 +271,14 @@ void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
         k2 = k1 +  tParam->rows + 1 ;      // beginning of next stack
         for(j=0; j < tParam->rows; ++j, ++k1, ++k2){
 
-            iParam->indices[it] = k1 + 1;
+            iParam->indices[it] = k1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1;
+            iParam->indices[it + 2] = k1 + 1;
             it +=3;
 
-            iParam->indices[it] = k1 + 1;
+            iParam->indices[it] = k2;
             iParam->indices[it + 1] = k2 + 1;
-            iParam->indices[it + 2] = k2;
+            iParam->indices[it + 2] = k1 + 1;
 
             it +=3;
 
@@ -941,7 +939,7 @@ int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int 
     float stackStep = M_PI / stackCount;
     float sectorAngle, stackAngle;
 
-    vParam->verticesSize = ((stackCount + 1) * (sectorCount + 1)) * 2;
+    vParam->verticesSize = (stackCount + 1) * (sectorCount + 1);
 
     vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
 
@@ -985,7 +983,7 @@ int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int 
         }
     }
 
-    iParam->indexesSize = (stackCount * sectorCount) * 2 * 6 + 6;
+    iParam->indexesSize = (stackCount * sectorCount) * 6 + 6;
 
     iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
 
@@ -1001,17 +999,17 @@ int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int 
             // 2 triangles per sector excluding first and last stacks
             // k1 => k2 => k1+1
 
-            iParam->indices[it] = k1;
+            iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1 + 1;
+            iParam->indices[it + 2] = k1;
             it +=3;
 
             // k1+1 => k2 => k2+1
             if(i != (stackCount-1))
             {
-                iParam->indices[it] = k1 + 1;
+                iParam->indices[it] = k2 + 1;
                 iParam->indices[it + 1] = k2;
-                iParam->indices[it + 2] = k2 + 1;
+                iParam->indices[it + 2] = k1 + 1;
                 it +=3;
             }
         }
@@ -1102,15 +1100,15 @@ void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, 
             // 2 triangles per sector excluding first and last stacks
             // k1 => k2 => k1+1
 
-            iParam->indices[it] = k1 + 1;
+            iParam->indices[it] = k1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1;
+            iParam->indices[it + 2] = k1 + 1;
             it +=3;
 
             // k1+1 => k2 => k2+1
-            iParam->indices[it] = k2 + 1;
+            iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1 + 1;
+            iParam->indices[it + 2] = k2 + 1;
             it +=3;
         }
     }
@@ -1127,15 +1125,15 @@ void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, 
             // 2 triangles per sector excluding first and last stacks
             // k1 => k2 => k1+1
 
-            iParam->indices[it] = k1;
+            iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1 + 1;
+            iParam->indices[it + 2] = k1;
             it +=3;
 
             // k1+1 => k2 => k2+1
-            iParam->indices[it] = k1 + 1;
+            iParam->indices[it] = k2 + 1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k2 + 1;
+            iParam->indices[it + 2] = k1 + 1;
             it +=3;
         }
     }

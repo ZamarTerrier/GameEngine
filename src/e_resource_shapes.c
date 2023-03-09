@@ -70,11 +70,11 @@ const uint32_t triIndx[] = {
 };
 
 const uint32_t quadIndx[] = {
-    2, 1, 0, 0, 3, 2
+    0, 1, 2, 2, 3, 0
 };
 
 const uint32_t cubeIndx[] = {
-    2, 1, 0, 0, 3, 2,
+    0, 1, 2, 2, 3, 0,
     4, 5, 6, 6, 7, 4,
     10, 9, 8, 8, 11, 10,
     12, 13, 14, 14, 15, 12,
@@ -83,9 +83,9 @@ const uint32_t cubeIndx[] = {
 };
 
 const uint32_t planeIndx[] = {
-    2, 1, 0, 0, 3, 2
+    0, 1, 2, 2, 3, 0
 };
 
 const uint32_t projPlaneIndx[] = {
-    2, 1, 0, 0, 3, 2
+    0, 1, 2, 2, 3, 0
 };

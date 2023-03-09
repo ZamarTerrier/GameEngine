@@ -26,6 +26,7 @@ typedef struct{
 
 void GameObject2DSetLinkedShape(GameObject2D *go);
 
+void GameObject2DDefaultDraw(GameObject2D* go);
 void GameObject2DInit(GameObject2D* go);
 void GameObject2DClean(GameObject2D* go);
 void GameObject2DRecreate(GameObject2D* go);

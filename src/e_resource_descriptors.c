@@ -132,6 +132,19 @@ EIVertexInputAttributeDescription TerrainAttributeDescription[] = {
         .offset = offsetof(TerrainVertex, texCoord) },
 };
 
+EIVertexInputAttributeDescription SkyAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(SkyVertex, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(SkyVertex, texture_uv) },
+};
+
 EIVertexInputBindingDescription Bind2DDescription = {
     .binding = 0,
     .stride = sizeof(Vertex2D),
@@ -165,6 +178,12 @@ EIVertexInputBindingDescription BindParticle3DDescription = {
 EIVertexInputBindingDescription BindTerrainDescription = {
     .binding = 0,
     .stride = sizeof(TerrainVertex),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription BindSkyDescription = {
+    .binding = 0,
+    .stride = sizeof(SkyVertex),
     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
 };
 
