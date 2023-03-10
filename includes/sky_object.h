@@ -5,6 +5,12 @@
 
 #include "gameObject2D.h"
 
+typedef enum{
+    ENGINE_SKY_TYPE_NIGHT,
+    ENGINE_SKY_TYPE_DAY,
+    ENGINE_SKY_TYPE_ATMOSPHERIC
+} EngineSkyType;
+
 typedef struct{
     float time;
     vec3 cam_pos __attribute__ ((aligned (16)));
@@ -13,11 +19,10 @@ typedef struct{
 
 typedef struct{
     GameObject2D go;
-    float mouse_x;
-    float mouse_y;
+    uint32_t type;
 } SkyObject;
 
-void SkyObjectInit(SkyObject *so, DrawParam *dParam);
+void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type);
 void SkyObjectSetMousePos(SkyObject *so, float pos_x, float pos_y);
 
 #endif // SKY_OBJECT_H

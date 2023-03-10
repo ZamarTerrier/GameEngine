@@ -79,7 +79,6 @@ void endSingleTimeCommands(void* commandBuffer) {
     vkFreeCommandBuffers(e_device, commandPool, 1, &commandBuffer);
 }
 
-
 bool isComplete(QueueFamilyIndices self) {
         return self.graphicsFamily >= 0 && self.presentFamily >= 0;
 }
@@ -247,9 +246,9 @@ void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
 
             vIter = i * tParam->rows + (i > 0 ? j + i : j);
 
-            pos.x = 0.5 * i;
+            pos.x = tParam->vertex_step * i;
             pos.y = 0;
-            pos.z = 0.5 * j;
+            pos.z = tParam->vertex_step * j;
 
             verts[vIter].position = pos;
             verts[vIter].normal = (vec3){0,1,0};
@@ -1312,6 +1311,33 @@ float dot_grad2(int hash, float xf, float yf){
     }
 }
 
+float gradv1(int hash, float x)
+{
+    const int h = hash & 0x0F;
+    float grad = 1.0f + (h & 7);
+    if((h & 8) != 0) grad = -grad;
+
+    return grad * x;
+}
+
+float gradv2(int hash, float x, float y)
+{
+    const int h = hash & 0x3F;
+    const float u = h < 4 ? x : y;
+    const float v = h < 4 ? y : x;
+
+    return((h & 1) ? -u : u) + ((h & 2) ? -2.0f * v : 2.0f * v);
+}
+
+float gradv3(int hash, float x, float y, float z)
+{
+    const int h = hash & 15;
+    const float u = h < 8 ? x : y;
+    const float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+
+    return((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+}
+
 vec3 perp(const vec3 v) {
     float min = fabs(v.x);
     vec3 cardinalAxis = {1, 0, 0};
@@ -1336,7 +1362,7 @@ float fade(float t){
     return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
 }
 
-float noise1D( float x){
+float PerlinNoise1D( float x){
     // Left coordinate of the unit-line that contains the input
     int xi0 = floor(x);
 
@@ -1358,7 +1384,7 @@ float noise1D( float x){
     return lerp_noise(dot_grad(h0, xf0), dot_grad(h1, xf1), u);
 }
 
-float noise2D(float x, float y)
+float PerlinNoise2D(float x, float y)
 {
     // Top-left coordinates of the unit-square
     int xi0 = (int)(floor(x)) & 0xFF;
@@ -1388,6 +1414,160 @@ float noise2D(float x, float y)
     float const x1 = lerp_noise(dot_grad2(h00, xf0, yf0), dot_grad2(h10, xf1, yf0), u);
     float const x2 = lerp_noise(dot_grad2(h01, xf0, yf1), dot_grad2(h11, xf1, yf1), u);
     return lerp_noise(x1, x2, v);
+}
+
+float SimplexNoise1D(float x)
+{
+    float n0, n1;
+
+    int i0 = floor(x);
+    int i1 = i0 + 1;
+
+    float x0 = x - i0;
+    float x1 = x0 - 1.0f;
+
+    float t0 = 1.0f - x0 * x0;
+
+    t0 *= t0;
+
+    uint8_t h = i0;
+    n0 = t0 * t0 * gradv1(p[h], x1);
+
+    float t1 = 1.0 - x1 * x1;
+
+    t1 *= t1;
+    h = i1;
+    n1 = t1 * t1 * gradv1(p[h], x1);
+
+    return 0.395f * (n0 + n1);
+}
+
+float SimplexNoise2D(float x, float y)
+{
+    float n0, n1, n2;
+
+    const float F2 = 0.366025403f;
+    const float G2 = 0.211324865f;
+
+    const float s = (x + y) * F2;
+    const float xs = x + s;
+    const float ys = y + s;
+    const int i = floor(xs);
+    const int j = floor(ys);
+
+    const float t = (float)(i + j) * G2;
+    const float X0 = i - t;
+    const float Y0 = j - t;
+    const float x0 = x - X0;
+    const float y0 = y - Y0;
+
+    int i1, j1;
+    if(x0 > y0){
+        i1 = 1;
+        j1 = 0;
+    }else{
+        i1 = 0;
+        j1 = 1;
+    }
+
+    const float x1 = x0 - i1 + G2;
+    const float y1 = y0 - j1 + G2;
+    const float x2 = x0 - 1.0f + 2.0f * G2;
+    const float y2 = y0 - 1.0f + 2.0f * G2;
+
+    const int gi0 = p[(uint8_t)i + p[(uint8_t)j]];
+    const int gi1 = p[(uint8_t)i + (uint8_t)i1 + p[(uint8_t)j + (uint8_t)j1]];
+    const int gi2 = p[(uint8_t)i + 1 + p[(uint8_t)j + 1]];
+
+    float t0 = 0.5f - x0 * x0 - y0 * y0;
+    if(t0 < 0.0f){
+        n0 = 0.0f;
+    }else{
+        t0 *= t0;
+        n0 = t0 * t0 * gradv2(gi0, x0, y0);
+    }
+
+    float t1 = 0.5f - x1 * x1 - y1 * y1;
+    if(t1 < 0.0f){
+        n1 = 0.0f;
+    }else{
+        t1 *= t1;
+        n1 = t1 * t1 * gradv2(gi1, x1, y1);
+    }
+
+    float t2 = 0.5f - x2 * x2 - y2 * y2;
+    if(t2 < 0.0f){
+        n2 = 0.0f;
+    }else{
+        t2 *= t2;
+        n2 = t2 * t2 * gradv2(gi2, x2, y2);
+    }
+
+    return 45.23065f * (n0 + n1 + n2);
+}
+
+float PerlinOctave1D(uint32_t octaves, float x, float frequency, float amplitude){
+    float output = 0;
+    float denom = 0;
+
+    for(int i=0;i < octaves; i++)
+    {
+        output += (amplitude * PerlinNoise1D(x * frequency));
+        denom += amplitude;
+
+        frequency *= 2.0;
+        amplitude *=0.5;
+    }
+
+    return output / denom;
+}
+
+float PerlinOctave2D(uint32_t octaves, float x, float y, float frequency, float amplitude){
+    float output = 0;
+    float denom = 0;
+
+    for(int i=0;i < octaves; i++)
+    {
+        output += (amplitude * PerlinNoise2D(x * frequency, y * frequency));
+        denom += amplitude;
+
+        frequency *= 2.0;
+        amplitude *=0.5;
+    }
+
+    return output / denom;
+}
+
+float SimplexOctave1D(uint32_t octaves, float x, float frequency, float amplitude){
+    float output = 0;
+    float denom = 0;
+
+    for(int i=0;i < octaves; i++)
+    {
+        output += (amplitude * SimplexNoise1D(x * frequency));
+        denom += amplitude;
+
+        frequency *= 2.0;
+        amplitude *=0.5;
+    }
+
+    return output / denom;
+}
+
+float SimplexOctave2D(uint32_t octaves, float x, float y, float frequency, float amplitude){
+    float output = 0;
+    float denom = 0;
+
+    for(int i=0;i < octaves; i++)
+    {
+        output += (amplitude * SimplexNoise2D(x * frequency, y * frequency));
+        denom += amplitude;
+
+        frequency *= 2.0;
+        amplitude *=0.5;
+    }
+
+    return output / denom;
 }
 
 float sinWithRange(float value, float minV, float range){

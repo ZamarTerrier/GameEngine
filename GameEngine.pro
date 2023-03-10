@@ -155,8 +155,12 @@ OBJECTS += \
     bin/shaders/text/vert.o \
     bin/shaders/terrain/frag.o \
     bin/shaders/terrain/vert.o \
-    bin/shaders/sky/frag.o \
-    bin/shaders/sky/vert.o \
+    bin/shaders/sky/sky_frag.o \
+    bin/shaders/sky/sky_vert.o \
+    bin/shaders/sky/stars_frag.o \
+    bin/shaders/sky/stars_vert.o \
+    bin/shaders/sky/atmospheric_frag.o \
+    bin/shaders/sky/atmospheric_vert.o \
     bin/shaders/sprite/frag.o \
     bin/shaders/sprite/vert.o \
     bin/shaders/3d_object/frag.o \

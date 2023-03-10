@@ -17,7 +17,7 @@
 
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_CAMERA_VIEW_DISTANCE 1000
+#define MAX_CAMERA_VIEW_DISTANCE 10000
 
 #ifdef __cplusplus
 extern "C"

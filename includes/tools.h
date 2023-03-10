@@ -42,8 +42,15 @@ vec3 perp(const vec3 v);
 
 float fade(float t);
 
-float noise1D( float x);
-float noise2D(float x, float y);
+float PerlinNoise1D(float x);
+float PerlinNoise2D(float x, float y);
+float PerlinOctave1D(uint32_t octaves, float x, float frequency, float amplitude);
+float PerlinOctave2D(uint32_t octaves, float x, float y, float frequency, float amplitude);
+
+float SimplexNoise1D(float x);
+float SimplexNoise2D(float x, float y);
+float SimplexOctave1D(uint32_t octaves, float x, float frequency, float amplitude);
+float SimplexOctave2D(uint32_t octaves, float x, float y, float frequency, float amplitude);
 
 float sinWithRange(float value, float minV, float range);
 float cosWithRange(float value, float minV, float range);

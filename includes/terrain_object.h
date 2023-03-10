@@ -7,17 +7,29 @@
 #define MAX_TEXTURE_STACK 21
 
 typedef struct{
-    uint32_t columns;
-    uint32_t rows;
-    uint32_t cell_step;
-    uint32_t scale_hight_factor;
-    uint32_t scale_size_factor;
+    uint32_t size_factor;
+    uint32_t height_factor;
+    uint32_t amplitude;
+    uint32_t frequency;
+    uint32_t octaves;
+} TerrainGeneratorParam;
+
+typedef struct{
+    uint32_t texture_scale;
     uint32_t texture_width;
     uint32_t texture_height;
+    uint32_t num_textures;
+} TerrainTextureParam;
+
+typedef struct{
+    uint32_t columns;
+    uint32_t rows;
+    uint32_t flags;
+    float vertex_step;
+    TerrainGeneratorParam t_g_param;
+    TerrainTextureParam t_t_param;
     char *texture_map;
     char **textures;
-    uint32_t num_textures;
-    uint32_t flags;
 } TerrainParam;
 
 typedef struct{
@@ -33,22 +45,23 @@ enum ENGINE_TERRIAN_FLAGS{
     ENGINE_TERRIAN_FLAGS_REPEATE_TEXTURE = 0x4,
     ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE = 0x8,
     ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS = 0x10,
+    ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN = 0x20,
 };
 
 typedef struct{
     GameObject3D go;
     uint32_t flags;
-    uint32_t num_textures;
-    uint32_t texture_scale;
-    uint32_t texture_width;
-    uint32_t texture_height;
     uint32_t width;
     uint32_t height;
-    uint32_t scale_hight_factor;
-    uint32_t scale_size_factor;
+    float t_shift;
+    TerrainTextureParam t_t_param;
+    TerrainGeneratorParam t_g_param;
     vec4_u8 tex_colors[MAX_TEXTURE_STACK];
 } TerrainObject;
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
+uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index);
+void TerrainObjectSetHeightGenerator(void * gener);
+void TerrainObjectSetTextureGenerator(void * gener);
 
 #endif // TERRAIN_OBJECT_H

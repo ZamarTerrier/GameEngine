@@ -15,6 +15,63 @@
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
+int ImageLoadFile(ImageFileData *data, uint32_t from_file)
+{
+    char *pixels;
+
+    if(from_file)
+        pixels = stbi_load(data->path, &data->texWidth, &data->texHeight, &data->texChannels, STBI_rgb_alpha);
+    else
+        pixels = stbi_load_from_memory(data->buffer, data->buff_size, &data->texWidth, &data->texHeight, &data->texChannels, STBI_rgb_alpha);
+
+    if(!pixels)
+        return 1;
+
+    data->data = pixels;
+
+    return 0;
+}
+
+int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, uint32_t tile_x, uint32_t tile_y, uint32_t tile_size)
+{
+    ImageFileData f_data;
+
+    f_data.path = path;
+
+    int res = ImageLoadFile(&f_data, 1);
+    if(res)
+        printf("Ошибка!\n");
+
+    if(f_data.texChannels < 4)
+    {
+        free(f_data.data);
+        return;
+    }
+
+    res = ImageResize(&f_data, tile_size, tile_size);
+    if(res)
+        printf("Ошибка!\n");
+
+    uint32_t iter_x = 0, iter_y = 0;
+
+    uint32_t *t_point = f_data.data;
+    uint32_t *d_point = data;
+    while(iter_y < f_data.texHeight)
+    {
+        d_point[((tile_y * tile_size * width) + (tile_x * tile_size)) + ((iter_y * width) + iter_x)] = (t_point[iter_y * f_data.texWidth + iter_x] | 0xFF000000);
+
+        iter_x ++;
+
+        if(iter_x >= f_data.texWidth)
+        {
+            iter_x = 0;
+            iter_y ++;
+        }
+    }
+
+    free(f_data.data);
+}
+
 int ImageResize(ImageFileData *data, uint32_t width, uint32_t height)
 {
     char *pixels = calloc(width * height, sizeof(char) * data->texChannels);
@@ -29,23 +86,6 @@ int ImageResize(ImageFileData *data, uint32_t width, uint32_t height)
     data->data = pixels;
     data->texWidth = width;
     data->texHeight = height;
-
-    return 0;
-}
-
-int ImageLoadFile(ImageFileData *data, uint32_t from_file)
-{
-    char *pixels;
-
-    if(from_file)
-        pixels = stbi_load(data->path, &data->texWidth, &data->texHeight, &data->texChannels, STBI_rgb_alpha);
-    else
-        pixels = stbi_load_from_memory(data->buffer, data->buff_size, &data->texWidth, &data->texHeight, &data->texChannels, STBI_rgb_alpha);
-
-    if(!pixels)
-        return 1;
-
-    data->data = pixels;
 
     return 0;
 }

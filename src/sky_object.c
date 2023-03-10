@@ -35,7 +35,7 @@ void SkyObjectDefaultUpdate(SkyObject *so)
 
 }
 
-void SkyObjectInit(SkyObject *so, DrawParam *dParam)
+void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
 {
     GameObjectSetUpdateFunc(so, (void *)SkyObjectDefaultUpdate);
     GameObjectSetDrawFunc(so, (void *)GameObject2DDefaultDraw);
@@ -100,10 +100,35 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam)
 
     }else{
 
-        setting.vertShader = &_binary_shaders_sky_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_sky_vert_spv_size);
-        setting.fragShader = &_binary_shaders_sky_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_sky_frag_spv_size);
+        switch(type){
+            case ENGINE_SKY_TYPE_NIGHT:
+                setting.vertShader = &_binary_shaders_sky_stars_vert_spv_start;
+                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_stars_vert_spv_size);
+                setting.fragShader = &_binary_shaders_sky_stars_frag_spv_start;
+                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_stars_frag_spv_size);
+                break;
+            case ENGINE_SKY_TYPE_DAY:
+                setting.vertShader = &_binary_shaders_sky_sky_vert_spv_start;
+                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_sky_vert_spv_size);
+                setting.fragShader = &_binary_shaders_sky_sky_frag_spv_start;
+                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_sky_frag_spv_size);
+                break;
+            case ENGINE_SKY_TYPE_ATMOSPHERIC:
+                setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
+                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
+                setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
+                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
+                break;
+            default:
+                setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
+                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
+                setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
+                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
+                break;
+        }
+
+
+
         setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         setting.drawType = 0;
         setting.fromFile = 0;
@@ -112,9 +137,4 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam)
     }
 
     PipelineCreateGraphics(&so->go.graphObj);
-}
-
-void SkyObjectSetMousePos(SkyObject *so, float pos_x, float pos_y){
-    so->mouse_x = pos_x;
-    so->mouse_y = pos_y;
 }

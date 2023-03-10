@@ -17,6 +17,11 @@
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
 
+typedef void (*custom_terrain_generator)(float *noise_value);
+
+custom_terrain_generator height_terrain;
+custom_terrain_generator texture_terrain;
+
 void TerrainDefaultUpdate(TerrainObject *to)
 {
     if(to->go.graphObj.local.descriptors == NULL)
@@ -41,10 +46,10 @@ void TerrainDefaultUpdate(TerrainObject *to)
 
     TerrainBuffer tb;
 
-    tb.multi_size = to->texture_scale;
-    tb.num_textures = to->num_textures;
+    tb.multi_size = to->t_t_param.texture_scale;
+    tb.num_textures = to->t_t_param.num_textures;
 
-    for(int i=0;i < to->num_textures;i++)
+    for(int i=0;i < to->t_t_param.num_textures;i++)
     {
         tb.tex_colors[i].x = to->tex_colors[i].x;
         tb.tex_colors[i].y = to->tex_colors[i].y;
@@ -66,14 +71,14 @@ void TearrainDefaultDestroy(TerrainObject *to)
 }
 
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to)
-{
-    ShaderDescriptor *descr = TextureImageAdd(&to->go.graphObj.local, NULL, to->texture_width, to->texture_height);
+{    
+    ShaderDescriptor *descr = TextureImageAdd(&to->go.graphObj.local, NULL, to->t_t_param.texture_width, to->t_t_param.texture_height);
 
     vertexParam *vParam = &to->go.graphObj.shape.vParam;
 
     TerrainVertex *verts = vParam->vertices;
 
-    uint32_t size_texture = to->texture_width * to->texture_height;
+    uint32_t size_texture = to->t_t_param.texture_width * to->t_t_param.texture_height;
 
     uint32_t some_map[size_texture];
     memset(some_map, 0, sizeof(uint32_t) * size_texture);
@@ -84,30 +89,26 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to)
 
     float t_noise = 0;
 
-    float x_del = (float)to->texture_width / to->width;
-    float y_del = (float)to->texture_height / to->height;
+    float x_del = (float)to->t_t_param.texture_width / to->width;
+    float y_del = (float)to->t_t_param.texture_height / to->height;
 
-    for(int i = 0;i < to->texture_width; i++)
+    for(int i = 0;i < to->t_t_param.texture_width; i++)
     {
-        float n_val_x = ((float)i / x_del) / to->scale_size_factor;
-        for(int j = 0;j < to->texture_height; j++)
+        float n_val_x = (((float)i * to->t_shift) / x_del) / to->t_g_param.size_factor;
+        for(int j = 0;j < to->t_t_param.texture_height; j++)
         {
-            iter = j * to->texture_width + i;
+            iter = j * to->t_t_param.texture_width + i;
 
-            float n_val_y = ((float)j / y_del) / to->scale_size_factor;
+            float n_val_y = (((float)j * to->t_shift) / y_del) / to->t_g_param.size_factor;
 
-            t_noise = noise2D(n_val_x, n_val_y);
-
-            if(t_noise > 0.5f)
-                num = 2;
-            else if(t_noise > 0.3f)
-                num = 1;
-            else if(t_noise < -0.5f)
-                num = 0;
+            if(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN)
+                t_noise = PerlinOctave2D(to->t_g_param.octaves, n_val_x, n_val_y, to->t_g_param.frequency, to->t_g_param.amplitude);
             else
-                num = 3;
+                t_noise = SimplexOctave2D(to->t_g_param.octaves, n_val_x, n_val_y, to->t_g_param.frequency, to->t_g_param.amplitude);
 
-            temp = (to->tex_colors[num].w << 24) | (to->tex_colors[num].x << 16) | (to->tex_colors[num].y << 8) | (to->tex_colors[num].z);
+                texture_terrain(t_noise);
+
+            temp =
             some_map[iter] = temp;
         }
     }
@@ -126,11 +127,24 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 
     for(int i = 0;i <= to->width; i++)
     {
+        float n_x = ((float)i * to->t_shift)/ to->t_g_param.size_factor;
         for(int j = 0;j <= to->height; j++)
         {
+            float n_y = ((float)j * to->t_shift)/ to->t_g_param.size_factor;
+
             iter = i * (to->width + 1) + j;
 
-            verts[iter].position.y = noise2D((float)(i) / to->scale_size_factor, (float)(j) / to->scale_size_factor) * to->scale_hight_factor;
+            float t_noise;
+
+            if(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN)
+                t_noise = PerlinOctave2D( to->t_g_param.octaves, n_x, n_y, to->t_g_param.frequency, to->t_g_param.amplitude);
+            else
+                t_noise = SimplexOctave2D( to->t_g_param.octaves, n_x, n_y, to->t_g_param.frequency, to->t_g_param.amplitude);
+
+            if(height_terrain != NULL)
+                height_terrain(t_noise);
+
+            verts[iter].position.y = t_noise * to->t_g_param.height_factor;;
         }
     }
 
@@ -139,6 +153,9 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam)
 {
+    height_terrain = NULL;
+    texture_terrain = NULL;
+
     GameObjectSetUpdateFunc(to, (void *)TerrainDefaultUpdate);
     GameObjectSetDrawFunc(to, (void *)GameObject3DDefaultDraw);
     GameObjectSetCleanFunc(to, (void *)GameObject3DClean);
@@ -154,15 +171,13 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     to->go.enable_light = false;
     to->go.wired = false;
 
-    to->texture_scale = tParam->cell_step;
-    to->texture_width = tParam->texture_width;
-    to->texture_height = tParam->texture_height;
-    to->num_textures = tParam->num_textures;
+    to->t_t_param = tParam->t_t_param;
+    to->t_g_param = tParam->t_g_param;
     to->flags = tParam->flags;
     to->width = tParam->columns;
     to->height = tParam->rows;
-    to->scale_hight_factor = tParam->scale_hight_factor;
-    to->scale_size_factor = tParam->scale_size_factor;
+    to->t_shift = rand() % UINT16_MAX;
+    to->t_shift = to->t_shift / UINT16_MAX;
 
     GraphicsObjectSetVertexSize(&to->go.graphObj, sizeof(TerrainVertex), sizeof(uint32_t));
 
@@ -181,8 +196,8 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    to->go.images = calloc(tParam->num_textures + 1, sizeof(GameObjectImage));
-    to->go.num_images = tParam->num_textures + 1;
+    to->go.images = calloc(tParam->t_t_param.num_textures + 1, sizeof(GameObjectImage));
+    to->go.num_images = tParam->t_t_param.num_textures + 1;
 
     if(!(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
     {
@@ -198,7 +213,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
         TextureImageAdd(&to->go.graphObj.local, &to->go.images[0], 0, 0);
     }
 
-    for(int i=0;i < tParam->num_textures;i++)
+    for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
         to->tex_colors[i].x = rand() % 255;
         to->tex_colors[i].y = rand() % 255;
@@ -209,7 +224,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
         TerrainObjectGenerateTerrainTextureMap(to);
 
-    for(int i=0;i < tParam->num_textures;i++)
+    for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
         if(strlen(tParam->textures[i]) != 0)
         {
@@ -257,4 +272,18 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     }
 
     PipelineCreateGraphics(&to->go.graphObj);
+}
+
+
+uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
+    return (to->tex_colors[index].w << 24) | (to->tex_colors[index].x << 16) | (to->tex_colors[index].y << 8) | (to->tex_colors[index].z);;
+}
+
+
+void TerrainObjectSetHeightGenerator(void *gener){
+    height_terrain = gener;
+}
+
+void TerrainObjectSetTextureGenerator(void *gener){
+    texture_terrain = gener;
 }

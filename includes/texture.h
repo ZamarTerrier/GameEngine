@@ -16,9 +16,9 @@ extern "C"
 {
 #endif
 
-int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
-
 int ImageLoadFile(ImageFileData *data, uint32_t from_file);
+int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, uint32_t tile_x, uint32_t tile_y, uint32_t tile_size);
+int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
 
 Texture2D *TextureFindTexture(char *image);
 
