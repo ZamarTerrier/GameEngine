@@ -166,35 +166,15 @@ void GameObject3DDestroy(GameObject3D* go){
 
     GraphicsObjectDestroy(&go->graphObj);
 
-    if(go->diffuse != NULL)
+    for(int i=0;i < go->num_images;i++)
     {
-        free(go->diffuse->path);
+        free(go->images[i].path);
 
-        if(go->diffuse->size > 0)
-            free(go->diffuse->buffer);
-
-        free(go->diffuse);
+        if(go->images[i].size > 0)
+            free(go->images[i].buffer);
     }
 
-    if(go->specular != NULL)
-    {
-        free(go->specular->path);
-
-        if(go->specular->size > 0)
-            free(go->specular->buffer);
-
-        free(go->specular);
-    }
-
-    if(go->normal != NULL)
-    {
-        free(go->normal->path);
-
-        if(go->normal->size > 0)
-            free(go->normal->buffer);
-
-        free(go->normal);
-    }
+    free(go->images);
 
     if(!go->graphObj.shape.linked)
     {

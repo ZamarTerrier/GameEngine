@@ -17,7 +17,7 @@
 
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_CAMERA_VIEW_DISTANCE 1000
+#define MAX_CAMERA_VIEW_DISTANCE 10000
 
 #ifdef __cplusplus
 extern "C"
@@ -35,6 +35,8 @@ typedef enum{
     ENGINE_VERTEX_TYPE_MODEL_OBJECT,
     ENGINE_VERTEX_TYPE_2D_PARTICLE,
     ENGINE_VERTEX_TYPE_3D_PARTICLE,
+    ENGINE_VERTEX_TYPE_TERRAIN,
+    ENGINE_VERTEX_TYPE_SKY,
 } VertexType;
 
 typedef struct ChildStack{
@@ -102,6 +104,17 @@ typedef struct {
     float size;
     vec3 color;
 } ParticleVertex3D;
+
+typedef struct {
+    vec3 position;
+    vec3 normal;
+    vec2 texCoord;
+} TerrainVertex;
+
+typedef struct{
+    vec2 position;
+    vec2 texture_uv;
+} SkyVertex;
 
 typedef struct {
     vec3 position;

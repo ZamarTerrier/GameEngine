@@ -66,18 +66,28 @@ typedef struct{
     uint32_t size;
 } UniformStruct;
 
+enum EngineDescriptorType{
+    ENGINE_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+    ENGINE_DESCRIPTOR_TYPE_IMAGE_SAMPLER,
+    ENGINE_DESCRIPTOR_TYPE_IMAGE_ARRAY
+};
+
 typedef struct{
-    void* texture;
+    void *texture;
+    void *texture_array;
+    uint32_t num_textures;
+    uint32_t max_textures;
     UniformStruct* uniform;
     uint32_t descrType;
+    uint32_t descrCount;
     uint32_t stageflag;
     uint32_t size;
     uint32_t buffsize;
     GameObjectImage *image;
-} ShaderBuffer;
+} ShaderDescriptor;
 
 typedef struct{
-    ShaderBuffer* descriptors;
+    ShaderDescriptor* descriptors;
     uint32_t descrCount;
 } localParam;
 

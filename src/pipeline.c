@@ -26,7 +26,7 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
     setting->viewport.height = (float) swapChainExtent.height;
     setting->viewport.minDepth = 0.0f;
     setting->viewport.maxDepth = 1.0f;
-    setting->drawWay = VK_FRONT_FACE_CLOCKWISE;
+    setting->drawWay = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 }
 
 void PipelineCreateGraphics(GraphicsObject* graphObj){

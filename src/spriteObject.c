@@ -61,8 +61,8 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     SpriteObjectCreateQuad(so);
 
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     so->go.image = calloc(1, sizeof(GameObjectImage));
 

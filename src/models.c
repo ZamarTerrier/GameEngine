@@ -263,9 +263,9 @@ void ModelSetSelCameraEnable(void *obj, bool enable)
 
 void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
-    BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&model->graphObj.local, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     TextureImageAdd(&model->graphObj.local, model->diffuse, 0, 0);
     TextureImageAdd(&model->graphObj.local, model->specular, 0, 0);

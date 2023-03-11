@@ -23,6 +23,7 @@ typedef struct{
     void *textureImageMemory;
     void *textureImageView;
     void *textureSampler;
+    uint32_t textureType;
     ImageFileData image_data;
     bool generated;
 } Texture2D;

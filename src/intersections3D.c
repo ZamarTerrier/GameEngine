@@ -1,6 +1,7 @@
 #include "intersections3D.h"
 
 #include "gameObject3D.h"
+#include "terrain_object.h"
 
 #include "e_math.h"
 
@@ -155,6 +156,43 @@ int IntersectionSpherePlane(void *obj1, void *obj2, float *distance, float *dept
     *depth = 0;
 
     return false;
+}
+
+int IntersectionSphereTerrain(void *sph_obj, void *terr_obj, float *distance, float *depth, vec3 *dir)
+{
+    InterSphereParam *sphere = sph_obj;
+    TerrainObject *terrain = terr_obj;
+
+    dir->x = 0;
+    dir->y = 0;
+    dir->z = 0;
+
+    *depth = 0;
+
+    vec3 pos = sphere->center;
+
+    if(pos.x < 0 || pos.z < 0)
+        return false;
+
+    int pos_x = floor(pos.x * terrain->width) / terrain->width;
+    int pos_z = floor(pos.z * terrain->height) / terrain->height;
+
+    TerrainVertex *verts = terrain->go.graphObj.shape.vParam.vertices;
+
+    vec3 some_pos = verts[pos_x * (terrain->width + 1) + pos_z].position;
+
+    float dist = v3_distance(pos, some_pos);
+
+    if(dist <= sphere->radius * sphere->radius)
+    {
+
+        sphere->center.y = some_pos.y + (sphere->radius * sphere->radius);
+        return true;
+    }
+
+
+    return false;
+
 }
 
 float SqDistPointAABB(vec3 pos, void *obj)

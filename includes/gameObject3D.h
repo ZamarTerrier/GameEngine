@@ -13,9 +13,8 @@ typedef struct GameObject3D{
     GameObject self;
     GraphicsObject graphObj;
     Transform3D transform;
-    GameObjectImage *diffuse;
-    GameObjectImage *specular;
-    GameObjectImage *normal;
+    GameObjectImage *images;
+    uint32_t num_images;
     int enable_light;
     bool wired;
     bool selfCamera;

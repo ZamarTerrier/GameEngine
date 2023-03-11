@@ -24,6 +24,7 @@ shader readFile(const char* filename);
 void* createShaderModule(shader shdr);
 
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns);
+void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param);
 int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
 void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount);
 int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius);
@@ -41,12 +42,20 @@ vec3 perp(const vec3 v);
 
 float fade(float t);
 
-float noise1D( float x);
-float noise2D(float x, float y);
+float PerlinNoise1D(float x);
+float PerlinNoise2D(float x, float y);
+float PerlinOctave1D(uint32_t octaves, float x, float frequency, float amplitude);
+float PerlinOctave2D(uint32_t octaves, float x, float y, float frequency, float amplitude);
+
+float SimplexNoise1D(float x);
+float SimplexNoise2D(float x, float y);
+float SimplexOctave1D(uint32_t octaves, float x, float frequency, float amplitude);
+float SimplexOctave2D(uint32_t octaves, float x, float y, float frequency, float amplitude);
 
 float sinWithRange(float value, float minV, float range);
 float cosWithRange(float value, float minV, float range);
 
+char *ToolsMakeString(char *s1, char *s2);
 void ToolsAddStrings(char *out, int buff_size, char *s1, char *s2);
 bool ToolsCmpStrings(char *in, char *s1);
 int ToolsStr32BitLength(uint32_t *text);

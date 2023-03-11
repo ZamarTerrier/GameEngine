@@ -20,7 +20,7 @@ void ShapeObjectDefaultUpdate(GameObject2D* go) {
 
     Camera2D* cam = (Camera2D*) cam2D;
 
-    ShaderBuffer* sBuffer = go->graphObj.local.descriptors;
+    ShaderDescriptor* sBuffer = go->graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -271,8 +271,8 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
             break;
     }
 
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
     so->go.image = calloc(1, sizeof(GameObjectImage));

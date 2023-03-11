@@ -36,7 +36,7 @@ FontCache *TextFontFind(char *path)
     return NULL;
 }
 
-void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderBuffer *descriptor){
+void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderDescriptor *descriptor){
 
     if(e_var_num_fonts + 1 >= MAX_FONTS)
     {
@@ -204,9 +204,10 @@ void TextObjectAddTexture(TextObject* to){
     if(to->go.graphObj.local.descrCount + 1 > MAX_UNIFORMS)
         return;
 
-    ShaderBuffer *descriptor = &to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount];
+    ShaderDescriptor *descriptor = &to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount];
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor->descrCount = 1;
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptor->image = NULL;
@@ -225,7 +226,7 @@ void TextObjectUpdateUniformBufferDefault(TextObject* to) {
 
     Camera2D* cam = (Camera2D*) cam2D;
 
-    ShaderBuffer* sBuffer = to->go.graphObj.local.descriptors;
+    ShaderDescriptor* sBuffer = to->go.graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -443,7 +444,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     //----------------------------------
 
-    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
     TextObjectAddTexture(to);
 
     GraphicsObjectCreateDrawItems(&to->go.graphObj);

@@ -57,8 +57,8 @@ void PainterObjectInit(EPainter *painter)
 
     GameObject2DSetLinkedShape(painter);
 
-    BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(PainterBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(DrawObjectsBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     GraphicsObjectCreateDrawItems(&painter->go.graphObj);
 

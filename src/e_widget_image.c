@@ -93,7 +93,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     if(settings[0].scissor.extent.width > 2000)
         settings[0].scissor.extent.width = 0;
 
-    ShaderBuffer* sBuffer = img->widget.go.graphObj.local.descriptors;
+    ShaderDescriptor* sBuffer = img->widget.go.graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -180,6 +180,7 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
 
     if(strlen(image_path) != 0)
     {
+        memset(img->widget.go.image->path, 0, 256);
         int len = strlen(image_path);
         img->widget.go.image->path = calloc(len + 1, sizeof(char));
         memcpy(img->widget.go.image->path, image_path, len);

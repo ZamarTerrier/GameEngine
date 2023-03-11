@@ -142,7 +142,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     GameObjectSetRecreateFunc(particle, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject3DDestroy);
 
-    particle->go.graphObj.local.descriptors = (ShaderBuffer *) calloc(MAX_UNIFORMS, sizeof(ShaderBuffer));
+    particle->go.graphObj.local.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
@@ -156,22 +156,20 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
     particle->particles = (Particle3D*) calloc(particle->num_parts, sizeof(Particle3D));
 
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
 
-    particle->go.diffuse = calloc(1, sizeof(GameObjectImage));
-    particle->go.specular = calloc(1, sizeof(GameObjectImage));
-    particle->go.normal = calloc(1, sizeof(GameObjectImage));
+    particle->go.images = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(dParam.diffuse) != 0)
     {
         int len = strlen(dParam.diffuse);
-        particle->go.diffuse->path = calloc(len + 1, sizeof(char));
-        memcpy(particle->go.diffuse->path, dParam.diffuse, len);
-        particle->go.diffuse->path[len] = '\0';
+        particle->go.images->path = calloc(len + 1, sizeof(char));
+        memcpy(particle->go.images->path, dParam.diffuse, len);
+        particle->go.images->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    TextureImageAdd(&particle->go.graphObj.local, particle->go.diffuse, 0, 0);
+    TextureImageAdd(&particle->go.graphObj.local, particle->go.images, 0, 0);
 
     GraphicsObjectCreateDrawItems(&particle->go.graphObj);
 

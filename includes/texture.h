@@ -16,28 +16,28 @@ extern "C"
 {
 #endif
 
-int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
-
 int ImageLoadFile(ImageFileData *data, uint32_t from_file);
+int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, uint32_t tile_x, uint32_t tile_y, uint32_t tile_size);
+int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
 
 Texture2D *TextureFindTexture(char *image);
 
 void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, void** image, void** imageMemory);
 
-int TextureImageCreate(GameObjectImage *image, ShaderBuffer *descriptor, bool from_file);
+int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, bool from_file);
 
 void* TextureCreateImageView(void* image, uint32_t format, uint32_t aspectFlags);
 
 void TextureCreateSampler(Texture2D *texture);
 
-ShaderBuffer *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height);
+ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height);
 
-void TextureCreate( ShaderBuffer *descriptor, GameObjectImage *image, bool from_file);
-void TextureCreateSpecific(ShaderBuffer *descriptor, uint32_t width, uint32_t height);
+void TextureCreate( ShaderDescriptor *descriptor, GameObjectImage *image, bool from_file);
+void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t width, uint32_t height);
 
-void TextureUpdate(ShaderBuffer *descriptor, void *in_data, uint32_t size_data, uint32_t offset);
+void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset);
 
-void TextureSetTexture(ShaderBuffer *descriptor, const char* path);
+void TextureSetTexture(ShaderDescriptor *descriptor, const char* path);
 
 void ImageDestroyTexture(Texture2D* texture);
 

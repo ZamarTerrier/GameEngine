@@ -289,7 +289,7 @@ void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size) {
     endSingleTimeCommands(commandBuffer);
 }
 
-void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorType type, VkShaderStageFlags flags){
+void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkShaderStageFlags flags){
 
     if(param->descrCount + 1 >= MAX_UNIFORMS)
     {
@@ -297,11 +297,12 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
         return;
     }
 
-    ShaderBuffer *descriptor = &param->descriptors[param->descrCount];
+    ShaderDescriptor *descriptor = &param->descriptors[param->descrCount];
 
     descriptor->uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
     descriptor->uniform->size = size;
-    descriptor->descrType = type;
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptor->descrCount = 1;
     descriptor->size = 1;
     descriptor->stageflag = flags;
     descriptor->buffsize = size;
@@ -314,7 +315,7 @@ void BuffersAddUniformObject(localParam* param, VkDeviceSize size, VkDescriptorT
 
 void BuffersRecreateUniform(localParam* param){
     for(int i=0;i < param->descrCount;i++){
-        ShaderBuffer *descriptor = &param->descriptors[i];
+        ShaderDescriptor *descriptor = &param->descriptors[i];
 
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
 

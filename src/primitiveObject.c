@@ -13,13 +13,12 @@
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 #include "e_resource_shapes.h"
+#include "e_resource_descriptors.h"
 #include "e_resource_export.h"
 
 void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
 {
-    po->go.diffuse = calloc(1, sizeof(GameObjectImage));
-    po->go.specular = calloc(1, sizeof(GameObjectImage));
-    po->go.normal = calloc(1, sizeof(GameObjectImage));
+    po->go.images = calloc(3, sizeof(GameObjectImage));
 
     if(dParam == NULL)
         return;
@@ -27,18 +26,18 @@ void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
     if(strlen(dParam->diffuse) != 0)
     {
         int len = strlen(dParam->diffuse);
-        po->go.diffuse->path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.diffuse->path, dParam->diffuse, len);
-        po->go.diffuse->path[len] = '\0';
+        po->go.images[0].path = calloc(len + 1, sizeof(char));
+        memcpy(po->go.images[0].path, dParam->diffuse, len);
+        po->go.images[0].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
     if(strlen(dParam->specular) != 0)
     {
         int len = strlen(dParam->specular);
-        po->go.specular->path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.specular->path, dParam->specular, len);
-        po->go.specular->path[len] = '\0';
+        po->go.images[1].path = calloc(len + 1, sizeof(char));
+        memcpy(po->go.images[1].path, dParam->specular, len);
+        po->go.images[1].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
@@ -46,9 +45,9 @@ void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
     if(strlen(dParam->normal) != 0)
     {
         int len = strlen(dParam->normal);
-        po->go.normal->path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.normal->path, dParam->normal, len);
-        po->go.normal->path[len] = '\0';
+        po->go.images[2].path = calloc(len + 1, sizeof(char));
+        memcpy(po->go.images[2].path, dParam->normal, len);
+        po->go.images[0].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
@@ -61,6 +60,8 @@ void PrimitiveObjectDestroy(PrimitiveObject *po)
     free(po->params);
     po->params = NULL;
 }
+
+
 
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params){
 
@@ -133,12 +134,6 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
             memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
             break;
-        case ENGINE_PRIMITIVE3D_TERRAIN:
-            InitPlane3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
-            po->params = calloc(1, sizeof(PlaneParam));
-            memcpy(po->params, params, sizeof(PlaneParam));
-            builded = true;
-            break;
     }
 
     if(builded)
@@ -151,19 +146,14 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     po->go.graphObj.local.descrCount = 0;
 
-    BuffersAddUniformObject(&po->go.graphObj.local, sizeof(ModelBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&po->go.graphObj.local, sizeof(LightBuffer3D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&po->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&po->go.graphObj.local, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PrimitiveObjectInitTexture(po, &dParam);
 
-    if(type == ENGINE_PRIMITIVE3D_TERRAIN)
-        TextureImageAdd(&po->go.graphObj.local,  NULL, pParam->texture_width, pParam->texture_height);
-    else
-        TextureImageAdd(&po->go.graphObj.local,  po->go.diffuse, 0, 0);
-
-
-    TextureImageAdd(&po->go.graphObj.local, po->go.specular, 0, 0);
-    TextureImageAdd(&po->go.graphObj.local, po->go.normal, 0, 0);
+    TextureImageAdd(&po->go.graphObj.local, &po->go.images[0], 0, 0);
+    TextureImageAdd(&po->go.graphObj.local, &po->go.images[1], 0, 0);
+    TextureImageAdd(&po->go.graphObj.local, &po->go.images[2], 0, 0);
 
     GraphicsObjectCreateDrawItems(&po->go.graphObj);
 
@@ -183,6 +173,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
         setting.drawType = dParam.drawType;
         setting.fromFile = 1;
         GameObject3DAddSettingPipeline(po, &setting);
+
     }else{
 
         setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
@@ -218,14 +209,14 @@ void *PrimitiveObjectGetVertex(PrimitiveObject *po)
 
 void PrimitiveObjectDiffuseTextureSetData(PrimitiveObject *po, void *data, uint32_t size_data, uint32_t offset)
 {
-    ShaderBuffer *descriprots = po->go.graphObj.local.descriptors;
+    ShaderDescriptor *descriprots = po->go.graphObj.local.descriptors;
 
     TextureUpdate(&descriprots[2], data, size_data, offset);
 }
 
 void PrimitiveObjectDiffuseSetTexture(PrimitiveObject *po, const char *path)
 {
-    ShaderBuffer *descriprots = po->go.graphObj.local.descriptors;
+    ShaderDescriptor *descriprots = po->go.graphObj.local.descriptors;
 
     TextureSetTexture(&descriprots[2], path);
 }

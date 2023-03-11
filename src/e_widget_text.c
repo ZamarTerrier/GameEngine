@@ -103,7 +103,7 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
         settings[0].scissor.extent.width = 0;
 
 
-    ShaderBuffer * sBuffer = wt->widget.go.graphObj.local.descriptors;
+    ShaderDescriptor * sBuffer = wt->widget.go.graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -190,9 +190,10 @@ void TextWidgetAddTexture(EWidgetText *wt){
     if(wt->widget.go.graphObj.local.descrCount + 1 > MAX_UNIFORMS)
         return;
 
-    ShaderBuffer *descriptor = &wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount];
+    ShaderDescriptor *descriptor = &wt->widget.go.graphObj.local.descriptors[wt->widget.go.graphObj.local.descrCount];
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptor->descrCount = 1;
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptor->image = NULL;
@@ -226,7 +227,7 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
         TextDataInit(&wt->tData, fontSize, temp);
     }
 
-    BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&wt->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
     TextWidgetAddTexture(wt);
 
     GraphicsObjectCreateDrawItems(&wt->widget.go.graphObj);

@@ -176,8 +176,8 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     if(dParam != NULL)
         GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam->vertShader, dParam->fragShader);
 
-    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     ew->go.image = calloc(1, sizeof(GameObjectImage));
 
