@@ -17,10 +17,9 @@
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
 
-typedef void (*custom_terrain_generator)(float *noise_value);
-
-custom_terrain_generator height_terrain;
-custom_terrain_generator texture_terrain;
+uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
+    return (to->tex_colors[index].w << 24) | (to->tex_colors[index].x << 16) | (to->tex_colors[index].y << 8) | (to->tex_colors[index].z);
+}
 
 void TerrainDefaultUpdate(TerrainObject *to)
 {
@@ -70,18 +69,11 @@ void TearrainDefaultDestroy(TerrainObject *to)
 
 }
 
-void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to)
-{    
-    ShaderDescriptor *descr = TextureImageAdd(&to->go.graphObj.local, NULL, to->t_t_param.texture_width, to->t_t_param.texture_height);
-
-    vertexParam *vParam = &to->go.graphObj.shape.vParam;
-
-    TerrainVertex *verts = vParam->vertices;
-
+void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
+{
     uint32_t size_texture = to->t_t_param.texture_width * to->t_t_param.texture_height;
 
-    uint32_t some_map[size_texture];
-    memset(some_map, 0, sizeof(uint32_t) * size_texture);
+    uint32_t *some_map = buffer; //[size_texture];
 
     uint32_t temp = 0;
 
@@ -106,14 +98,22 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to)
             else
                 t_noise = SimplexOctave2D(to->t_g_param.octaves, n_val_x, n_val_y, to->t_g_param.frequency, to->t_g_param.amplitude);
 
-                texture_terrain(t_noise);
+            if(t_noise >= 0.5f)
+                num = 2;
+            else if(t_noise > 0.0f)
+                num = 1;
+            else if(t_noise <= -0.5f)
+                num = 0;
+            else
+                num = 3;
 
-            temp =
+            temp = TerrainObjectGetTextureColor(to, num);
+
             some_map[iter] = temp;
         }
     }
 
-    TextureUpdate(descr, some_map, size_texture * sizeof(uint32_t), 0);
+    TextureUpdate(to->texture_descr, some_map, size_texture * sizeof(uint32_t), 0);
 }
 
 void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
@@ -141,8 +141,8 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
             else
                 t_noise = SimplexOctave2D( to->t_g_param.octaves, n_x, n_y, to->t_g_param.frequency, to->t_g_param.amplitude);
 
-            if(height_terrain != NULL)
-                height_terrain(t_noise);
+            if(t_noise <= -0.5f)
+                 t_noise = -0.5f;
 
             verts[iter].position.y = t_noise * to->t_g_param.height_factor;;
         }
@@ -153,9 +153,6 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam)
 {
-    height_terrain = NULL;
-    texture_terrain = NULL;
-
     GameObjectSetUpdateFunc(to, (void *)TerrainDefaultUpdate);
     GameObjectSetDrawFunc(to, (void *)GameObject3DDefaultDraw);
     GameObjectSetCleanFunc(to, (void *)GameObject3DClean);
@@ -222,7 +219,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     }
 
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
-        TerrainObjectGenerateTerrainTextureMap(to);
+        to->texture_descr = TextureImageAdd(&to->go.graphObj.local, NULL, to->t_t_param.texture_width, to->t_t_param.texture_height);
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
@@ -272,18 +269,4 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     }
 
     PipelineCreateGraphics(&to->go.graphObj);
-}
-
-
-uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
-    return (to->tex_colors[index].w << 24) | (to->tex_colors[index].x << 16) | (to->tex_colors[index].y << 8) | (to->tex_colors[index].z);;
-}
-
-
-void TerrainObjectSetHeightGenerator(void *gener){
-    height_terrain = gener;
-}
-
-void TerrainObjectSetTextureGenerator(void *gener){
-    texture_terrain = gener;
 }
