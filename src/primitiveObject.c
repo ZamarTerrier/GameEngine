@@ -151,9 +151,9 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     PrimitiveObjectInitTexture(po, &dParam);
 
-    TextureImageAdd(&po->go.graphObj.local, &po->go.images[0], 0, 0);
-    TextureImageAdd(&po->go.graphObj.local, &po->go.images[1], 0, 0);
-    TextureImageAdd(&po->go.graphObj.local, &po->go.images[2], 0, 0);
+    TextureImageAdd(&po->go.graphObj.local, &po->go.images[0]);
+    TextureImageAdd(&po->go.graphObj.local, &po->go.images[1]);
+    TextureImageAdd(&po->go.graphObj.local, &po->go.images[2]);
 
     GraphicsObjectCreateDrawItems(&po->go.graphObj);
 

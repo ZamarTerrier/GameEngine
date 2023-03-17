@@ -14,6 +14,7 @@
 #define MAX_IMAGES 32
 #define MAX_PIPELINES 50
 #define MAX_UNIFORMS 10
+#define MAX_LIGHTS 16
 
 #define MAX_GUI_CALLBACKS 25
 
@@ -78,6 +79,7 @@ typedef struct{
     int size;
     int imgWidth;
     int imgHeight;
+    uint32_t flags;
 } GameObjectImage;
 
 typedef struct {
@@ -211,8 +213,8 @@ typedef struct{
 
 typedef struct{
     DirLight dir;
-    PointLight lights[32];
-    SpotLight spots [32];
+    PointLight lights[MAX_LIGHTS];
+    SpotLight spots [MAX_LIGHTS];
     int num_points;
     int num_spots;
     int light_react;

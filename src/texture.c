@@ -388,7 +388,7 @@ void TextureArrayInit(localParam *local, uint32_t size)
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
-ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height){
+ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image){
 
     if(local->descrCount + 1 > MAX_UNIFORMS)
     {
@@ -400,7 +400,7 @@ ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image, uin
 
     descriptor->image = image;
 
-    if(image != NULL)
+    if(!(image->flags & ENGINE_TEXTURE_FLAG_SPECIFIC))
     {
         if(descriptor->image->size > 0)
             TextureCreate(descriptor, descriptor->image, 0);
@@ -411,7 +411,12 @@ ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image, uin
         image->imgHeight = texture->image_data.texHeight;
         image->imgWidth = texture->image_data.texWidth;
     }else
-        TextureCreateSpecific(descriptor, width, height);
+    {
+        if(image->flags & ENGINE_TEXTURE_FLAG_URGB)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_UINT, image->imgWidth, image->imgHeight);
+        else
+            TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, image->imgWidth, image->imgHeight);
+    }
 
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -447,7 +452,7 @@ void TextureCreate(ShaderDescriptor *descriptor, GameObjectImage *image, bool fr
 
 }
 
-void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t width, uint32_t height)
+void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height)
 {
     descriptor->texture = calloc(1, sizeof(Texture2D));
 
@@ -456,7 +461,7 @@ void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t width, uint32_
     texture->generated = true;
     texture->image_data.texWidth = width;
     texture->image_data.texHeight = height;
-    texture->textureType = VK_FORMAT_R8G8B8A8_UINT;
+    texture->textureType = format;
 
     TextureCreateEmpty(texture);
     TextureCreateTextureImageView(texture);
@@ -500,7 +505,7 @@ void TextureSetTexture(ShaderDescriptor *descriptor, const char* path){
     if(path != NULL)
         TextureCreate(descriptor, &g_image, 1);
     else
-        TextureCreateSpecific(descriptor, 100, 100);
+        TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, 100, 100);
 
 }
 

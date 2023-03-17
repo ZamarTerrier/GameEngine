@@ -284,7 +284,7 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         memcpy(so->go.image->path, dParam.diffuse, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        TextureImageAdd(&so->go.graphObj.local, so->go.image, 0, 0);
+        TextureImageAdd(&so->go.graphObj.local, so->go.image);
     }
 
     if(strlen(dParam.specular) != 0)
@@ -294,7 +294,7 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         memcpy(so->go.image->path, dParam.specular, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        TextureImageAdd(&so->go.graphObj.local, so->go.image, 0, 0);
+        TextureImageAdd(&so->go.graphObj.local, so->go.image);
     }
 
     GraphicsObjectCreateDrawItems(&so->go.graphObj);

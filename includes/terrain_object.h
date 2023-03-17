@@ -35,7 +35,7 @@ typedef struct{
 typedef struct{
     int multi_size;
     int num_textures;
-    vec2 some_val;
+    vec2 cam_posxz;
     vec4 tex_colors[MAX_TEXTURE_STACK];
 } TerrainBuffer;
 
@@ -51,6 +51,7 @@ enum ENGINE_TERRIAN_FLAGS{
 typedef struct{
     GameObject3D go;
     uint32_t flags;
+    TerrainVertex *height_map;
     uint32_t width;
     uint32_t height;
     float t_shift;
@@ -63,5 +64,6 @@ typedef struct{
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer);
 uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index);
+void TerrainObjectUpdate(TerrainObject *terrain);
 
 #endif // TERRAIN_OBJECT_H

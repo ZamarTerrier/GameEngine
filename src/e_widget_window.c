@@ -194,7 +194,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-    TextureImageAdd(&widget->go.graphObj.local, widget->go.image, 0, 0);
+    TextureImageAdd(&widget->go.graphObj.local, widget->go.image);
 
     GraphicsObjectCreateDrawItems(&widget->go.graphObj);
 

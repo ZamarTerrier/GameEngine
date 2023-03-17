@@ -16,6 +16,11 @@ extern "C"
 {
 #endif
 
+typedef enum{
+    ENGINE_TEXTURE_FLAG_SPECIFIC = 0x1,
+    ENGINE_TEXTURE_FLAG_URGB = 0x2,
+} EngineTextureFlags;
+
 int ImageLoadFile(ImageFileData *data, uint32_t from_file);
 int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, uint32_t tile_x, uint32_t tile_y, uint32_t tile_size);
 int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
@@ -30,10 +35,10 @@ void* TextureCreateImageView(void* image, uint32_t format, uint32_t aspectFlags)
 
 void TextureCreateSampler(Texture2D *texture);
 
-ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image, uint32_t width, uint32_t height);
+ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image);
 
 void TextureCreate( ShaderDescriptor *descriptor, GameObjectImage *image, bool from_file);
-void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t width, uint32_t height);
+void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height);
 
 void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset);
 

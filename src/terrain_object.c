@@ -4,6 +4,7 @@
 
 #include "camera.h"
 #include "graphicsObject.h"
+#include "lightObject.h"
 
 #include "buffers.h"
 #include "pipeline.h"
@@ -56,15 +57,73 @@ void TerrainDefaultUpdate(TerrainObject *to)
         tb.tex_colors[i].w = to->tex_colors[i].w;
     }
 
+    tb.cam_posxz.x = getViewPos().x;
+    tb.cam_posxz.y = getViewPos().z;
+
     vkMapMemory(e_device, to->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tb), 0, &data);
     memcpy(data, &tb, sizeof(tb));
     vkUnmapMemory(e_device, to->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
 
+    LightBuffer3D lbo = {};
+    memset(&lbo, 0, sizeof(LightBuffer3D));
+
+    if(e_var_num_lights > 0 && to->go.enable_light)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+
+            switch (lights[i]->type) {
+                case ENGINE_LIGHT_TYPE_DIRECTIONAL:
+                    lbo.dir.ambient = lights[i]->ambient;
+                    lbo.dir.diffuse = lights[i]->diffuse;
+                    lbo.dir.specular = lights[i]->specular;
+                    lbo.dir.direction = lights[i]->direction;
+                    break;
+                case ENGINE_LIGHT_TYPE_POINT:
+                    lbo.num_points++;
+
+                    lbo.lights[lbo.num_points - 1].position = lights[i]->position;
+                    lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
+                    lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
+                    lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
+                    lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
+                    lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
+                    lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
+
+                    break;
+                case ENGINE_LIGHT_TYPE_SPOT:
+                    lbo.num_spots++;
+
+                    lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
+                    lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
+                    lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
+                    lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
+                    lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
+                    lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
+                    lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
+                    lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
+                    lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    lbo.light_react = to->go.enable_light;
+
+    vkMapMemory(e_device, to->go.graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+    memcpy(data, &lbo, sizeof(lbo));
+    vkUnmapMemory(e_device, to->go.graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
 
 }
 
 void TearrainDefaultDestroy(TerrainObject *to)
 {
+    free(to->height_map);
+
     GraphicsObjectDestroy(&to->go.graphObj);
 
 }
@@ -125,6 +184,8 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 
     int iter = 0;
 
+    to->height_map = calloc(vParam->verticesSize, sizeof(TerrainVertex));
+
     for(int i = 0;i <= to->width; i++)
     {
         float n_x = ((float)i * to->t_shift)/ to->t_g_param.size_factor;
@@ -144,9 +205,11 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
             if(t_noise <= -0.5f)
                  t_noise = -0.5f;
 
-            verts[iter].position.y = t_noise * to->t_g_param.height_factor;;
+            verts[iter].position.y = t_noise * to->t_g_param.height_factor;
         }
     }
+
+    memcpy(to->height_map, verts, vParam->verticesSize * sizeof(TerrainVertex));
 
     BuffersUpdateVertex(vParam);
 }
@@ -192,6 +255,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
 
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     to->go.images = calloc(tParam->t_t_param.num_textures + 1, sizeof(GameObjectImage));
     to->go.num_images = tParam->t_t_param.num_textures + 1;
@@ -207,7 +271,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-        TextureImageAdd(&to->go.graphObj.local, &to->go.images[0], 0, 0);
+        TextureImageAdd(&to->go.graphObj.local, &to->go.images[0]);
     }
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
@@ -218,8 +282,26 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
         to->tex_colors[i].w = rand() % 255;
     }
 
+    GameObjectImage g_img;
+    memset(&g_img, 0, sizeof(GameObjectImage));
+
+    //Карта текстур
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
-        to->texture_descr = TextureImageAdd(&to->go.graphObj.local, NULL, to->t_t_param.texture_width, to->t_t_param.texture_height);
+    {
+
+        g_img.imgWidth = to->t_t_param.texture_width;
+        g_img.imgHeight = to->t_t_param.texture_height;
+        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
+
+        to->texture_descr = TextureImageAdd(&to->go.graphObj.local, &g_img);
+    }
+
+    /*//Карта теней
+    g_img.imgWidth = 1024;
+    g_img.imgHeight = 1024;
+    g_img.flags = ENGINE_TEXTURE_FLAG_SPECIFIC;
+
+    to->texture_descr = TextureImageAdd(&to->go.graphObj.local, &g_img);*/
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
@@ -232,7 +314,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-        TextureImageAdd(&to->go.graphObj.local, &to->go.images[i + 1], 0, 0);
+        TextureImageAdd(&to->go.graphObj.local, &to->go.images[i + 1]);
     }
 
 
@@ -269,4 +351,10 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     }
 
     PipelineCreateGraphics(&to->go.graphObj);
+}
+
+void TerrainObjectUpdate(TerrainObject *terrain)
+{
+
+
 }

@@ -191,7 +191,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-    TextureImageAdd(&ew->go.graphObj.local, ew->go.image, 0, 0);
+    TextureImageAdd(&ew->go.graphObj.local, ew->go.image);
 
     GraphicsObjectCreateDrawItems(&ew->go.graphObj);
 
