@@ -2,6 +2,56 @@
 
 #include "e_resource_data.h"
 
+void LightObjectFillLights(LightBuffer3D *lbo, bool enable_light)
+{
+    if(e_var_num_lights > 0 && enable_light)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+
+            switch (lights[i]->type) {
+                case ENGINE_LIGHT_TYPE_DIRECTIONAL:
+                    lbo->dir.ambient = lights[i]->ambient;
+                    lbo->dir.diffuse = lights[i]->diffuse;
+                    lbo->dir.specular = lights[i]->specular;
+                    lbo->dir.direction = lights[i]->direction;
+                    break;
+                case ENGINE_LIGHT_TYPE_POINT:
+                    lbo->num_points++;
+
+                    lbo->lights[lbo->num_points - 1].position = lights[i]->position;
+                    lbo->lights[lbo->num_points - 1].constant = lights[i]->constant;
+                    lbo->lights[lbo->num_points - 1].linear = lights[i]->linear;
+                    lbo->lights[lbo->num_points - 1].quadratic = lights[i]->quadratic;
+                    lbo->lights[lbo->num_points - 1].ambient = lights[i]->ambient;
+                    lbo->lights[lbo->num_points - 1].diffuse = lights[i]->diffuse;
+                    lbo->lights[lbo->num_points - 1].specular = lights[i]->specular;
+
+                    break;
+                case ENGINE_LIGHT_TYPE_SPOT:
+                    lbo->num_spots++;
+
+                    lbo->lights[lbo->num_spots - 1].position = lights[i]->position;
+                    lbo->lights[lbo->num_spots - 1].constant = lights[i]->constant;
+                    lbo->lights[lbo->num_spots - 1].linear = lights[i]->linear;
+                    lbo->lights[lbo->num_spots - 1].quadratic = lights[i]->quadratic;
+                    lbo->lights[lbo->num_spots - 1].ambient = lights[i]->ambient;
+                    lbo->lights[lbo->num_spots - 1].diffuse = lights[i]->diffuse;
+                    lbo->lights[lbo->num_spots - 1].specular = lights[i]->specular;
+                    lbo->spots[lbo->num_spots - 1].direction =  lights[i]->direction;
+                    lbo->spots[lbo->num_spots - 1].cutOff = lights[i]->cutOff;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    lbo->light_react = enable_light;
+}
+
 void LightObjectInit(LightObject *lo, ELightType type)
 {
     memset(lo, 0, sizeof(LightObject));

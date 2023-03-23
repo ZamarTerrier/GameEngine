@@ -144,18 +144,21 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
         BuffersUpdateIndex(&po->go.graphObj.shape.iParam);
     }
 
-    po->go.graphObj.local.descrCount = 0;
+    po->go.graphObj.blueprints.count = 0;
 
-    BuffersAddUniformObject(&po->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&po->go.graphObj.local, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformShadow(&po->go.graphObj.blueprints.shadow_descr, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+
+    BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PrimitiveObjectInitTexture(po, &dParam);
 
-    TextureImageAdd(&po->go.graphObj.local, &po->go.images[0]);
-    TextureImageAdd(&po->go.graphObj.local, &po->go.images[1]);
-    TextureImageAdd(&po->go.graphObj.local, &po->go.images[2]);
+    TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[0]);
+    TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[1]);
+    TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[2]);
 
-    GraphicsObjectCreateDrawItems(&po->go.graphObj);
+    GraphicsObjectCreateDrawItems(&po->go.graphObj, true);
 
     PipelineSetting setting;
 
@@ -196,7 +199,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     }
 
-    PipelineCreateGraphics(&po->go.graphObj);
+    PipelineCreateGraphics(&po->go.graphObj, true);
 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
         Transform3DSetScale(po, -500, -500, -500);
@@ -209,14 +212,14 @@ void *PrimitiveObjectGetVertex(PrimitiveObject *po)
 
 void PrimitiveObjectDiffuseTextureSetData(PrimitiveObject *po, void *data, uint32_t size_data, uint32_t offset)
 {
-    ShaderDescriptor *descriprots = po->go.graphObj.local.descriptors;
+    ShaderDescriptor *descriprots = po->go.graphObj.blueprints.descriptors;
 
     TextureUpdate(&descriprots[2], data, size_data, offset);
 }
 
 void PrimitiveObjectDiffuseSetTexture(PrimitiveObject *po, const char *path)
 {
-    ShaderDescriptor *descriprots = po->go.graphObj.local.descriptors;
+    ShaderDescriptor *descriprots = po->go.graphObj.blueprints.descriptors;
 
     TextureSetTexture(&descriprots[2], path);
 }

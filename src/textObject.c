@@ -4,7 +4,7 @@
 
 #include "transform.h"
 
-#include "bindDesciption.h"
+#include "e_descriptor.h"
 #include "texture.h"
 #include "buffers.h"
 
@@ -36,7 +36,7 @@ FontCache *TextFontFind(char *path)
     return NULL;
 }
 
-void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderDescriptor *descriptor){
+void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor *descriptor){
 
     if(e_var_num_fonts + 1 >= MAX_FONTS)
     {
@@ -170,7 +170,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderDescriptor *d
 
     texture->textureImageView = TextureCreateImageView(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    TextureCreateSampler(fonts[e_var_num_fonts].texture);
+    TextureCreateSampler(&texture->textureSampler, texture->textureType);
 
     descriptor->texture = fonts[e_var_num_fonts].texture;
 
@@ -183,13 +183,12 @@ void TextObjectMakeLastText(TextObject *to){
 }
 
 void TextObjectRecreateUniform(TextObject *to){
-    int count = to->go.graphObj.local.descrCount;
+    int count = to->go.graphObj.blueprints.count;
 
     for(int i=0;i < count;i++){
-        if(to->go.graphObj.local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
-            to->go.graphObj.local.descriptors[i].uniform = (UniformStruct *) calloc(1, sizeof(UniformStruct));
-            to->go.graphObj.local.descriptors[i].uniform->size = to->go.graphObj.local.descriptors[i].buffsize;
-            BuffersCreateUniform(to->go.graphObj.local.descriptors[i].uniform, i);
+        if(to->go.graphObj.blueprints.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+            to->go.graphObj.blueprints.descriptors[i].uniform.size = to->go.graphObj.blueprints.descriptors[i].buffsize;
+            BuffersCreateUniform(&to->go.graphObj.blueprints.descriptors[i].uniform);
         }
         else
         {
@@ -201,10 +200,10 @@ void TextObjectRecreateUniform(TextObject *to){
 
 void TextObjectAddTexture(TextObject* to){
 
-    if(to->go.graphObj.local.descrCount + 1 > MAX_UNIFORMS)
+    if(to->go.graphObj.blueprints.count + 1 > MAX_UNIFORMS)
         return;
 
-    ShaderDescriptor *descriptor = &to->go.graphObj.local.descriptors[to->go.graphObj.local.descrCount];
+    BluePrintDescriptor *descriptor = &to->go.graphObj.blueprints.descriptors[to->go.graphObj.blueprints.count];
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
@@ -214,19 +213,13 @@ void TextObjectAddTexture(TextObject* to){
 
     TextImageMakeTexture(&to->go, &to->textData, descriptor);
 
-    to->go.graphObj.local.descrCount ++;
+    to->go.graphObj.blueprints.count ++;
 }
 
 void TextObjectUpdateUniformBufferDefault(TextObject* to) {
 
-    if(to->go.graphObj.local.descriptors == NULL)
+    if(to->go.graphObj.blueprints.descriptors == NULL)
         return;
-
-    void* data;
-
-    Camera2D* cam = (Camera2D*) cam2D;
-
-    ShaderDescriptor* sBuffer = to->go.graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -234,17 +227,14 @@ void TextObjectUpdateUniformBufferDefault(TextObject* to) {
     tbo.rotation = to->go.transform.rotation;
     tbo.scale = to->go.transform.scale;
 
-    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
-    memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
 }
 
 void TextObjectDrawDefault(TextObject* to)
 {
     for(int i=0; i < to->go.graphObj.gItems.pipelineCount; i++){
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.graphicsPipeline[i]);
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelineLayout[i], 0, 1, &to->go.graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelines[i].pipeline);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelines[i].layout, 0, 1, &to->go.graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
 
         PipelineSetting *settings = &to->go.graphObj.gItems.settings[i];
 
@@ -414,8 +404,8 @@ void TextObjectRecreate(TextObject* to){
     }
 
     TextObjectRecreateUniform(to);
-    GraphicsObjectCreateDrawItems(&to->go.graphObj);
-    PipelineCreateGraphics(&to->go.graphObj);
+    GraphicsObjectCreateDrawItems(&to->go.graphObj, false);
+    PipelineCreateGraphics(&to->go.graphObj, false);
     Transform2DReposition(to);
     TextObjectMakeLastText(to);
 }
@@ -444,10 +434,10 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     //----------------------------------
 
-    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
     TextObjectAddTexture(to);
 
-    GraphicsObjectCreateDrawItems(&to->go.graphObj);
+    GraphicsObjectCreateDrawItems(&to->go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -466,5 +456,5 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     GameObject2DAddSettingPipeline(to, &setting);
 
-    PipelineCreateGraphics(&to->go.graphObj);
+    PipelineCreateGraphics(&to->go.graphObj, false);
 }

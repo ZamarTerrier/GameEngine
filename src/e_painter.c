@@ -30,15 +30,9 @@ void PainterObjectUniformUpdate(EPainter *painter)
     pb.position = painter->go.transform.position;
     pb.size = painter->go.transform.scale;
 
-    vkMapMemory(e_device, painter->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(pb), 0, &data);
-    memcpy(data, &pb, sizeof(pb));
-    vkUnmapMemory(e_device,  painter->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(painter->go.graphObj.blueprints.descriptors, 0, &pb, sizeof(pb));
 
-
-
-    vkMapMemory(e_device, painter->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(painter->drawObjects), 0, &data);
-    memcpy(data, &painter->drawObjects, sizeof(painter->drawObjects));
-    vkUnmapMemory(e_device,  painter->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(painter->go.graphObj.blueprints.descriptors, 1, &painter->drawObjects, sizeof(painter->drawObjects));;
 
     memset(&painter->drawObjects, 0, sizeof(painter->drawObjects));
 
@@ -57,10 +51,10 @@ void PainterObjectInit(EPainter *painter)
 
     GameObject2DSetLinkedShape(painter);
 
-    BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&painter->go.graphObj.local, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&painter->go.graphObj.blueprints, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&painter->go.graphObj.blueprints, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    GraphicsObjectCreateDrawItems(&painter->go.graphObj);
+    GraphicsObjectCreateDrawItems(&painter->go.graphObj, false);
 
     PipelineSetting setting = {};
 
@@ -77,7 +71,7 @@ void PainterObjectInit(EPainter *painter)
 
     GameObject2DAddSettingPipeline(&painter->go, &setting);
 
-    PipelineCreateGraphics(&painter->go.graphObj);
+    PipelineCreateGraphics(&painter->go.graphObj, false);
 }
 
 void PainterObjectSetPaintFunc(PaintDrawFunc paint_func)

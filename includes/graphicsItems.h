@@ -9,19 +9,29 @@ extern "C"
 #endif
 
 typedef struct{
-    uint32_t* code;
+    char* code;
     size_t size;
 } shader;
 
 typedef struct{
-    void* descriptorSetLayout;
-    void** descriptorSets;
-    void** graphicsPipeline;
-    void** pipelineLayout;
+    void *pipeline;
+    void *layout;
+} PipelineStruct;
+
+typedef struct{
+    void *descr_pool;
+    void *descr_set_layout;
+    void **descr_sets;
+} ShaderDescriptor;
+
+typedef struct{
+    ShaderDescriptor descriptors;
+    ShaderDescriptor shadow_descr;
+    PipelineStruct *pipelines;
+    PipelineStruct shadow;
     uint32_t pipelineCount;
     void* settings;
     uint32_t settingsCount;
-    void* descriptorPool;
     bool perspective;
 } GraphicItems;
 
@@ -77,19 +87,21 @@ typedef struct{
     void *texture_array;
     uint32_t num_textures;
     uint32_t max_textures;
-    UniformStruct* uniform;
+    UniformStruct uniform;
     uint32_t descrType;
     uint32_t descrCount;
     uint32_t stageflag;
     uint32_t size;
     uint32_t buffsize;
     GameObjectImage *image;
-} ShaderDescriptor;
+} BluePrintDescriptor;
 
 typedef struct{
-    ShaderDescriptor* descriptors;
-    uint32_t descrCount;
-} localParam;
+    BluePrintDescriptor* descriptors;
+    BluePrintDescriptor shadow_descr;
+    uint32_t isShadow;
+    uint32_t count;
+} Blueprints;
 
 #ifdef __cplusplus
 }

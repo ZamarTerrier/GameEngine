@@ -15,11 +15,10 @@
 
 void SkyObjectDefaultUpdate(SkyObject *so)
 {
-    if(so->go.graphObj.local.descriptors == NULL)
+    if(so->go.graphObj.blueprints.descriptors == NULL)
         return;
 
     Camera3D *cam = cam3D;
-    void* data;
     double time;
 
     time = glfwGetTime();
@@ -29,10 +28,7 @@ void SkyObjectDefaultUpdate(SkyObject *so)
     sb.cam_pos = cam->position;
     sb.cam_rot = v3_divs(cam->rotation, 2);
 
-    vkMapMemory(e_device, so->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(sb), 0, &data);
-    memcpy(data, &sb, sizeof(sb));
-    vkUnmapMemory(e_device, so->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(so->go.graphObj.blueprints.descriptors, 0, &sb, sizeof(sb));
 }
 
 void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
@@ -75,11 +71,11 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
 
     GameObjectSetUpdateFunc(&so->go, (void *)SkyObjectDefaultUpdate);
 
-    so->go.graphObj.local.descrCount = 0;
+    so->go.graphObj.blueprints.count = 0;
 
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(SkyBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(SkyBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    GraphicsObjectCreateDrawItems(&so->go.graphObj);
+    GraphicsObjectCreateDrawItems(&so->go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -136,5 +132,5 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
 
     }
 
-    PipelineCreateGraphics(&so->go.graphObj);
+    PipelineCreateGraphics(&so->go.graphObj, false);
 }

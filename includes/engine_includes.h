@@ -6,19 +6,20 @@
 #include <string.h>
 #include <math.h>
 
-#include "e_math_variables.h"
+#include "e_vertex.h"
+#include "e_buffers_variables.h"
 
-#define MAX_BONES 128
+#include "e_math_variables.h"
 
 #define MAX_FONTS 32
 #define MAX_IMAGES 32
 #define MAX_PIPELINES 50
 #define MAX_UNIFORMS 10
-#define MAX_LIGHTS 16
 
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_CAMERA_VIEW_DISTANCE 10000
+#define MAX_CAMERA_VIEW_DISTANCE 500
+#define ORITO_SIZE 0.0007
 
 #ifdef __cplusplus
 extern "C"
@@ -29,16 +30,6 @@ extern "C"
 
 typedef enum { false, true} bool;
 #endif
-
-typedef enum{
-    ENGINE_VERTEX_TYPE_2D_OBJECT,
-    ENGINE_VERTEX_TYPE_3D_OBJECT,
-    ENGINE_VERTEX_TYPE_MODEL_OBJECT,
-    ENGINE_VERTEX_TYPE_2D_PARTICLE,
-    ENGINE_VERTEX_TYPE_3D_PARTICLE,
-    ENGINE_VERTEX_TYPE_TERRAIN,
-    ENGINE_VERTEX_TYPE_SKY,
-} VertexType;
 
 typedef struct ChildStack{
     struct ChildStack* before;
@@ -82,50 +73,6 @@ typedef struct{
     uint32_t flags;
 } GameObjectImage;
 
-typedef struct {
-    vec2 position;
-    vec3 color;    
-    vec2 texCoord;
-} Vertex2D;
-
-typedef struct {
-    vec3 position;
-    vec3 normal;
-    vec3 color;
-    vec2 texCoord;
-} Vertex3D;
-
-typedef struct {
-    vec2 position;
-    float size;
-    vec3 color;
-} ParticleVertex2D;
-
-typedef struct {
-    vec3 position;
-    float size;
-    vec3 color;
-} ParticleVertex3D;
-
-typedef struct {
-    vec3 position;
-    vec3 normal;
-    vec2 texCoord;
-} TerrainVertex;
-
-typedef struct{
-    vec2 position;
-    vec2 texture_uv;
-} SkyVertex;
-
-typedef struct {
-    vec3 position;
-    vec3 normal;
-    vec3 color;
-    vec2 texCoord;
-    vec4 joints;
-    vec4 weight;
-} ModelVertex3D;
 
 typedef struct FontCache{
     char path[2048];
@@ -158,72 +105,10 @@ typedef struct {
     uint32_t size;
 } attrDescr;
 
-typedef struct {
-    vec2 position;
-    vec2 rotation;
-    vec2 scale;
-} TransformBuffer2D;
-
 typedef struct{
-    vec2 origin;
-    vec2 offset;
-    vec2 rotation;
-    vec2 scale;
-} ImageBufferObjects;
-
-typedef struct{
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ModelBuffer3D;
-
-typedef struct {
-    vec3 position __attribute__ ((aligned (16)));
-
-    float constant;
-    float linear;
-    float quadratic;
-
-    vec3 ambient __attribute__ ((aligned (16)));
-    vec3 diffuse __attribute__ ((aligned (16)));
-    vec3 specular __attribute__ ((aligned (16)));
-} PointLight;
-
-typedef struct {
-    vec3 position __attribute__ ((aligned (16)));
-    vec3  direction __attribute__ ((aligned (16)));
-
-    float constant;
-    float linear;
-    float quadratic;
-    float cutOff;
-
-    vec3 ambient __attribute__ ((aligned (16)));
-    vec3 diffuse __attribute__ ((aligned (16)));
-    vec3 specular __attribute__ ((aligned (16)));
-} SpotLight;
-
-typedef struct{
-    vec3 direction __attribute__ ((aligned (16)));
-
-    vec3 ambient __attribute__ ((aligned (16)));
-    vec3 diffuse __attribute__ ((aligned (16)));
-    vec3 specular __attribute__ ((aligned (16)));
-} DirLight;
-
-typedef struct{
-    DirLight dir;
-    PointLight lights[MAX_LIGHTS];
-    SpotLight spots [MAX_LIGHTS];
-    int num_points;
-    int num_spots;
-    int light_react;
-} LightBuffer3D;
-
-typedef struct{
-    mat4 mats[MAX_BONES] __attribute__ ((aligned (16)));
-    int size __attribute__ ((aligned (16)));
-} InvMatrixsBuffer;
+    vec3 position;
+    vec3 rotation;
+} SomeDirLight;
 
 typedef struct{
     char diffuse[256];

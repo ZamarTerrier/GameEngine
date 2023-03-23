@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include "bindDesciption.h"
+#include "e_descriptor.h"
 #include "pipeline.h"
 #include "buffers.h"
 #include "texture.h"
@@ -15,12 +15,14 @@
 void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
 {
     //10 возможных дескрипторов
-    graphObj->local.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
-    graphObj->local.descrCount = 0;
+    graphObj->blueprints.descriptors = (BluePrintDescriptor *) calloc(MAX_UNIFORMS, sizeof(BluePrintDescriptor));
+    graphObj->blueprints.count = 0;
 
     //10 возможных настроек для рендеринга
     graphObj->gItems.settings = (PipelineSetting *) calloc(MAX_UNIFORMS, sizeof(PipelineSetting));
     graphObj->gItems.settingsCount = 0;
+
+    graphObj->blueprints.isShadow = false;
 
     switch(type)
     {
@@ -32,7 +34,7 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
         case ENGINE_VERTEX_TYPE_3D_OBJECT:
             graphObj->aShader.bindingDescription = &Bind3DDescription;
             graphObj->aShader.attr = cubeAttributeDescription;
-            graphObj->aShader.countAttr = 4;
+            graphObj->aShader.countAttr = 3;
             break;
         case ENGINE_VERTEX_TYPE_MODEL_OBJECT:
             graphObj->aShader.bindingDescription = &BindModel3DDescription;
@@ -106,19 +108,21 @@ void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount
         BuffersUpdateIndex(&graphObj->shape.iParam);
 }
 
-void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
+void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj, bool with_shadow){
 
-    createDescriptorSetLayout(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
-    createDescriptorPool(&graphObj->gItems, graphObj->local.descriptors, graphObj->local.descrCount);
-    createDescriptorSets(&graphObj->gItems, &graphObj->local);
+    DescriptorCreate(&graphObj->gItems.descriptors, graphObj->blueprints.descriptors, graphObj->blueprints.count, imagesCount);
 
+    if(with_shadow)
+    {
+        graphObj->blueprints.isShadow = true;
+
+        DescriptorCreate(&graphObj->gItems.shadow_descr, &graphObj->blueprints.shadow_descr, 1, imagesCount);
+    }
 }
 
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj){
-    free(graphObj->gItems.graphicsPipeline);
-    graphObj->gItems.graphicsPipeline = NULL;
-    free(graphObj->gItems.pipelineLayout);
-    graphObj->gItems.pipelineLayout = NULL;
+    free(graphObj->gItems.pipelines);
+    graphObj->gItems.pipelines = NULL;
     graphObj->gItems.pipelineCount = 0;
 }
 
@@ -126,30 +130,28 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
 {
     GraphicsObjectCleanPipelines(graphObj);
 
-    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptorPool, NULL);
-    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptorSetLayout, NULL);
+    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptors.descr_pool, NULL);
+    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptors.descr_set_layout, NULL);
 
 
-    for(int i=0;i< graphObj->local.descrCount;i++)
+    for(int i=0;i< graphObj->blueprints.count;i++)
     {
 
-        ShaderDescriptor *descriptor = &graphObj->local.descriptors[i];
-        if(graphObj->local.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+        BluePrintDescriptor *descriptor = &graphObj->blueprints.descriptors[i];
+        if(graphObj->blueprints.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             //descriptor->texture = NULL;
         }
         else
         {
             for (int j = 0; j < imagesCount; j++) {
-                ShaderDescriptor *desriptor = &graphObj->local.descriptors[i];
-                vkDestroyBuffer(e_device, desriptor->uniform->uniformBuffers[j], NULL);
-                vkFreeMemory(e_device, desriptor->uniform->uniformBuffersMemory[j], NULL);
+                BluePrintDescriptor *desriptor = &graphObj->blueprints.descriptors[i];
+                vkDestroyBuffer(e_device, desriptor->uniform.uniformBuffers[j], NULL);
+                vkFreeMemory(e_device, desriptor->uniform.uniformBuffersMemory[j], NULL);
             }
-            free(descriptor->uniform->uniformBuffers);
-            descriptor->uniform->uniformBuffers = NULL;
-            free(descriptor->uniform->uniformBuffersMemory);
-            descriptor->uniform->uniformBuffersMemory = NULL;
-            free(descriptor->uniform);
-            descriptor->uniform = NULL;
+            free(descriptor->uniform.uniformBuffers);
+            descriptor->uniform.uniformBuffers = NULL;
+            free(descriptor->uniform.uniformBuffersMemory);
+            descriptor->uniform.uniformBuffersMemory = NULL;
         }
     }
 }
@@ -158,36 +160,25 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
     for(int i=0;i < graphObj->gItems.pipelineCount;i++)
     {
-        vkDestroyPipeline(e_device, graphObj->gItems.graphicsPipeline[i], NULL);
-        vkDestroyPipelineLayout(e_device, graphObj->gItems.pipelineLayout[i], NULL);
+        vkDestroyPipeline(e_device, graphObj->gItems.pipelines[i].pipeline, NULL);
+        vkDestroyPipelineLayout(e_device, graphObj->gItems.pipelines[i].layout, NULL);
     }
+
     free(graphObj->gItems.settings);
-    free(graphObj->gItems.graphicsPipeline);
-    free(graphObj->gItems.pipelineLayout);
+    free(graphObj->gItems.pipelines);
     graphObj->gItems.settings = NULL;
-    graphObj->gItems.graphicsPipeline = NULL;
-    graphObj->gItems.pipelineLayout = NULL;
+    graphObj->gItems.pipelines = NULL;
 
-    vkFreeDescriptorSets(e_device, graphObj->gItems.descriptorPool, imagesCount, graphObj->gItems.descriptorSets);
-    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptorPool, NULL);
-    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptorSetLayout, NULL);
-    graphObj->gItems.descriptorPool = NULL;
-    graphObj->gItems.descriptorSetLayout = NULL;
-    graphObj->gItems.descriptorSets = NULL;
+    vkFreeDescriptorSets(e_device, graphObj->gItems.descriptors.descr_pool, imagesCount, graphObj->gItems.descriptors.descr_sets);
+    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptors.descr_pool, NULL);
+    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptors.descr_set_layout, NULL);
+    graphObj->gItems.descriptors.descr_pool = NULL;
+    graphObj->gItems.descriptors.descr_set_layout = NULL;
+    graphObj->gItems.descriptors.descr_sets = NULL;
 
-    vkDestroyBuffer(e_device, graphObj->shape.iParam.indexBuffer, NULL);
-    vkFreeMemory(e_device, graphObj->shape.iParam.indexBufferMemory, NULL);
-    graphObj->shape.iParam.indexBuffer = NULL;
-    graphObj->shape.iParam.indexBufferMemory = NULL;
-
-    vkDestroyBuffer(e_device, graphObj->shape.vParam.vertexBuffer, NULL);
-    vkFreeMemory(e_device, graphObj->shape.vParam.vertexBufferMemory, NULL);
-    graphObj->shape.vParam.vertexBuffer = NULL;
-    graphObj->shape.vParam.vertexBufferMemory = NULL;
-
-    for(int i=0;i < graphObj->local.descrCount;i++)
+    for(int i=0;i < graphObj->blueprints.count;i++)
     {
-        ShaderDescriptor *descriptor = &graphObj->local.descriptors[i];
+        BluePrintDescriptor *descriptor = &graphObj->blueprints.descriptors[i];
         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
             Texture2D *texture = descriptor->texture;
 
@@ -198,23 +189,56 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
             }
 
             descriptor->texture = NULL;
+        }else if(descriptor->descrType == 0x20){
+
+            free(descriptor->texture);
+            descriptor->texture = NULL;
+
         }else{
             for (int j = 0; j < imagesCount; j++) {
-                vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
-                vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
+                vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
+                vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
             }
-            free(descriptor->uniform->uniformBuffers);
-            descriptor->uniform->uniformBuffers = NULL;
-            free(descriptor->uniform->uniformBuffersMemory);
-            descriptor->uniform->uniformBuffersMemory = NULL;
-            free(descriptor->uniform);
-            descriptor->uniform = NULL;
+            free(descriptor->uniform.uniformBuffers);
+            descriptor->uniform.uniformBuffers = NULL;
+            free(descriptor->uniform.uniformBuffersMemory);
+            descriptor->uniform.uniformBuffersMemory = NULL;
         }
     }
 
-    free(graphObj->local.descriptors);
-    graphObj->local.descriptors = NULL;
-    graphObj->local.descrCount = 0;
+    free(graphObj->blueprints.descriptors);
+    graphObj->blueprints.descriptors = NULL;
+    graphObj->blueprints.count = 0;
+
+    if(graphObj->blueprints.isShadow)
+    {
+        vkDestroyPipeline(e_device, graphObj->gItems.shadow.pipeline, NULL);
+        vkDestroyPipelineLayout(e_device, graphObj->gItems.shadow.layout, NULL);
+
+        vkFreeDescriptorSets(e_device, graphObj->gItems.shadow_descr.descr_pool, imagesCount, graphObj->gItems.shadow_descr.descr_sets);
+        vkDestroyDescriptorPool(e_device, graphObj->gItems.shadow_descr.descr_pool, NULL);
+        vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.shadow_descr.descr_set_layout, NULL);
+
+        BluePrintDescriptor *descriptor = &graphObj->blueprints.shadow_descr;
+        for (int j = 0; j < imagesCount; j++) {
+            vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
+            vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
+        }
+        free(descriptor->uniform.uniformBuffers);
+        descriptor->uniform.uniformBuffers = NULL;
+        free(descriptor->uniform.uniformBuffersMemory);
+        descriptor->uniform.uniformBuffersMemory = NULL;
+    }
+
+    vkDestroyBuffer(e_device, graphObj->shape.iParam.indexBuffer, NULL);
+    vkFreeMemory(e_device, graphObj->shape.iParam.indexBufferMemory, NULL);
+    graphObj->shape.iParam.indexBuffer = NULL;
+    graphObj->shape.iParam.indexBufferMemory = NULL;
+
+    vkDestroyBuffer(e_device, graphObj->shape.vParam.vertexBuffer, NULL);
+    vkFreeMemory(e_device, graphObj->shape.vParam.vertexBufferMemory, NULL);
+    graphObj->shape.vParam.vertexBuffer = NULL;
+    graphObj->shape.vParam.vertexBufferMemory = NULL;
 }
 
 void GraphicsObjectSetShadersPath(GraphicsObject *graphObj, const char *vert, const char *frag)

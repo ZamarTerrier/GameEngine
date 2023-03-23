@@ -24,14 +24,14 @@ uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
 
 void TerrainDefaultUpdate(TerrainObject *to)
 {
-    if(to->go.graphObj.local.descriptors == NULL)
+    if(to->go.graphObj.blueprints.descriptors == NULL)
         return;
 
     Camera3D* cam = (Camera3D*) cam3D;
-    void* data;
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
+    vec3 zero = {0.0f, 0.0f, 0.0f};
 
     to->go.transform.model = m4_translate_mat(m4_mult(m4_scale_mat(to->go.transform.scale), m4_rotation_matrix(to->go.transform.rotation)), to->go.transform.position);
 
@@ -40,9 +40,15 @@ void TerrainDefaultUpdate(TerrainObject *to)
     mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(e_device, to->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-    memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device, to->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
+
+    LightSpaceMatrix lsm;
+    //mbo.model = edenMat;
+    mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
+    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
+
+    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
+    DescriptorUpdate(&to->go.graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));
 
     TerrainBuffer tb;
 
@@ -60,64 +66,14 @@ void TerrainDefaultUpdate(TerrainObject *to)
     tb.cam_posxz.x = getViewPos().x;
     tb.cam_posxz.y = getViewPos().z;
 
-    vkMapMemory(e_device, to->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tb), 0, &data);
-    memcpy(data, &tb, sizeof(tb));
-    vkUnmapMemory(e_device, to->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 2, &tb, sizeof(tb));
 
     LightBuffer3D lbo = {};
     memset(&lbo, 0, sizeof(LightBuffer3D));
 
-    if(e_var_num_lights > 0 && to->go.enable_light)
-    {
-        LightObject **lights = e_var_lights;
+    LightObjectFillLights(&lbo, to->go.enable_light);
 
-        for(int i=0;i < e_var_num_lights; i++)
-        {
-
-            switch (lights[i]->type) {
-                case ENGINE_LIGHT_TYPE_DIRECTIONAL:
-                    lbo.dir.ambient = lights[i]->ambient;
-                    lbo.dir.diffuse = lights[i]->diffuse;
-                    lbo.dir.specular = lights[i]->specular;
-                    lbo.dir.direction = lights[i]->direction;
-                    break;
-                case ENGINE_LIGHT_TYPE_POINT:
-                    lbo.num_points++;
-
-                    lbo.lights[lbo.num_points - 1].position = lights[i]->position;
-                    lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
-                    lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
-                    lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
-                    lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
-                    lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
-                    lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
-
-                    break;
-                case ENGINE_LIGHT_TYPE_SPOT:
-                    lbo.num_spots++;
-
-                    lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
-                    lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
-                    lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
-                    lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
-                    lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
-                    lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
-                    lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
-                    lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
-                    lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    lbo.light_react = to->go.enable_light;
-
-    vkMapMemory(e_device, to->go.graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
-    memcpy(data, &lbo, sizeof(lbo));
-    vkUnmapMemory(e_device, to->go.graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 3, &lbo, sizeof(lbo));
 }
 
 void TearrainDefaultDestroy(TerrainObject *to)
@@ -209,6 +165,40 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
         }
     }
 
+
+    vec3 norm;
+
+    for(int i = 0;i <= to->width; i++)
+    {
+
+        for(int j = 0;j <= to->height; j++)
+        {
+            if(i > 0 && i < to->width && j > 0 && j < to->height)
+            {
+                iter = (i - 1) * (to->width + 1) + j;
+                float hL = verts[iter].position.y;
+
+                iter = (i + 1) * (to->width + 1) + j;
+                float hR = verts[iter].position.y;
+
+                iter = (i - 0) * (to->width + 1) + (j - 1);
+                float hD = verts[iter].position.y;
+
+                iter = (i - 0) * (to->width + 1) + (j + 1);
+                float hU = verts[iter].position.y;
+
+                norm.x = hL - hR;
+                norm.y = hD - hU;
+                norm.z = 2.0f;
+
+                iter = i * (to->width + 1) + j;
+                verts[iter].normal = norm;
+
+            }
+
+        }
+    }
+
     memcpy(to->height_map, verts, vParam->verticesSize * sizeof(TerrainVertex));
 
     BuffersUpdateVertex(vParam);
@@ -221,6 +211,8 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     GameObjectSetCleanFunc(to, (void *)GameObject3DClean);
     GameObjectSetRecreateFunc(to, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(to, (void *)TearrainDefaultDestroy);
+
+    to->go.self.obj_type = ENGINE_GAME_OBJECT_TYPE_3D;
 
     Transform3DInit(&to->go.transform);
     GraphicsObjectInit(&to->go.graphObj, ENGINE_VERTEX_TYPE_TERRAIN);
@@ -251,11 +243,16 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS))
         TerrainObjectGenerateTerrainHeights(to);
 
-    to->go.graphObj.local.descrCount = 0;
+    to->go.graphObj.blueprints.count = 0;
 
-    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&to->go.graphObj.local, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformShadow(&to->go.graphObj.blueprints.shadow_descr, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+
+    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    TextureShadowImageAdd(&to->go.graphObj.blueprints);
 
     to->go.images = calloc(tParam->t_t_param.num_textures + 1, sizeof(GameObjectImage));
     to->go.num_images = tParam->t_t_param.num_textures + 1;
@@ -271,7 +268,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-        TextureImageAdd(&to->go.graphObj.local, &to->go.images[0]);
+        TextureImageAdd(&to->go.graphObj.blueprints, &to->go.images[0]);
     }
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
@@ -293,15 +290,8 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
         g_img.imgHeight = to->t_t_param.texture_height;
         g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
 
-        to->texture_descr = TextureImageAdd(&to->go.graphObj.local, &g_img);
+        to->texture_descr = TextureImageAdd(&to->go.graphObj.blueprints, &g_img);
     }
-
-    /*//Карта теней
-    g_img.imgWidth = 1024;
-    g_img.imgHeight = 1024;
-    g_img.flags = ENGINE_TEXTURE_FLAG_SPECIFIC;
-
-    to->texture_descr = TextureImageAdd(&to->go.graphObj.local, &g_img);*/
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
@@ -314,11 +304,10 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-        TextureImageAdd(&to->go.graphObj.local, &to->go.images[i + 1]);
+        TextureImageAdd(&to->go.graphObj.blueprints, &to->go.images[i + 1]);
     }
 
-
-    GraphicsObjectCreateDrawItems(&to->go.graphObj);
+    GraphicsObjectCreateDrawItems(&to->go.graphObj, true);
 
     PipelineSetting setting;
 
@@ -350,7 +339,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
 
     }
 
-    PipelineCreateGraphics(&to->go.graphObj);
+    PipelineCreateGraphics(&to->go.graphObj, true);
 }
 
 void TerrainObjectUpdate(TerrainObject *terrain)

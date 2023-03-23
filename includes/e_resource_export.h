@@ -15,6 +15,20 @@ extern char _binary_shaders_text_vert_spv_end;
 extern int _binary_shaders_text_vert_spv_size;
 extern char _binary_shaders_text_vert_spv_start;
 
+extern char _binary_shaders_quad_frag_spv_end;
+extern int _binary_shaders_quad_frag_spv_size;
+extern char _binary_shaders_quad_frag_spv_start;
+extern char _binary_shaders_quad_vert_spv_end;
+extern int _binary_shaders_quad_vert_spv_size;
+extern char _binary_shaders_quad_vert_spv_start;
+
+extern char _binary_shaders_depth_frag_spv_end;
+extern int _binary_shaders_depth_frag_spv_size;
+extern char _binary_shaders_depth_frag_spv_start;
+extern char _binary_shaders_depth_vert_spv_end;
+extern int _binary_shaders_depth_vert_spv_size;
+extern char _binary_shaders_depth_vert_spv_start;
+
 extern char _binary_shaders_terrain_frag_spv_end;
 extern int _binary_shaders_terrain_frag_spv_size;
 extern char _binary_shaders_terrain_frag_spv_start;

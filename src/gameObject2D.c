@@ -17,14 +17,14 @@
 
 void GameObject2DDefaultUpdate(GameObject2D* go) {
 
-    if(go->graphObj.local.descriptors == NULL)
+    if(go->graphObj.blueprints.descriptors == NULL)
         return;
 
     void* data;
 
     Camera2D* cam = (Camera2D*) cam2D;
 
-    ShaderDescriptor* sBuffer = go->graphObj.local.descriptors;
+    BluePrintDescriptor* sBuffer = go->graphObj.blueprints.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -32,9 +32,7 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
-    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
-    memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
 
     ImageBufferObjects ibo;
     ibo.origin = go->transform.img.origin;
@@ -44,9 +42,7 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     ibo.rotation.x = 0;
     ibo.rotation.y = 0;
 
-    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
-    memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 1, &ibo, sizeof(ibo));
 }
 
 void GameObject2DDefaultDraw(GameObject2D* go){
@@ -76,7 +72,7 @@ void GameObject2DDefaultDraw(GameObject2D* go){
     }*/
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].pipeline);
 
         PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
@@ -87,7 +83,7 @@ void GameObject2DDefaultDraw(GameObject2D* go){
         VkDeviceSize offsets[] = {0};
 
         vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout[i], 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].layout, 0, 1, &go->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
 
         switch(settings->drawType){
             case 0:
@@ -116,14 +112,6 @@ void GameObject2DAddSettingPipeline(GameObject2D* go, void *arg){
 
 }
 
-void GameObject2DCreateDrawItems(GameObject2D* go){
-
-    createDescriptorSetLayout(&go->graphObj.gItems, go->graphObj.local.descriptors, go->graphObj.local.descrCount);
-    createDescriptorPool(&go->graphObj.gItems, go->graphObj.local.descriptors, go->graphObj.local.descrCount);
-    createDescriptorSets(&go->graphObj.gItems, &go->graphObj.local);
-
-}
-
 void GameObject2DClean(GameObject2D* go){
     GraphicsObjectClean(&go->graphObj);
 }
@@ -144,9 +132,9 @@ void GameObject2DRecreate(GameObject2D* go){
         settings[i].viewport.width = WIDTH;
     }
 
-    BuffersRecreateUniform(&go->graphObj.local);
-    GraphicsObjectCreateDrawItems(&go->graphObj);
-    PipelineCreateGraphics(&go->graphObj);
+    BuffersRecreateUniform(&go->graphObj.blueprints);
+    GraphicsObjectCreateDrawItems(&go->graphObj, false);
+    PipelineCreateGraphics(&go->graphObj, false);
     Transform2DReposition(go);
     Transform2DRescale(go);
 
@@ -188,6 +176,8 @@ void GameObject2DInit(GameObject2D* go)
     GameObjectSetCleanFunc(go, (void *)GameObject2DClean);
     GameObjectSetRecreateFunc(go, (void *)GameObject2DRecreate);
     GameObjectSetDestroyFunc(go, (void *)GameObject2DDestroy);
+
+    go->self.obj_type = ENGINE_GAME_OBJECT_TYPE_2D;
 
     Transform2DInit(&go->transform);
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_2D_OBJECT);

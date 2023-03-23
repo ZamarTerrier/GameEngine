@@ -8,6 +8,11 @@ extern "C"
 {
 #endif
 
+typedef enum{
+    ENGINE_GAME_OBJECT_TYPE_2D,
+    ENGINE_GAME_OBJECT_TYPE_3D
+} GameObjectType;
+
 typedef struct {
     void *InitPoint;
     void *UpdatePoint;
@@ -15,6 +20,7 @@ typedef struct {
     void *CleanPoint;
     void *RecreatePoint;
     void *DestroyPoint;
+    uint32_t obj_type;
 } GameObject;
 
 void GameObjectSetInitFunc(GameObject *go, void *func);

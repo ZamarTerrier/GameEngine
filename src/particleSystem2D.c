@@ -49,7 +49,7 @@ void Particle2DFind(ParticleObject2D *particle){
 void Particle2DDefaultUpdate(ParticleObject2D* particle){
 
 
-    if(particle->go.graphObj.local.descriptors == NULL)
+    if(particle->go.graphObj.blueprints.descriptors == NULL)
         return;
 
     if(particle->num_parts == 0)
@@ -86,18 +86,13 @@ void Particle2DDefaultUpdate(ParticleObject2D* particle){
 
     BuffersUpdateVertex(vParam);
 
-    Camera3D* cam = (Camera3D*) cam3D;
-    void* data;
-
     TransformBuffer2D tbo = {};
 
     tbo.position = particle->go.transform.position;
     tbo.rotation = particle->go.transform.rotation;
     tbo.scale = particle->go.transform.scale;
 
-    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
-    memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(particle->go.graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
 
 }
 
@@ -108,7 +103,7 @@ void Particle2DDefaultDraw(GameObject2D* go){
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
 
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].pipeline);
 
         PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
@@ -120,7 +115,7 @@ void Particle2DDefaultDraw(GameObject2D* go){
 
         vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout[i], 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].layout, 0, 1, &go->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
 
         switch(settings->drawType){
             case 0:
@@ -144,7 +139,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
     GameObjectSetRecreateFunc(particle, (void *)GameObject2DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject2DDestroy);
 
-    particle->go.graphObj.local.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
+    particle->go.graphObj.blueprints.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_2D_PARTICLE);
@@ -157,7 +152,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
     particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex2D));
     particle->particles = (Particle2D*) calloc(particle->num_parts, sizeof(Particle2D));
 
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&particle->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
 
     particle->go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -170,9 +165,9 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    TextureImageAdd(&particle->go.graphObj.local, particle->go.image);
+    TextureImageAdd(&particle->go.graphObj.blueprints, particle->go.image);
 
-    GraphicsObjectCreateDrawItems(&particle->go.graphObj);
+    GraphicsObjectCreateDrawItems(&particle->go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -192,7 +187,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
 
     GameObject3DAddSettingPipeline(particle, &setting);
 
-    PipelineCreateGraphics(&particle->go.graphObj);
+    PipelineCreateGraphics(&particle->go.graphObj, false);
 
     particle->num_parts = 0;
 }

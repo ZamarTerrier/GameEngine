@@ -1,5 +1,7 @@
 #include "engine.h"
 
+#include <vulkan/vulkan.h>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -18,6 +20,7 @@
 #include "gameObject.h"
 #include "textObject.h"
 #include "lightObject.h"
+#include "render_texture.h"
 
 #include "e_widget_entry.h"
 #include "e_widget_entry_area.h"
@@ -100,10 +103,13 @@ void EngineInitVulkan(){
     engine_buffered_image *images = e_var_images;
     TextureCreateEmptyDefault(&images[e_var_num_images].texture);
     TextureCreateTextureImageView(&images[e_var_num_images].texture);
-    TextureCreateSampler(&images[e_var_num_images].texture);
+    TextureCreateSampler(&images[e_var_num_images].texture.textureSampler, images[e_var_num_images].texture.textureType);
     char *text = "Null texture";
     memcpy(images[e_var_num_images].path, text, strlen(text));
     e_var_num_images ++;
+
+    render_texture = calloc(1, sizeof(RenderTexture));
+    RenderTextureInit(render_texture);
 }
 
 void EngineInitSystem(int width, int height, const char* name){
@@ -422,13 +428,35 @@ void EngineLoop(){
 
 void EngineDrawFrame(){
 
+    int temp;
+
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
     if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
         printf("failed to begin recording command buffer!");
         exit(1);
     }
+
+    display_draw = 0;
+
+    RenderTextureBeginRendering(render_texture, commandBuffers[imageIndex]);
+
+    temp = 0;
+
+    while(temp < objs.count){
+        if(objs.go[temp]->obj_type == ENGINE_GAME_OBJECT_TYPE_3D)
+            GameObjectDraw(objs.go[temp]);
+
+        temp ++;
+    }
+
+    RenderTextureEndRendering(commandBuffers[imageIndex]);
+
+    //ImageWriteFile(imageIndex);
+
+    display_draw = 1;
 
     VkRenderPassBeginInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -438,27 +466,25 @@ void EngineDrawFrame(){
     renderPassInfo.renderArea.offset.y = 0;
     renderPassInfo.renderArea.extent = *(VkExtent2D*)&swapChainExtent;
 
+    VkClearValue clearValues[2];
 
-    VkClearValue* clearColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
-    clearColor->color.float32[0] = 0.8f;
-    clearColor->color.float32[1] = 0.1f;
-    clearColor->color.float32[2] = 0.1f;
-    clearColor->color.float32[3] = 1.0f;
-    VkClearValue* depthColor = (VkClearValue *) calloc(1, sizeof(VkClearValue));
-    depthColor->depthStencil.depth = 1.0f;
-    depthColor->depthStencil.stencil = 0;
-    VkClearValue clearValues[] = {
-        *clearColor,
-        *depthColor
-    };
+    clearValues[0].color.float32[0] = 0.8f;
+    clearValues[0].color.float32[1] = 0.1f;
+    clearValues[0].color.float32[2] = 0.1f;
+    clearValues[0].color.float32[3] = 1.0f;
+    clearValues[1].depthStencil.depth = 1.0f;
+    clearValues[1].depthStencil.stencil = 0;
+
     renderPassInfo.clearValueCount = 2;
     renderPassInfo.pClearValues = clearValues;
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    int temp = 0;
+    temp = 0;
 
     while(temp < objs.count){
+
+        //if(objs.go[temp]->obj_type == ENGINE_GAME_OBJECT_TYPE_3D)
         GameObjectDraw(objs.go[temp]);
 
         temp ++;
@@ -470,11 +496,6 @@ void EngineDrawFrame(){
         printf("failed to record command buffer!");
         exit(1);
     }
-
-    free(clearColor);
-    clearColor = NULL;
-    free(depthColor);
-    depthColor = NULL;
 
 }
 
@@ -557,6 +578,9 @@ void EngineCleanUp(){
         e_var_lights = NULL;
         e_var_num_lights = 0;
     }
+
+    RenderTextureDestroy(render_texture);
+    free(render_texture);
 
     vkDestroyDevice(e_device, NULL);
 

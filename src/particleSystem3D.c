@@ -45,7 +45,7 @@ void Particle3DFind(ParticleObject3D *particle){
 void Particle3DDefaultUpdate(ParticleObject3D* particle){
 
 
-    if(particle->go.graphObj.local.descriptors == NULL)
+    if(particle->go.graphObj.blueprints.descriptors == NULL)
         return;
 
     if(particle->num_parts == 0)
@@ -83,7 +83,6 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     BuffersUpdateVertex(vParam);
 
     Camera3D* cam = (Camera3D*) cam3D;
-    void* data;
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
@@ -93,9 +92,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(e_device, particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-    memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device,  particle->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(particle->go.graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
 
 }
 
@@ -106,7 +103,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
     for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
 
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].pipeline);
 
         PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
@@ -118,7 +115,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
 
         vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout[i], 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].layout, 0, 1, &go->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
 
         switch(settings->drawType){
             case 0:
@@ -142,7 +139,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     GameObjectSetRecreateFunc(particle, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject3DDestroy);
 
-    particle->go.graphObj.local.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
+    particle->go.graphObj.blueprints.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
@@ -156,7 +153,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
     particle->particles = (Particle3D*) calloc(particle->num_parts, sizeof(Particle3D));
 
-    BuffersAddUniformObject(&particle->go.graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&particle->go.graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
 
     particle->go.images = calloc(1, sizeof(GameObjectImage));
 
@@ -169,9 +166,9 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    TextureImageAdd(&particle->go.graphObj.local, particle->go.images);
+    TextureImageAdd(&particle->go.graphObj.blueprints, particle->go.images);
 
-    GraphicsObjectCreateDrawItems(&particle->go.graphObj);
+    GraphicsObjectCreateDrawItems(&particle->go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -191,7 +188,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
 
     GameObject3DAddSettingPipeline(particle, &setting);
 
-    PipelineCreateGraphics(&particle->go.graphObj);
+    PipelineCreateGraphics(&particle->go.graphObj, false);
 
     particle->num_parts = 0;
 }

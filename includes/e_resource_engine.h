@@ -19,6 +19,8 @@ extern void* presentQueue;
 
 extern void* surface;
 
+extern void *render_texture;
+
 extern void* swapChain;
 extern void** swapChainImages;
 extern void** swapChainImageViews;
@@ -50,6 +52,7 @@ extern uint32_t imageIndex;
 extern uint32_t extensionCount;
 extern uint32_t imagesCount;
 extern uint32_t glfwExtensionCount;
+extern uint32_t display_draw;
 
 extern bool framebufferResized;
 extern bool framebufferwasResized;

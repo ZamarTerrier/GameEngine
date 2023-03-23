@@ -22,7 +22,7 @@ int BuffersCreateIndexInst(indexParam* ind);
 int BuffersCreateIndex(indexParam* ind);
 int BuffersUpdateIndex(indexParam* ind);
 
-void BuffersCreateUniform(UniformStruct* uniform, int size);
+void BuffersCreateUniform(UniformStruct* uniform);
 
 uint32_t findMemoryType(uint32_t typeFilter, uint32_t properties);
 
@@ -30,7 +30,9 @@ void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** bu
 
 void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size);
 
-void BuffersAddUniformObject(localParam* param, uint64_t size, uint32_t flags);
-void BuffersRecreateUniform(localParam* param);
+void BuffersAddUniformObject(Blueprints* blueprints, uint64_t size, uint32_t flags);
+void BuffersAddUniformShadow(BluePrintDescriptor *descriptor, uint64_t size, uint32_t flags);
+
+void BuffersRecreateUniform(Blueprints* blueprints);
 
 #endif // BUFFERS_H

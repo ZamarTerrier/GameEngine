@@ -10,7 +10,7 @@ extern "C"
 #endif
 
 typedef struct{
-    localParam local;
+    Blueprints blueprints;
     GraphicItems gItems;
     aboutShader aShader;
     bool lock;
@@ -22,7 +22,7 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type);
 void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t type_v_size, uint32_t type_i_size);
 void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount);
 
-void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj);
+void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj, bool with_shadow);
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj);
 void GraphicsObjectClean(GraphicsObject* graphObj);
 void GraphicsObjectDestroy(GraphicsObject* graphObj);

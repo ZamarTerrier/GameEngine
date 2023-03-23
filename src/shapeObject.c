@@ -13,14 +13,8 @@
 
 void ShapeObjectDefaultUpdate(GameObject2D* go) {
 
-    if(go->graphObj.local.descriptors == NULL)
+    if(go->graphObj.blueprints.descriptors == NULL)
         return;
-
-    void* data;
-
-    Camera2D* cam = (Camera2D*) cam2D;
-
-    ShaderDescriptor* sBuffer = go->graphObj.local.descriptors;
 
     TransformBuffer2D tbo;
 
@@ -28,9 +22,7 @@ void ShapeObjectDefaultUpdate(GameObject2D* go) {
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
-    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
-    memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
 
     ImageBufferObjects ibo;
     ibo.origin = go->transform.img.origin;
@@ -40,9 +32,7 @@ void ShapeObjectDefaultUpdate(GameObject2D* go) {
     ibo.rotation.x = 0;
     ibo.rotation.y = 0;
 
-    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
-    memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 1, &ibo, sizeof(ibo));
 }
 
 void ShapeObjectCreateQuad(ShapeObject *so, QuadParams *param)
@@ -271,8 +261,8 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
             break;
     }
 
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
     so->go.image = calloc(1, sizeof(GameObjectImage));
@@ -284,7 +274,7 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         memcpy(so->go.image->path, dParam.diffuse, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        TextureImageAdd(&so->go.graphObj.local, so->go.image);
+        TextureImageAdd(&so->go.graphObj.blueprints, so->go.image);
     }
 
     if(strlen(dParam.specular) != 0)
@@ -294,10 +284,10 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         memcpy(so->go.image->path, dParam.specular, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        TextureImageAdd(&so->go.graphObj.local, so->go.image);
+        TextureImageAdd(&so->go.graphObj.blueprints, so->go.image);
     }
 
-    GraphicsObjectCreateDrawItems(&so->go.graphObj);
+    GraphicsObjectCreateDrawItems(&so->go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -320,5 +310,5 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
 
     GameObject2DAddSettingPipeline(so, &setting);
 
-    PipelineCreateGraphics(&so->go.graphObj);
+    PipelineCreateGraphics(&so->go.graphObj, false);
 }

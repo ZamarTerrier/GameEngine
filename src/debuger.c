@@ -36,7 +36,7 @@ void DestroyDebugUtilsMessengerEXT(void* arg, void* debugMessenger, const EdAllo
 }
 
 
-void *thread_f(const char *text) //функция для вычисления элемента матрицы
+void *thread_f(const char *text)
 {
     printf("validation layer : %s\n", text);
 }

@@ -16,6 +16,8 @@ void *e_var_current_entry = NULL;
 void* cam2D;
 void* cam3D;
 
+SomeDirLight some_light;
+
 char *rootDirPath;
 
 void *e_var_images;

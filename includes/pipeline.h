@@ -8,7 +8,7 @@
 #include "graphicsObject.h"
 
 #include "tools.h"
-#include "bindDesciption.h"
+#include "e_descriptor.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -17,7 +17,7 @@ extern "C"
 
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *setting);
 
-void PipelineCreateGraphics(GraphicsObject* graphObj);
+void PipelineCreateGraphics(GraphicsObject* graphObj, bool with_shadow);
 
 void PipelineCreateRenderPass();
 

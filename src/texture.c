@@ -1,5 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "texture.h"
 
@@ -7,6 +8,9 @@
 
 #include "stb_image.h"
 #include "stb_image_resize.h"
+#include "stb_image_write.h"
+
+#include "render_texture.h"
 
 #include "buffers.h"
 
@@ -14,6 +18,37 @@
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
+
+int ImageWriteFile(uint32_t indx)
+{
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    RenderTexture *render = render_texture;
+
+    uint32_t width = 2048, height = 2048;
+
+    VkDeviceSize bufferSize = width * height * 4;
+
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
+    ToolsTransitionImageLayout(render->frames[indx].image, render->m_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsCopyBufferToImage(stagingBuffer, render->frames[indx].image, width, height);
+    ToolsTransitionImageLayout(render->frames[indx].image, render->m_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    char *data;
+
+    if(vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data) != VK_SUCCESS){
+         stbi_write_png("/home/ilia/temp.png", width, height, 4, data, width * 4);
+         vkUnmapMemory(e_device, stagingBufferMemory);
+    }
+
+    vkDestroyBuffer(e_device, stagingBuffer, NULL);
+    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+
+    return 0;
+}
 
 int ImageLoadFile(ImageFileData *data, uint32_t from_file)
 {
@@ -203,7 +238,7 @@ Texture2D *TextureFindTexture(char *path)
     return NULL;
 }
 
-int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, bool from_file) {
+int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, bool from_file) {
 
     Texture2D *temp_tex;
 
@@ -339,15 +374,20 @@ void* TextureCreateImageView(void* image, uint32_t format, uint32_t aspectFlags)
     return imageView;
 }
 
-void TextureCreateSampler(Texture2D *texture) {
+void TextureCreateSampler(void *sampler, uint32_t texture_type) {
 
     VkSamplerCreateInfo samplerInfo = {};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    if(texture->textureType == VK_FORMAT_R8G8B8A8_SRGB)
+
+    if(texture_type == VK_FORMAT_R8G8B8A8_SRGB)
     {
         samplerInfo.magFilter = VK_FILTER_LINEAR;
         samplerInfo.minFilter = VK_FILTER_LINEAR;
+    }else{
+        samplerInfo.magFilter = VK_FILTER_NEAREST;
+        samplerInfo.minFilter = VK_FILTER_NEAREST;
     }
+
     samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -366,21 +406,21 @@ void TextureCreateSampler(Texture2D *texture) {
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = 0.0f;
 
-    if (vkCreateSampler(e_device, &samplerInfo, NULL, &texture->textureSampler) != VK_SUCCESS) {
+    if (vkCreateSampler(e_device, &samplerInfo, NULL, sampler) != VK_SUCCESS) {
         printf("failed to create texture sampler!");
         exit(1);
     }
 }
 
-void TextureArrayInit(localParam *local, uint32_t size)
+void TextureArrayInit(Blueprints *blueprints, uint32_t size)
 {
-    if(local->descrCount + 1 > MAX_UNIFORMS)
+    if(blueprints->count + 1 > MAX_UNIFORMS)
     {
         printf("Слишком много декрипторов!\n");
         return;
     }
 
-    ShaderDescriptor *descriptor = &local->descriptors[local->descrCount];
+    BluePrintDescriptor *descriptor = &blueprints->descriptors[blueprints->count];
 
     descriptor->descrType = ENGINE_DESCRIPTOR_TYPE_IMAGE_SAMPLER;
     descriptor->descrCount = 0;
@@ -388,15 +428,31 @@ void TextureArrayInit(localParam *local, uint32_t size)
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
-ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image){
+void TextureShadowImageAdd(Blueprints *blueprints)
+{
+    BluePrintDescriptor *descriptor = &blueprints->descriptors[blueprints->count];
 
-    if(local->descrCount + 1 > MAX_UNIFORMS)
+    descriptor->texture = calloc(1, sizeof(Texture2D));
+    descriptor->descrType = 0x20;
+    descriptor->descrCount = 1;
+    descriptor->size = 1;
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    Texture2D *texture = descriptor->texture;
+    texture->generated = false;
+
+    blueprints->count ++;
+}
+
+ShaderDescriptor *TextureImageAdd(Blueprints *blueprints, GameObjectImage *image){
+
+    if(blueprints->count + 1 > MAX_UNIFORMS)
     {
         printf("Слишком много декрипторов!\n");
         return;
     }
 
-    ShaderDescriptor *descriptor = &local->descriptors[local->descrCount];
+    BluePrintDescriptor *descriptor = &blueprints->descriptors[blueprints->count];
 
     descriptor->image = image;
 
@@ -424,12 +480,12 @@ ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image){
     descriptor->size = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    local->descrCount ++;
+    blueprints->count ++;
 
-    return &local->descriptors[local->descrCount - 1];
+    return &blueprints->descriptors[blueprints->count - 1];
 }
 
-void TextureCreate(ShaderDescriptor *descriptor, GameObjectImage *image, bool from_file){
+void TextureCreate(BluePrintDescriptor *descriptor, GameObjectImage *image, bool from_file){
 
     int res = TextureImageCreate(image, descriptor, from_file);
 
@@ -442,7 +498,7 @@ void TextureCreate(ShaderDescriptor *descriptor, GameObjectImage *image, bool fr
         texture->generated = false;
 
         TextureCreateTextureImageView(texture);
-        TextureCreateSampler(texture);
+        TextureCreateSampler(&texture->textureSampler, texture->textureType);
 
         descriptor->texture = texture;
 
@@ -452,7 +508,7 @@ void TextureCreate(ShaderDescriptor *descriptor, GameObjectImage *image, bool fr
 
 }
 
-void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height)
+void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height)
 {
     descriptor->texture = calloc(1, sizeof(Texture2D));
 
@@ -465,11 +521,11 @@ void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t format, uint32
 
     TextureCreateEmpty(texture);
     TextureCreateTextureImageView(texture);
-    TextureCreateSampler(texture);
+    TextureCreateSampler(&texture->textureSampler, texture->textureType);
 
 }
 
-void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset)
+void TextureUpdate(BluePrintDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset)
 {
     Texture2D *texture = descriptor->texture;
 
@@ -495,7 +551,7 @@ void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_da
 }
 
 
-void TextureSetTexture(ShaderDescriptor *descriptor, const char* path){
+void TextureSetTexture(BluePrintDescriptor *descriptor, const char* path){
 
     ImageDestroyTexture(descriptor->texture);
 

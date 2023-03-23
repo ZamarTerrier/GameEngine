@@ -21,6 +21,7 @@ typedef enum{
     ENGINE_TEXTURE_FLAG_URGB = 0x2,
 } EngineTextureFlags;
 
+int ImageWriteFile(uint32_t indx);
 int ImageLoadFile(ImageFileData *data, uint32_t from_file);
 int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, uint32_t tile_x, uint32_t tile_y, uint32_t tile_size);
 int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
@@ -29,20 +30,24 @@ Texture2D *TextureFindTexture(char *image);
 
 void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, void** image, void** imageMemory);
 
-int TextureImageCreate(GameObjectImage *image, ShaderDescriptor *descriptor, bool from_file);
+int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, bool from_file);
 
+void TextureCreateEmptyDefault(Texture2D *texture);
+
+void TextureCreateTextureImageView(Texture2D *texture);
 void* TextureCreateImageView(void* image, uint32_t format, uint32_t aspectFlags);
 
-void TextureCreateSampler(Texture2D *texture);
+void TextureCreateSampler(void *sampler, uint32_t texture_type);
 
-ShaderDescriptor *TextureImageAdd(localParam *local, GameObjectImage *image);
+void TextureShadowImageAdd(Blueprints *blueprints);
+ShaderDescriptor *TextureImageAdd(Blueprints *blueprints, GameObjectImage *image);
 
-void TextureCreate( ShaderDescriptor *descriptor, GameObjectImage *image, bool from_file);
-void TextureCreateSpecific(ShaderDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height);
+void TextureCreate( BluePrintDescriptor *descriptor, GameObjectImage *image, bool from_file);
+void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height);
 
-void TextureUpdate(ShaderDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset);
+void TextureUpdate(BluePrintDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset);
 
-void TextureSetTexture(ShaderDescriptor *descriptor, const char* path);
+void TextureSetTexture(BluePrintDescriptor *descriptor, const char* path);
 
 void ImageDestroyTexture(Texture2D* texture);
 

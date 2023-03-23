@@ -18,14 +18,14 @@
 
 void GameObject3DDefaultUpdate(GameObject3D* go) {
 
-    if(go->graphObj.local.descriptors == NULL)
+    if(go->graphObj.blueprints.descriptors == NULL)
         return;
 
     Camera3D* cam = (Camera3D*) cam3D;
-    void* data;
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
+    vec3 zero = {0.0f, 0.0f, 0.0f};
 
     go->transform.model = m4_translate_mat(m4_mult(m4_scale_mat(go->transform.scale), m4_rotation_matrix(go->transform.rotation)), go->transform.position);
 
@@ -34,95 +34,66 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
-    vkMapMemory(e_device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-    memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device, go->graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
 
+    LightSpaceMatrix lsm;
+    //mbo.model = edenMat;
+    mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
+    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, 0.0001, MAX_CAMERA_VIEW_DISTANCE);
+
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
+    DescriptorUpdate(&go->graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));
 
     LightBuffer3D lbo = {};
     memset(&lbo, 0, sizeof(LightBuffer3D));
 
-    if(e_var_num_lights > 0 && go->enable_light)
-    {
-        LightObject **lights = e_var_lights;
+    LightObjectFillLights(&lbo, go->enable_light);
 
-        for(int i=0;i < e_var_num_lights; i++)
-        {
-
-            switch (lights[i]->type) {
-                case ENGINE_LIGHT_TYPE_DIRECTIONAL:
-                    lbo.dir.ambient = lights[i]->ambient;
-                    lbo.dir.diffuse = lights[i]->diffuse;
-                    lbo.dir.specular = lights[i]->specular;
-                    lbo.dir.direction = lights[i]->direction;
-                    break;
-                case ENGINE_LIGHT_TYPE_POINT:
-                    lbo.num_points++;
-
-                    lbo.lights[lbo.num_points - 1].position = lights[i]->position;
-                    lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
-                    lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
-                    lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
-                    lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
-                    lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
-                    lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
-
-                    break;
-                case ENGINE_LIGHT_TYPE_SPOT:
-                    lbo.num_spots++;
-
-                    lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
-                    lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
-                    lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
-                    lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
-                    lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
-                    lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
-                    lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
-                    lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
-                    lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    lbo.light_react = go->enable_light;
-
-    vkMapMemory(e_device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
-    memcpy(data, &lbo, sizeof(lbo));
-    vkUnmapMemory(e_device, go->graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(go->graphObj.blueprints.descriptors, 2, &lbo, sizeof(lbo));
 }
 
 void GameObject3DDefaultDraw(GameObject3D* go){
 
-    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){//go->graphObj.gItems.pipelineCount; i++){
+    if(display_draw)
+    {
+        for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){//go->graphObj.gItems.pipelineCount; i++){
 
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.graphicsPipeline[i]);
+            PipelineSetting *settings = &go->graphObj.gItems.settings[i];
 
-        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+            vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].pipeline);
 
-        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+            vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
+            vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+
+            vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].layout, 0, 1, &go->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
+
+            VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
+            VkDeviceSize offsets[] = {0};
+
+            vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+            switch(settings->drawType){
+                case 0:
+                    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                    break;
+                case 1:
+                    vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+                    break;
+            }
+
+        }
+    }else{
+        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.shadow.pipeline);
+
+        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.shadow.layout, 0, 1, &go->graphObj.gItems.shadow_descr.descr_sets[imageIndex], 0, NULL);
 
         VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
         VkDeviceSize offsets[] = {0};
 
         vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelineLayout[i], 0, 1, &go->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
-
-        switch(settings->drawType){
-            case 0:
-                vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
-                break;
-            case 1:
-                vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
-                break;
-        }
-
+        vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
     }
 
 }
@@ -157,9 +128,9 @@ void GameObject3DRecreate(GameObject3D* go){
         settings[i].viewport.width = WIDTH;
     }
 
-    BuffersRecreateUniform(&go->graphObj.local);
-    GraphicsObjectCreateDrawItems(&go->graphObj);
-    PipelineCreateGraphics(&go->graphObj);
+    BuffersRecreateUniform(&go->graphObj.blueprints);
+    GraphicsObjectCreateDrawItems(&go->graphObj, false);
+    PipelineCreateGraphics(&go->graphObj, false);
 }
 
 void GameObject3DDestroy(GameObject3D* go){
@@ -198,6 +169,8 @@ void GameObject3DInit(GameObject3D *go){
     GameObjectSetCleanFunc(go, (void *)GameObject3DClean);
     GameObjectSetRecreateFunc(go, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(go, (void *)GameObject3DDestroy);
+
+    go->self.obj_type = ENGINE_GAME_OBJECT_TYPE_3D;
 
     Transform3DInit(&go->transform);
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_3D_OBJECT);

@@ -365,7 +365,6 @@ float v3_point_tri_dist(const vec3 *P, const vec3 *x0, const vec3 *B, const vec3
     return dist;
 }
 
-
 vec3 v3_slerp(vec3 start, vec3 end, float percent)
 {
   float dot = v3_dot(start, end);
@@ -734,6 +733,7 @@ mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
   float tan_half_fov = tanf((fov_degrees * (M_PI / 180)) / 2.0);
 
   mat4 matrix;
+  memset(&matrix, 0, sizeof(mat4));
 
   matrix.m[0][0] = 1.0f / (tan_half_fov * aspect_ratio);
   matrix.m[0][1] = 0.0f;
@@ -756,6 +756,26 @@ mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
   matrix.m[3][3] = 0.0f;
 
   return matrix;
+}
+
+mat4 m4_ortho(float top, float bottom, float left, float right, float zFar, float zNear)
+{
+    float rl = 1.0f / (right  - left);
+    float tb = 1.0f / (top    - bottom);
+    float fn =-1.0f / (zFar - zNear);
+
+    mat4 matrix;
+    memset(&matrix, 0, sizeof(mat4));
+
+    matrix.m[0][0] = 2.0 / rl;
+    matrix.m[1][1] = 2.0 / tb;
+    matrix.m[2][2] = -fn;
+    matrix.m[3][0] = -(right + left) * rl;
+    matrix.m[3][1] = -(top + bottom) * tb;
+    matrix.m[3][2] = zNear * fn;
+    matrix.m[3][3] = 1.0f;
+
+    return matrix;
 }
 
 mat4 mat4_mult_transform(mat4 m1, mat4 m2)

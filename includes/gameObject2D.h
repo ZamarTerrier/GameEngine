@@ -7,7 +7,7 @@
 #include "graphicsObject.h"
 #include "transform.h"
 
-#include "bindDesciption.h"
+#include "e_descriptor.h"
 #include "pipeline.h"
 #include "texture.h"
 

@@ -29,6 +29,8 @@ typedef struct{
     char type;
 }LightObject;
 
+void LightObjectFillLights(LightBuffer3D *lbo, bool enable_light);
+
 void LightObjectInit(LightObject *lo, ELightType type);
 
 void LightObjectSetPosition(LightObject *lo, float x, float y, float z);

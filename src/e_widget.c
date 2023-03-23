@@ -23,9 +23,77 @@ bool e_var_wasReleased = true, e_var_leftMouse = false;
 EWidget* e_var_sellected = NULL;
 EWidget* e_var_last_sellected = NULL;
 
-void WidgetUniformUpdate(EWidget *ew){
+void WidgetUpdateScissor(EWidget *widget, EIRect2D *scissor, vec2 *parent_pos, vec2 *offset)
+{
 
-    void* data;
+    vec2 parentSize = {WIDTH, HEIGHT};
+
+    EWidget* parent = widget->parent;
+
+    if(parent != NULL)
+    {
+        *parent_pos = parent->position;
+        parentSize = parent->scale;
+
+        while(parent->parent != NULL){
+
+            parent = parent->parent;
+
+            *offset = v2_div(parent->offset, (vec2){ WIDTH, HEIGHT});
+
+            vec2 temp = v2_add(parent->position, *offset);
+
+            if(parent_pos->x < temp.x)
+            {
+                parentSize.x = parentSize.x - (temp.x - parent_pos->x) / 2;
+                parent_pos->x = temp.x;
+            }
+
+            if(parent_pos->y < temp.y)
+            {
+                parentSize.y = parentSize.y - (temp.y - parent_pos->y) / 2;
+                parent_pos->y = temp.y;
+            }
+
+            if(parent_pos->x + (parentSize.x * 2) > parent->position.x + (parent->scale.x * 2))
+            {
+                parent_pos->x = parent->position.x;
+                parentSize.x = parent->scale.x;
+            }
+
+            if(parent_pos->y + (parentSize.y * 2) > parent->position.y + (parent->scale.y * 2))
+            {
+                parent_pos->y = parent->position.y;
+                parentSize.y = parent->scale.y;
+            }
+
+        }
+
+    }
+
+    scissor->offset.x = parent_pos->x * WIDTH;
+
+    if(scissor->offset.x < 0)
+        scissor->offset.x = 0;
+
+    scissor->offset.y = parent_pos->y * HEIGHT;
+
+    if(scissor->offset.y < 0)
+        scissor->offset.y = 0;
+
+    scissor->extent.height = parentSize.y * 2 * HEIGHT;
+
+    if(scissor->extent.height > HEIGHT)
+        scissor->extent.height = 0;
+
+    scissor->extent.width = parentSize.x * 2 * WIDTH;
+
+    if(scissor->extent.width > WIDTH)
+        scissor->extent.width = 0;
+
+}
+
+void WidgetUniformUpdate(EWidget *ew){
 
     GUIBuffer gb = {};
     gb.offset.x = ew->offset.x > 0 ? ew->offset.x / (WIDTH) : 0;
@@ -47,9 +115,7 @@ void WidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
-    memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(ew->go.graphObj.blueprints.descriptors, 0, &gb, sizeof(gb));
 
     MaskObjectBuffer mbo = {};
 
@@ -79,10 +145,7 @@ void WidgetUniformUpdate(EWidget *ew){
         mbo.size = 0;
     }
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-    memcpy(data, &mbo, sizeof(mbo));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(ew->go.graphObj.blueprints.descriptors, 1, &mbo, sizeof(mbo));
 }
 
 void WidgetSetParent(EWidget* ew, EWidget* parent){
@@ -176,8 +239,8 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     if(dParam != NULL)
         GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam->vertShader, dParam->fragShader);
 
-    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&ew->go.graphObj.local, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&ew->go.graphObj.blueprints, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&ew->go.graphObj.blueprints, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     ew->go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -191,9 +254,9 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-    TextureImageAdd(&ew->go.graphObj.local, ew->go.image);
+    TextureImageAdd(&ew->go.graphObj.blueprints, ew->go.image);
 
-    GraphicsObjectCreateDrawItems(&ew->go.graphObj);
+    GraphicsObjectCreateDrawItems(&ew->go.graphObj, false);
 
     PipelineSetting setting = {};
 
@@ -223,7 +286,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     ew->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
     ew->callbacks.size = 0;
 
-    PipelineCreateGraphics(&ew->go.graphObj);
+    PipelineCreateGraphics(&ew->go.graphObj, false);
 }
 
 void WidgetConnect(EWidget* widget, int trigger, widget_callback callback, void* args){

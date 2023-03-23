@@ -61,8 +61,8 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     SpriteObjectCreateQuad(so);
 
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&so->go.graphObj.local, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     so->go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -75,9 +75,9 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    TextureImageAdd(&so->go.graphObj.local, so->go.image);
+    TextureImageAdd(&so->go.graphObj.blueprints, so->go.image);
 
-    GraphicsObjectCreateDrawItems(&so->go.graphObj);
+    GraphicsObjectCreateDrawItems(&so->go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -94,5 +94,5 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     GameObject2DAddSettingPipeline(so, &setting);
 
-    PipelineCreateGraphics(&so->go.graphObj);
+    PipelineCreateGraphics(&so->go.graphObj, false);
 }

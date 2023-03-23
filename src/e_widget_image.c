@@ -10,10 +10,6 @@
 
 void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
 
-    void* data;
-
-    double xpos, ypos;
-
     vec2 offset = {0, 0};
     if(img->widget.parent != NULL){
         offset = v2_div(img->widget.parent->offset, (vec2){ WIDTH, HEIGHT});
@@ -23,77 +19,11 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
         img->widget.position = v2_add(img->widget.go.transform.position, v2_divs(img->widget.go.transform.scale, 2));
     }
 
-
     PipelineSetting *settings =  img->widget.go.graphObj.gItems.settings;
 
-    vec2 parentPos = {0, 0};
+    vec2 parent_pos = {0, 0};
 
-    vec2 parentSize = {WIDTH, HEIGHT};
-
-    EWidget* parent = img->widget.parent;
-
-    if(parent != NULL)
-    {
-        parentPos = parent->position;
-        parentSize = parent->scale;
-
-        while(parent->parent != NULL){
-
-            parent = parent->parent;
-
-            offset = v2_div(parent->offset, (vec2){ WIDTH, HEIGHT});
-
-            vec2 temp = v2_add(parent->position, offset);
-
-            if(parentPos.x < temp.x)
-            {
-                parentSize.x = parentSize.x - (temp.x - parentPos.x) / 2;
-                parentPos.x = temp.x;
-            }
-
-            if(parentPos.y < temp.y)
-            {
-                parentSize.y = parentSize.y - (temp.y - parentPos.y) / 2;
-                parentPos.y = temp.y;
-            }
-
-            if(parentPos.x + (parentSize.x * 2) > parent->position.x + (parent->scale.x * 2))
-            {
-                parentPos.x = parent->position.x;
-                parentSize.x = parent->scale.x;
-            }
-
-            if(parentPos.y + (parentSize.y * 2) > parent->position.y + (parent->scale.y * 2))
-            {
-                parentPos.y = parent->position.y;
-                parentSize.y = parent->scale.y;
-            }
-
-        }
-
-    }
-
-    settings[0].scissor.offset.x = parentPos.x * WIDTH;
-
-    if(settings[0].scissor.offset.x < 0)
-        settings[0].scissor.offset.x = 0;
-
-    settings[0].scissor.offset.y = parentPos.y * HEIGHT;
-
-    if(settings[0].scissor.offset.y < 0)
-        settings[0].scissor.offset.y = 0;
-
-    settings[0].scissor.extent.height = parentSize.y * 2 * HEIGHT;
-
-    if(settings[0].scissor.extent.height > 2000)
-        settings[0].scissor.extent.height = 0;
-
-    settings[0].scissor.extent.width = parentSize.x * 2 * WIDTH;
-
-    if(settings[0].scissor.extent.width > 2000)
-        settings[0].scissor.extent.width = 0;
-
-    ShaderDescriptor* sBuffer = img->widget.go.graphObj.local.descriptors;
+    WidgetUpdateScissor(&img->widget, &settings[0].scissor, &parent_pos, &offset);
 
     TransformBuffer2D tbo;
 
@@ -101,9 +31,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     tbo.rotation = img->widget.go.transform.rotation;
     tbo.scale = img->widget.go.transform.scale;
 
-    vkMapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(tbo), 0, &data);
-    memcpy(data, &tbo, sizeof(tbo));
-    vkUnmapMemory(e_device, sBuffer[0].uniform->uniformBuffersMemory[imageIndex]);
+    DescriptorUpdate(img->widget.go.graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
 
     ImageBufferObjects ibo;
     memset(&ibo, 0, sizeof(ImageBufferObjects));
@@ -111,10 +39,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     ibo.scale.x = 1.0f;
     ibo.scale.y = 1.0f;
 
-    vkMapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(ibo), 0, &data);
-    memcpy(data, &ibo, sizeof(ibo));
-    vkUnmapMemory(e_device, sBuffer[1].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(img->widget.go.graphObj.blueprints.descriptors, 1, &ibo, sizeof(ibo));
 }
 
 void ImageWidgetCreateQuad(EWidgetImage *wi)
@@ -173,8 +98,8 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
 
     ImageWidgetCreateQuad(img);
 
-    BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&img->widget.go.graphObj.local, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&img->widget.go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&img->widget.go.graphObj.blueprints, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     img->widget.go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -188,9 +113,9 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    TextureImageAdd(&img->widget.go.graphObj.local, img->widget.go.image);
+    TextureImageAdd(&img->widget.go.graphObj.blueprints, img->widget.go.image);
 
-    GraphicsObjectCreateDrawItems(&img->widget.go.graphObj);
+    GraphicsObjectCreateDrawItems(&img->widget.go.graphObj, false);
 
     PipelineSetting setting;
 
@@ -207,7 +132,7 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
 
     GameObject2DAddSettingPipeline(&img->widget.go, &setting);
 
-    PipelineCreateGraphics(&img->widget.go.graphObj);
+    PipelineCreateGraphics(&img->widget.go.graphObj, false);
 
     img->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 

@@ -40,7 +40,7 @@ void ModelDefaultDraw(ModelObject3D* mo){
 
             for(int p=0;p < model->graphObj.gItems.pipelineCount;p++)
             {
-                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.graphicsPipeline[p]);
+                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].pipeline);
 
                 PipelineSetting *settings = &model->graphObj.gItems.settings[p];
 
@@ -52,7 +52,7 @@ void ModelDefaultDraw(ModelObject3D* mo){
 
                 vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelineLayout[p], 0, 1, &model->graphObj.gItems.descriptorSets[imageIndex], 0, NULL);
+                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].layout, 0, 1, &model->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
 
                 switch(settings->drawType){
                     case 0:
@@ -74,7 +74,7 @@ void ModelDefaultUpdate(ModelObject3D* mo){
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
         {
-            if(mo->nodes[i].models[j].graphObj.local.descriptors == NULL)
+            if(mo->nodes[i].models[j].graphObj.blueprints.descriptors == NULL)
                 return;
 
             Camera3D* cam = (Camera3D*) cam3D;
@@ -90,71 +90,19 @@ void ModelDefaultUpdate(ModelObject3D* mo){
             mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
             mbo.proj.m[1][1] *= -1;
 
-
-            vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-            memcpy(data, &mbo, sizeof(mbo));
-            vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
+            DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
 
             InvMatrixsBuffer imb = {};
             memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
-            vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(imb), 0, &data);
-            memcpy(data, &imb, sizeof(imb));
-            vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[1].uniform->uniformBuffersMemory[imageIndex]);
+            DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 1, &imb, sizeof(imb));
 
             LightBuffer3D lbo = {};
             memset(&lbo, 0, sizeof(LightBuffer3D));
 
-            if(e_var_num_lights > 0 && mo->nodes[i].models[j].light_enable)
-            {
-                LightObject **lights = e_var_lights;
+            LightObjectFillLights(&lbo, mo->nodes[i].models[j].light_enable);
 
-                for(int i=0;i < e_var_num_lights; i++)
-                {
-
-                    switch (lights[i]->type) {
-                        case ENGINE_LIGHT_TYPE_DIRECTIONAL:
-                            lbo.dir.ambient = lights[i]->ambient;
-                            lbo.dir.diffuse = lights[i]->diffuse;
-                            lbo.dir.specular = lights[i]->specular;
-                            lbo.dir.direction = lights[i]->direction;
-                            break;
-                        case ENGINE_LIGHT_TYPE_POINT:
-                            lbo.num_points++;
-
-                            lbo.lights[lbo.num_points - 1].position = lights[i]->position;
-                            lbo.lights[lbo.num_points - 1].constant = lights[i]->constant;
-                            lbo.lights[lbo.num_points - 1].linear = lights[i]->linear;
-                            lbo.lights[lbo.num_points - 1].quadratic = lights[i]->quadratic;
-                            lbo.lights[lbo.num_points - 1].ambient = lights[i]->ambient;
-                            lbo.lights[lbo.num_points - 1].diffuse = lights[i]->diffuse;
-                            lbo.lights[lbo.num_points - 1].specular = lights[i]->specular;
-
-                            break;
-                        case ENGINE_LIGHT_TYPE_SPOT:
-                            lbo.num_spots++;
-
-                            lbo.lights[lbo.num_spots - 1].position = lights[i]->position;
-                            lbo.lights[lbo.num_spots - 1].constant = lights[i]->constant;
-                            lbo.lights[lbo.num_spots - 1].linear = lights[i]->linear;
-                            lbo.lights[lbo.num_spots - 1].quadratic = lights[i]->quadratic;
-                            lbo.lights[lbo.num_spots - 1].ambient = lights[i]->ambient;
-                            lbo.lights[lbo.num_spots - 1].diffuse = lights[i]->diffuse;
-                            lbo.lights[lbo.num_spots - 1].specular = lights[i]->specular;
-                            lbo.spots[lbo.num_spots - 1].direction =  lights[i]->direction;
-                            lbo.spots[lbo.num_spots - 1].cutOff = lights[i]->cutOff;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-
-            lbo.light_react = mo->nodes[i].models[j].light_enable;
-
-            vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
-            memcpy(data, &lbo, sizeof(lbo));
-            vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.local.descriptors[2].uniform->uniformBuffersMemory[imageIndex]);
+            DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 2, &lbo, sizeof(lbo));
         }
     }
 }
@@ -190,9 +138,9 @@ void ModelRecreate(ModelObject3D* mo){
                 settings[m].viewport.width = WIDTH;
             }
 
-            BuffersRecreateUniform(&model->graphObj.local);
-            GraphicsObjectCreateDrawItems(&model->graphObj);
-            PipelineCreateGraphics(&model->graphObj);
+            BuffersRecreateUniform(&model->graphObj.blueprints);
+            GraphicsObjectCreateDrawItems(&model->graphObj, false);
+            PipelineCreateGraphics(&model->graphObj, false);
         }
     }
 }
@@ -263,15 +211,15 @@ void ModelSetSelCameraEnable(void *obj, bool enable)
 
 void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
-    BuffersAddUniformObject(&model->graphObj.local, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.local, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.local, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    TextureImageAdd(&model->graphObj.local, model->diffuse);
-    TextureImageAdd(&model->graphObj.local, model->specular);
-    TextureImageAdd(&model->graphObj.local, model->normal);
+    TextureImageAdd(&model->graphObj.blueprints, model->diffuse);
+    TextureImageAdd(&model->graphObj.blueprints, model->specular);
+    TextureImageAdd(&model->graphObj.blueprints, model->normal);
 
-    GraphicsObjectCreateDrawItems(&model->graphObj);
+    GraphicsObjectCreateDrawItems(&model->graphObj, false);
 
     PipelineSetting setting;
 
@@ -293,7 +241,7 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     ModelAddSettingPipeline(model, setting);
 
-    PipelineCreateGraphics(&model->graphObj);
+    PipelineCreateGraphics(&model->graphObj, false);
 
     model->light_enable = false;
 

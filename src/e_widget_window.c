@@ -145,8 +145,6 @@ int WindowWidgetHideButton(EWidget* widget, void* entry, void *arg){
 
 void WindowWidgetUniformUpdate(EWidget *ew){
 
-    void* data;
-
     GUIBuffer gb = {};
     gb.offset.x = ew->offset.x > 0 ? ew->offset.x / (WIDTH) : 0;
     gb.offset.y = ew->offset.y > 0 ? ew->offset.y / (HEIGHT) : 0;
@@ -160,10 +158,7 @@ void WindowWidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    vkMapMemory(e_device, ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex], 0, sizeof(gb), 0, &data);
-    memcpy(data, &gb, sizeof(gb));
-    vkUnmapMemory(e_device,  ew->go.graphObj.local.descriptors[0].uniform->uniformBuffersMemory[imageIndex]);
-
+    DescriptorUpdate(ew->go.graphObj.blueprints.descriptors, 0, &gb, sizeof(gb));
 }
 
 void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
@@ -180,7 +175,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
     if(dParam != NULL)
         GraphicsObjectSetShadersPath(&widget->go.graphObj, dParam->vertShader, dParam->fragShader);
 
-    BuffersAddUniformObject(&widget->go.graphObj.local, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+    BuffersAddUniformObject(&widget->go.graphObj.blueprints, sizeof(GUIBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     widget->go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -194,9 +189,9 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
 
-    TextureImageAdd(&widget->go.graphObj.local, widget->go.image);
+    TextureImageAdd(&widget->go.graphObj.blueprints, widget->go.image);
 
-    GraphicsObjectCreateDrawItems(&widget->go.graphObj);
+    GraphicsObjectCreateDrawItems(&widget->go.graphObj, false);
 
     PipelineSetting setting = {};
 
@@ -224,7 +219,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
     widget->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
     widget->callbacks.size = 0;
 
-    PipelineCreateGraphics(&widget->go.graphObj);
+    PipelineCreateGraphics(&widget->go.graphObj, false);
 
     Transform2DSetScale(widget, size.x, size.y);
     Transform2DSetPosition(widget, position.x, position.y);

@@ -41,7 +41,7 @@ typedef struct{
     TextData textData;
 } TextObject;
 
-void TextImageMakeTexture(GameObject2D *go, TextData *tData, ShaderDescriptor *descriptor);
+void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor *descriptor);
 
 void TextObjectMakeLastText(TextObject *to);
 
