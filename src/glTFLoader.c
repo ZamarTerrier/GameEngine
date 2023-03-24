@@ -361,7 +361,6 @@ void SetupMeshState(glTFStruct *glTF, cgltf_data *model) {
 
                 for(int v=0;v < g_mesh->num_verts; v++)
                 {
-                    g_mesh->verts[v].color = (vec3){1,1,1};
                     g_mesh->verts[v].weight = (vec4){1,1,1,1};
                 }
 
@@ -644,6 +643,14 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
 
+          LightSpaceMatrix lsm;
+          //mbo.model = edenMat;
+          mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
+          mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
+
+          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
+          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));
+
           InvMatrixsBuffer imb = {};
           memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
@@ -652,14 +659,14 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           imb.size = glTF->num_join_mats;
 
-          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 1, &imb, sizeof(InvMatrixsBuffer));
+          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 2, &imb, sizeof(InvMatrixsBuffer));
 
           LightBuffer3D lbo = {};
           memset(&lbo, 0, sizeof(LightBuffer3D));
 
           LightObjectFillLights(&lbo, mo->nodes[i].models[j].light_enable);
 
-          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 2, &lbo, sizeof(lbo));
+          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 3, &lbo, sizeof(lbo));
       }
 
   }
@@ -747,6 +754,8 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
   GameObjectSetCleanFunc(mo, (void *)ModelClean);
   GameObjectSetRecreateFunc(mo, (void *)ModelRecreate);
   GameObjectSetDestroyFunc(mo, (void *)ModelglTFDestroy);
+
+  mo->self.obj_type = ENGINE_GAME_OBJECT_TYPE_3D;
 
   mo->obj = calloc(1, sizeof(glTFStruct));
 

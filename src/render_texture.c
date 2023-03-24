@@ -57,7 +57,7 @@ void RenderTextureInit(RenderTexture *render)
 {
     memset(render, 0, sizeof(RenderTexture));
 
-    render->m_format = VK_FORMAT_D16_UNORM;
+    render->m_format = findDepthFormat();
 
     render->frames = (RenderFrame*) calloc(imagesCount, sizeof(RenderFrame));
 

@@ -39,7 +39,7 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
         case ENGINE_VERTEX_TYPE_MODEL_OBJECT:
             graphObj->aShader.bindingDescription = &BindModel3DDescription;
             graphObj->aShader.attr = modelAttributeDescription;
-            graphObj->aShader.countAttr = 6;
+            graphObj->aShader.countAttr = 5;
             break;
         case ENGINE_VERTEX_TYPE_2D_PARTICLE:
             graphObj->aShader.bindingDescription = &BindParticle2DDescription;

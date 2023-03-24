@@ -155,9 +155,6 @@ void ParseSomeStruct(ModelObject3D *mo, ModelVertex3D *vertexs){
                     vertexs[3 * i + k].color.z = n[k][2];
                 }*/
 
-                vertexs[3 * i + k].color.x = 1.0f;
-                vertexs[3 * i + k].color.y = 1.0f;
-                vertexs[3 * i + k].color.z = 1.0f;
 
                 /**/
 

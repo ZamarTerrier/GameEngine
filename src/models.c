@@ -38,31 +38,46 @@ void ModelDefaultDraw(ModelObject3D* mo){
 
             ModelStruct *model = &mo->nodes[i].models[j];
 
-            for(int p=0;p < model->graphObj.gItems.pipelineCount;p++)
+
+            if(display_draw)
             {
-                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].pipeline);
+                for(int p=0;p < model->graphObj.gItems.pipelineCount;p++)
+                {
+                    vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].pipeline);
 
-                PipelineSetting *settings = &model->graphObj.gItems.settings[p];
+                    PipelineSetting *settings = &model->graphObj.gItems.settings[p];
 
-                vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-                vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                    vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
+                    vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+
+                    VkBuffer vertexBuffers[] = {model->graphObj.shape.vParam.vertexBuffer};
+                    VkDeviceSize offsets[] = {0};
+
+                    vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+                    vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].layout, 0, 1, &model->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
+
+                    switch(settings->drawType){
+                        case 0:
+                            vkCmdBindIndexBuffer(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                            vkCmdDrawIndexed(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                            break;
+                        case 1:
+                            vkCmdDraw(commandBuffers[imageIndex], model->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+                            break;
+                    }
+                }
+            }else{
+                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.shadow.pipeline);
+
+                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.shadow.layout, 0, 1, &model->graphObj.gItems.shadow_descr.descr_sets[imageIndex], 0, NULL);
 
                 VkBuffer vertexBuffers[] = {model->graphObj.shape.vParam.vertexBuffer};
                 VkDeviceSize offsets[] = {0};
 
                 vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-
-                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].layout, 0, 1, &model->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
-
-                switch(settings->drawType){
-                    case 0:
-                        vkCmdBindIndexBuffer(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                        vkCmdDrawIndexed(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
-                        break;
-                    case 1:
-                        vkCmdDraw(commandBuffers[imageIndex], model->graphObj.shape.vParam.verticesSize, 1, 0, 0);
-                        break;
-                }
+                vkCmdBindIndexBuffer(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                vkCmdDrawIndexed(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
             }
         }
     }
@@ -211,15 +226,18 @@ void ModelSetSelCameraEnable(void *obj, bool enable)
 
 void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
+    BuffersAddUniformShadow(&model->graphObj.blueprints.shadow_descr, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+
     BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     TextureImageAdd(&model->graphObj.blueprints, model->diffuse);
-    TextureImageAdd(&model->graphObj.blueprints, model->specular);
+    //TextureImageAdd(&model->graphObj.blueprints, model->specular);
     TextureImageAdd(&model->graphObj.blueprints, model->normal);
 
-    GraphicsObjectCreateDrawItems(&model->graphObj, false);
+    GraphicsObjectCreateDrawItems(&model->graphObj, true);
 
     PipelineSetting setting;
 
@@ -241,7 +259,7 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     ModelAddSettingPipeline(model, setting);
 
-    PipelineCreateGraphics(&model->graphObj, false);
+    PipelineCreateGraphics(&model->graphObj, true);
 
     model->light_enable = false;
 

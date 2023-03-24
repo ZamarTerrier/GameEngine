@@ -145,8 +145,8 @@ void PipelineMakePipeline(GraphicsObject *graphObj, PipelineSetting *setting, Pi
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Optional
-    pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptors.descr_set_layout; // Optional
+    pipelineLayoutInfo.setLayoutCount = 1; // Кол-во Дескирпторов для Юниформ баферов
+    pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.descriptors.descr_set_layout; // Дескирпторы для Юниформ баферов
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 
     if (vkCreatePipelineLayout(e_device, &pipelineLayoutInfo, NULL, &pipeline->layout) != VK_SUCCESS) {
@@ -240,8 +240,13 @@ void PipelineMakeShadowPipeline(GraphicsObject *graphObj, PipelineStruct *pipeli
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.logicOp = VK_LOGIC_OP_COPY;
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
+    colorBlending.blendConstants[0] = 0.0f;
+    colorBlending.blendConstants[1] = 0.0f;
+    colorBlending.blendConstants[2] = 0.0f;
+    colorBlending.blendConstants[3] = 0.0f;
     //---------------
     VkPipelineDepthStencilStateCreateInfo depthStencil = {};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -249,9 +254,9 @@ void PipelineMakeShadowPipeline(GraphicsObject *graphObj, PipelineStruct *pipeli
     depthStencil.depthWriteEnable = graphObj->gItems.perspective;
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f; // Optional
     depthStencil.maxDepthBounds = 1.0f; // Optional
-    depthStencil.stencilTestEnable = VK_FALSE;
 
     //---------------
     //Мультисэмплинг
@@ -292,9 +297,9 @@ void PipelineMakeShadowPipeline(GraphicsObject *graphObj, PipelineStruct *pipeli
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Optional
-    pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.shadow_descr.descr_set_layout; // Optional
-    pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+    pipelineLayoutInfo.setLayoutCount = 1; // Кол-во Дескирпторов для Юниформ баферов
+    pipelineLayoutInfo.pSetLayouts = &graphObj->gItems.shadow_descr.descr_set_layout; // Дескирпторы для Юниформ баферов
+    pipelineLayoutInfo.pushConstantRangeCount = 0; // Кол-во Констант, отправляемых в шейдер
 
     if (vkCreatePipelineLayout(e_device, &pipelineLayoutInfo, NULL, &pipeline->layout) != VK_SUCCESS) {
         printf("failed to create pipeline layout!");
@@ -303,7 +308,6 @@ void PipelineMakeShadowPipeline(GraphicsObject *graphObj, PipelineStruct *pipeli
 
     //Сам пайплайн
     VkGraphicsPipelineCreateInfo pipelineInfo = {};
-    memset(&pipelineInfo, 0, sizeof(VkGraphicsPipelineCreateInfo));
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
     pipelineInfo.pStages = shaderStages;

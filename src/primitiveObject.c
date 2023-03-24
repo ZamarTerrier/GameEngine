@@ -32,21 +32,21 @@ void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    if(strlen(dParam->specular) != 0)
+    if(strlen(dParam->normal) != 0)
     {
-        int len = strlen(dParam->specular);
+        int len = strlen(dParam->normal);
         po->go.images[1].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[1].path, dParam->specular, len);
+        memcpy(po->go.images[1].path, dParam->normal, len);
         po->go.images[1].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
 
-    if(strlen(dParam->normal) != 0)
+    if(strlen(dParam->specular) != 0)
     {
-        int len = strlen(dParam->normal);
+        int len = strlen(dParam->specular);
         po->go.images[2].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[2].path, dParam->normal, len);
+        memcpy(po->go.images[2].path, dParam->specular, len);
         po->go.images[0].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
@@ -152,11 +152,13 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
     BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
+    TextureShadowImageAdd(&po->go.graphObj.blueprints);
+
     PrimitiveObjectInitTexture(po, &dParam);
 
     TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[0]);
     TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[1]);
-    TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[2]);
+    //TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[2]);
 
     GraphicsObjectCreateDrawItems(&po->go.graphObj, true);
 
@@ -188,14 +190,14 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
         setting.fromFile = 0;
         GameObject3DAddSettingPipeline(po, &setting);
 
-        setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
+        /*setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
         setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_line_vert_spv_size);
         setting.fragShader = &_binary_shaders_3d_object_line_frag_spv_start;
         setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_line_frag_spv_size);
         setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
         setting.drawType = 0;
         setting.fromFile = 0;
-        GameObject3DAddSettingPipeline(po, &setting);
+        GameObject3DAddSettingPipeline(po, &setting);*/
 
     }
 

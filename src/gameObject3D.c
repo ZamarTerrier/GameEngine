@@ -39,7 +39,7 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     LightSpaceMatrix lsm;
     //mbo.model = edenMat;
     mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
-    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, 0.0001, MAX_CAMERA_VIEW_DISTANCE);
+    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
 
     DescriptorUpdate(go->graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
     DescriptorUpdate(&go->graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));

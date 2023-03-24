@@ -159,7 +159,6 @@ void read_mesh(engine_model_mesh *vBuffer, ufbx_mesh *mesh)
             vert->position = (vec3){pos.x, pos.y, pos.z};
             vert->normal = (vec3){normal.x, normal.y, normal.z};
             vert->texCoord = (vec2){uv.x, 1.0f - uv.y};
-            vert->color = (vec3){1.0f, 1.0f, 1.0f};
 
             // The skinning vertex stream is pre-calculated above so we just need to
             // copy the right one by the vertex index.

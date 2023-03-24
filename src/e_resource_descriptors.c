@@ -54,21 +54,16 @@ EIVertexInputAttributeDescription modelAttributeDescription[] = {
     {
         .binding = 0,
         .location = 2,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(ModelVertex3D, color) },
-    {
-        .binding = 0,
-        .location = 3,
         .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = offsetof(ModelVertex3D, texCoord) },
     {
         .binding = 0,
-        .location = 4,
+        .location = 3,
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .offset = offsetof(ModelVertex3D, joints) },
     {
         .binding = 0,
-        .location = 5,
+        .location = 4,
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .offset = offsetof(ModelVertex3D, weight) }
 };

@@ -18,7 +18,7 @@
 
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_CAMERA_VIEW_DISTANCE 500
+#define MAX_CAMERA_VIEW_DISTANCE 600
 #define ORITO_SIZE 0.0007
 
 #ifdef __cplusplus
