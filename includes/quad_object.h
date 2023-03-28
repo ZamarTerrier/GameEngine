@@ -11,4 +11,6 @@ typedef struct{
 
 void QuadObjectInit(QuadObject *qu);
 
+void QuadObjectAddDefault(QuadObject *qu, void *render);
+
 #endif // QUAD_OBJECT_H

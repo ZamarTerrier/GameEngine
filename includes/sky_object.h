@@ -15,6 +15,7 @@ typedef struct{
     float time;
     vec3 cam_pos __attribute__ ((aligned (16)));
     vec3 cam_rot __attribute__ ((aligned (16)));
+    vec3 dir_light __attribute__ ((aligned (16)));
 } SkyBuffer;
 
 typedef struct{
@@ -24,5 +25,7 @@ typedef struct{
 
 void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type);
 void SkyObjectSetMousePos(SkyObject *so, float pos_x, float pos_y);
+
+void SkyObjectAddDefault(SkyObject *so, void *render);
 
 #endif // SKY_OBJECT_H

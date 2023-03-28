@@ -14,13 +14,7 @@
 
 void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
 {
-    //10 возможных дескрипторов
-    graphObj->blueprints.descriptors = (BluePrintDescriptor *) calloc(MAX_UNIFORMS, sizeof(BluePrintDescriptor));
-    graphObj->blueprints.count = 0;
-
-    //10 возможных настроек для рендеринга
-    graphObj->gItems.settings = (PipelineSetting *) calloc(MAX_UNIFORMS, sizeof(PipelineSetting));
-    graphObj->gItems.settingsCount = 0;
+    graphObj->blueprints.num_blue_print_packs = 0;
 
     graphObj->blueprints.isShadow = false;
 
@@ -108,126 +102,97 @@ void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount
         BuffersUpdateIndex(&graphObj->shape.iParam);
 }
 
-void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj, bool with_shadow){
+void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
 
-    DescriptorCreate(&graphObj->gItems.descriptors, graphObj->blueprints.descriptors, graphObj->blueprints.count, imagesCount);
+    memset(graphObj->gItems.shader_packs, 0, sizeof(ShaderPack) * MAX_BLUE_PRINTS);
 
-    if(with_shadow)
+
+    for(int i=0;i< graphObj->blueprints.num_blue_print_packs;i++)
     {
-        graphObj->blueprints.isShadow = true;
 
-        DescriptorCreate(&graphObj->gItems.shadow_descr, &graphObj->blueprints.shadow_descr, 1, imagesCount);
+        BluePrintPack *pack = &graphObj->blueprints.blue_print_packs[i];
+
+        DescriptorCreate(&graphObj->gItems.shader_packs[i].descriptor, pack->descriptors, &graphObj->blueprints, pack->num_descriptors, imagesCount);
+
     }
-}
 
-void GraphicsObjectCleanPipelines(GraphicsObject *graphObj){
-    free(graphObj->gItems.pipelines);
-    graphObj->gItems.pipelines = NULL;
-    graphObj->gItems.pipelineCount = 0;
 }
 
 void GraphicsObjectClean(GraphicsObject *graphObj)
 {
-    GraphicsObjectCleanPipelines(graphObj);
-
-    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptors.descr_pool, NULL);
-    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptors.descr_set_layout, NULL);
-
-
-    for(int i=0;i< graphObj->blueprints.count;i++)
+    for(int i=0;i < graphObj->gItems.num_shader_packs;i++)
     {
+        PipelineDestroy(&graphObj->gItems.shader_packs[i]);
 
-        BluePrintDescriptor *descriptor = &graphObj->blueprints.descriptors[i];
-        if(graphObj->blueprints.descriptors[i].descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            //descriptor->texture = NULL;
-        }
-        else
+        vkFreeDescriptorSets(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, imagesCount, graphObj->gItems.shader_packs[i].descriptor.descr_sets);
+        vkDestroyDescriptorPool(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, NULL);
+        vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_set_layout, NULL);
+    }
+
+    for(int i=0;i < graphObj->blueprints.num_blue_print_packs;i++)
+    {
+        for(int j=0;j < graphObj->blueprints.blue_print_packs[i].num_descriptors;j++)
         {
-            for (int j = 0; j < imagesCount; j++) {
-                BluePrintDescriptor *desriptor = &graphObj->blueprints.descriptors[i];
-                vkDestroyBuffer(e_device, desriptor->uniform.uniformBuffers[j], NULL);
-                vkFreeMemory(e_device, desriptor->uniform.uniformBuffersMemory[j], NULL);
+            BluePrintDescriptor *descriptor = &graphObj->blueprints.blue_print_packs[i].descriptors[j];
+
+            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+                for (int j = 0; j < imagesCount; j++) {
+                    vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
+                    vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
+                }
+                free(descriptor->uniform.uniformBuffers);
+                descriptor->uniform.uniformBuffers = NULL;
+                free(descriptor->uniform.uniformBuffersMemory);
+                descriptor->uniform.uniformBuffersMemory = NULL;
             }
-            free(descriptor->uniform.uniformBuffers);
-            descriptor->uniform.uniformBuffers = NULL;
-            free(descriptor->uniform.uniformBuffersMemory);
-            descriptor->uniform.uniformBuffersMemory = NULL;
         }
     }
 }
 
 void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
-    for(int i=0;i < graphObj->gItems.pipelineCount;i++)
+
+    for(int i=0;i < graphObj->gItems.num_shader_packs;i++)
     {
-        vkDestroyPipeline(e_device, graphObj->gItems.pipelines[i].pipeline, NULL);
-        vkDestroyPipelineLayout(e_device, graphObj->gItems.pipelines[i].layout, NULL);
+        PipelineDestroy(&graphObj->gItems.shader_packs[i]);
+
+        vkFreeDescriptorSets(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, imagesCount, graphObj->gItems.shader_packs[i].descriptor.descr_sets);
+        vkDestroyDescriptorPool(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, NULL);
+        vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_set_layout, NULL);
     }
 
-    free(graphObj->gItems.settings);
-    free(graphObj->gItems.pipelines);
-    graphObj->gItems.settings = NULL;
-    graphObj->gItems.pipelines = NULL;
-
-    vkFreeDescriptorSets(e_device, graphObj->gItems.descriptors.descr_pool, imagesCount, graphObj->gItems.descriptors.descr_sets);
-    vkDestroyDescriptorPool(e_device, graphObj->gItems.descriptors.descr_pool, NULL);
-    vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.descriptors.descr_set_layout, NULL);
-    graphObj->gItems.descriptors.descr_pool = NULL;
-    graphObj->gItems.descriptors.descr_set_layout = NULL;
-    graphObj->gItems.descriptors.descr_sets = NULL;
-
-    for(int i=0;i < graphObj->blueprints.count;i++)
+    for(int i=0;i < graphObj->blueprints.num_blue_print_packs;i++)
     {
-        BluePrintDescriptor *descriptor = &graphObj->blueprints.descriptors[i];
-        if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
-            Texture2D *texture = descriptor->texture;
+        for(int j=0;j < graphObj->blueprints.blue_print_packs[i].num_descriptors;j++)
+        {
+            BluePrintDescriptor *descriptor = &graphObj->blueprints.blue_print_packs[i].descriptors[j];
 
-            if(texture->generated)
-            {
-                ImageDestroyTexture(texture);
+            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+                Texture2D *texture = descriptor->texture;
+
+                if(texture->generated)
+                {
+                    ImageDestroyTexture(texture);
+                    free(descriptor->texture);
+                }
+
+                descriptor->texture = NULL;
+            }else if(descriptor->descrType == 0x20){
+
                 free(descriptor->texture);
+                descriptor->texture = NULL;
+
+            }else{
+                for (int j = 0; j < imagesCount; j++) {
+                    vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
+                    vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
+                }
+                free(descriptor->uniform.uniformBuffers);
+                descriptor->uniform.uniformBuffers = NULL;
+                free(descriptor->uniform.uniformBuffersMemory);
+                descriptor->uniform.uniformBuffersMemory = NULL;
             }
-
-            descriptor->texture = NULL;
-        }else if(descriptor->descrType == 0x20){
-
-            free(descriptor->texture);
-            descriptor->texture = NULL;
-
-        }else{
-            for (int j = 0; j < imagesCount; j++) {
-                vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
-                vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
-            }
-            free(descriptor->uniform.uniformBuffers);
-            descriptor->uniform.uniformBuffers = NULL;
-            free(descriptor->uniform.uniformBuffersMemory);
-            descriptor->uniform.uniformBuffersMemory = NULL;
         }
-    }
-
-    free(graphObj->blueprints.descriptors);
-    graphObj->blueprints.descriptors = NULL;
-    graphObj->blueprints.count = 0;
-
-    if(graphObj->blueprints.isShadow)
-    {
-        vkDestroyPipeline(e_device, graphObj->gItems.shadow.pipeline, NULL);
-        vkDestroyPipelineLayout(e_device, graphObj->gItems.shadow.layout, NULL);
-
-        vkFreeDescriptorSets(e_device, graphObj->gItems.shadow_descr.descr_pool, imagesCount, graphObj->gItems.shadow_descr.descr_sets);
-        vkDestroyDescriptorPool(e_device, graphObj->gItems.shadow_descr.descr_pool, NULL);
-        vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.shadow_descr.descr_set_layout, NULL);
-
-        BluePrintDescriptor *descriptor = &graphObj->blueprints.shadow_descr;
-        for (int j = 0; j < imagesCount; j++) {
-            vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
-            vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
-        }
-        free(descriptor->uniform.uniformBuffers);
-        descriptor->uniform.uniformBuffers = NULL;
-        free(descriptor->uniform.uniformBuffersMemory);
-        descriptor->uniform.uniformBuffersMemory = NULL;
     }
 
     vkDestroyBuffer(e_device, graphObj->shape.iParam.indexBuffer, NULL);

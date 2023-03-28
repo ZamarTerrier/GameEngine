@@ -24,9 +24,6 @@ uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
 
 void TerrainDefaultUpdate(TerrainObject *to)
 {
-    if(to->go.graphObj.blueprints.descriptors == NULL)
-        return;
-
     Camera3D* cam = (Camera3D*) cam3D;
 
     ModelBuffer3D mbo = {};
@@ -40,15 +37,15 @@ void TerrainDefaultUpdate(TerrainObject *to)
     mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
-    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 0, &mbo, sizeof(mbo));
 
     LightSpaceMatrix lsm;
     //mbo.model = edenMat;
     mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
     mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
 
-    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
-    DescriptorUpdate(&to->go.graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
 
     TerrainBuffer tb;
 
@@ -66,14 +63,14 @@ void TerrainDefaultUpdate(TerrainObject *to)
     tb.cam_posxz.x = getViewPos().x;
     tb.cam_posxz.y = getViewPos().z;
 
-    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 2, &tb, sizeof(tb));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 2, &tb, sizeof(tb));
 
     LightBuffer3D lbo = {};
     memset(&lbo, 0, sizeof(LightBuffer3D));
 
     LightObjectFillLights(&lbo, to->go.enable_light);
 
-    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 3, &lbo, sizeof(lbo));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 3, &lbo, sizeof(lbo));
 }
 
 void TearrainDefaultDestroy(TerrainObject *to)
@@ -243,17 +240,6 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS))
         TerrainObjectGenerateTerrainHeights(to);
 
-    to->go.graphObj.blueprints.count = 0;
-
-    BuffersAddUniformShadow(&to->go.graphObj.blueprints.shadow_descr, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-
-    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    TextureShadowImageAdd(&to->go.graphObj.blueprints);
-
     to->go.images = calloc(tParam->t_t_param.num_textures + 1, sizeof(GameObjectImage));
     to->go.num_images = tParam->t_t_param.num_textures + 1;
 
@@ -267,8 +253,6 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             to->go.images[0].path[len] = '\0';
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
-
-        TextureImageAdd(&to->go.graphObj.blueprints, &to->go.images[0]);
     }
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
@@ -282,16 +266,6 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     GameObjectImage g_img;
     memset(&g_img, 0, sizeof(GameObjectImage));
 
-    //Карта текстур
-    if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
-    {
-
-        g_img.imgWidth = to->t_t_param.texture_width;
-        g_img.imgHeight = to->t_t_param.texture_height;
-        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
-
-        to->texture_descr = TextureImageAdd(&to->go.graphObj.blueprints, &g_img);
-    }
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
@@ -303,43 +277,54 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             to->go.images[i + 1].path[len] = '\0';
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
+    }
+}
 
-        TextureImageAdd(&to->go.graphObj.blueprints, &to->go.images[i + 1]);
+void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
+{
+    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
+    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
+
+    //Карта для текстур
+    if(!(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
+    {
+        BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[0]);
+    }else{
+
+        GameObjectImage g_img;
+        memset(&g_img, 0, sizeof(GameObjectImage));
+
+        g_img.imgWidth = to->t_t_param.texture_width;
+        g_img.imgHeight = to->t_t_param.texture_height;
+        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
+
+        to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img);
     }
 
-    GraphicsObjectCreateDrawItems(&to->go.graphObj, true);
+    for(int i=0;i < to->t_t_param.num_textures;i++)
+        BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[i + 1]);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&to->go.graphObj, &setting);
 
-    if(dParam != NULL && strlen(dParam->fragShader) > 0 && strlen(dParam->vertShader) > 0)
-    {
-        GraphicsObjectSetShadersPath(&to->go.graphObj, dParam->vertShader, dParam->fragShader);
+    setting.vertShader = &_binary_shaders_terrain_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_vert_spv_size);
+    setting.fragShader = &_binary_shaders_terrain_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_spv_size);
+    setting.fromFile = 0;
 
-        setting.vertShader = dParam->vertShader;
-        setting.sizeVertShader = 0;
-        setting.fragShader = dParam->fragShader;
-        setting.sizeFragShader = 0;
-        setting.topology = dParam->topology;
-        setting.drawType = dParam->drawType;
-        setting.fromFile = 1;
-        GameObject3DAddSettingPipeline(to, &setting);
+    GameObject3DAddSettingPipeline(to, nums, &setting);
 
-    }else{
+    to->go.graphObj.blueprints.num_blue_print_packs ++;
 
-        setting.vertShader = &_binary_shaders_terrain_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_vert_spv_size);
-        setting.fragShader = &_binary_shaders_terrain_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_spv_size);
-        setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        setting.drawType = 0;
-        setting.fromFile = 0;
-        GameObject3DAddSettingPipeline(to, &setting);
-
-    }
-
-    PipelineCreateGraphics(&to->go.graphObj, true);
 }
 
 void TerrainObjectUpdate(TerrainObject *terrain)

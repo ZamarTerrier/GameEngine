@@ -5,19 +5,23 @@
 #include "gameObject2D.h"
 #include "render_texture.h"
 
+#include "e_descriptor.h"
+
 #include "e_texture_variables.h"
 
 #include "e_resource_engine.h"
 
-void DescriptorUpdate(BluePrintDescriptor* descriptors, uint32_t indx, char *data, uint32_t size_data)
+void DescriptorUpdate(Blueprints *blueprints, uint32_t indx_pack, uint32_t indx_descr, char *data, uint32_t size_data)
 {
+    BluePrintDescriptor *descriptor = &blueprints->blue_print_packs[indx_pack].descriptors[indx_descr];
+
     void *point;
-    vkMapMemory(e_device, descriptors[indx].uniform.uniformBuffersMemory[imageIndex], 0, size_data, 0, &point);
+    vkMapMemory(e_device, descriptor->uniform.uniformBuffersMemory[imageIndex], 0, size_data, 0, &point);
     memcpy(point, data, size_data);
-    vkUnmapMemory(e_device, descriptors[indx].uniform.uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, descriptor->uniform.uniformBuffersMemory[imageIndex]);
 }
 
-void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor* descriptors, size_t num_descr, size_t num_frame) {
+void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor *descriptors, Blueprints *blueprints, size_t num_descr, size_t num_frame) {
 
     //Создаем параметры дескриптора
     VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding *) calloc(num_descr, sizeof(VkDescriptorSetLayoutBinding));
@@ -137,7 +141,7 @@ void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor* descrip
                     textsize ++;
             }else if(blueprint_descriptor->descrType == 0x20){
 
-                RenderTexture *render = render_texture;
+                RenderTexture *render = blueprint_descriptor->render_image;
                 imageInfos[textsize].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                 imageInfos[textsize].imageView = render->frames[i].view;
                 imageInfos[textsize].sampler = render->frames[i].sampler;

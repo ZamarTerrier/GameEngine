@@ -7,32 +7,6 @@
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
-void BuffersCreateFramebuffers() {
-    swapChainFramebuffers = (VkFramebuffer*) calloc(imagesCount, sizeof(VkFramebuffer));
-
-    for (int i=0;i<imagesCount;i++) {
-        VkImageView attachments[] = {
-            swapChainImageViews[i],
-            depthImageView
-        };
-
-        VkFramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = 2;
-        framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = swapChainExtent.width;
-        framebufferInfo.height = swapChainExtent.height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(e_device, &framebufferInfo, NULL, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-            printf("failed to create framebuffer!");
-            exit(1);
-        }
-    }
-
-}
-
 void BuffersCreateCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(e_physicalDevice);
 
@@ -289,54 +263,21 @@ void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size) {
     endSingleTimeCommands(commandBuffer);
 }
 
-void BuffersAddUniformObject(Blueprints* blueprints, VkDeviceSize size, VkShaderStageFlags flags){
-
-    if(blueprints->count + 1 >= MAX_UNIFORMS)
-    {
-        printf("Слишком много декрипторов!\n");
-        return;
-    }
-
-    BluePrintDescriptor *descriptor = &blueprints->descriptors[blueprints->count];
-
-    descriptor->uniform.size = size;
-    descriptor->descrType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor->descrCount = 1;
-    descriptor->size = 1;
-    descriptor->stageflag = flags;
-    descriptor->buffsize = size;
-    descriptor->image = NULL;
-
-    BuffersCreateUniform(&descriptor->uniform);
-
-    blueprints->count ++;
-}
-
-void BuffersAddUniformShadow(BluePrintDescriptor *descriptor, VkDeviceSize size, VkShaderStageFlags flags){
-
-    descriptor->uniform.size = size;
-    descriptor->descrType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor->descrCount = 1;
-    descriptor->size = 1;
-    descriptor->stageflag = flags;
-    descriptor->buffsize = size;
-    descriptor->image = NULL;
-
-    BuffersCreateUniform(&descriptor->uniform);
-}
-
 void BuffersRecreateUniform(Blueprints* blueprints){
-    for(int i=0;i < blueprints->count;i++){
-        BluePrintDescriptor *descriptor = &blueprints->descriptors[i];
 
-        if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+    for(int i=0; i < blueprints->num_blue_print_packs;i++)
+    {
+        BluePrintPack *pack = &blueprints->blue_print_packs[i];
 
-        }
-        else
-        {
-            int sizer = descriptor->buffsize;
-            descriptor->uniform.size = sizer;
-            BuffersCreateUniform(&descriptor->uniform);
+        for(int i=0;i < pack->num_descriptors;i++){
+            BluePrintDescriptor *descriptor = &pack->descriptors[i];
+
+            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+            {
+                int sizer = descriptor->buffsize;
+                descriptor->uniform.size = sizer;
+                BuffersCreateUniform(&descriptor->uniform);
+            }
         }
     }
 }

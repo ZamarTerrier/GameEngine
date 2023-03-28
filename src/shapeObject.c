@@ -5,6 +5,8 @@
 #include "buffers.h"
 #include "camera.h"
 
+#include "e_blue_print.h"
+
 #include "e_math.h"
 
 #include "e_resource_data.h"
@@ -13,16 +15,13 @@
 
 void ShapeObjectDefaultUpdate(GameObject2D* go) {
 
-    if(go->graphObj.blueprints.descriptors == NULL)
-        return;
-
     TransformBuffer2D tbo;
 
     tbo.position = v2_subs(go->transform.position, 1.0f);
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
+    DescriptorUpdate(&go->graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
 
     ImageBufferObjects ibo;
     ibo.origin = go->transform.img.origin;
@@ -32,7 +31,7 @@ void ShapeObjectDefaultUpdate(GameObject2D* go) {
     ibo.rotation.x = 0;
     ibo.rotation.y = 0;
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 1, &ibo, sizeof(ibo));
+    DescriptorUpdate(&go->graphObj.blueprints, 0, 1, &ibo, sizeof(ibo));
 }
 
 void ShapeObjectCreateQuad(ShapeObject *so, QuadParams *param)
@@ -261,9 +260,7 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
             break;
     }
 
-    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
-
+    so->type = type;
 
     so->go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -274,7 +271,6 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         memcpy(so->go.image->path, dParam.diffuse, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        TextureImageAdd(&so->go.graphObj.blueprints, so->go.image);
     }
 
     if(strlen(dParam.specular) != 0)
@@ -284,31 +280,36 @@ void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *pa
         memcpy(so->go.image->path, dParam.specular, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-        TextureImageAdd(&so->go.graphObj.blueprints, so->go.image);
     }
+}
 
-    GraphicsObjectCreateDrawItems(&so->go.graphObj, false);
+void ShapeObjectAddDefault(ShapeObject *so, void *render)
+{
+    uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
+    so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&so->go.graphObj.blueprints, 0, so->go.image);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-        setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
+    setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+    setting.fromFile = 0;
 
-    if(type == ENGINE_SHAPE_OBJECT_LINE)
+    if(so->type == ENGINE_SHAPE_OBJECT_LINE)
     {
         setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-        setting.drawType = 1;
+        setting.flags &= ~(ENGINE_PIPELINE_FLAG_DRAW_INDEXED);
     }
 
-    GameObject2DAddSettingPipeline(so, &setting);
+    GameObject2DAddSettingPipeline(so, nums, &setting);
 
-    PipelineCreateGraphics(&so->go.graphObj, false);
+    so->go.graphObj.blueprints.num_blue_print_packs ++;
 }

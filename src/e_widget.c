@@ -115,7 +115,7 @@ void WidgetUniformUpdate(EWidget *ew){
     gb.color = ew->color;
     gb.transparent = ew->transparent;
 
-    DescriptorUpdate(ew->go.graphObj.blueprints.descriptors, 0, &gb, sizeof(gb));
+    DescriptorUpdate(&ew->go.graphObj.blueprints, 0, 0, &gb, sizeof(gb));
 
     MaskObjectBuffer mbo = {};
 
@@ -145,7 +145,7 @@ void WidgetUniformUpdate(EWidget *ew){
         mbo.size = 0;
     }
 
-    DescriptorUpdate(ew->go.graphObj.blueprints.descriptors, 1, &mbo, sizeof(mbo));
+    DescriptorUpdate(&ew->go.graphObj.blueprints, 0, 1, &gb, sizeof(gb));
 }
 
 void WidgetSetParent(EWidget* ew, EWidget* parent){
@@ -239,9 +239,6 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     if(dParam != NULL)
         GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam->vertShader, dParam->fragShader);
 
-    BuffersAddUniformObject(&ew->go.graphObj.blueprints, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&ew->go.graphObj.blueprints, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-
     ew->go.image = calloc(1, sizeof(GameObjectImage));
 
     if(dParam != NULL)
@@ -253,25 +250,6 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
             ew->go.image->path[len] = '\0';
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
-
-    TextureImageAdd(&ew->go.graphObj.blueprints, ew->go.image);
-
-    GraphicsObjectCreateDrawItems(&ew->go.graphObj, false);
-
-    PipelineSetting setting = {};
-
-    PipelineSettingSetDefault(&ew->go.graphObj, &setting);
-
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
-        setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_frag_spv_size);
-        setting.fromFile = 0;
-    }
-
-    GameObject2DAddSettingPipeline(&ew->go, &setting);
 
     ew->color = (vec4){0.2, 0.2, 0.2, 1.0};
 
@@ -286,7 +264,34 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
     ew->callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
     ew->callbacks.size = 0;
 
-    PipelineCreateGraphics(&ew->go.graphObj, false);
+}
+
+void WidgetAddDefault(EWidget *widget, void *render)
+{
+    uint32_t nums = widget->go.graphObj.blueprints.num_blue_print_packs;
+    widget->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&widget->go.graphObj.blueprints, nums, widget->go.image);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&widget->go.graphObj, &setting);
+
+    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    {
+        setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
+        setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_frag_spv_size);
+        setting.fromFile = 0;
+    }
+
+    GameObject2DAddSettingPipeline(&widget->go, nums, &setting);
+
+    widget->go.graphObj.blueprints.num_blue_print_packs ++;
 }
 
 void WidgetConnect(EWidget* widget, int trigger, widget_callback callback, void* args){

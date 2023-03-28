@@ -23,7 +23,7 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
         wt->widget.position = wt->widget.go.transform.position;
     }
 
-    PipelineSetting *settings =  wt->widget.go.graphObj.gItems.settings;
+    PipelineSetting *settings = wt->widget.go.graphObj.blueprints.blue_print_packs[0].settings;
 
     vec2 parent_pos = {0, 0};
 
@@ -40,32 +40,46 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
     tbo.rotation = wt->widget.go.transform.rotation;
     tbo.scale = wt->widget.go.transform.scale;
 
-    DescriptorUpdate(wt->widget.go.graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
+    DescriptorUpdate(&wt->widget.go.graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
 
 }
 
 void TextWidgetDrawDefault(EWidgetText* wt)
 {
-    GraphicItems *gItems = &wt->widget.go.graphObj.gItems;
-    for(int i=0; i < gItems->pipelineCount; i++){
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, gItems->pipelines[i].pipeline);
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, gItems->pipelines[i].layout, 0, 1, &gItems->descriptors.descr_sets[imageIndex], 0, NULL);
+    for(int i=0; i < wt->widget.go.graphObj.blueprints.num_blue_print_packs; i++)
+    {
+        BluePrintPack *pack = &wt->widget.go.graphObj.blueprints.blue_print_packs[i];
 
-        PipelineSetting *settings = &gItems->settings[i];
-
-        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
-
-        VkDeviceSize offsets = 0;
-        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &wt->widget.go.graphObj.shape.vParam.vertexBuffer, &offsets);
-        for (uint32_t j = 0; j < wt->tData.font.numLetters; j++)
+        if(pack->render_point == current_render)
         {
-            vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+            ShaderPack *shader_pack = &wt->widget.go.graphObj.gItems.shader_packs[i];
+
+            for(int j=0; j < shader_pack->num_pipelines; j++){
+
+                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, shader_pack->pipelines[j].pipeline);
+                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, shader_pack->pipelines[j].layout, 0, 1, &shader_pack->descriptor.descr_sets[imageIndex], 0, NULL);
+
+                PipelineSetting *settings = &pack->settings[j];
+
+                vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
+                vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+
+                VkDeviceSize offsets = 0;
+                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &wt->widget.go.graphObj.shape.vParam.vertexBuffer, &offsets);
+                for (uint32_t j = 0; j < wt->tData.font.numLetters; j++)
+                {
+                    vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+                }
+
+            }
         }
     }
+
 }
 
+//Не корректно работает
 void TextWidgetRecreateUniform(EWidgetText *wt){
+    /*
     int count = wt->widget.go.graphObj.blueprints.count;
 
     for(int i=0;i < count;i++){
@@ -78,9 +92,9 @@ void TextWidgetRecreateUniform(EWidgetText *wt){
             /*ImageDestroyTexture(wt->widget.go.graphObj.local.descriptors[i].texture);
             free(wt->widget.go.graphObj.local.descriptors[i].texture);
             wt->widget.go.graphObj.local.descriptors[i].texture = (Texture2D *) calloc(1, sizeof(Texture2D));
-            TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[i].texture);*/
+            TextImageMakeTexture(&wt->widget.go, &wt->tData, wt->widget.go.graphObj.local.descriptors[i].texture);
         }
-    }
+    }*/
 
 }
 
@@ -88,35 +102,42 @@ void TextWidgetMakeLastText(EWidgetText *wt){
     TextImageSetText(wt->tData.text, wt, &wt->tData);
 }
 
+//Не корректно работает
 void TextWidgettRecreate(EWidgetText* wt){
 
-    PipelineSetting *settings = (PipelineSetting *)wt->widget.go.graphObj.gItems.settings;
-
-    for(int i=0; i < wt->widget.go.graphObj.gItems.settingsCount;i++)
+    /*
+    for(int i=0; i < wt->widget.go.graphObj.blueprints.num_blue_print_packs; i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        BluePrintPack *pack = wt->widget.go.graphObj.blueprints.blue_print_packs[i];
+
+        for(int j=0; j < pack->num_settings;j++)
+        {
+            pack->settings[i].scissor.offset.x = 0;
+            pack->settings[i].scissor.offset.y = 0;
+            pack->settings[i].scissor.extent.height = HEIGHT;
+            pack->settings[i].scissor.extent.width = WIDTH;
+            pack->settings[i].viewport.x = 0;
+            pack->settings[i].viewport.y = 0;
+            pack->settings[i].viewport.height = HEIGHT;
+            pack->settings[i].viewport.width = WIDTH;
+        }
     }
 
     TextWidgetRecreateUniform(wt);
     GraphicsObjectCreateDrawItems(&wt->widget.go.graphObj, false);
     PipelineCreateGraphics(&wt->widget.go.graphObj, false);
     Transform2DReposition(wt);
-    TextWidgetMakeLastText(wt);
+    TextWidgetMakeLastText(wt);*/
 }
 
-void TextWidgetAddTexture(EWidgetText *wt){
+void TextWidgetAddTexture(EWidgetText *wt, uint32_t indx_pack){
 
-    if(wt->widget.go.graphObj.blueprints.count + 1 > MAX_UNIFORMS)
+    BluePrintPack *pack = &wt->widget.go.graphObj.blueprints.blue_print_packs[indx_pack];
+
+    if(pack->num_descriptors + 1 > MAX_UNIFORMS)
         return;
 
-    BluePrintDescriptor *descriptor = &wt->widget.go.graphObj.blueprints.descriptors[wt->widget.go.graphObj.blueprints.count];
+    BluePrintDescriptor *descriptor = &pack->descriptors[pack->num_descriptors];
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
@@ -126,7 +147,7 @@ void TextWidgetAddTexture(EWidgetText *wt){
 
     TextImageMakeTexture(&wt->widget.go, &wt->tData, descriptor);
 
-    wt->widget.go.graphObj.blueprints.count ++;
+    pack->num_descriptors ++;
 }
 
 void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent){
@@ -153,10 +174,31 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
         TextDataInit(&wt->tData, fontSize, temp);
     }
 
-    BuffersAddUniformObject(&wt->widget.go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
-    TextWidgetAddTexture(wt);
 
-    GraphicsObjectCreateDrawItems(&wt->widget.go.graphObj, false);
+
+    wt->widget.type = ENGINE_WIDGET_TYPE_TEXT;
+    wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
+
+    wt->widget.offset.x = 0;
+    wt->widget.offset.y = 0;
+
+    WidgetSetParent(&wt->widget, parent);
+
+    wt->widget.widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE;
+
+    wt->widget.callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
+    wt->widget.callbacks.size = 0;
+}
+
+void TextWidgetAddDefault(EWidgetText *wt, void *render)
+{
+
+    uint32_t nums = wt->widget.go.graphObj.blueprints.num_blue_print_packs;
+    wt->widget.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&wt->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+
+    TextWidgetAddTexture(wt, nums);
 
     PipelineSetting setting = {};
 
@@ -172,23 +214,9 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
     }
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-    GameObject2DAddSettingPipeline(wt, &setting);
+    GameObject2DAddSettingPipeline(wt, nums, &setting);
 
-    wt->widget.type = ENGINE_WIDGET_TYPE_TEXT;
-    wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
-
-    wt->widget.offset.x = 0;
-    wt->widget.offset.y = 0;
-
-    WidgetSetParent(&wt->widget, parent);
-
-    wt->widget.widget_flags = ENGINE_FLAG_WIDGET_ACTIVE | ENGINE_FLAG_WIDGET_VISIBLE;
-
-    wt->widget.callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
-    wt->widget.callbacks.size = 0;
-
-    PipelineCreateGraphics(&wt->widget.go.graphObj, false);
-
+    wt->widget.go.graphObj.blueprints.num_blue_print_packs ++;
 }
 
 void TextWidgetSetColor(EWidgetText* wt, vec3 color)

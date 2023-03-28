@@ -44,10 +44,6 @@ void Particle3DFind(ParticleObject3D *particle){
 
 void Particle3DDefaultUpdate(ParticleObject3D* particle){
 
-
-    if(particle->go.graphObj.blueprints.descriptors == NULL)
-        return;
-
     if(particle->num_parts == 0)
         return;
 
@@ -92,7 +88,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
-    DescriptorUpdate(particle->go.graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
+    DescriptorUpdate(&particle->go.graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
 
 }
 
@@ -101,34 +97,38 @@ void Particle3DDefaultDraw(GameObject3D* go){
     if(go->graphObj.shape.vParam.verticesSize == 0)
         return;
 
-    for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){
+    for(int i=0; i < go->graphObj.gItems.num_shader_packs;i++)
+    {
+        BluePrintPack *pack = &go->graphObj.blueprints.blue_print_packs[i];
 
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].pipeline);
+        if(pack->render_point == current_render)
+        {
+            ShaderPack *pack = &go->graphObj.gItems.shader_packs[i];
 
-        PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+            for(int j=0; j < pack->num_pipelines; j++){
 
-        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
 
-        VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
-        VkDeviceSize offsets[] = {0};
+                PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
 
-        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+                vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
+                vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
 
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].layout, 0, 1, &go->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
+                VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
+                VkDeviceSize offsets[] = {0};
 
-        switch(settings->drawType){
-            case 0:
-                vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
-                break;
-            case 1:
-                vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
-                break;
+                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
+
+                if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
+                    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                }else
+                    vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+            }
         }
-
     }
-
 }
 
 void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
@@ -138,8 +138,6 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     GameObjectSetCleanFunc(particle, (void *)GameObject3DClean);
     GameObjectSetRecreateFunc(particle, (void *)GameObject3DRecreate);
     GameObjectSetDestroyFunc(particle, (void *)GameObject3DDestroy);
-
-    particle->go.graphObj.blueprints.descriptors = (ShaderDescriptor *) calloc(MAX_UNIFORMS, sizeof(ShaderDescriptor));
 
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
@@ -153,8 +151,6 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
     particle->particles = (Particle3D*) calloc(particle->num_parts, sizeof(Particle3D));
 
-    BuffersAddUniformObject(&particle->go.graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-
     particle->go.images = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(dParam.diffuse) != 0)
@@ -166,9 +162,17 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
-    TextureImageAdd(&particle->go.graphObj.blueprints, particle->go.images);
+    particle->num_parts = 0;
+}
 
-    GraphicsObjectCreateDrawItems(&particle->go.graphObj, false);
+void Particle3DAddDefault(ParticleObject3D* particle, void *render)
+{
+    uint32_t nums = particle->go.graphObj.blueprints.num_blue_print_packs;
+    particle->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+
+    BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.images);
 
     PipelineSetting setting;
 
@@ -184,13 +188,11 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     }
 
     setting.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-    setting.drawType = 1;
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_DRAW_INDEXED);
 
-    GameObject3DAddSettingPipeline(particle, &setting);
+    GameObject3DAddSettingPipeline(particle, nums, &setting);
 
-    PipelineCreateGraphics(&particle->go.graphObj, false);
-
-    particle->num_parts = 0;
+    particle->go.graphObj.blueprints.num_blue_print_packs ++;
 }
 
 void Particle3DAdd(ParticleObject3D* particle, vec3 position, vec3 direction, float speed, float gravity, float life){

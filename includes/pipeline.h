@@ -17,9 +17,11 @@ extern "C"
 
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *setting);
 
-void PipelineCreateGraphics(GraphicsObject* graphObj, bool with_shadow);
+void PipelineCreateGraphics(GraphicsObject* graphObj);
 
 void PipelineCreateRenderPass();
+
+void PipelineDestroy(ShaderPack *pack);
 
 #ifdef __cplusplus
 }

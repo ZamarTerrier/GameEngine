@@ -30,9 +30,9 @@ void PainterObjectUniformUpdate(EPainter *painter)
     pb.position = painter->go.transform.position;
     pb.size = painter->go.transform.scale;
 
-    DescriptorUpdate(painter->go.graphObj.blueprints.descriptors, 0, &pb, sizeof(pb));
+    DescriptorUpdate(&painter->go.graphObj.blueprints, 0, 0, &pb, sizeof(pb));
 
-    DescriptorUpdate(painter->go.graphObj.blueprints.descriptors, 1, &painter->drawObjects, sizeof(painter->drawObjects));;
+    DescriptorUpdate(&painter->go.graphObj.blueprints, 0, 1, &painter->drawObjects, sizeof(painter->drawObjects));;
 
     memset(&painter->drawObjects, 0, sizeof(painter->drawObjects));
 
@@ -51,10 +51,15 @@ void PainterObjectInit(EPainter *painter)
 
     GameObject2DSetLinkedShape(painter);
 
-    BuffersAddUniformObject(&painter->go.graphObj.blueprints, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-    BuffersAddUniformObject(&painter->go.graphObj.blueprints, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+}
 
-    GraphicsObjectCreateDrawItems(&painter->go.graphObj, false);
+void PainterObjectAddDefault(EPainter *painter, void *render)
+{
+    uint32_t nums = painter->go.graphObj.blueprints.num_blue_print_packs;
+    painter->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&painter->go.graphObj.blueprints, nums, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddUniformObject(&painter->go.graphObj.blueprints, nums, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting = {};
 
@@ -69,9 +74,9 @@ void PainterObjectInit(EPainter *painter)
         setting.fromFile = 0;
     }
 
-    GameObject2DAddSettingPipeline(&painter->go, &setting);
+    GameObject2DAddSettingPipeline(&painter->go, nums, &setting);
 
-    PipelineCreateGraphics(&painter->go.graphObj, false);
+    painter->go.graphObj.blueprints.num_blue_print_packs ++;
 }
 
 void PainterObjectSetPaintFunc(PaintDrawFunc paint_func)

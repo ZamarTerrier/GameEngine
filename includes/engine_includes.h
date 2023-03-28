@@ -15,10 +15,11 @@
 #define MAX_IMAGES 32
 #define MAX_PIPELINES 50
 #define MAX_UNIFORMS 10
+#define MAX_BLUE_PRINTS 10
 
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_CAMERA_VIEW_DISTANCE 600
+#define MAX_CAMERA_VIEW_DISTANCE 1000
 #define ORITO_SIZE 0.0007
 
 #ifdef __cplusplus

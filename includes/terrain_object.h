@@ -58,10 +58,13 @@ typedef struct{
     TerrainTextureParam t_t_param;
     TerrainGeneratorParam t_g_param;
     vec4_u8 tex_colors[MAX_TEXTURE_STACK];
-    ShaderDescriptor *texture_descr;
+    BluePrintDescriptor *texture_descr;
 } TerrainObject;
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
+
+void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow);
+
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer);
 uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index);
 void TerrainObjectUpdate(TerrainObject *terrain);

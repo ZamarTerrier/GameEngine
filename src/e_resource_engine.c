@@ -16,7 +16,7 @@ void* presentQueue;
 
 void* surface;
 
-void *render_texture;
+void *current_render;
 
 void* swapChain;
 void** swapChainImages;
@@ -29,7 +29,6 @@ void* depthImageView;
 void* renderPass;
 void* commandPool;
 
-void** swapChainFramebuffers;
 void** commandBuffers;
 
 void** imageAvailableSemaphores;
@@ -49,8 +48,6 @@ uint32_t imageIndex;
 uint32_t extensionCount = 0;
 uint32_t imagesCount = 0;
 uint32_t glfwExtensionCount = 0;
-
-uint32_t display_draw = 0;
 
 bool framebufferResized = false;
 bool framebufferwasResized = true;

@@ -193,6 +193,7 @@ void EngineCreateSyncobjects();
 
 void EngineLoop();
 
+void EngineAddRender(void *render);
 void EngineDraw(void* obj);
 
 void EngineUpdateUniformBuffer();

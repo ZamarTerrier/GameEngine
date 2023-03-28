@@ -5,6 +5,10 @@
 
 #include "camera.h"
 
+#include "lightObject.h"
+
+#include "e_blue_print.h"
+
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 #include "e_resource_descriptors.h"
@@ -15,9 +19,6 @@
 
 void SkyObjectDefaultUpdate(SkyObject *so)
 {
-    if(so->go.graphObj.blueprints.descriptors == NULL)
-        return;
-
     Camera3D *cam = cam3D;
     double time;
 
@@ -28,7 +29,22 @@ void SkyObjectDefaultUpdate(SkyObject *so)
     sb.cam_pos = cam->position;
     sb.cam_rot = v3_divs(cam->rotation, 2);
 
-    DescriptorUpdate(so->go.graphObj.blueprints.descriptors, 0, &sb, sizeof(sb));
+    sb.dir_light.x = 0.5f;
+    sb.dir_light.y = 0.3f;
+    sb.dir_light.z = 0;
+
+    if(e_var_num_lights > 0)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+            if(lights[i]->type == ENGINE_LIGHT_TYPE_DIRECTIONAL)
+                sb.dir_light = lights[i]->direction;
+        }
+    }
+
+    DescriptorUpdate(&so->go.graphObj.blueprints, 0, 0, &sb, sizeof(sb));
 }
 
 void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
@@ -43,6 +59,8 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
     GraphicsObjectInit(&so->go.graphObj, ENGINE_VERTEX_TYPE_SKY);
 
     so->go.graphObj.shape.linked = false;
+
+    so->type = type;
 
     GraphicsObjectSetVertexSize(&so->go.graphObj, sizeof(SkyVertex), sizeof(uint32_t));
 
@@ -70,67 +88,49 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
     GraphicsObjectSetVertex(&so->go.graphObj, some_vertex, 4, some_index, 6);
 
     GameObjectSetUpdateFunc(&so->go, (void *)SkyObjectDefaultUpdate);
+}
 
-    so->go.graphObj.blueprints.count = 0;
+void SkyObjectAddDefault(SkyObject *so, void *render)
+{
+    uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
+    so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(SkyBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    GraphicsObjectCreateDrawItems(&so->go.graphObj, false);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(SkyBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
-    if(dParam != NULL && strlen(dParam->fragShader) > 0 && strlen(dParam->vertShader) > 0)
-    {
-        GraphicsObjectSetShadersPath(&so->go.graphObj, dParam->vertShader, dParam->fragShader);
-
-        setting.vertShader = dParam->vertShader;
-        setting.sizeVertShader = 0;
-        setting.fragShader = dParam->fragShader;
-        setting.sizeFragShader = 0;
-        setting.topology = dParam->topology;
-        setting.drawType = dParam->drawType;
-        setting.fromFile = 1;
-        GameObject3DAddSettingPipeline(so, &setting);
-
-    }else{
-
-        switch(type){
-            case ENGINE_SKY_TYPE_NIGHT:
-                setting.vertShader = &_binary_shaders_sky_stars_vert_spv_start;
-                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_stars_vert_spv_size);
-                setting.fragShader = &_binary_shaders_sky_stars_frag_spv_start;
-                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_stars_frag_spv_size);
-                break;
-            case ENGINE_SKY_TYPE_DAY:
-                setting.vertShader = &_binary_shaders_sky_sky_vert_spv_start;
-                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_sky_vert_spv_size);
-                setting.fragShader = &_binary_shaders_sky_sky_frag_spv_start;
-                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_sky_frag_spv_size);
-                break;
-            case ENGINE_SKY_TYPE_ATMOSPHERIC:
-                setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
-                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
-                setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
-                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
-                break;
-            default:
-                setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
-                setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
-                setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
-                setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
-                break;
-        }
-
-
-
-        setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        setting.drawType = 0;
-        setting.fromFile = 0;
-        GameObject3DAddSettingPipeline(so, &setting);
-
+    switch(so->type){
+        case ENGINE_SKY_TYPE_NIGHT:
+            setting.vertShader = &_binary_shaders_sky_stars_vert_spv_start;
+            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_stars_vert_spv_size);
+            setting.fragShader = &_binary_shaders_sky_stars_frag_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_stars_frag_spv_size);
+            break;
+        case ENGINE_SKY_TYPE_DAY:
+            setting.vertShader = &_binary_shaders_sky_sky_vert_spv_start;
+            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_sky_vert_spv_size);
+            setting.fragShader = &_binary_shaders_sky_sky_frag_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_sky_frag_spv_size);
+            break;
+        case ENGINE_SKY_TYPE_ATMOSPHERIC:
+            setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
+            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
+            setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
+            break;
+        default:
+            setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
+            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
+            setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
+            break;
     }
 
-    PipelineCreateGraphics(&so->go.graphObj, false);
+    setting.fromFile = 0;
+
+    GameObject2DAddSettingPipeline(so, nums, &setting);
+
+    so->go.graphObj.blueprints.num_blue_print_packs ++;
 }

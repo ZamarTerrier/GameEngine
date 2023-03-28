@@ -311,46 +311,58 @@ void DefaultFBXUpdate(ModelObject3D *mo)
   {
       for(int j=0;j < mo->nodes[i].num_models;j++)
       {
-          if(mo->nodes[i].models[j].graphObj.blueprints.descriptors == NULL)
-              return;
+          for(int l=0; l < mo->nodes[i].models[j].graphObj.blueprints.num_blue_print_packs; l++)
+          {
+              BluePrintPack *pack = &mo->nodes[i].models[j].graphObj.blueprints.blue_print_packs[l];
 
-          Camera3D* cam = (Camera3D*) cam3D;
-          void* data;
+              if(pack->render_point == current_render)
+              {
 
-          ModelBuffer3D mbo = {};
-          vec3 cameraUp = {0.0f,1.0f, 0.0f};
+                  if(pack->descriptors == NULL)
+                      return;
 
-          int node_id = fbx->meshes[i].instance_node_indices[0];
+                  Camera3D* cam = (Camera3D*) cam3D;
+                  void* data;
 
-          mo->nodes[i].model = fbx->nodes[node_id].geometry_to_world;//
+                  ModelBuffer3D mbo = {};
+                  vec3 cameraUp = {0.0f,1.0f, 0.0f};
 
-          mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
-          mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-          mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
-          mbo.proj.m[1][1] *= -1;
+                  int node_id = fbx->meshes[i].instance_node_indices[0];
 
-          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.blueprints.descriptors[0].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
-          memcpy(data, &mbo, sizeof(mbo));
-          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.blueprints.descriptors[0].uniform.uniformBuffersMemory[imageIndex]);
+                  mo->nodes[i].model = fbx->nodes[node_id].geometry_to_world;//
 
-          InvMatrixsBuffer imb = {};
-          memset(&imb, 0, sizeof(InvMatrixsBuffer));
+                  mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
+                  mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
+                  mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
+                  mbo.proj.m[1][1] *= -1;
 
-          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.blueprints.descriptors[1].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
-          memcpy(data, &imb, sizeof(InvMatrixsBuffer));
-          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.blueprints.descriptors[1].uniform.uniformBuffersMemory[imageIndex]);
+                  vkMapMemory(e_device, pack->descriptors[0].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
+                  memcpy(data, &mbo, sizeof(mbo));
+                  vkUnmapMemory(e_device, pack->descriptors[0].uniform.uniformBuffersMemory[imageIndex]);
 
-          LightBuffer3D lbo = {};
-          lbo.lights[0].position.x = 0;
-          lbo.lights[0].position.y = 0;
-          lbo.lights[0].position.z = 9.5f;
+                  InvMatrixsBuffer imb = {};
+                  memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
-          lbo.num_points = 0;
-          lbo.num_spots = 0;
+                  vkMapMemory(e_device, pack->descriptors[1].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(InvMatrixsBuffer), 0, &data);
+                  memcpy(data, &imb, sizeof(InvMatrixsBuffer));
+                  vkUnmapMemory(e_device, pack->descriptors[1].uniform.uniformBuffersMemory[imageIndex]);
 
-          vkMapMemory(e_device, mo->nodes[i].models[j].graphObj.blueprints.descriptors[2].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
-          memcpy(data, &lbo, sizeof(lbo));
-          vkUnmapMemory(e_device, mo->nodes[i].models[j].graphObj.blueprints.descriptors[2].uniform.uniformBuffersMemory[imageIndex]);
+                  LightBuffer3D lbo = {};
+                  lbo.lights[0].position.x = 0;
+                  lbo.lights[0].position.y = 0;
+                  lbo.lights[0].position.z = 9.5f;
+
+                  lbo.num_points = 0;
+                  lbo.num_spots = 0;
+
+                  vkMapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
+                  memcpy(data, &lbo, sizeof(lbo));
+                  vkUnmapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex]);
+
+              }
+          }
+
+
       }
   }
 }
@@ -409,14 +421,11 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
 
   if(mo->num_draw_nodes > 0)
   {
-
       for(int i=0; i < fbx->num_meshes;i++)
       {
 
           mo->nodes[i].models = calloc(1, sizeof(ModelStruct));
           mo->nodes[i].num_models = 1;
-
-          mo->nodes[i].models->graphObj.blueprints.descriptors = (ShaderDescriptor *) calloc(0, sizeof(ShaderDescriptor));
 
           GraphicsObjectInit(&mo->nodes[i].models->graphObj, ENGINE_VERTEX_TYPE_MODEL_OBJECT);
 

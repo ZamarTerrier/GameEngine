@@ -22,6 +22,8 @@ typedef struct GameObject3D{
 
 void GameObject3DDefaultUpdate(GameObject3D* go);
 void GameObject3DDefaultDraw(GameObject3D* go);
+
+void GameObject3DInitDraw(GameObject3D *go);
 void GameObject3DClean(GameObject3D* go);
 void GameObject3DRecreate(GameObject3D* go);
 void GameObject3DDestroy(GameObject3D* go);
@@ -30,9 +32,11 @@ void GameObject3DSetLinkedShape(GameObject3D *go);
 
 void GameObject3DInit(GameObject3D *go);
 
+void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render);
+
 void GameObject3DEnableLight(GameObject3D *go, bool enable);
 
-void GameObject3DAddSettingPipeline(GameObject3D* go, void *setting);
+void GameObject3DAddSettingPipeline(GameObject3D* go, uint32_t indx_pack, void *arg);
 
 #ifdef __cplusplus
 }

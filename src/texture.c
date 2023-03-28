@@ -14,14 +14,18 @@
 
 #include "buffers.h"
 
+#include "e_blue_print.h"
+
 #include "tools.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
+//Не корректно
 int ImageWriteFile(uint32_t indx)
 {
 
+    /*
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
@@ -47,7 +51,7 @@ int ImageWriteFile(uint32_t indx)
     vkDestroyBuffer(e_device, stagingBuffer, NULL);
     vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
-    return 0;
+    return 0;*/
 }
 
 int ImageLoadFile(ImageFileData *data, uint32_t from_file)
@@ -414,6 +418,7 @@ void TextureCreateSampler(void *sampler, uint32_t texture_type) {
 
 void TextureArrayInit(Blueprints *blueprints, uint32_t size)
 {
+    /*
     if(blueprints->count + 1 > MAX_UNIFORMS)
     {
         printf("Слишком много декрипторов!\n");
@@ -425,64 +430,7 @@ void TextureArrayInit(Blueprints *blueprints, uint32_t size)
     descriptor->descrType = ENGINE_DESCRIPTOR_TYPE_IMAGE_SAMPLER;
     descriptor->descrCount = 0;
     descriptor->size = 1;
-    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
-}
-
-void TextureShadowImageAdd(Blueprints *blueprints)
-{
-    BluePrintDescriptor *descriptor = &blueprints->descriptors[blueprints->count];
-
-    descriptor->texture = calloc(1, sizeof(Texture2D));
-    descriptor->descrType = 0x20;
-    descriptor->descrCount = 1;
-    descriptor->size = 1;
-    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    Texture2D *texture = descriptor->texture;
-    texture->generated = false;
-
-    blueprints->count ++;
-}
-
-ShaderDescriptor *TextureImageAdd(Blueprints *blueprints, GameObjectImage *image){
-
-    if(blueprints->count + 1 > MAX_UNIFORMS)
-    {
-        printf("Слишком много декрипторов!\n");
-        return;
-    }
-
-    BluePrintDescriptor *descriptor = &blueprints->descriptors[blueprints->count];
-
-    descriptor->image = image;
-
-    if(!(image->flags & ENGINE_TEXTURE_FLAG_SPECIFIC))
-    {
-        if(descriptor->image->size > 0)
-            TextureCreate(descriptor, descriptor->image, 0);
-        else
-            TextureCreate(descriptor, descriptor->image, 1);
-
-        Texture2D *texture = descriptor->texture;
-        image->imgHeight = texture->image_data.texHeight;
-        image->imgWidth = texture->image_data.texWidth;
-    }else
-    {
-        if(image->flags & ENGINE_TEXTURE_FLAG_URGB)
-            TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_UINT, image->imgWidth, image->imgHeight);
-        else
-            TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, image->imgWidth, image->imgHeight);
-    }
-
-
-    descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptor->descrCount = 1;
-    descriptor->size = 1;
-    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    blueprints->count ++;
-
-    return &blueprints->descriptors[blueprints->count - 1];
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;*/
 }
 
 void TextureCreate(BluePrintDescriptor *descriptor, GameObjectImage *image, bool from_file){

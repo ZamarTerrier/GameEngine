@@ -15,16 +15,13 @@
 
 void QuadObjectUpdate(GameObject2D *go)
 {
-    if(go->graphObj.blueprints.descriptors == NULL)
-        return;
-
     TransformBuffer2D tbo;
 
     tbo.position = v2_subs(go->transform.position, 0.5f);
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
+    DescriptorUpdate(&go->graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
 }
 
 void QuadObjectInit(QuadObject *qu)
@@ -38,11 +35,14 @@ void QuadObjectInit(QuadObject *qu)
 
     GameObject2DSetLinkedShape(qu);
 
-    BuffersAddUniformObject(&qu->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+}
 
-    TextureShadowImageAdd(&qu->go.graphObj.blueprints);
+void QuadObjectAddDefault(QuadObject *qu, void *render)
+{
+    uint32_t nums = qu->go.graphObj.blueprints.num_blue_print_packs;
+    qu->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    GraphicsObjectCreateDrawItems(&qu->go.graphObj, false);
+    BluePrintAddUniformObject(&qu->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
 
     PipelineSetting setting = {};
 
@@ -57,7 +57,7 @@ void QuadObjectInit(QuadObject *qu)
         setting.fromFile = 0;
     }
 
-    GameObject2DAddSettingPipeline(qu, &setting);
+    GameObject2DAddSettingPipeline(qu, nums, &setting);
 
-    PipelineCreateGraphics(&qu->go.graphObj, false);
+    qu->go.graphObj.blueprints.num_blue_print_packs ++;
 }

@@ -114,10 +114,10 @@ typedef int(*widget_callback)(EWidget *widget, void *, void*);
 
 int WidgetFindIdChild(EWidget* widget);
 ChildStack * WidgetFindChild(EWidget* widget, int num);
-
 void WidgetUpdateScissor(EWidget *widget, EIRect2D *scissor, vec2 *parent_pos, vec2 *offset);
 void WidgetSetParent(EWidget* ew, EWidget* parent);
 void WidgetInit(EWidget *ew, DrawParam *dParam, EWidget *parent);
+void WidgetAddDefault(EWidget *widget, void *render);
 void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
 void WidgetConnect(EWidget *widget, int trigger, widget_callback callback, void *args);
 void WidgetRecreate(EWidget *widget);

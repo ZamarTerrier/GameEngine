@@ -10,6 +10,8 @@
 #include "texture.h"
 #include "pipeline.h"
 
+#include "e_blue_print.h"
+
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 #include "e_resource_shapes.h"
@@ -144,67 +146,38 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
         BuffersUpdateIndex(&po->go.graphObj.shape.iParam);
     }
 
-    po->go.graphObj.blueprints.count = 0;
-
-    BuffersAddUniformShadow(&po->go.graphObj.blueprints.shadow_descr, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-
-    BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&po->go.graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    TextureShadowImageAdd(&po->go.graphObj.blueprints);
-
     PrimitiveObjectInitTexture(po, &dParam);
 
-    TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[0]);
-    TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[1]);
-    //TextureImageAdd(&po->go.graphObj.blueprints, &po->go.images[2]);
+    if(type == ENGINE_PRIMITIVE3D_SKYBOX)
+        Transform3DSetScale(po, -500, -500, -500);
 
-    GraphicsObjectCreateDrawItems(&po->go.graphObj, true);
+}
+
+void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render)
+{
+    uint32_t nums = po->go.graphObj.blueprints.num_blue_print_packs;
+    po->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0]);
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1]);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&po->go.graphObj, &setting);
 
-    if(strlen(dParam.fragShader) > 0 && strlen(dParam.vertShader) > 0)
-    {
-        GraphicsObjectSetShadersPath(&po->go.graphObj, dParam.vertShader, dParam.fragShader);
+    setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
+    setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
+    setting.fromFile = 0;
 
-        setting.vertShader = dParam.vertShader;
-        setting.sizeVertShader = 0;
-        setting.fragShader = dParam.fragShader;
-        setting.sizeFragShader = 0;
-        setting.topology = dParam.topology;
-        setting.drawType = dParam.drawType;
-        setting.fromFile = 1;
-        GameObject3DAddSettingPipeline(po, &setting);
+    GameObject3DAddSettingPipeline(po, nums, &setting);
 
-    }else{
-
-        setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
-        setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
-        setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        setting.drawType = 0;
-        setting.fromFile = 0;
-        GameObject3DAddSettingPipeline(po, &setting);
-
-        /*setting.vertShader = &_binary_shaders_3d_object_line_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_line_vert_spv_size);
-        setting.fragShader = &_binary_shaders_3d_object_line_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_line_frag_spv_size);
-        setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-        setting.drawType = 0;
-        setting.fromFile = 0;
-        GameObject3DAddSettingPipeline(po, &setting);*/
-
-    }
-
-    PipelineCreateGraphics(&po->go.graphObj, true);
-
-    if(type == ENGINE_PRIMITIVE3D_SKYBOX)
-        Transform3DSetScale(po, -500, -500, -500);
+    po->go.graphObj.blueprints.num_blue_print_packs ++;
 }
 
 void *PrimitiveObjectGetVertex(PrimitiveObject *po)
@@ -212,16 +185,18 @@ void *PrimitiveObjectGetVertex(PrimitiveObject *po)
     return &po->go.graphObj.shape.vParam;
 }
 
+//Не корректно
 void PrimitiveObjectDiffuseTextureSetData(PrimitiveObject *po, void *data, uint32_t size_data, uint32_t offset)
 {
-    ShaderDescriptor *descriprots = po->go.graphObj.blueprints.descriptors;
+    /*ShaderDescriptor *descriprots = po->go.graphObj.blueprints.descriptors;
 
-    TextureUpdate(&descriprots[2], data, size_data, offset);
+    TextureUpdate(&descriprots[2], data, size_data, offset);*/
 }
 
+//Не корректно
 void PrimitiveObjectDiffuseSetTexture(PrimitiveObject *po, const char *path)
 {
-    ShaderDescriptor *descriprots = po->go.graphObj.blueprints.descriptors;
+    /*ShaderDescriptor *descriprots = po->go.graphObj.blueprints.descriptors;
 
-    TextureSetTexture(&descriprots[2], path);
+    TextureSetTexture(&descriprots[2], path);*/
 }

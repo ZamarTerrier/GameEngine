@@ -309,8 +309,6 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam *dParam){
 
   ModelStruct *model = &mo->nodes[0].models[0];
 
-  model->graphObj.blueprints.descriptors = (ShaderDescriptor *) calloc(0, sizeof(ShaderDescriptor));
-
   GraphicsObjectInit(&model->graphObj, ENGINE_VERTEX_TYPE_MODEL_OBJECT);
 
   model->graphObj.gItems.perspective = true;

@@ -7,6 +7,8 @@
 #include "pipeline.h"
 #include "buffers.h"
 
+#include "e_blue_print.h"
+
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
@@ -61,8 +63,6 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
 
     SpriteObjectCreateQuad(so);
 
-    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&so->go.graphObj.blueprints, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     so->go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -74,25 +74,30 @@ void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
+}
 
-    TextureImageAdd(&so->go.graphObj.blueprints, so->go.image);
+void SpriteObjectAddDefault(SpriteObject *so, void *render)
+{
 
-    GraphicsObjectCreateDrawItems(&so->go.graphObj, false);
+    uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
+    so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&so->go.graphObj.blueprints, 0, so->go.image);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-        setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
+    setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+    setting.fromFile = 0;
 
-    GameObject2DAddSettingPipeline(so, &setting);
+    GameObject2DAddSettingPipeline(so, nums, &setting);
 
-    PipelineCreateGraphics(&so->go.graphObj, false);
+    so->go.graphObj.blueprints.num_blue_print_packs ++;
 }

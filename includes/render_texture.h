@@ -3,8 +3,11 @@
 
 #include "engine_includes.h"
 
-#define RENDER_TEXTURE_WIDTH 2048
-#define RENDER_TEXTURE_HEIGHT 2048
+typedef enum{
+    ENGINE_RENDER_TYPE_WINDOW,
+    ENGINE_RENDER_TYPE_IMAGE,
+    ENGINE_RENDER_TYPE_DEPTH
+} EngineRenderType;
 
 typedef struct{
     void *image;
@@ -28,10 +31,15 @@ typedef struct{
     uint32_t height;
     uint32_t mip_levels;
     uint32_t m_format;
+
+    uint32_t type;
+
+    uint32_t indx_descriptor;
 } RenderTexture;
 
-void RenderTextureInit(RenderTexture *render);
+void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uint32_t height);
 void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff);
+void RenderTextureRecreate(RenderTexture *render);
 void RenderTextureEndRendering(void *cmd_buff);
 void RenderTextureDestroy(RenderTexture *render);
 

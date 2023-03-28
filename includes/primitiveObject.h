@@ -55,7 +55,11 @@ typedef struct{
     int stackCount;
 } ConeParam;
 
+
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params);
+
+void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render);
+
 void *PrimitiveObjectGetVertex(PrimitiveObject *po);
 void PrimitiveObjectDiffuseTextureSetData(PrimitiveObject *po, void *data, uint32_t size_data, uint32_t offset);
 void PrimitiveObjectDiffuseSetTexture(PrimitiveObject *po, const char *path);

@@ -27,12 +27,14 @@ typedef struct{
 void GameObject2DSetLinkedShape(GameObject2D *go);
 
 void GameObject2DDefaultDraw(GameObject2D* go);
+
+void GameObject2DInitDraw(GameObject2D *go);
 void GameObject2DInit(GameObject2D* go);
 void GameObject2DClean(GameObject2D* go);
 void GameObject2DRecreate(GameObject2D* go);
 void GameObject2DDestroy(GameObject2D* go);
 
-void GameObject2DAddSettingPipeline(GameObject2D* go, void *setting);
+void GameObject2DAddSettingPipeline(GameObject2D* go, uint32_t indx_pack, void *arg);
 
 vec2 GameObject2DGetSize(GameObject2D* go);
 

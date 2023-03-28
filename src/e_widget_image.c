@@ -19,7 +19,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
         img->widget.position = v2_add(img->widget.go.transform.position, v2_divs(img->widget.go.transform.scale, 2));
     }
 
-    PipelineSetting *settings =  img->widget.go.graphObj.gItems.settings;
+    PipelineSetting *settings = img->widget.go.graphObj.blueprints.blue_print_packs[0].settings;
 
     vec2 parent_pos = {0, 0};
 
@@ -31,7 +31,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     tbo.rotation = img->widget.go.transform.rotation;
     tbo.scale = img->widget.go.transform.scale;
 
-    DescriptorUpdate(img->widget.go.graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
+    DescriptorUpdate(&img->widget.go.graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
 
     ImageBufferObjects ibo;
     memset(&ibo, 0, sizeof(ImageBufferObjects));
@@ -39,7 +39,7 @@ void ImageWidgetUpdateUniformBufferDefault(EWidgetImage* img) {
     ibo.scale.x = 1.0f;
     ibo.scale.y = 1.0f;
 
-    DescriptorUpdate(img->widget.go.graphObj.blueprints.descriptors, 1, &ibo, sizeof(ibo));
+    DescriptorUpdate(&img->widget.go.graphObj.blueprints, 0, 1, &ibo, sizeof(ibo));
 }
 
 void ImageWidgetCreateQuad(EWidgetImage *wi)
@@ -98,8 +98,6 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
 
     ImageWidgetCreateQuad(img);
 
-    BuffersAddUniformObject(&img->widget.go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&img->widget.go.graphObj.blueprints, sizeof(ImageBufferObjects), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     img->widget.go.image = calloc(1, sizeof(GameObjectImage));
 
@@ -112,27 +110,6 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
         img->widget.go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
-
-    TextureImageAdd(&img->widget.go.graphObj.blueprints, img->widget.go.image);
-
-    GraphicsObjectCreateDrawItems(&img->widget.go.graphObj, false);
-
-    PipelineSetting setting;
-
-    PipelineSettingSetDefault(&img->widget.go.graphObj, &setting);
-
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-        setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
-        setting.fromFile = 0;
-    }
-
-    GameObject2DAddSettingPipeline(&img->widget.go, &setting);
-
-    PipelineCreateGraphics(&img->widget.go.graphObj, false);
 
     img->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
@@ -147,4 +124,32 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
     img->widget.callbacks.stack = (CallbackStruct *) calloc(MAX_GUI_CALLBACKS, sizeof(CallbackStruct));
     img->widget.callbacks.size = 0;
 
+}
+
+void ImageWidgetAddDefault(EWidgetImage *img, void *render)
+{
+    uint32_t nums = img->widget.go.graphObj.blueprints.num_blue_print_packs;
+    img->widget.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&img->widget.go.graphObj.blueprints, nums, img->widget.go.image);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&img->widget.go.graphObj, &setting);
+
+    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    {
+        setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
+        setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
+        setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
+        setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+        setting.fromFile = 0;
+    }
+
+    GameObject2DAddSettingPipeline(&img->widget.go, 0, &setting);
+
+    img->widget.go.graphObj.blueprints.num_blue_print_packs ++;
 }

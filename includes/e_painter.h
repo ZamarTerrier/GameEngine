@@ -42,6 +42,8 @@ typedef void (*PaintDrawFunc)(EPainter *painter);
 
 void PainterObjectInit(EPainter *painter);
 
+void PainterObjectAddDefault(EPainter *painter, void *render);
+
 void PainterObjectSetPaintFunc(PaintDrawFunc paint_func);
 void PainterObjectSetColor(float r, float g, float b);
 

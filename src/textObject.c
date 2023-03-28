@@ -182,7 +182,9 @@ void TextObjectMakeLastText(TextObject *to){
     TextImageSetText(to->textData.text, to, &to->textData);
 }
 
+//Не корректно
 void TextObjectRecreateUniform(TextObject *to){
+    /*
     int count = to->go.graphObj.blueprints.count;
 
     for(int i=0;i < count;i++){
@@ -194,16 +196,18 @@ void TextObjectRecreateUniform(TextObject *to){
         {
             //TextImageMakeTexture(&to->go, &to->textData, &to->go.graphObj.local.descriptors[i]);
         }
-    }
+    }*/
 
 }
 
-void TextObjectAddTexture(TextObject* to){
+void TextObjectAddTexture(TextObject* to, uint32_t indx_pack){
 
-    if(to->go.graphObj.blueprints.count + 1 > MAX_UNIFORMS)
+    BluePrintPack *pack = &to->go.graphObj.blueprints.blue_print_packs[indx_pack];
+
+    if(pack->num_descriptors + 1 > MAX_UNIFORMS)
         return;
 
-    BluePrintDescriptor *descriptor = &to->go.graphObj.blueprints.descriptors[to->go.graphObj.blueprints.count];
+    BluePrintDescriptor *descriptor = &pack->descriptors[pack->num_descriptors];
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
@@ -213,12 +217,14 @@ void TextObjectAddTexture(TextObject* to){
 
     TextImageMakeTexture(&to->go, &to->textData, descriptor);
 
-    to->go.graphObj.blueprints.count ++;
+    pack->num_descriptors ++;
 }
 
-void TextObjectUpdateUniformBufferDefault(TextObject* to) {
+void TextObjectUpdateUniformBufferDefault(TextObject* to, uint32_t indx_pack) {
 
-    if(to->go.graphObj.blueprints.descriptors == NULL)
+    BluePrintPack *pack = &to->go.graphObj.blueprints.blue_print_packs[indx_pack];
+
+    if(pack->descriptors == NULL)
         return;
 
     TransformBuffer2D tbo;
@@ -227,25 +233,35 @@ void TextObjectUpdateUniformBufferDefault(TextObject* to) {
     tbo.rotation = to->go.transform.rotation;
     tbo.scale = to->go.transform.scale;
 
-    DescriptorUpdate(to->go.graphObj.blueprints.descriptors, 0, &tbo, sizeof(tbo));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
 }
 
 void TextObjectDrawDefault(TextObject* to)
 {
-    for(int i=0; i < to->go.graphObj.gItems.pipelineCount; i++){
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelines[i].pipeline);
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, to->go.graphObj.gItems.pipelines[i].layout, 0, 1, &to->go.graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
+    for(int i=0; i < to->go.graphObj.gItems.num_shader_packs;i++)
+    {
+        BluePrintPack *pack = &to->go.graphObj.blueprints.blue_print_packs[i];
 
-        PipelineSetting *settings = &to->go.graphObj.gItems.settings[i];
-
-        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
-
-        VkDeviceSize offsets = 0;
-        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &to->go.graphObj.shape.vParam.vertexBuffer, &offsets);
-        for (uint32_t j = 0; j < to->textData.font.numLetters; j++)
+        if(pack->render_point == current_render)
         {
-            vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+            ShaderPack *pack = &to->go.graphObj.gItems.shader_packs[i];
+
+            for(int j=0; j < pack->num_pipelines; j++){
+                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
+                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
+
+                PipelineSetting *settings = &to->go.graphObj.blueprints.blue_print_packs[i].settings[j];
+
+                vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
+                vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+
+                VkDeviceSize offsets = 0;
+                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &to->go.graphObj.shape.vParam.vertexBuffer, &offsets);
+                for (uint32_t j = 0; j < to->textData.font.numLetters; j++)
+                {
+                    vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+                }
+            }
         }
     }
 }
@@ -387,8 +403,10 @@ void TextObjectSetTextU8(TextObject* to, const char* text)
     TextImageSetText(buff, &to->go, &to->textData);
 }
 
+//Не корректно
 void TextObjectRecreate(TextObject* to){
 
+    /*
     PipelineSetting *settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
 
     for(int i=0; i < to->go.graphObj.gItems.settingsCount;i++)
@@ -407,7 +425,7 @@ void TextObjectRecreate(TextObject* to){
     GraphicsObjectCreateDrawItems(&to->go.graphObj, false);
     PipelineCreateGraphics(&to->go.graphObj, false);
     Transform2DReposition(to);
-    TextObjectMakeLastText(to);
+    TextObjectMakeLastText(to);*/
 }
 
 void TextDataInit(TextData *tData, int fontSize, char* fontPath){
@@ -431,13 +449,16 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     //Загружаем шрифт и настраеваем его на работу
     TextDataInit(&to->textData, fontSize, fontPath);
+}
 
-    //----------------------------------
+void TextObjectAddDefault(TextObject* to, void *render)
+{
+    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
+    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BuffersAddUniformObject(&to->go.graphObj.blueprints, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
-    TextObjectAddTexture(to);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT);
 
-    GraphicsObjectCreateDrawItems(&to->go.graphObj, false);
+    TextObjectAddTexture(to, nums);
 
     PipelineSetting setting;
 
@@ -454,7 +475,7 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-    GameObject2DAddSettingPipeline(to, &setting);
+    GameObject2DAddSettingPipeline(to, nums, &setting);
 
-    PipelineCreateGraphics(&to->go.graphObj, false);
+    to->go.graphObj.blueprints.num_blue_print_packs ++;
 }

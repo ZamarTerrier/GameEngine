@@ -21,6 +21,8 @@ typedef struct{
 
 void SpriteObjectInit(SpriteObject *go, SpriteParam sParam);
 
+void SpriteObjectAddDefault(SpriteObject *so, void *render);
+
 #ifdef __cplusplus
 }
 #endif

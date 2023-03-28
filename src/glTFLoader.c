@@ -621,9 +621,6 @@ void DefaultglTFUpdate(ModelObject3D *mo)
   {
       for(int j=0;j < mo->nodes[i].num_models;j++)
       {
-          if(mo->nodes[i].models[j].graphObj.blueprints.descriptors == NULL)
-              return;
-
           Camera3D* cam = (Camera3D*) cam3D;
           void* data;
 
@@ -641,15 +638,15 @@ void DefaultglTFUpdate(ModelObject3D *mo)
           mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
           mbo.proj.m[1][1] *= -1;
 
-          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
+          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 0, &mbo, sizeof(mbo));
 
           LightSpaceMatrix lsm;
           //mbo.model = edenMat;
           mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
           mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
 
-          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
-          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));
+          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
+          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
 
           InvMatrixsBuffer imb = {};
           memset(&imb, 0, sizeof(InvMatrixsBuffer));
@@ -659,14 +656,14 @@ void DefaultglTFUpdate(ModelObject3D *mo)
 
           imb.size = glTF->num_join_mats;
 
-          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 2, &imb, sizeof(InvMatrixsBuffer));
+          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 2, &imb, sizeof(imb));
 
           LightBuffer3D lbo = {};
           memset(&lbo, 0, sizeof(LightBuffer3D));
 
           LightObjectFillLights(&lbo, mo->nodes[i].models[j].light_enable);
 
-          DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 3, &lbo, sizeof(lbo));
+          DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 3, &lbo, sizeof(lbo));
       }
 
   }
@@ -870,8 +867,6 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
                               }
                           }
                       }
-
-                      model->graphObj.blueprints.descriptors = (ShaderDescriptor *) calloc(0, sizeof(ShaderDescriptor));
 
                       GraphicsObjectInit(&model->graphObj, ENGINE_VERTEX_TYPE_MODEL_OBJECT);
 

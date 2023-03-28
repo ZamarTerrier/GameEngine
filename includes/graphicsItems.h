@@ -25,13 +25,16 @@ typedef struct{
 } ShaderDescriptor;
 
 typedef struct{
-    ShaderDescriptor descriptors;
+    ShaderDescriptor descriptor;
+    PipelineStruct pipelines[MAX_PIPELINES];
+    uint32_t num_pipelines;
+} ShaderPack;
+
+typedef struct{
+    ShaderPack shader_packs[MAX_BLUE_PRINTS];
+    uint32_t num_shader_packs;
     ShaderDescriptor shadow_descr;
-    PipelineStruct *pipelines;
     PipelineStruct shadow;
-    uint32_t pipelineCount;
-    void* settings;
-    uint32_t settingsCount;
     bool perspective;
 } GraphicItems;
 
@@ -70,38 +73,11 @@ typedef struct{
     bool init;
 } Shape;
 
-typedef struct{
-    void** uniformBuffers;
-    void** uniformBuffersMemory;
-    uint32_t size;
-} UniformStruct;
-
 enum EngineDescriptorType{
     ENGINE_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
     ENGINE_DESCRIPTOR_TYPE_IMAGE_SAMPLER,
     ENGINE_DESCRIPTOR_TYPE_IMAGE_ARRAY
 };
-
-typedef struct{
-    void *texture;
-    void *texture_array;
-    uint32_t num_textures;
-    uint32_t max_textures;
-    UniformStruct uniform;
-    uint32_t descrType;
-    uint32_t descrCount;
-    uint32_t stageflag;
-    uint32_t size;
-    uint32_t buffsize;
-    GameObjectImage *image;
-} BluePrintDescriptor;
-
-typedef struct{
-    BluePrintDescriptor* descriptors;
-    BluePrintDescriptor shadow_descr;
-    uint32_t isShadow;
-    uint32_t count;
-} Blueprints;
 
 #ifdef __cplusplus
 }

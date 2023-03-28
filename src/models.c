@@ -38,14 +38,14 @@ void ModelDefaultDraw(ModelObject3D* mo){
 
             ModelStruct *model = &mo->nodes[i].models[j];
 
-
-            if(display_draw)
+            for(int l=0; l < model->graphObj.gItems.num_shader_packs;l++)
             {
-                for(int p=0;p < model->graphObj.gItems.pipelineCount;p++)
-                {
-                    vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].pipeline);
+                ShaderPack *pack = &model->graphObj.gItems.shader_packs[l];
 
-                    PipelineSetting *settings = &model->graphObj.gItems.settings[p];
+                for(int k=0; k < pack->num_pipelines; k++){
+                    vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[l].pipeline);
+
+                    PipelineSetting *settings = &model->graphObj.blueprints.blue_print_packs[i].settings[j];
 
                     vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
                     vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
@@ -55,29 +55,14 @@ void ModelDefaultDraw(ModelObject3D* mo){
 
                     vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
 
-                    vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.pipelines[p].layout, 0, 1, &model->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
+                    vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[k].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
-                    switch(settings->drawType){
-                        case 0:
-                            vkCmdBindIndexBuffer(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                            vkCmdDrawIndexed(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
-                            break;
-                        case 1:
-                            vkCmdDraw(commandBuffers[imageIndex], model->graphObj.shape.vParam.verticesSize, 1, 0, 0);
-                            break;
-                    }
+                    if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
+                        vkCmdBindIndexBuffer(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                        vkCmdDrawIndexed(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                    }else
+                        vkCmdDraw(commandBuffers[imageIndex], model->graphObj.shape.vParam.verticesSize, 1, 0, 0);
                 }
-            }else{
-                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.shadow.pipeline);
-
-                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, model->graphObj.gItems.shadow.layout, 0, 1, &model->graphObj.gItems.shadow_descr.descr_sets[imageIndex], 0, NULL);
-
-                VkBuffer vertexBuffers[] = {model->graphObj.shape.vParam.vertexBuffer};
-                VkDeviceSize offsets[] = {0};
-
-                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-                vkCmdBindIndexBuffer(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                vkCmdDrawIndexed(commandBuffers[imageIndex], model->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
             }
         }
     }
@@ -89,11 +74,7 @@ void ModelDefaultUpdate(ModelObject3D* mo){
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
         {
-            if(mo->nodes[i].models[j].graphObj.blueprints.descriptors == NULL)
-                return;
-
             Camera3D* cam = (Camera3D*) cam3D;
-            void* data;
 
             ModelBuffer3D mbo = {};
             vec3 cameraUp = {0.0f,1.0f, 0.0f};
@@ -105,19 +86,19 @@ void ModelDefaultUpdate(ModelObject3D* mo){
             mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
             mbo.proj.m[1][1] *= -1;
 
-            DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
+            DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 0, &mbo, sizeof(mbo));
 
             InvMatrixsBuffer imb = {};
             memset(&imb, 0, sizeof(InvMatrixsBuffer));
 
-            DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 1, &imb, sizeof(imb));
+            DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 1, &imb, sizeof(imb));
 
             LightBuffer3D lbo = {};
             memset(&lbo, 0, sizeof(LightBuffer3D));
 
             LightObjectFillLights(&lbo, mo->nodes[i].models[j].light_enable);
 
-            DescriptorUpdate(mo->nodes[i].models[j].graphObj.blueprints.descriptors, 2, &lbo, sizeof(lbo));
+            DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 2, &lbo, sizeof(lbo));
         }
     }
 }
@@ -132,7 +113,9 @@ void ModelClean(ModelObject3D* mo){
     }
 }
 
+//Не корректно
 void ModelRecreate(ModelObject3D* mo){
+    /*
     for(int i=0; i < mo->num_draw_nodes;i++)
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
@@ -157,11 +140,13 @@ void ModelRecreate(ModelObject3D* mo){
             GraphicsObjectCreateDrawItems(&model->graphObj, false);
             PipelineCreateGraphics(&model->graphObj, false);
         }
-    }
+    }*/
 }
 
+//Не корректно
 void ModelSetSomeViewport(ModelObject3D* mo, float x, float y, float height, float width)
 {
+    /*
     for(int i=0; i < mo->num_draw_nodes;i++)
     {
         for(int j=0;j < mo->nodes[i].num_models;j++)
@@ -178,7 +163,7 @@ void ModelSetSomeViewport(ModelObject3D* mo, float x, float y, float height, flo
                 settings[m].viewport.width = width;
             }
         }
-    }
+    }*/
 }
 
 void ModelDestroy(ModelObject3D* mo){
@@ -191,13 +176,16 @@ void ModelDestroy(ModelObject3D* mo){
     }
 }
 
-void ModelAddSettingPipeline(ModelStruct* model, PipelineSetting setting){
+void ModelAddSettingPipeline(ModelStruct* model, uint32_t indx_pack, PipelineSetting setting){
 
-    PipelineSetting *settings = model->graphObj.gItems.settings;
 
-    memcpy(&settings[model->graphObj.gItems.settingsCount], &setting, sizeof(PipelineSetting));
+    uint32_t indx = model->graphObj.blueprints.blue_print_packs[indx_pack].num_settings;
 
-    model->graphObj.gItems.settingsCount++;
+    PipelineSetting *settings = &model->graphObj.blueprints.blue_print_packs[indx_pack].settings;
+
+    memcpy(&settings[indx], &setting, sizeof(PipelineSetting));
+
+    model->graphObj.blueprints.blue_print_packs[indx_pack].num_settings ++;
 }
 
 void ModelSetLightEnable(void *obj, bool enable)
@@ -224,18 +212,24 @@ void ModelSetSelCameraEnable(void *obj, bool enable)
     }
 }
 
+//Не корректно
 void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
-    BuffersAddUniformShadow(&model->graphObj.blueprints.shadow_descr, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    /*
+    model->graphObj.blueprints.num_blue_print_packs = 2;
+    model->graphObj.blueprints.blue_print_packs[0].render_point = render_texture;
+    model->graphObj.blueprints.blue_print_packs[1].render_point = window_render;
 
-    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT);
-    BuffersAddUniformObject(&model->graphObj.blueprints, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, 0, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
 
-    TextureImageAdd(&model->graphObj.blueprints, model->diffuse);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, 1, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, 1, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, 1, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, 1, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&model->graphObj.blueprints, 1, model->diffuse);
     //TextureImageAdd(&model->graphObj.blueprints, model->specular);
-    TextureImageAdd(&model->graphObj.blueprints, model->normal);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, 1, model->normal);
 
     GraphicsObjectCreateDrawItems(&model->graphObj, true);
 
@@ -243,7 +237,15 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    model->graphObj.gItems.settingsCount = 0;
+    setting.vertShader = &_binary_shaders_depth_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_spv_size);
+    setting.fragShader = &_binary_shaders_depth_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_spv_size);
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    setting.drawType = 0;
+    setting.fromFile = 0;
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
+    ModelAddSettingPipeline(model, 0, setting);
 
     if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
     {
@@ -252,15 +254,14 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
         setting.fragShader = &_binary_shaders_model_frag_spv_start;
         setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
         setting.fromFile = 0;
-        setting.drawWay = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     }
     else
         GraphicsObjectSetShadersPath(&model->graphObj, dParam->vertShader, dParam->fragShader);
 
-    ModelAddSettingPipeline(model, setting);
+    ModelAddSettingPipeline(model, 1, setting);
 
     PipelineCreateGraphics(&model->graphObj, true);
 
-    model->light_enable = false;
+    model->light_enable = false;*/
 
 }

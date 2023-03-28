@@ -3,6 +3,8 @@
 
 #include "engine_includes.h"
 
+#include "e_blue_print.h"
+
 #include "e_texture_variables.h"
 
 #include "tools.h"
@@ -38,9 +40,6 @@ void TextureCreateTextureImageView(Texture2D *texture);
 void* TextureCreateImageView(void* image, uint32_t format, uint32_t aspectFlags);
 
 void TextureCreateSampler(void *sampler, uint32_t texture_type);
-
-void TextureShadowImageAdd(Blueprints *blueprints);
-ShaderDescriptor *TextureImageAdd(Blueprints *blueprints, GameObjectImage *image);
 
 void TextureCreate( BluePrintDescriptor *descriptor, GameObjectImage *image, bool from_file);
 void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height);

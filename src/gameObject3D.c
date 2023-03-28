@@ -18,9 +18,6 @@
 
 void GameObject3DDefaultUpdate(GameObject3D* go) {
 
-    if(go->graphObj.blueprints.descriptors == NULL)
-        return;
-
     Camera3D* cam = (Camera3D*) cam3D;
 
     ModelBuffer3D mbo = {};
@@ -34,77 +31,104 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     mbo.proj = m4_perspective(45.0f, 0.01f, MAX_CAMERA_VIEW_DISTANCE);
     mbo.proj.m[1][1] *= -1;
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &mbo, sizeof(mbo));
+    DescriptorUpdate(&go->graphObj.blueprints, 1, 0, &mbo, sizeof(mbo));
 
     LightSpaceMatrix lsm;
     //mbo.model = edenMat;
     mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
     mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 1, &lsm, sizeof(lsm));
-    DescriptorUpdate(&go->graphObj.blueprints.shadow_descr, 0, &mbo, sizeof(mbo));
+    DescriptorUpdate(&go->graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
+    DescriptorUpdate(&go->graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
 
     LightBuffer3D lbo = {};
     memset(&lbo, 0, sizeof(LightBuffer3D));
 
     LightObjectFillLights(&lbo, go->enable_light);
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 2, &lbo, sizeof(lbo));
+    DescriptorUpdate(&go->graphObj.blueprints, 1, 2, &lbo, sizeof(lbo));
 }
 
 void GameObject3DDefaultDraw(GameObject3D* go){
 
-    if(display_draw)
+    for(int i=0; i < go->graphObj.gItems.num_shader_packs;i++)
     {
-        for(int i=0; i < go->graphObj.gItems.pipelineCount; i++){//go->graphObj.gItems.pipelineCount; i++){
+        BluePrintPack *pack = &go->graphObj.blueprints.blue_print_packs[i];
 
-            PipelineSetting *settings = &go->graphObj.gItems.settings[i];
+        if(pack->render_point == current_render)
+        {
+            ShaderPack *pack = &go->graphObj.gItems.shader_packs[i];
 
-            vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].pipeline);
+            for(int j=0; j < pack->num_pipelines; j++){
 
-            vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-            vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
 
-            vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.pipelines[i].layout, 0, 1, &go->graphObj.gItems.descriptors.descr_sets[imageIndex], 0, NULL);
+                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
 
-            VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
-            VkDeviceSize offsets[] = {0};
+                if(settings->flags & ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW){
+                    vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
+                    vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                }
 
-            vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
-            switch(settings->drawType){
-                case 0:
+                VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
+                VkDeviceSize offsets[] = {0};
+
+                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+
+                if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
                     vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
                     vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
-                    break;
-                case 1:
+                }else
                     vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
-                    break;
             }
-
         }
-    }else{
-        vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.shadow.pipeline);
-
-        vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, go->graphObj.gItems.shadow.layout, 0, 1, &go->graphObj.gItems.shadow_descr.descr_sets[imageIndex], 0, NULL);
-
-        VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
-        VkDeviceSize offsets[] = {0};
-
-        vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
     }
-
 }
 
-void GameObject3DAddSettingPipeline(GameObject3D* go, void *arg){
+void GameObject3DInitDraw(GameObject3D *go)
+{
+    GraphicsObjectCreateDrawItems(&go->graphObj);
+
+    PipelineCreateGraphics(&go->graphObj);
+}
+
+void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render)
+{
+    uint32_t nums = go->graphObj.blueprints.num_blue_print_packs;
+    go->graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&go->graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_depth_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_spv_size);
+    setting.fragShader = &_binary_shaders_depth_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_spv_size);
+    setting.fromFile = 0;
+
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
+    //setting.flags |= ENGINE_PIPELINE_FLAG_BIAS;
+    setting.cull_mode = VK_CULL_MODE_NONE;
+
+    GameObject3DAddSettingPipeline(go, nums, &setting);
+
+    go->graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void GameObject3DAddSettingPipeline(GameObject3D* go, uint32_t indx_pack, void *arg){
     PipelineSetting* setting = arg;
 
-    PipelineSetting* settings = go->graphObj.gItems.settings;
-    memcpy(&settings[go->graphObj.gItems.settingsCount], setting, sizeof(PipelineSetting));
+    uint32_t indx = go->graphObj.blueprints.blue_print_packs[indx_pack].num_settings;
 
-    go->graphObj.gItems.settingsCount++;
+    PipelineSetting* settings = &go->graphObj.blueprints.blue_print_packs[indx_pack].settings;
+    memcpy(&settings[indx], setting, sizeof(PipelineSetting));
+
+    go->graphObj.blueprints.blue_print_packs[indx_pack].num_settings ++;
 
 }
 
@@ -114,23 +138,29 @@ void GameObject3DClean(GameObject3D* go){
 
 void GameObject3DRecreate(GameObject3D* go){
 
-    PipelineSetting *settings = (PipelineSetting *)go->graphObj.gItems.settings;
-
-    for(int i=0; i < go->graphObj.gItems.settingsCount;i++)
+    for(int i=0; i < go->graphObj.gItems.num_shader_packs;i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        BluePrintPack *pack = &go->graphObj.blueprints.blue_print_packs[i];
+
+        PipelineSetting *settings = pack->settings;
+
+        for(int i=0; i < pack->num_settings;i++)
+        {
+            settings[i].scissor.offset.x = 0;
+            settings[i].scissor.offset.y = 0;
+            settings[i].scissor.extent.height = HEIGHT;
+            settings[i].scissor.extent.width = WIDTH;
+            settings[i].viewport.x = 0;
+            settings[i].viewport.y = 0;
+            settings[i].viewport.height = HEIGHT;
+            settings[i].viewport.width = WIDTH;
+        }
     }
 
     BuffersRecreateUniform(&go->graphObj.blueprints);
-    GraphicsObjectCreateDrawItems(&go->graphObj, false);
-    PipelineCreateGraphics(&go->graphObj, false);
+
+    GraphicsObjectCreateDrawItems(&go->graphObj);
+    PipelineCreateGraphics(&go->graphObj);
 }
 
 void GameObject3DDestroy(GameObject3D* go){

@@ -37,10 +37,16 @@ typedef struct{
     uint32_t count;
 } renderObjects;
 
+typedef struct{
+    RenderTexture** renders;
+    uint32_t count;
+} render_planes;
+
 typedef void (*e_charCallback)(GLFWwindow*, uint32_t);
 typedef void (*e_keyCallback)(GLFWwindow*, int , int , int , int );
 
 renderObjects objs;
+render_planes planes;
 
 void * RecreateFunc = NULL;
 
@@ -78,10 +84,8 @@ void EngineInitVulkan(){
     createLogicalDevice();
     SwapChainCreate();
     SwapChainCreateImageViews();
-    PipelineCreateRenderPass();
     BuffersCreateCommandPool();
     ToolsCreateDepthResources();
-    BuffersCreateFramebuffers();
     BuffersCreateCommand();
     EngineCreateSyncobjects();
 
@@ -108,8 +112,6 @@ void EngineInitVulkan(){
     memcpy(images[e_var_num_images].path, text, strlen(text));
     e_var_num_images ++;
 
-    render_texture = calloc(1, sizeof(RenderTexture));
-    RenderTextureInit(render_texture);
 }
 
 void EngineInitSystem(int width, int height, const char* name){
@@ -240,12 +242,6 @@ void EngineCleanupSwapChain() {
     vkDestroyImage(e_device, depthImage, NULL);
     vkFreeMemory(e_device, depthImageMemory, NULL);
 
-    for (size_t i = 0; i < imagesCount; i++) {
-        vkDestroyFramebuffer(e_device, swapChainFramebuffers[i], NULL);
-    }
-    free(swapChainFramebuffers);
-    swapChainFramebuffers = NULL;
-
     vkFreeCommandBuffers(e_device, commandPool, imagesCount, commandBuffers);
     free(commandBuffers);
     commandBuffers = NULL;
@@ -298,6 +294,13 @@ void EnginereRecreateSwapChain() {
     SwapChainCreateImageViews();
     PipelineCreateRenderPass();
     ToolsCreateDepthResources();
+
+
+    for(int i=0;i < planes.count;i++)
+    {
+        RenderTextureRecreate(planes.renders[i])  ;
+    }
+
     int temp = 0;
 
     while(temp < objs.count)
@@ -306,7 +309,6 @@ void EnginereRecreateSwapChain() {
         temp ++;
     }
 
-    BuffersCreateFramebuffers();
     BuffersCreateCommand();
 
 
@@ -439,63 +441,42 @@ void EngineDrawFrame(){
         exit(1);
     }
 
-    display_draw = 0;
+    for(int i=0;i < planes.count;i++)
+    {
+        current_render = planes.renders[i];
 
-    RenderTextureBeginRendering(render_texture, commandBuffers[imageIndex]);
+        RenderTextureBeginRendering(current_render, commandBuffers[imageIndex]);
 
-    temp = 0;
+        temp = 0;
 
-    while(temp < objs.count){
-        if(objs.go[temp]->obj_type == ENGINE_GAME_OBJECT_TYPE_3D)
+        while(temp < objs.count){
             GameObjectDraw(objs.go[temp]);
 
-        temp ++;
+            temp ++;
+        }
+
+        RenderTextureEndRendering(commandBuffers[imageIndex]);
     }
-
-    RenderTextureEndRendering(commandBuffers[imageIndex]);
-
-    //ImageWriteFile(imageIndex);
-
-    display_draw = 1;
-
-    VkRenderPassBeginInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-    renderPassInfo.renderArea.offset.x = 0;
-    renderPassInfo.renderArea.offset.y = 0;
-    renderPassInfo.renderArea.extent = *(VkExtent2D*)&swapChainExtent;
-
-    VkClearValue clearValues[2];
-
-    clearValues[0].color.float32[0] = 0.8f;
-    clearValues[0].color.float32[1] = 0.1f;
-    clearValues[0].color.float32[2] = 0.1f;
-    clearValues[0].color.float32[3] = 1.0f;
-    clearValues[1].depthStencil.depth = 1.0f;
-    clearValues[1].depthStencil.stencil = 0;
-
-    renderPassInfo.clearValueCount = 2;
-    renderPassInfo.pClearValues = clearValues;
-
-    vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    temp = 0;
-
-    while(temp < objs.count){
-
-        //if(objs.go[temp]->obj_type == ENGINE_GAME_OBJECT_TYPE_3D)
-        GameObjectDraw(objs.go[temp]);
-
-        temp ++;
-    }
-
-    vkCmdEndRenderPass(commandBuffers[imageIndex]);
 
     if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
         printf("failed to record command buffer!");
         exit(1);
     }
+
+}
+
+void EngineAddRender(void *render)
+{
+
+    for(int i=0;i < planes.count;i++)
+    {
+        if(planes.renders[i] == render)
+            return;
+    }
+
+    planes.count ++;
+    planes.renders = (RenderTexture **) realloc(planes.renders,planes.count * sizeof(RenderTexture*));
+    planes.renders[planes.count - 1] = render;
 
 }
 
@@ -578,9 +559,6 @@ void EngineCleanUp(){
         e_var_lights = NULL;
         e_var_num_lights = 0;
     }
-
-    RenderTextureDestroy(render_texture);
-    free(render_texture);
 
     vkDestroyDevice(e_device, NULL);
 

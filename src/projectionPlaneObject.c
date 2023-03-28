@@ -9,6 +9,8 @@
 
 #include "camera.h"
 
+#include "e_blue_print.h"
+
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 #include "e_resource_shapes.h"
@@ -24,7 +26,7 @@ void ProjectionPlaneUpdate(GameObject2D *go){
     pdf.camRot = cam->rotation;
     pdf.camPos = v3_divs(cam->position, 10);
 
-    DescriptorUpdate(go->graphObj.blueprints.descriptors, 0, &pdf, sizeof(pdf));
+    DescriptorUpdate(&go->graphObj.blueprints, 0, 0, &pdf, sizeof(pdf));
 }
 
 void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
@@ -40,11 +42,16 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GraphicsObjectSetShadersPath(&go->graphObj, dParam.vertShader, dParam.fragShader);
 
-    BuffersAddUniformObject(&go->graphObj.blueprints, sizeof(ProjDataBuffer), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+}
 
-    GraphicsObjectCreateDrawItems(&go->graphObj, false);
+void ProjectionPlaneAddDefault(GameObject2D *go, void *render)
+{
+    uint32_t nums = go->graphObj.blueprints.num_blue_print_packs;
+    go->graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    PipelineSetting setting = {};
+    BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ProjDataBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    PipelineSetting setting;
 
     PipelineSettingSetDefault(&go->graphObj, &setting);
 
@@ -57,7 +64,7 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
         setting.fromFile = 0;
     }
 
-    GameObject2DAddSettingPipeline(go, &setting);
+    GameObject2DAddSettingPipeline(go, nums, &setting);
 
-    PipelineCreateGraphics(&go->graphObj, false);
+    go->graphObj.blueprints.num_blue_print_packs ++;
 }
