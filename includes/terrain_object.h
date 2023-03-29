@@ -37,7 +37,7 @@ typedef struct{
     int num_textures;
     vec2 cam_posxz;
     vec4 tex_colors[MAX_TEXTURE_STACK];
-} TerrainBuffer;
+} TextureBuffer;
 
 enum ENGINE_TERRIAN_FLAGS{
     ENGINE_TERRIAN_FLAGS_CUSTOM_TEXTURE = 0x1,
@@ -59,10 +59,14 @@ typedef struct{
     TerrainGeneratorParam t_g_param;
     vec4_u8 tex_colors[MAX_TEXTURE_STACK];
     BluePrintDescriptor *texture_descr;
+    void *render;
 } TerrainObject;
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
 
+void TerrainObjectAddTextureRender(TerrainObject *to, void *render);
+
+void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow);
 void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow);
 
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer);

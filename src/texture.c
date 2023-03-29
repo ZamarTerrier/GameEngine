@@ -16,6 +16,7 @@
 
 #include "e_blue_print.h"
 
+#include "e_math.h"
 #include "tools.h"
 
 #include "e_resource_data.h"
@@ -383,18 +384,20 @@ void TextureCreateSampler(void *sampler, uint32_t texture_type) {
     VkSamplerCreateInfo samplerInfo = {};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 
-    if(texture_type == VK_FORMAT_R8G8B8A8_SRGB)
+    if(texture_type == VK_FORMAT_R8G8B8A8_UINT)
     {
-        samplerInfo.magFilter = VK_FILTER_LINEAR;
-        samplerInfo.minFilter = VK_FILTER_LINEAR;
-    }else{
         samplerInfo.magFilter = VK_FILTER_NEAREST;
         samplerInfo.minFilter = VK_FILTER_NEAREST;
+    }else{
+        samplerInfo.magFilter = VK_FILTER_LINEAR;
+        samplerInfo.minFilter = VK_FILTER_LINEAR;
     }
 
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
     samplerInfo.anisotropyEnable = VK_TRUE;
 
     VkPhysicalDeviceProperties properties  ={};
@@ -405,10 +408,9 @@ void TextureCreateSampler(void *sampler, uint32_t texture_type) {
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
     samplerInfo.compareEnable = VK_FALSE;
     samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = 0.0f;
+    samplerInfo.maxLod = 1.0f;
 
     if (vkCreateSampler(e_device, &samplerInfo, NULL, sampler) != VK_SUCCESS) {
         printf("failed to create texture sampler!");

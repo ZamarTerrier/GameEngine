@@ -516,7 +516,7 @@ int IntersectionAABBCapsule(void *obj1, void *obj2, float *dist, float *depth, v
 
     float r = cap->radius * 0.58f;
 
-    float d = max(d1, d2);
+    float d = e_max(d1, d2);
 
     d = d > 1.0 ? 0 : d;
 
@@ -549,16 +549,16 @@ int IntersectionTriangleAABB(vec3 v0, vec3 v1, vec3 v2, void *obj, float *dist, 
     p0 = v0.z*v1.y - v0.y*v1.z;
     p2 = v2.z*(v1.y - v0.y) - v2.z*(v1.z - v0.z);
     r = e1 * fabs(f0.z) + e2 * fabs(f0.y);
-    if (max(-max(p0, p2), min(p0, p2)) > r) return 0; // Axis is a separating axis
+    if (e_max(-e_max(p0, p2), e_min(p0, p2)) > r) return 0; // Axis is a separating axis
     // Repeat similar tests for remaining axes a01..a22
     // Test the three axes corresponding to the face normals of AABB b (category 1).
     // Exit if...
     // ... [-e0, e0] and [min(v0.x,v1.x,v2.x), max(v0.x,v1.x,v2.x)] do not overlap
-    if (max(max(v0.x, v1.x), v2.x) < -e0 || min(min(v0.x, v1.x), v2.x) > e0) return 0;
+    if (e_max(e_max(v0.x, v1.x), v2.x) < -e0 || e_min(e_min(v0.x, v1.x), v2.x) > e0) return 0;
     // ... [-e1, e1] and [min(v0.y,v1.y,v2.y), max(v0.y,v1.y,v2.y)] do not overlap
-    if (max(max(v0.y, v1.y), v2.y) < -e1 || min(min(v0.y, v1.y), v2.y) > e1) return 0;
+    if (e_max(e_max(v0.y, v1.y), v2.y) < -e1 || e_min(e_min(v0.y, v1.y), v2.y) > e1) return 0;
     // ... [-e2, e2] and [min(v0.z,v1.z,v2.z), max(v0.z,v1.z,v2.z)] do not overlap
-    if (max(max(v0.z, v1.z), v2.z) < -e2 || min(min(v0.z, v1.z), v2.z) > e2) return 0;
+    if (e_max(e_max(v0.z, v1.z), v2.z) < -e2 || e_min(e_min(v0.z, v1.z), v2.z) > e2) return 0;
     // Test separating axis corresponding to triangle face normal (category 2)
     vec3 n;
     float d;

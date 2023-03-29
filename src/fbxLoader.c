@@ -16,7 +16,7 @@
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
 
-size_t clamp_sz(size_t a, size_t min_a, size_t max_a) { return min(max(a, min_a), max_a); }
+size_t clamp_sz(size_t a, size_t min_a, size_t max_a) { return e_min(e_max(a, min_a), max_a); }
 
 mat4 ufbx_to_mat4(ufbx_matrix m) {
     return mat4_colmnsf(
@@ -33,9 +33,9 @@ void update_animation(ModelObject3D *vs, engine_fbx_anim *va, float time)
     FBXStruct *fbx = vs->obj;
 
     float frame_time = (time - va->time_begin) * va->framerate;
-    size_t f0 = min((size_t)frame_time + 0, va->num_frames - 1);
-    size_t f1 = min((size_t)frame_time + 1, va->num_frames - 1);
-    float t = min(frame_time - (float)f0, 1.0f);
+    size_t f0 = e_min((size_t)frame_time + 0, va->num_frames - 1);
+    size_t f1 = e_min((size_t)frame_time + 1, va->num_frames - 1);
+    float t = e_min(frame_time - (float)f0, 1.0f);
 
     for (size_t i = 0; i < fbx->num_nodes; i++) {
         engine_fbx_node *vn = &fbx->nodes[i];

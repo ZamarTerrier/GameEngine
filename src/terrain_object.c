@@ -2,9 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
+#include "engine.h"
+
 #include "camera.h"
 #include "graphicsObject.h"
 #include "lightObject.h"
+#include "render_texture.h"
 
 #include "buffers.h"
 #include "pipeline.h"
@@ -47,7 +50,7 @@ void TerrainDefaultUpdate(TerrainObject *to)
     DescriptorUpdate(&to->go.graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
     DescriptorUpdate(&to->go.graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
 
-    TerrainBuffer tb;
+    TextureBuffer tb;
 
     tb.multi_size = to->t_t_param.texture_scale;
     tb.num_textures = to->t_t_param.num_textures;
@@ -78,7 +81,6 @@ void TearrainDefaultDestroy(TerrainObject *to)
     free(to->height_map);
 
     GraphicsObjectDestroy(&to->go.graphObj);
-
 }
 
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
@@ -112,7 +114,7 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
 
             if(t_noise >= 0.5f)
                 num = 2;
-            else if(t_noise > 0.0f)
+            else if(t_noise >= 0.0f)
                 num = 1;
             else if(t_noise <= -0.5f)
                 num = 0;
@@ -280,6 +282,39 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     }
 }
 
+void TerrainObjectAddTextureRender(TerrainObject *to, void *render)
+{
+    to->render = render;
+}
+
+void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow)
+{
+    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
+    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
+    BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, to->render);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&to->go.graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_terrain_vert_2_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_vert_2_spv_size);
+    setting.fragShader = &_binary_shaders_terrain_frag_2_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_2_spv_size);
+    setting.fromFile = 0;
+
+    GameObject3DAddSettingPipeline(to, nums, &setting);
+
+    to->go.graphObj.blueprints.num_blue_print_packs ++;
+
+}
+
 void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
 {
     uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
@@ -287,17 +322,18 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
 
     BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT);
     BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT);
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TerrainBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TextureBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
     BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
 
-    //Карта для текстур
     if(!(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
     {
+        to->go.images[0].flags = ENGINE_TEXTURE_FLAG_URGB;
         BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[0]);
     }else{
 
+        //Карта для текстур
         GameObjectImage g_img;
         memset(&g_img, 0, sizeof(GameObjectImage));
 
@@ -306,6 +342,7 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
         g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
 
         to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img);
+
     }
 
     for(int i=0;i < to->t_t_param.num_textures;i++)
@@ -326,6 +363,7 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
     to->go.graphObj.blueprints.num_blue_print_packs ++;
 
 }
+
 
 void TerrainObjectUpdate(TerrainObject *terrain)
 {

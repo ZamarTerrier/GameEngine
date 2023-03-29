@@ -5,6 +5,8 @@
 #include "buffers.h"
 #include "texture.h"
 
+#include "e_math.h"
+
 #include "tools.h"
 
 #include "e_resource_engine.h"
@@ -18,8 +20,8 @@ void RenderTextureCreateRenderPass(RenderTexture *render)
     colorAttachment->storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     colorAttachment->stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment->initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment->finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachment->initialLayout = render->type == ENGINE_RENDER_TYPE_IMAGE ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment->finalLayout = render->type == ENGINE_RENDER_TYPE_IMAGE ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentDescription *depthAttachment = calloc(1, sizeof(VkAttachmentDescription));
     depthAttachment->format = findDepthFormat();
@@ -36,13 +38,15 @@ void RenderTextureCreateRenderPass(RenderTexture *render)
     colorAttachmentRef->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference *depthAttachmentRef = calloc(1, sizeof(VkAttachmentReference));
-    depthAttachmentRef->attachment = render->type == ENGINE_RENDER_TYPE_DEPTH ? 0 : 1;
+    depthAttachmentRef->attachment = render->type  == ENGINE_RENDER_TYPE_DEPTH ? 0 : 1;
     depthAttachmentRef->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass;
     memset(&subpass, 0, sizeof(VkSubpassDescription));
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.pDepthStencilAttachment = depthAttachmentRef;
+
+    if(render->type != ENGINE_RENDER_TYPE_IMAGE)
+        subpass.pDepthStencilAttachment = depthAttachmentRef;
 
     if(render->type != ENGINE_RENDER_TYPE_DEPTH){
         subpass.colorAttachmentCount = 1;
@@ -72,11 +76,18 @@ void RenderTextureCreateRenderPass(RenderTexture *render)
         depency[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         depency[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        VkAttachmentDescription attachments[] = {*colorAttachment, *depthAttachment};
+        if(render->type == ENGINE_RENDER_TYPE_WINDOW)
+        {
+            VkAttachmentDescription attachments[] = {*colorAttachment, *depthAttachment};
 
-        renderPassInfo.attachmentCount = 2;
-        renderPassInfo.pDependencies = depency;
-        renderPassInfo.pAttachments = attachments;
+            renderPassInfo.attachmentCount = 2;
+            renderPassInfo.pDependencies = depency;
+            renderPassInfo.pAttachments = attachments;
+        }else{
+            renderPassInfo.attachmentCount = 1;
+            renderPassInfo.pDependencies = depency;
+            renderPassInfo.pAttachments = colorAttachment;
+        }
 
     }else{
 
@@ -115,11 +126,12 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 {
     memset(render, 0, sizeof(RenderTexture));
 
-    render->m_format = type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : ( type == ENGINE_RENDER_TYPE_WINDOW ? swapChainImageFormat : VK_FORMAT_R8G8B8A8_SRGB);
+    render->m_format = type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : swapChainImageFormat;
 
     render->frames = (RenderFrame*) calloc(imagesCount, sizeof(RenderFrame));
 
     render->type = type;
+    render->mip_levels = floor(log2(e_max(width, height))) + 1;;
 
     RenderTextureCreateRenderPass(render);
 
@@ -141,10 +153,12 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 
         if(type != ENGINE_RENDER_TYPE_WINDOW)
         {
-            TextureCreateImage(render->width, render->height, render->m_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &frame->image, &frame->image_memory);
+            uint32_t usage = type == ENGINE_RENDER_TYPE_DEPTH ?  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT :  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+            TextureCreateImage(render->width, render->height, render->m_format, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &frame->image, &frame->image_memory);
 
             TextureCreateSampler(&frame->sampler, render->m_format);
-            frame->view = TextureCreateImageView(frame->image, render->m_format, VK_IMAGE_ASPECT_DEPTH_BIT);
+            frame->view = TextureCreateImageView(frame->image, render->m_format, type == ENGINE_RENDER_TYPE_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
 
             VkImageMemoryBarrier imgBar;
 
@@ -158,7 +172,7 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
             imgBar.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             imgBar.image = frame->image;
 
-            imgBar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            imgBar.subresourceRange.aspectMask = type == ENGINE_RENDER_TYPE_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
             imgBar.subresourceRange.baseMipLevel = 0;
             imgBar.subresourceRange.levelCount = 1;
             imgBar.subresourceRange.baseArrayLayer = 0;
@@ -181,7 +195,7 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
         framebufferInfo->height = render->height;
         framebufferInfo->layers = 1;
 
-        if(type != ENGINE_RENDER_TYPE_DEPTH)
+        if(type == ENGINE_RENDER_TYPE_WINDOW)
         {
             VkImageView attachments[2];
             attachments[0] = frame->view;
@@ -189,6 +203,12 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 
             framebufferInfo->attachmentCount = 2;
             framebufferInfo->pAttachments = attachments;
+        }else if(type == ENGINE_RENDER_TYPE_IMAGE)
+        {
+            VkImageView attachment[] = { frame->view };
+
+            framebufferInfo->attachmentCount = 1;
+            framebufferInfo->pAttachments = attachment;
         }else{
             VkImageView attachment[] = { frame->view };
 

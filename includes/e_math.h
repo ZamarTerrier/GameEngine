@@ -8,8 +8,8 @@ extern "C"
 {
 #endif
 
-#define min( a, b ) ((a) < (b) ? (a) : (b))
-#define max( a, b ) ((a) > (b) ? (a) : (b))
+#define e_min( a, b ) ((a) < (b) ? (a) : (b))
+#define e_max( a, b ) ((a) > (b) ? (a) : (b))
 
 #define INTR_EPS 1E-6
 

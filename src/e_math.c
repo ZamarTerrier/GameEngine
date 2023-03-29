@@ -16,7 +16,7 @@ float lerp(float a, float b, float t) { return a*(1.0f-t) + b*t; }
 
 float clamp(float a, float d1, float d2){
 
-  float res = min(max(a, d1), d2);
+  float res = e_min(e_max(a, d1), d2);
 
   return res;
 }
@@ -192,11 +192,11 @@ vec3 v3_cross(vec3 a, vec3 b)
 
 }
 
-float v3_maxs(vec3 a){ return max(max(a.x, a.y), a.z); }
-float v3_mins(vec3 a){ return min(min(a.x, a.y), a.z); }
+float v3_maxs(vec3 a){ return e_max(e_max(a.x, a.y), a.z); }
+float v3_mins(vec3 a){ return e_min(e_min(a.x, a.y), a.z); }
 
-vec3 v3_min(vec3 a, vec3 b){ return (vec3){ min(a.x, b.x), min(a.y, b.y), min(a.z, b.z)}; }
-vec3 v3_max(vec3 a, vec3 b){ return (vec3){ max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) }; }
+vec3 v3_min(vec3 a, vec3 b){ return (vec3){ e_min(a.x, b.x), e_min(a.y, b.y), e_min(a.z, b.z)}; }
+vec3 v3_max(vec3 a, vec3 b){ return (vec3){ e_max(a.x, b.x), e_max(a.y, b.y), e_max(a.z, b.z) }; }
 
 vec3 v3_abs(vec3 a){ return (vec3){ fabs(a.x), fabs(a.y), fabs(a.z)}; }
 
