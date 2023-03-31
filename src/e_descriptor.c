@@ -143,8 +143,15 @@ void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor *descrip
 
                 RenderTexture *render = blueprint_descriptor->render_image;
                 imageInfos[textsize].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfos[textsize].imageView = render->frames[i].view;
-                imageInfos[textsize].sampler = render->frames[i].sampler;
+
+                if(render->flags & ENGINE_RENDER_FLAG_ONE_SHOT)
+                {
+                    imageInfos[textsize].imageView = render->frames[0].view;
+                    imageInfos[textsize].sampler = render->frames[0].sampler;
+                }else{
+                    imageInfos[textsize].imageView = render->frames[i].view;
+                    imageInfos[textsize].sampler = render->frames[i].sampler;
+                }
 
                 descriptorWrites[j].pImageInfo = &imageInfos[textsize];
 

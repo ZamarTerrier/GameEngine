@@ -64,6 +64,8 @@ typedef struct{
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
 
+void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height);
+
 void TerrainObjectAddTextureRender(TerrainObject *to, void *render);
 
 void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow);
@@ -71,6 +73,7 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow);
 
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer);
 uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index);
+
 void TerrainObjectUpdate(TerrainObject *terrain);
 
 #endif // TERRAIN_OBJECT_H

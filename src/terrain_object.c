@@ -25,6 +25,23 @@ uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
     return (to->tex_colors[index].w << 24) | (to->tex_colors[index].x << 16) | (to->tex_colors[index].y << 8) | (to->tex_colors[index].z);
 }
 
+void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height)
+{
+    tParam->columns = 500;
+    tParam->rows = 500;
+    tParam->t_g_param.size_factor = 300;
+    tParam->t_g_param.height_factor = 40;
+    tParam->t_g_param.frequency = 1;
+    tParam->t_g_param.amplitude = 1;
+    tParam->t_g_param.octaves = 4;
+    tParam->vertex_step = 1.0;
+    tParam->t_t_param.texture_scale = 80;
+    tParam->t_t_param.texture_width = texture_width;
+    tParam->t_t_param.texture_height = texture_height;
+    tParam->t_t_param.num_textures = 0;
+    tParam->flags = ENGINE_TERRIAN_FLAGS_REPEATE_TEXTURE | ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE | ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS ;//| ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN;
+}
+
 void TerrainDefaultUpdate(TerrainObject *to)
 {
     Camera3D* cam = (Camera3D*) cam3D;
@@ -50,7 +67,7 @@ void TerrainDefaultUpdate(TerrainObject *to)
     DescriptorUpdate(&to->go.graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
     DescriptorUpdate(&to->go.graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
 
-    TextureBuffer tb;
+    /*TextureBuffer tb;
 
     tb.multi_size = to->t_t_param.texture_scale;
     tb.num_textures = to->t_t_param.num_textures;
@@ -66,14 +83,14 @@ void TerrainDefaultUpdate(TerrainObject *to)
     tb.cam_posxz.x = getViewPos().x;
     tb.cam_posxz.y = getViewPos().z;
 
-    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 2, &tb, sizeof(tb));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 2, &tb, sizeof(tb));*/
 
     LightBuffer3D lbo = {};
     memset(&lbo, 0, sizeof(LightBuffer3D));
 
     LightObjectFillLights(&lbo, to->go.enable_light);
 
-    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 3, &lbo, sizeof(lbo));
+    DescriptorUpdate(&to->go.graphObj.blueprints, 1, 2, &lbo, sizeof(lbo));
 }
 
 void TearrainDefaultDestroy(TerrainObject *to)
@@ -100,12 +117,13 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
 
     for(int i = 0;i < to->t_t_param.texture_width; i++)
     {
-        float n_val_x = (((float)i * to->t_shift) / x_del) / to->t_g_param.size_factor;
+        float n_val_x = ((float)i * to->t_shift) / to->t_g_param.size_factor / x_del;
+
         for(int j = 0;j < to->t_t_param.texture_height; j++)
         {
-            iter = j * to->t_t_param.texture_width + i;
+            float n_val_y = ((float)j * to->t_shift) / to->t_g_param.size_factor / y_del;
 
-            float n_val_y = (((float)j * to->t_shift) / y_del) / to->t_g_param.size_factor;
+            iter = j * to->t_t_param.texture_width + i;
 
             if(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN)
                 t_noise = PerlinOctave2D(to->t_g_param.octaves, n_val_x, n_val_y, to->t_g_param.frequency, to->t_g_param.amplitude);
@@ -265,10 +283,6 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
         to->tex_colors[i].w = rand() % 255;
     }
 
-    GameObjectImage g_img;
-    memset(&g_img, 0, sizeof(GameObjectImage));
-
-
     for(int i=0;i < tParam->t_t_param.num_textures;i++)
     {
         if(strlen(tParam->textures[i]) != 0)
@@ -344,7 +358,6 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
         to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img);
 
     }
-
     for(int i=0;i < to->t_t_param.num_textures;i++)
         BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[i + 1]);
 

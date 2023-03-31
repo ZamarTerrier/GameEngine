@@ -220,23 +220,18 @@ void TextObjectAddTexture(TextObject* to, uint32_t indx_pack){
     pack->num_descriptors ++;
 }
 
-void TextObjectUpdateUniformBufferDefault(TextObject* to, uint32_t indx_pack) {
-
-    BluePrintPack *pack = &to->go.graphObj.blueprints.blue_print_packs[indx_pack];
-
-    if(pack->descriptors == NULL)
-        return;
+void TextObjectUpdateUniformBufferDefault(GameObject2D *go) {
 
     TransformBuffer2D tbo;
 
-    tbo.position = to->go.transform.position;
-    tbo.rotation = to->go.transform.rotation;
-    tbo.scale = to->go.transform.scale;
+    tbo.position = go->transform.position;
+    tbo.rotation = go->transform.rotation;
+    tbo.scale = go->transform.scale;
 
-    DescriptorUpdate(&to->go.graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
+    DescriptorUpdate(&go->graphObj.blueprints, 0, 0, &tbo, sizeof(tbo));
 }
 
-void TextObjectDrawDefault(TextObject* to)
+void TextObjectDrawDefault(TextObject* to, void *command)
 {
     for(int i=0; i < to->go.graphObj.gItems.num_shader_packs;i++)
     {
@@ -247,19 +242,19 @@ void TextObjectDrawDefault(TextObject* to)
             ShaderPack *pack = &to->go.graphObj.gItems.shader_packs[i];
 
             for(int j=0; j < pack->num_pipelines; j++){
-                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
-                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
+                vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
+                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 PipelineSetting *settings = &to->go.graphObj.blueprints.blue_print_packs[i].settings[j];
 
-                vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-                vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                vkCmdSetViewport(command, 0, 1, &settings->viewport);
+                vkCmdSetScissor(command, 0, 1, &settings->scissor);
 
                 VkDeviceSize offsets = 0;
-                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &to->go.graphObj.shape.vParam.vertexBuffer, &offsets);
+                vkCmdBindVertexBuffers(command, 0, 1, &to->go.graphObj.shape.vParam.vertexBuffer, &offsets);
                 for (uint32_t j = 0; j < to->textData.font.numLetters; j++)
                 {
-                    vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+                    vkCmdDraw(command, 4, 1, j * 4, 0);
                 }
             }
         }
@@ -478,4 +473,11 @@ void TextObjectAddDefault(TextObject* to, void *render)
     GameObject2DAddSettingPipeline(to, nums, &setting);
 
     to->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void TextObjectInitDefault(TextObject *to, int fontSize, const char* fontPath, DrawParam *dParam)
+{
+    TextObjectInit(to, fontSize, fontPath);
+    TextObjectAddDefault(to, dParam->render);
+    GameObject2DInitDraw(to);
 }

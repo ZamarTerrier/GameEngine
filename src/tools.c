@@ -98,8 +98,6 @@ QueueFamilyIndices findQueueFamilies(void* arg) {
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
 
 
-
-
     for (int i=0; i < queueFamilyCount; i++){
 
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {

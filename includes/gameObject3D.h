@@ -21,7 +21,7 @@ typedef struct GameObject3D{
 } GameObject3D;
 
 void GameObject3DDefaultUpdate(GameObject3D* go);
-void GameObject3DDefaultDraw(GameObject3D* go);
+void GameObject3DDefaultDraw(GameObject3D* go, void *command);
 
 void GameObject3DInitDraw(GameObject3D *go);
 void GameObject3DClean(GameObject3D* go);

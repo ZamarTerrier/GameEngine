@@ -6,6 +6,7 @@
 #include "gameObject2D.h"
 
 #define MAX_WIDGET_MASKS 64
+#define MAX_WIDGET_DRAW 256
 
 #ifdef __cplusplus
 extern "C"
@@ -122,7 +123,7 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
 void WidgetConnect(EWidget *widget, int trigger, widget_callback callback, void *args);
 void WidgetRecreate(EWidget *widget);
 void WidgetEventsPipe(EWidget *widget);
-void WidgetDraw(EWidget *widget);
+uint32_t WidgetDraw(EWidget *widget, EWidget **widgets);
 void WidgetDestroy(EWidget * widget);
 
 #ifdef __cplusplus

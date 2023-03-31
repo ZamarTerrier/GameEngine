@@ -199,7 +199,7 @@ int EntryWidgetUnfocus(EWidget *widget, void *entry, void *arg){
     return 0;
 }
 
-void EntryUpdateLine(){
+void EntryWidgetUpdate(){
 
     if(e_var_current_entry == NULL)
             return;

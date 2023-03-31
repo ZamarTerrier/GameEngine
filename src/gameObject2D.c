@@ -36,7 +36,7 @@ void GameObject2DDefaultUpdate(GameObject2D* go) {
     DescriptorUpdate(&go->graphObj.blueprints, 0, 1, &ibo, sizeof(ibo));
 }
 
-void GameObject2DDefaultDraw(GameObject2D* go){
+void GameObject2DDefaultDraw(GameObject2D* go, void *command){
 
     for(int i=0; i < go->graphObj.gItems.num_shader_packs;i++)
     {
@@ -47,27 +47,27 @@ void GameObject2DDefaultDraw(GameObject2D* go){
             ShaderPack *pack = &go->graphObj.gItems.shader_packs[i];
 
             for(int j=0; j < pack->num_pipelines; j++){
-                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
+                vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
 
                 PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW){
-                    vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-                    vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                    vkCmdSetViewport(command, 0, 1, &settings->viewport);
+                    vkCmdSetScissor(command, 0, 1, &settings->scissor);
                 }
 
                 VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
                 VkDeviceSize offsets[] = {0};
 
-                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
+                vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
+                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
 
-                    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                    vkCmdBindIndexBuffer(command, go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(command, go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
                 }else
-                    vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+                    vkCmdDraw(command, go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
             }
         }
     }

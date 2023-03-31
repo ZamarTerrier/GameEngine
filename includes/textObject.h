@@ -47,6 +47,7 @@ void TextObjectMakeLastText(TextObject *to);
 
 void TextDataInit(TextData *tData, int fontSize, char* fontPath);
 void TextObjectInit(TextObject* to, int fontSize,  const char* fontPath);
+void TextObjectInitDefault(TextObject *to, int fontSize, const char* fontPath, DrawParam *dParam);
 
 void TextDataSetFontPath(TextData* tData, const char* path);
 void TextDataSetTextColor(TextData* tData, vec3 color);

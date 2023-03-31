@@ -63,8 +63,6 @@ void PrimitiveObjectDestroy(PrimitiveObject *po)
     po->params = NULL;
 }
 
-
-
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params){
 
     GameObject3DInit(po);
@@ -151,6 +149,18 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
         Transform3DSetScale(po, -500, -500, -500);
 
+}
+
+void PrimitiveObjectInitDefault(PrimitiveObject *po, DrawParam dParam, char type, void *params)
+{
+        PrimitiveObjectInit(po, dParam, type, params);
+
+        if(dParam.flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
+            GameObject3DAddShadowDescriptor(po, dParam.shadow);
+
+        PrimitiveObjectAddDefault(po, dParam.render);
+        BluePrintAddRenderImage(&po->go.graphObj.blueprints, 1, dParam.shadow);
+        GameObject3DInitDraw(po);
 }
 
 void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render)

@@ -32,7 +32,7 @@ void GameObjectSetDestroyFunc(GameObject *go, void *func);
 
 void GameObjectInit(GameObject* go);
 void GameObjectUpdate(GameObject* go) ;
-void GameObjectDraw(GameObject* go);
+void GameObjectDraw(GameObject* go, void *command);
 void GameObjectClean(GameObject* go);
 void GameObjectRecreate(GameObject* go);
 void GameObjectDestroy(GameObject* go);

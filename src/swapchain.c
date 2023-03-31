@@ -80,6 +80,7 @@ void SwapChainCreate() {
     EIExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
     imagesCount = swapChainSupport.capabilities.minImageCount + 1;
+
     if (swapChainSupport.capabilities.maxImageCount > 0 && imagesCount > swapChainSupport.capabilities.maxImageCount) {
         imagesCount = swapChainSupport.capabilities.maxImageCount;
     }

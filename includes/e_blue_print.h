@@ -36,9 +36,8 @@ typedef struct{
 
 typedef struct{
     BluePrintPack blue_print_packs[MAX_BLUE_PRINTS];
-    BluePrintDescriptor shadow_descr;
-    uint32_t isShadow;
     uint32_t num_blue_print_packs;
+    uint32_t isShadow;
 } Blueprints;
 
 void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags);

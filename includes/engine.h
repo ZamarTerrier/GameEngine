@@ -191,10 +191,9 @@ void EnginereRecreateSwapChain();
 
 void EngineCreateSyncobjects();
 
-void EngineLoop();
-
-void EngineAddRender(void *render);
-void EngineDraw(void* obj);
+void EngineDraw(void *obj, uint32_t count);
+void EngineBeginDraw( void *point_renders, uint32_t count );
+void EngineEndDraw();
 
 void EngineUpdateUniformBuffer();
 

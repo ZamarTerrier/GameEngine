@@ -32,6 +32,11 @@ extern "C"
 typedef enum { false, true} bool;
 #endif
 
+typedef enum{
+    ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW = 0x1,
+    ENGINE_DRAW_PARAM_FLAG_DRAW_INDEXED = 0x2
+} EngineDrawParamFlags;
+
 typedef struct ChildStack{
     struct ChildStack* before;
     struct ChildStack* next;
@@ -120,7 +125,9 @@ typedef struct{
     char vertShader[256];
     char fragShader[256];
     char topology;
-    char drawType;
+    char flags;
+    void *render;
+    void *shadow;
 } DrawParam;
 
 typedef struct EISurfaceCapabilitiesKHR {

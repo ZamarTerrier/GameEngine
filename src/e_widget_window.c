@@ -345,7 +345,11 @@ void WindowWidgetDraw(EWidgetWindow *ww){
     if(!ww->show)
         return;
 
-    WidgetDraw(&ww->top);
+    EWidget *widgets[MAX_WIDGET_DRAW];
+
+    uint32_t count = WidgetDraw(&ww->top, widgets);
+
+    EngineDraw(widgets, count);
 }
 
 void WindowWidgetDestroy(EWidgetWindow *ww){

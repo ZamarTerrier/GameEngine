@@ -57,6 +57,7 @@ typedef struct{
 
 
 void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params);
+void PrimitiveObjectInitDefault(PrimitiveObject *po, DrawParam dParam, char type, void *params);
 
 void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render);
 

@@ -429,19 +429,24 @@ void WidgetEventsPipe(EWidget* widget)
 
 }
 
-void WidgetDraw(EWidget * widget)
+uint32_t WidgetDraw(EWidget * widget, EWidget **widgets)
 {
+    uint32_t count = 0;
     if(!(widget->widget_flags & ENGINE_FLAG_WIDGET_VISIBLE))
         return;
 
     ChildStack *child = widget->child;
-    EngineDraw(widget);
     while(child != NULL)
     {
-        WidgetDraw(child->node);
+        count += WidgetDraw(child->node, widgets);
 
         child = child->next;
     }
+    widgets[count] = widget;
+
+    count ++;
+
+    return count;
 }
 
 void WidgetRecreate(EWidget * widget){

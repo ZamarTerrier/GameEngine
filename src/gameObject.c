@@ -47,14 +47,14 @@ void GameObjectUpdate(GameObject* go) {
     update(go);
 }
 
-void GameObjectDraw(GameObject* go) {
+void GameObjectDraw(GameObject* go, void *command) {
 
     if(go == NULL)
         return;
 
-    void (*draw)(GameObject* go) = go->DrawPoint;
+    void (*draw)(GameObject* go, void *cmd) = go->DrawPoint;
 
-    draw(go);
+    draw(go, command);
 }
 
 void GameObjectClean(GameObject* go){

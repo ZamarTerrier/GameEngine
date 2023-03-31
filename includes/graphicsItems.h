@@ -33,8 +33,6 @@ typedef struct{
 typedef struct{
     ShaderPack shader_packs[MAX_BLUE_PRINTS];
     uint32_t num_shader_packs;
-    ShaderDescriptor shadow_descr;
-    PipelineStruct shadow;
     bool perspective;
 } GraphicItems;
 

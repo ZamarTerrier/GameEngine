@@ -32,21 +32,11 @@
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
-typedef struct{
-    GameObject** go;
-    uint32_t count;
-} renderObjects;
-
-typedef struct{
-    RenderTexture** renders;
-    uint32_t count;
-} render_planes;
+RenderTexture **renders;
+uint32_t num_renders;
 
 typedef void (*e_charCallback)(GLFWwindow*, uint32_t);
 typedef void (*e_keyCallback)(GLFWwindow*, int , int , int , int );
-
-renderObjects objs;
-render_planes planes;
 
 void * RecreateFunc = NULL;
 
@@ -55,10 +45,6 @@ int charCallbackSize;
 
 e_keyCallback *keyCallbacks;
 int keyCallbackSize;
-
-void EngineUpdateLine(){
-    EntryUpdateLine();
-}
 
 void EngineCharacterCallback(GLFWwindow* window, uint32_t codepoint)
 {
@@ -88,9 +74,6 @@ void EngineInitVulkan(){
     ToolsCreateDepthResources();
     BuffersCreateCommand();
     EngineCreateSyncobjects();
-
-    objs.go = (GameObject **) calloc(0, sizeof(GameObject*));
-    objs.count = 0;
 
     charCallbacks = (e_charCallback *) calloc(0, sizeof(e_charCallback));
     keyCallbacks = (e_keyCallback *) calloc(0, sizeof(e_keyCallback));
@@ -138,9 +121,7 @@ void EngineInitSystem(int width, int height, const char* name){
 }
 
 void EngineFixedCursorCenter(){
-
     glfwSetCursorPos(e_window, WIDTH / 2, HEIGHT / 2);
-
 }
 
 void EngineGetCursorPos(double *xpos, double *ypos){
@@ -148,9 +129,7 @@ void EngineGetCursorPos(double *xpos, double *ypos){
 }
 
 void EngineSetCursorPos(float xpos, float ypos){
-
     glfwSetCursorPos(e_window, xpos, ypos);
-
 }
 
 void EngineHideCursor(char state){
@@ -173,33 +152,27 @@ int EngineGetMousePress(int Key){
     return state;
 }
 
-int EngineWindowIsClosed()
-{
+int EngineWindowIsClosed(){
     return glfwWindowShouldClose(e_window);
 }
 
-double EngineGetTime()
-{
+double EngineGetTime(){
     return glfwGetTime();
 }
 
-const char *EngineGetClipBoardString()
-{
+const char *EngineGetClipBoardString(){
     return glfwGetClipboardString(e_window);
 }
 
-void EngineSetClipBoardString(const char *string)
-{
+void EngineSetClipBoardString(const char *string){
     glfwSetClipboardString( e_window, string);
 }
 
-void EnginePoolEvents()
-{
+void EnginePoolEvents(){
     glfwPollEvents();
 }
 
-void EngineDeviceWaitIdle()
-{
+void EngineDeviceWaitIdle(){
     vkDeviceWaitIdle(e_device);
 }
 
@@ -231,8 +204,7 @@ void EngineSetCursorPoscallback(void * callback){
     glfwSetCursorPosCallback(e_window, callback);
 }
 
-void EngineSetRecreateFunc(void *func)
-{
+void EngineSetRecreateFunc(void *func){
     RecreateFunc = func;
 }
 
@@ -245,14 +217,6 @@ void EngineCleanupSwapChain() {
     vkFreeCommandBuffers(e_device, commandPool, imagesCount, commandBuffers);
     free(commandBuffers);
     commandBuffers = NULL;
-
-    int temp = objs.count;
-
-    while(temp > 0)
-    {
-        GameObjectClean(objs.go[temp - 1]);
-        temp --;
-    }
 
     vkDestroyRenderPass(e_device, renderPass, NULL);
 
@@ -267,7 +231,7 @@ void EngineCleanupSwapChain() {
 
 }
 
-void EnginereRecreateSwapChain() {
+void EnginereRecreateSwapChain(RenderTexture **renders, uint32_t num_renders) {
 
     glfwGetFramebufferSize(e_window, &WIDTH, &HEIGHT);
 
@@ -295,18 +259,9 @@ void EnginereRecreateSwapChain() {
     PipelineCreateRenderPass();
     ToolsCreateDepthResources();
 
-
-    for(int i=0;i < planes.count;i++)
+    for(int i=0;i < num_renders;i++)
     {
-        RenderTextureRecreate(planes.renders[i])  ;
-    }
-
-    int temp = 0;
-
-    while(temp < objs.count)
-    {
-        GameObjectRecreate(objs.go[temp]);
-        temp ++;
+        RenderTextureRecreate(renders[i])  ;
     }
 
     BuffersCreateCommand();
@@ -342,22 +297,45 @@ void EngineCreateSyncobjects() {
     }
 }
 
-void EngineLoop(){
+void EngineDraw(void *obj, uint32_t count){
 
-    EngineUpdateLine();
+    GameObject **go = obj;
+
+    for(int i=0;i < count;i++)
+        GameObjectUpdate(go[i]);
+
+    for(int i=0;i < num_renders;i++)
+    {
+        RenderTexture *render = renders[i];
+
+
+        if((render->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && (render->flags & ENGINE_RENDER_FLAG_SHOOTED))
+            continue;
+
+        current_render = render;
+
+        RenderTextureBeginRendering(current_render, commandBuffers[imageIndex]);
+
+        for(int j=0;j < count;j++)
+            GameObjectDraw(go[j], commandBuffers[imageIndex]);
+
+        RenderTextureEndRendering(commandBuffers[imageIndex]);
+    }
+}
+
+void EngineBeginDraw(void *point_renders, uint32_t count ){
+
+    renders = point_renders;
+    num_renders = count;
 
     VkResult result = vkAcquireNextImageKHR(e_device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR && framebufferwasResized) {
-        EnginereRecreateSwapChain();
+        EnginereRecreateSwapChain(renders, num_renders);
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         printf("failed to acquire swap chain image!");
         exit(1);
-    }
-
-    for(int i=0;i < objs.count;i++){
-        GameObjectUpdate(objs.go[i]);
     }
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -368,7 +346,24 @@ void EngineLoop(){
 
     //vkResetCommandPool(e_device, commandPool, 0);
 
-    EngineDrawFrame();
+    VkCommandBufferBeginInfo *beginInfo = calloc(1, sizeof(VkCommandBufferBeginInfo));
+    beginInfo->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo->flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+    if(vkBeginCommandBuffer(commandBuffers[imageIndex], beginInfo) != VK_SUCCESS){
+        printf("failed begin command buffer\n");
+        exit(1);
+    }
+
+    free(beginInfo);
+}
+
+void EngineEndDraw(){
+
+    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
+        printf("failed to record command buffer!");
+        exit(1);
+    }
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -386,7 +381,6 @@ void EngineLoop(){
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    EngineDeviceWaitIdle();
     vkResetFences(e_device, 1, &inFlightFences[currentFrame]);
 
     if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
@@ -404,14 +398,14 @@ void EngineLoop(){
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    result = vkQueuePresentKHR(presentQueue, &presentInfo);
+    VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-    //vkQueueWaitIdle(presentQueue);
+    vkQueueWaitIdle(presentQueue);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || (framebufferResized && framebufferwasResized)) {
         framebufferResized = false;
         framebufferwasResized = false;
-        EnginereRecreateSwapChain();
+        EnginereRecreateSwapChain(renders, num_renders);
     } else if (result != VK_SUCCESS) {
         printf("failed to present swap chain image!");
         exit(1);
@@ -419,89 +413,22 @@ void EngineLoop(){
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    free(objs.go);
-    objs.go = (GameObject **) calloc(0, sizeof(GameObject *));
-    objs.count = 0;
+
+    for(int i=0;i < num_renders;i++)
+    {
+        if((renders[i]->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && !(renders[i]->flags & ENGINE_RENDER_FLAG_SHOOTED))
+            renders[i]->flags |= ENGINE_RENDER_FLAG_SHOOTED;
+    }
 
     free(e_var_lights);
     e_var_lights = calloc(0, sizeof(LightObject *));
     e_var_num_lights = 0;
 }
 
-void EngineDrawFrame(){
-
-    int temp;
-
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-    if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
-        printf("failed to begin recording command buffer!");
-        exit(1);
-    }
-
-    for(int i=0;i < planes.count;i++)
-    {
-        current_render = planes.renders[i];
-
-        RenderTextureBeginRendering(current_render, commandBuffers[imageIndex]);
-
-        temp = 0;
-
-        while(temp < objs.count){
-            GameObjectDraw(objs.go[temp]);
-
-            temp ++;
-        }
-
-        RenderTextureEndRendering(commandBuffers[imageIndex]);
-    }
-
-    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
-        printf("failed to record command buffer!");
-        exit(1);
-    }
-
-}
-
-void EngineAddRender(void *render)
-{
-
-    for(int i=0;i < planes.count;i++)
-    {
-        if(planes.renders[i] == render)
-            return;
-    }
-
-    planes.count ++;
-    planes.renders = (RenderTexture **) realloc(planes.renders,planes.count * sizeof(RenderTexture*));
-    planes.renders[planes.count - 1] = render;
-
-}
-
-void EngineDraw(void* arg){
-
-    GameObject* go = (GameObject *)arg;
-
-    if(go->UpdatePoint == NULL)
-    {
-        perror("False point!\n");
-        return;
-    }
-
-    for(int i=0;i < objs.count;i++)
-    {
-        if(objs.go[i] == go)
-            return;
-    }
-
-    objs.count ++;
-    objs.go = (GameObject **) realloc(objs.go,objs.count * sizeof(GameObject*));
-    objs.go[objs.count - 1] = go;
-}
-
 void EngineCleanUp(){
+
+    vkDeviceWaitIdle(e_device);
+
     EngineCleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -517,12 +444,6 @@ void EngineCleanUp(){
 
     vkDestroyCommandPool(e_device, commandPool, NULL);
 
-
-    if(objs.count > 0)
-    {
-        free(objs.go);
-        objs.go = NULL;
-    }
 
     if(e_var_num_fonts > 0)
     {
