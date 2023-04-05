@@ -230,7 +230,7 @@ int EntryWidgetDestroyDefault(EWidgetEntry *entry)
     free(entry->buffers);
 }
 
-void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
+void EntryWidgetInit(EWidgetEntry *entry, int fontSize, DrawParam *dParam, EWidget* parent){
 
 
     if(fontSize > 16)
@@ -238,7 +238,9 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
     else if(fontSize <= 0)
         fontSize = 2;
 
-    WidgetInit(&entry->widget, NULL, parent);
+    WidgetInit(&entry->widget, dParam, parent);
+    WidgetAddDefault(&entry->widget, dParam->render);
+    GameObject2DInitDraw(&entry->widget);
 
     GameObjectSetDestroyFunc(entry, (void *)EntryWidgetDestroyDefault);
 
@@ -247,7 +249,9 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent){
 
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
-    TextWidgetInit(&entry->text, fontSize, NULL, &entry->widget);
+    TextWidgetInit(&entry->text, fontSize, dParam, &entry->widget);
+    TextWidgetAddDefault(&entry->text, dParam->render);
+    GameObject2DInitDraw(&entry->text);
     Transform2DSetPosition(&entry->text, 0, 10 + (fontSize * 2) );
 
     entry->currPos = 0;

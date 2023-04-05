@@ -30,11 +30,10 @@ void QuadObjectInit(QuadObject *qu)
 
     GameObjectSetUpdateFunc(qu, (void *)QuadObjectUpdate);
 
-    GraphicsObjectSetVertexSize(&qu->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&qu->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertexSize(&qu->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&qu->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
 
-    GameObject2DSetLinkedShape(qu);
-
+    qu->go.graphObj.num_shapes = 1;
 }
 
 void QuadObjectAddDefault(QuadObject *qu, void *render)
@@ -48,14 +47,12 @@ void QuadObjectAddDefault(QuadObject *qu, void *render)
 
     PipelineSettingSetDefault(&qu->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_quad_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_quad_vert_spv_size);
-        setting.fragShader = &_binary_shaders_quad_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_quad_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_quad_vert_spv_size);
+    setting.fragShader = &_binary_shaders_quad_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     GameObject2DAddSettingPipeline(qu, nums, &setting);
 

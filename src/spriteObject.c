@@ -52,28 +52,29 @@ void SpriteObjectCreateQuad(SpriteObject *so)
 
     memcpy(tIndx, indx, 6 * sizeof(uint32_t));
 
-    GraphicsObjectSetVertex(&so->go.graphObj, verts, 4, tIndx, 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, 0, verts, 4, tIndx, 6);
 }
 
-void SpriteObjectInit(SpriteObject *so, SpriteParam sParam){
+void SpriteObjectInit(SpriteObject *so, DrawParam *dParam){
 
     GameObject2DInit(so);
 
-    GraphicsObjectSetVertexSize(&so->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertexSize(&so->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
 
     SpriteObjectCreateQuad(so);
 
-
     so->go.image = calloc(1, sizeof(GameObjectImage));
 
-    if(strlen(sParam.texturePath) != 0)
+    if(strlen(dParam->diffuse) != 0)
     {
-        int len = strlen(sParam.texturePath);
+        int len = strlen(dParam->diffuse);
         so->go.image->path = calloc(len + 1, sizeof(char));
-        memcpy(so->go.image->path, sParam.texturePath, len);
+        memcpy(so->go.image->path, dParam->diffuse, len);
         so->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
+
+    so->go.graphObj.num_shapes = 1;
 }
 
 void SpriteObjectAddDefault(SpriteObject *so, void *render)
@@ -96,8 +97,16 @@ void SpriteObjectAddDefault(SpriteObject *so, void *render)
     setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
     setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
     setting.fromFile = 0;
+    setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
 
     GameObject2DAddSettingPipeline(so, nums, &setting);
 
     so->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void SpriteObjectInitDefault(SpriteObject *so, DrawParam *dParam)
+{
+    SpriteObjectInit(so, dParam);
+    SpriteObjectAddDefault(so, dParam->render);
+    GameObject2DInitDraw(so);
 }

@@ -61,16 +61,23 @@ int RangeWidgetMove(EWidget* widget, void* entry, void* args){
     return 0;
 }
 
-void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min, float max, EWidget *parent){
+void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min, float max, DrawParam *dParam, EWidget *parent){
 
     DrawParam param = {};
-    WidgetInit(&range->widget, NULL, parent);
+    WidgetInit(&range->widget, dParam, parent);
+    WidgetAddDefault(&range->widget, dParam->render);
+    GameObject2DInitDraw(&range->widget);
 
     memcpy(range->widget.go.name, "Widget_Range", 10);
     range->widget.type = ENGINE_WIDGET_TYPE_RANGE;
 
-    WidgetInit(&range->line, NULL, &range->widget);
-    WidgetInit(&range->range, NULL, &range->widget);
+    WidgetInit(&range->line, dParam, &range->widget);
+    WidgetAddDefault(&range->line, dParam->render);
+    GameObject2DInitDraw(&range->line);
+
+    WidgetInit(&range->range, dParam, &range->widget);
+    WidgetAddDefault(&range->range, dParam->render);
+    GameObject2DInitDraw(&range->range);
 
     range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
     Transform2DSetScale(&range->line, size_x, 2);

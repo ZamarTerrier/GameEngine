@@ -141,8 +141,8 @@ float Intersect3DRayTriangle(void* shape, InterRay3DParam *ray, vec3 *q){
 
     GameObject3D *model = (GameObject3D *) shape;
 
-    vertexParam *vParam = &model->graphObj.shape.vParam;
-    indexParam *iParam = &model->graphObj.shape.iParam;
+    vertexParam *vParam = &model->graphObj.shapes[0].vParam;
+    indexParam *iParam = &model->graphObj.shapes[0].iParam;
 
     if(vParam->verticesSize < 3)
         return;

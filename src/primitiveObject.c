@@ -63,7 +63,7 @@ void PrimitiveObjectDestroy(PrimitiveObject *po)
     po->params = NULL;
 }
 
-void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void *params){
+void PrimitiveObjectInit(PrimitiveObject *po, DrawParam *dParam, char type, void *params){
 
     GameObject3DInit(po);
 
@@ -76,7 +76,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     CubeSphereParam *csParam = (CubeSphereParam *)params;
     ConeParam *cParam = (ConeParam *)params;
 
-    GraphicsObjectSetVertexSize(&po->go.graphObj, sizeof(Vertex3D), sizeof(uint32_t));
+    GraphicsObjectSetVertexSize(&po->go.graphObj, 0, sizeof(Vertex3D), sizeof(uint32_t));
 
     int builded = false;
 
@@ -84,52 +84,48 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
     switch(type)
     {
         case ENGINE_PRIMITIVE3D_LINE :
-            GraphicsObjectSetVertex(&po->go.graphObj, lineVert, 2, NULL, 0);
-            GameObject3DSetLinkedShape(po);
+            GraphicsObjectSetVertex(&po->go.graphObj, 0, lineVert, 2, NULL, 0);
             break;
         case ENGINE_PRIMITIVE3D_TRIANGLE :
-            GraphicsObjectSetVertex(&po->go.graphObj, triVert, 3, triIndx, 3);
-            GameObject3DSetLinkedShape(po);
+            GraphicsObjectSetVertex(&po->go.graphObj, 0, triVert, 3, triIndx, 3);
             break;
         case ENGINE_PRIMITIVE3D_QUAD :
-            GraphicsObjectSetVertex(&po->go.graphObj, quadVert, 4, quadIndx, 6);
-            GameObject3DSetLinkedShape(po);
+            GraphicsObjectSetVertex(&po->go.graphObj, 0, quadVert, 4, quadIndx, 6);
             break;
         case ENGINE_PRIMITIVE3D_PLANE :
-            InitPlane3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, pParam->sectorCount, pParam->stackCount);
+            InitPlane3D(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, pParam->sectorCount, pParam->stackCount);
             po->params = calloc(1, sizeof(PlaneParam));
             memcpy(po->params, params, sizeof(PlaneParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CUBE :
-            GraphicsObjectSetVertex(&po->go.graphObj, cubeVert, 24, cubeIndx, 36);
-            GameObject3DSetLinkedShape(po);
+            GraphicsObjectSetVertex(&po->go.graphObj, 0, cubeVert, 24, cubeIndx, 36);
             break;
         case ENGINE_PRIMITIVE3D_CUBESPHERE :
-            Cubesphere(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, csParam->radius, csParam->verperrow);
+            Cubesphere(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, csParam->radius, csParam->verperrow);
             po->params = calloc(1, sizeof(CubeSphereParam));
             memcpy(po->params, params, sizeof(CubeSphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_ICOSPHERE :
-            IcoSphereGenerator(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius);
+            IcoSphereGenerator(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, sParam->radius);
             po->params = calloc(1, sizeof(SphereParam));
             memcpy(po->params, params, sizeof(SphereParam));
             break;
         case ENGINE_PRIMITIVE3D_SPHERE :
-            SphereGenerator3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            SphereGenerator3D(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
             po->params = calloc(1, sizeof(SphereParam));
             memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CONE :
-            ConeGenerator(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, cParam->height, cParam->sectorCount, cParam->stackCount);
+            ConeGenerator(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, cParam->height, cParam->sectorCount, cParam->stackCount);
             po->params = calloc(1, sizeof(ConeParam));
             memcpy(po->params, params, sizeof(ConeParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_SKYBOX:
-            SphereGenerator3D(&po->go.graphObj.shape.vParam, &po->go.graphObj.shape.iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            SphereGenerator3D(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
             po->params = calloc(1, sizeof(SphereParam));
             memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
@@ -138,28 +134,30 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam dParam, char type, void 
 
     if(builded)
     {
-        BuffersCreateVertex(&po->go.graphObj.shape.vParam);
-        BuffersCreateIndex(&po->go.graphObj.shape.iParam);
-        BuffersUpdateVertex(&po->go.graphObj.shape.vParam);
-        BuffersUpdateIndex(&po->go.graphObj.shape.iParam);
+        BuffersCreateVertex(&po->go.graphObj.shapes[0].vParam);
+        BuffersCreateIndex(&po->go.graphObj.shapes[0].iParam);
+        BuffersUpdateVertex(&po->go.graphObj.shapes[0].vParam);
+        BuffersUpdateIndex(&po->go.graphObj.shapes[0].iParam);
     }
 
-    PrimitiveObjectInitTexture(po, &dParam);
+    po->go.graphObj.num_shapes = 1;
+
+    PrimitiveObjectInitTexture(po, dParam);
 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
         Transform3DSetScale(po, -500, -500, -500);
 
 }
 
-void PrimitiveObjectInitDefault(PrimitiveObject *po, DrawParam dParam, char type, void *params)
+void PrimitiveObjectInitDefault(PrimitiveObject *po, DrawParam *dParam, char type, void *params)
 {
         PrimitiveObjectInit(po, dParam, type, params);
 
-        if(dParam.flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
-            GameObject3DAddShadowDescriptor(po, dParam.shadow);
+        if(dParam->flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
+            GameObject3DAddShadowDescriptor(po, dParam->shadow);
 
-        PrimitiveObjectAddDefault(po, dParam.render);
-        BluePrintAddRenderImage(&po->go.graphObj.blueprints, 1, dParam.shadow);
+        PrimitiveObjectAddDefault(po, dParam->render);
+        BluePrintAddRenderImage(&po->go.graphObj.blueprints, 1, dParam->shadow);
         GameObject3DInitDraw(po);
 }
 
@@ -184,6 +182,7 @@ void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render)
     setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
     setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
     setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     GameObject3DAddSettingPipeline(po, nums, &setting);
 
@@ -192,7 +191,7 @@ void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render)
 
 void *PrimitiveObjectGetVertex(PrimitiveObject *po)
 {
-    return &po->go.graphObj.shape.vParam;
+    return &po->go.graphObj.shapes[0].vParam;
 }
 
 //Не корректно

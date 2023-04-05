@@ -46,10 +46,8 @@ void PainterObjectInit(EPainter *painter)
     GameObject2DInit(painter);
     GameObjectSetUpdateFunc(painter, (void *)PainterObjectUniformUpdate);
 
-    GraphicsObjectSetVertexSize(&painter->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&painter->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
-
-    GameObject2DSetLinkedShape(painter);
+    GraphicsObjectSetVertexSize(&painter->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&painter->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
 
 }
 

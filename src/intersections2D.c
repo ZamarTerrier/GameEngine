@@ -31,7 +31,7 @@ size_t indexOfFurthestPoint (void *obj, vec2 direction) {
     float maxdot = -1;
     size_t index = -1;
 
-    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    vertexParam *vParam = &shape->graphObj.shapes[0].vParam;
     Vertex2D *vertex = vParam->vertices;
 
     for (int i=0;i < vParam->verticesSize;i++) {
@@ -52,7 +52,7 @@ vec2 supportFunc(void *obj, vec2 direction)
     float maxdot = -1;
     vec2 base;
 
-    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    vertexParam *vParam = &shape->graphObj.shapes[0].vParam;
     Vertex2D *vertex = vParam->vertices;
 
     for (int i=0;i < vParam->verticesSize;i++) {
@@ -70,7 +70,7 @@ vec2 averagePoint (void *obj) {
 
     GameObject2D *shape = obj;
 
-    vertexParam *vParam = &shape->graphObj.shape.vParam;
+    vertexParam *vParam = &shape->graphObj.shapes[0].vParam;
     Vertex2D *vertex = vParam->vertices;
 
     vec2 avg = { 0.f, 0.f };
@@ -88,8 +88,8 @@ vec2 support (void *obj1, void *obj2, vec2 d) {
     GameObject2D *shape1 = obj1;
     GameObject2D *shape2 = obj2;
 
-    Vertex2D *vertex1 = shape1->graphObj.shape.vParam.vertices;
-    Vertex2D *vertex2 = shape2->graphObj.shape.vParam.vertices;
+    Vertex2D *vertex1 = shape1->graphObj.shapes[0].vParam.vertices;
+    Vertex2D *vertex2 = shape2->graphObj.shapes[0].vParam.vertices;
 
     // get furthest point of first body along an arbitrary direction
     size_t i = indexOfFurthestPoint (obj1, d);
@@ -482,8 +482,8 @@ int IntersectionSphapeSquare(void *obj1, InterSquareParam *square)
 {
     GameObject2D *shape = obj1;
 
-    vertexParam *vParam = &shape->graphObj.shape.vParam;
-    indexParam *iParam = &shape->graphObj.shape.iParam;
+    vertexParam *vParam = &shape->graphObj.shapes[0].vParam;
+    indexParam *iParam = &shape->graphObj.shapes[0].iParam;
 
 
     InterTriangleParam triangle;
@@ -509,11 +509,11 @@ int IntersectionShapeShape(void *obj1, void *obj2)
     GameObject2D *shape1 = obj1;
     GameObject2D *shape2 = obj2;
 
-    vertexParam *vParam1 = &shape1->graphObj.shape.vParam;
-    vertexParam *vParam2 = &shape2->graphObj.shape.vParam;
+    vertexParam *vParam1 = &shape1->graphObj.shapes[0].vParam;
+    vertexParam *vParam2 = &shape2->graphObj.shapes[0].vParam;
 
-    indexParam *iParam1 = &shape1->graphObj.shape.iParam;
-    indexParam *iParam2 = &shape2->graphObj.shape.iParam;
+    indexParam *iParam1 = &shape1->graphObj.shapes[0].iParam;
+    indexParam *iParam2 = &shape2->graphObj.shapes[0].iParam;
 
     InterTriangleParam triangle1, triangle2;
 

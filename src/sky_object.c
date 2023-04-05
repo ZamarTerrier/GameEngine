@@ -49,6 +49,8 @@ void SkyObjectDefaultUpdate(SkyObject *so)
 
 void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
 {
+    memset(so, 0, sizeof(SkyObject));
+
     GameObjectSetUpdateFunc(so, (void *)SkyObjectDefaultUpdate);
     GameObjectSetDrawFunc(so, (void *)GameObject2DDefaultDraw);
     GameObjectSetCleanFunc(so, (void *)GameObject2DClean);
@@ -58,11 +60,9 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
     Transform3DInit(&so->go.transform);
     GraphicsObjectInit(&so->go.graphObj, ENGINE_VERTEX_TYPE_SKY);
 
-    so->go.graphObj.shape.linked = false;
-
     so->type = type;
 
-    GraphicsObjectSetVertexSize(&so->go.graphObj, sizeof(SkyVertex), sizeof(uint32_t));
+    GraphicsObjectSetVertexSize(&so->go.graphObj, 0, sizeof(SkyVertex), sizeof(uint32_t));
 
     SkyVertex *some_vertex = calloc(4, sizeof(SkyVertex));
     some_vertex[0].position.x = -1;
@@ -82,10 +82,11 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
     some_vertex[3].texture_uv.x = 1;
     some_vertex[3].texture_uv.y = 0;
 
-    uint32_t *some_index = calloc(6, sizeof(uint32_t));
-    memcpy(some_index, projPlaneIndx, sizeof(uint32_t) * 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, 0, some_vertex, 4, projPlaneIndx, 6);
 
-    GraphicsObjectSetVertex(&so->go.graphObj, some_vertex, 4, some_index, 6);
+    free(some_vertex);
+
+    so->go.graphObj.num_shapes = 1;
 
     GameObjectSetUpdateFunc(&so->go, (void *)SkyObjectDefaultUpdate);
 }
@@ -129,6 +130,7 @@ void SkyObjectAddDefault(SkyObject *so, void *render)
     }
 
     setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     GameObject2DAddSettingPipeline(so, nums, &setting);
 

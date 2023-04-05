@@ -28,8 +28,6 @@ void GameObject3DClean(GameObject3D* go);
 void GameObject3DRecreate(GameObject3D* go);
 void GameObject3DDestroy(GameObject3D* go);
 
-void GameObject3DSetLinkedShape(GameObject3D *go);
-
 void GameObject3DInit(GameObject3D *go);
 
 void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render);

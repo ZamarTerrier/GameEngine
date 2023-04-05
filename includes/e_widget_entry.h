@@ -26,7 +26,7 @@ extern bool e_ctrl_press, e_c_press, e_v_press, e_pasted;
 
 int EntryWidgetDestroyDefault(EWidgetEntry *entry);
 
-void EntryWidgetInit(EWidgetEntry *entry, int fontSize, EWidget* parent);
+void EntryWidgetInit(EWidgetEntry *entry, int fontSize, DrawParam *dParam, EWidget* parent);
 void EntryWidgetUpdate();
 void EntryWidgetCharacterCallback(void* window, uint32_t codepoint);
 void EntryWidgetKeyCallback(void* window,  int key, int scancode, int action, int mods);

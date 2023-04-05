@@ -60,7 +60,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
     if(particle->num_parts == 0)
         return;
 
-    vertexParam *vParam = &particle->go.graphObj.shape.vParam;
+    vertexParam *vParam = &particle->go.graphObj.shapes[0].vParam;
 
     if(vParam->vertices != NULL)
         free(vParam->vertices);
@@ -94,7 +94,7 @@ void Particle3DDefaultUpdate(ParticleObject3D* particle){
 
 void Particle3DDefaultDraw(GameObject3D* go){
 
-    if(go->graphObj.shape.vParam.verticesSize == 0)
+    if(go->graphObj.shapes[0].vParam.verticesSize == 0)
         return;
 
     for(int i=0; i < go->graphObj.gItems.num_shader_packs;i++)
@@ -114,7 +114,7 @@ void Particle3DDefaultDraw(GameObject3D* go){
                 vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
                 vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
 
-                VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
+                VkBuffer vertexBuffers[] = {go->graphObj.shapes[settings->vert_indx].vParam.vertexBuffer};
                 VkDeviceSize offsets[] = {0};
 
                 vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
@@ -122,10 +122,10 @@ void Particle3DDefaultDraw(GameObject3D* go){
                 vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
-                    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                    vkCmdBindIndexBuffer(commandBuffers[imageIndex], go->graphObj.shapes[settings->vert_indx].iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(commandBuffers[imageIndex], go->graphObj.shapes[settings->vert_indx].iParam.indexesSize, 1, 0, 0, 0);
                 }else
-                    vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+                    vkCmdDraw(commandBuffers[imageIndex], go->graphObj.shapes[settings->vert_indx].vParam.verticesSize, 1, 0, 0);
             }
         }
     }
@@ -142,13 +142,14 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
 
-    GraphicsObjectSetVertexSize(&particle->go.graphObj, sizeof(ParticleVertex3D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&particle->go.graphObj, NULL, 0, NULL, 0);
+    GraphicsObjectSetVertexSize(&particle->go.graphObj, 0, sizeof(ParticleVertex3D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&particle->go.graphObj, 0, NULL, 0, NULL, 0);
 
     particle->go.graphObj.gItems.perspective = true;
     particle->go.enable_light = false;
 
-    particle->go.graphObj.shape.vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
+    particle->go.graphObj.shapes[0].vParam.vertices = calloc(particle->num_parts, sizeof(ParticleVertex3D));
+    particle->go.graphObj.num_shapes = 1;
     particle->particles = (Particle3D*) calloc(particle->num_parts, sizeof(Particle3D));
 
     particle->go.images = calloc(1, sizeof(GameObjectImage));

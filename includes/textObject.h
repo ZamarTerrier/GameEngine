@@ -49,6 +49,8 @@ void TextDataInit(TextData *tData, int fontSize, char* fontPath);
 void TextObjectInit(TextObject* to, int fontSize,  const char* fontPath);
 void TextObjectInitDefault(TextObject *to, int fontSize, const char* fontPath, DrawParam *dParam);
 
+void TextObjectAddDefault(TextObject* to, void *render);
+
 void TextDataSetFontPath(TextData* tData, const char* path);
 void TextDataSetTextColor(TextData* tData, vec3 color);
 void TextDataSetTextSize(TextData* tData, float size);

@@ -30,13 +30,14 @@ typedef struct{
     EWidget top;
     EWidgetWindow *window;
     LinkedButtonList list[256];
-    uint32_t num_elems;    
+    uint32_t num_elems;
+    void *render;
 } EWidgetTopMenu;
 
 void TopMenuWidgetResize(EWidgetTopMenu *top_menu);
-void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window);
-int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name);
-void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name);
+void TopMenuWidgetInit(EWidgetTopMenu *top_menu, DrawParam *dParam, EWidgetWindow *window);
+int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name, DrawParam *dParam);
+void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name, DrawParam *dParam);
 
 #ifdef __cplusplus
 }

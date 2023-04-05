@@ -51,12 +51,15 @@ void GameObject2DDefaultDraw(GameObject2D* go, void *command){
 
                 PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
 
+                vertexParam *vParam = &go->graphObj.shapes[settings->vert_indx].vParam;
+                indexParam *iParam = &go->graphObj.shapes[settings->vert_indx].iParam;
+
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW){
                     vkCmdSetViewport(command, 0, 1, &settings->viewport);
                     vkCmdSetScissor(command, 0, 1, &settings->scissor);
                 }
 
-                VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
+                VkBuffer vertexBuffers[] = {vParam->vertexBuffer};
                 VkDeviceSize offsets[] = {0};
 
                 vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
@@ -64,10 +67,10 @@ void GameObject2DDefaultDraw(GameObject2D* go, void *command){
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
 
-                    vkCmdBindIndexBuffer(command, go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(command, go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                    vkCmdBindIndexBuffer(command, iParam->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(command, iParam->indexesSize, 1, 0, 0, 0);
                 }else
-                    vkCmdDraw(command, go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+                    vkCmdDraw(command, vParam->verticesSize, 1, 0, 0);
             }
         }
     }
@@ -146,19 +149,15 @@ void GameObject2DDestroy(GameObject2D* go){
         free(go->image);
     }
 
-    if(!go->graphObj.shape.linked)
+    for(int i=0; i < go->graphObj.num_shapes; i++)
     {
-        if(go->graphObj.shape.vParam.verticesSize)
-            free(go->graphObj.shape.vParam.vertices);
+        if(go->graphObj.shapes[i].vParam.verticesSize)
+            free(go->graphObj.shapes[i].vParam.vertices);
 
-        if(go->graphObj.shape.iParam.indexesSize)
-            free(go->graphObj.shape.iParam.indices);
+        if(go->graphObj.shapes[i].iParam.indexesSize)
+            free(go->graphObj.shapes[i].iParam.indices);
     }
-}
 
-void GameObject2DSetLinkedShape(GameObject2D *go)
-{
-    go->graphObj.shape.linked = true;
 }
 
 void GameObject2DInit(GameObject2D* go)
@@ -174,7 +173,6 @@ void GameObject2DInit(GameObject2D* go)
     Transform2DInit(&go->transform);
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_2D_OBJECT);
 
-    go->graphObj.shape.linked = false;
 }
 
 vec2 GameObject2DGetSize(GameObject2D* go)

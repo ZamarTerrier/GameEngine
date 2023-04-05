@@ -84,8 +84,8 @@ int IntersectRayShape( InterRay2DParam *ray, void *obj)
 {
     GameObject2D *shape = obj;
 
-    vertexParam *vParam = &shape->graphObj.shape.vParam;
-    indexParam *iParam = &shape->graphObj.shape.iParam;
+    vertexParam *vParam = &shape->graphObj.shapes[0].vParam;
+    indexParam *iParam = &shape->graphObj.shapes[0].iParam;
 
     InterTriangleParam triangle;
 

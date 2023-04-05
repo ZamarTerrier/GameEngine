@@ -23,16 +23,20 @@ int ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
     return 0;
 }
 
-void ButtonWidgetInit(EWidgetButton *button, const char *text, EWidget *parent){
+void ButtonWidgetInit(EWidgetButton *button, const char *text, DrawParam *dParam, EWidget *parent){
 
     WidgetInit(button, NULL, parent);
+    WidgetAddDefault(button, dParam->render);
+    GameObject2DInitDraw(button);
 
     memcpy(button->widget.go.name, "Button", 6);
     button->widget.type = ENGINE_WIDGET_TYPE_BUTTON;
 
     button->selfColor = button->widget.color = (vec4){ 1, 1, 1, 1};
 
-    TextWidgetInit(&button->text, 9, NULL, &button->widget);
+    TextWidgetInit(&button->text, 9, dParam, &button->widget);
+    TextWidgetAddDefault(&button->text, dParam->render);
+    GameObject2DInitDraw(&button->text);
     TextWidgetSetText(&button->text, text);
 
     Transform2DSetPosition(&button->text, 0, 9 * 4.0f);

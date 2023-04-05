@@ -18,88 +18,90 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
 
     graphObj->blueprints.isShadow = false;
 
+    memset(&graphObj->shapes, 0, sizeof(Shape) * MAX_SHAPES);
+
     switch(type)
     {
         case ENGINE_VERTEX_TYPE_2D_OBJECT:
-            graphObj->aShader.bindingDescription = &Bind2DDescription;
-            graphObj->aShader.attr = planeAttributeDescription;
-            graphObj->aShader.countAttr = 3;
+            graphObj->shapes[0].bindingDescription = &Bind2DDescription;
+            graphObj->shapes[0].attr = planeAttributeDescription;
+            graphObj->shapes[0].countAttr = 3;
             break;
         case ENGINE_VERTEX_TYPE_3D_OBJECT:
-            graphObj->aShader.bindingDescription = &Bind3DDescription;
-            graphObj->aShader.attr = cubeAttributeDescription;
-            graphObj->aShader.countAttr = 3;
+            graphObj->shapes[0].bindingDescription = &Bind3DDescription;
+            graphObj->shapes[0].attr = cubeAttributeDescription;
+            graphObj->shapes[0].countAttr = 3;
             break;
         case ENGINE_VERTEX_TYPE_MODEL_OBJECT:
-            graphObj->aShader.bindingDescription = &BindModel3DDescription;
-            graphObj->aShader.attr = modelAttributeDescription;
-            graphObj->aShader.countAttr = 5;
+            graphObj->shapes[0].bindingDescription = &BindModel3DDescription;
+            graphObj->shapes[0].attr = modelAttributeDescription;
+            graphObj->shapes[0].countAttr = 5;
             break;
         case ENGINE_VERTEX_TYPE_2D_PARTICLE:
-            graphObj->aShader.bindingDescription = &BindParticle2DDescription;
-            graphObj->aShader.attr = particle2DAttributeDescription;
-            graphObj->aShader.countAttr = 3;
+            graphObj->shapes[0].bindingDescription = &BindParticle2DDescription;
+            graphObj->shapes[0].attr = particle2DAttributeDescription;
+            graphObj->shapes[0].countAttr = 3;
             break;
         case ENGINE_VERTEX_TYPE_3D_PARTICLE:
-            graphObj->aShader.bindingDescription = &BindParticle3DDescription;
-            graphObj->aShader.attr = particle3DAttributeDescription;
-            graphObj->aShader.countAttr = 3;
+            graphObj->shapes[0].bindingDescription = &BindParticle3DDescription;
+            graphObj->shapes[0].attr = particle3DAttributeDescription;
+            graphObj->shapes[0].countAttr = 3;
             break;
         case ENGINE_VERTEX_TYPE_TERRAIN:
-            graphObj->aShader.bindingDescription = &BindTerrainDescription;
-            graphObj->aShader.attr = TerrainAttributeDescription;
-            graphObj->aShader.countAttr = 3;
+            graphObj->shapes[0].bindingDescription = &BindTerrainDescription;
+            graphObj->shapes[0].attr = TerrainAttributeDescription;
+            graphObj->shapes[0].countAttr = 3;
             break;
         case ENGINE_VERTEX_TYPE_SKY:
-            graphObj->aShader.bindingDescription = &BindSkyDescription;
-            graphObj->aShader.attr = SkyAttributeDescription;
-            graphObj->aShader.countAttr = 2;
+            graphObj->shapes[0].bindingDescription = &BindSkyDescription;
+            graphObj->shapes[0].attr = SkyAttributeDescription;
+            graphObj->shapes[0].countAttr = 2;
             break;
     }
-
-    graphObj->shape.init = false;
 }
 
-void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t type_v_size, uint32_t type_i_size)
+void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t vert_pack, uint32_t type_v_size, uint32_t type_i_size)
 {
-    graphObj->shape.vParam.typeSize = type_v_size;
-    graphObj->shape.iParam.typeSize = type_i_size;
+    graphObj->shapes[vert_pack].vParam.typeSize = type_v_size;
+    graphObj->shapes[vert_pack].iParam.typeSize = type_i_size;
 }
 
-void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount){
+void GraphicsObjectSetVertex(GraphicsObject* graphObj, uint32_t vert_pack, void *vert, int vertCount, uint32_t *inx, int indxCount){
 
     int res = 0;
 
     if(vert != NULL)
     {
-        graphObj->shape.vParam.vertices = vert;
-        graphObj->shape.vParam.verticesSize = vertCount;
+        graphObj->shapes[vert_pack].vParam.vertices = calloc(vertCount, graphObj->shapes[vert_pack].vParam.typeSize);
+        memcpy(graphObj->shapes[vert_pack].vParam.vertices, vert, graphObj->shapes[vert_pack].vParam.typeSize * vertCount);
+        graphObj->shapes[vert_pack].vParam.verticesSize = vertCount;
     }
 
     if(inx != NULL)
     {
-        graphObj->shape.iParam.indices = inx;
-        graphObj->shape.iParam.indexesSize = indxCount;
+        graphObj->shapes[vert_pack].iParam.indices = calloc(indxCount, graphObj->shapes[vert_pack].iParam.typeSize);
+        memcpy(graphObj->shapes[vert_pack].iParam.indices, inx, graphObj->shapes[vert_pack].iParam.typeSize * indxCount);
+        graphObj->shapes[vert_pack].iParam.indexesSize = indxCount;
     }
 
-    if(!graphObj->shape.init)
+    if(!graphObj->shapes[vert_pack].init)
     {
-        res = BuffersCreateVertex(&graphObj->shape.vParam);
+        res = BuffersCreateVertex(&graphObj->shapes[vert_pack].vParam);
         if(res)
             return;
 
-        res = BuffersCreateIndex(&graphObj->shape.iParam);
+        res = BuffersCreateIndex(&graphObj->shapes[vert_pack].iParam);
         if(res)
             return;
 
-        graphObj->shape.init = true;
+        graphObj->shapes[vert_pack].init = true;
     }
 
-    if(graphObj->shape.vParam.verticesSize > 0)
-        BuffersUpdateVertex(&graphObj->shape.vParam);
+    if(graphObj->shapes[vert_pack].vParam.verticesSize > 0)
+        BuffersUpdateVertex(&graphObj->shapes[vert_pack].vParam);
 
-    if(graphObj->shape.iParam.indexesSize > 0)
-        BuffersUpdateIndex(&graphObj->shape.iParam);
+    if(graphObj->shapes[vert_pack].iParam.indexesSize > 0)
+        BuffersUpdateIndex(&graphObj->shapes[vert_pack].iParam);
 }
 
 void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
@@ -195,15 +197,18 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
         }
     }
 
-    vkDestroyBuffer(e_device, graphObj->shape.iParam.indexBuffer, NULL);
-    vkFreeMemory(e_device, graphObj->shape.iParam.indexBufferMemory, NULL);
-    graphObj->shape.iParam.indexBuffer = NULL;
-    graphObj->shape.iParam.indexBufferMemory = NULL;
+    for(int i=0;i < graphObj->num_shapes;i++)
+    {
+        vkDestroyBuffer(e_device, graphObj->shapes[i].iParam.indexBuffer, NULL);
+        vkFreeMemory(e_device, graphObj->shapes[i].iParam.indexBufferMemory, NULL);
+        graphObj->shapes[i].iParam.indexBuffer = NULL;
+        graphObj->shapes[i].iParam.indexBufferMemory = NULL;
 
-    vkDestroyBuffer(e_device, graphObj->shape.vParam.vertexBuffer, NULL);
-    vkFreeMemory(e_device, graphObj->shape.vParam.vertexBufferMemory, NULL);
-    graphObj->shape.vParam.vertexBuffer = NULL;
-    graphObj->shape.vParam.vertexBufferMemory = NULL;
+        vkDestroyBuffer(e_device, graphObj->shapes[i].vParam.vertexBuffer, NULL);
+        vkFreeMemory(e_device, graphObj->shapes[i].vParam.vertexBufferMemory, NULL);
+        graphObj->shapes[i].vParam.vertexBuffer = NULL;
+        graphObj->shapes[i].vParam.vertexBufferMemory = NULL;
+    }
 }
 
 void GraphicsObjectSetShadersPath(GraphicsObject *graphObj, const char *vert, const char *frag)

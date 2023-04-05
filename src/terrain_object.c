@@ -30,10 +30,10 @@ void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width
     tParam->columns = 500;
     tParam->rows = 500;
     tParam->t_g_param.size_factor = 300;
-    tParam->t_g_param.height_factor = 40;
+    tParam->t_g_param.height_factor = 60;
     tParam->t_g_param.frequency = 1;
     tParam->t_g_param.amplitude = 1;
-    tParam->t_g_param.octaves = 4;
+    tParam->t_g_param.octaves = 6;
     tParam->vertex_step = 1.0;
     tParam->t_t_param.texture_scale = 80;
     tParam->t_t_param.texture_width = texture_width;
@@ -62,7 +62,7 @@ void TerrainDefaultUpdate(TerrainObject *to)
     LightSpaceMatrix lsm;
     //mbo.model = edenMat;
     mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
-    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
+    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_SHADOW_VIEW_DISTANCE, MAX_SHADOW_VIEW_DISTANCE);
 
     DescriptorUpdate(&to->go.graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
     DescriptorUpdate(&to->go.graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
@@ -151,7 +151,7 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
 void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 {
 
-    vertexParam *vParam = &to->go.graphObj.shape.vParam;
+    vertexParam *vParam = &to->go.graphObj.shapes[0].vParam;
 
     TerrainVertex *verts = vParam->vertices;
 
@@ -236,7 +236,6 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
 
     to->go.graphObj.gItems.perspective = true;
 
-    to->go.graphObj.shape.linked = false;
     to->go.enable_light = false;
     to->go.wired = false;
 
@@ -248,14 +247,14 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     to->t_shift = rand() % UINT16_MAX;
     to->t_shift = to->t_shift / UINT16_MAX;
 
-    GraphicsObjectSetVertexSize(&to->go.graphObj, sizeof(TerrainVertex), sizeof(uint32_t));
+    GraphicsObjectSetVertexSize(&to->go.graphObj, 0, sizeof(TerrainVertex), sizeof(uint32_t));
 
-    InitTerrain(&to->go.graphObj.shape.vParam, &to->go.graphObj.shape.iParam, tParam);
+    InitTerrain(&to->go.graphObj.shapes[0].vParam, &to->go.graphObj.shapes[0].iParam, tParam);
 
-    BuffersCreateVertex(&to->go.graphObj.shape.vParam);
-    BuffersCreateIndex(&to->go.graphObj.shape.iParam);
-    BuffersUpdateVertex(&to->go.graphObj.shape.vParam);
-    BuffersUpdateIndex(&to->go.graphObj.shape.iParam);
+    BuffersCreateVertex(&to->go.graphObj.shapes[0].vParam);
+    BuffersCreateIndex(&to->go.graphObj.shapes[0].iParam);
+    BuffersUpdateVertex(&to->go.graphObj.shapes[0].vParam);
+    BuffersUpdateIndex(&to->go.graphObj.shapes[0].iParam);
 
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS))
         TerrainObjectGenerateTerrainHeights(to);
@@ -294,6 +293,8 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
             //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
         }
     }
+
+    to->go.graphObj.num_shapes = 1;
 }
 
 void TerrainObjectAddTextureRender(TerrainObject *to, void *render)
@@ -322,6 +323,7 @@ void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow)
     setting.fragShader = &_binary_shaders_terrain_frag_2_spv_start;
     setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_2_spv_size);
     setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     GameObject3DAddSettingPipeline(to, nums, &setting);
 
@@ -370,6 +372,7 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
     setting.fragShader = &_binary_shaders_terrain_frag_spv_start;
     setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_spv_size);
     setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     GameObject3DAddSettingPipeline(to, nums, &setting);
 

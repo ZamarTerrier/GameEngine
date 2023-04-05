@@ -36,7 +36,7 @@ void GameObject3DDefaultUpdate(GameObject3D* go) {
     LightSpaceMatrix lsm;
     //mbo.model = edenMat;
     mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
-    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
+    mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_SHADOW_VIEW_DISTANCE, MAX_SHADOW_VIEW_DISTANCE);
 
     DescriptorUpdate(&go->graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
     DescriptorUpdate(&go->graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
@@ -72,16 +72,16 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
                 vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
-                VkBuffer vertexBuffers[] = {go->graphObj.shape.vParam.vertexBuffer};
+                VkBuffer vertexBuffers[] = {go->graphObj.shapes[settings->vert_indx].vParam.vertexBuffer};
                 VkDeviceSize offsets[] = {0};
 
                 vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
-                    vkCmdBindIndexBuffer(command, go->graphObj.shape.iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(command, go->graphObj.shape.iParam.indexesSize, 1, 0, 0, 0);
+                    vkCmdBindIndexBuffer(command, go->graphObj.shapes[settings->vert_indx].iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(command, go->graphObj.shapes[settings->vert_indx].iParam.indexesSize, 1, 0, 0, 0);
                 }else
-                    vkCmdDraw(command, go->graphObj.shape.vParam.verticesSize, 1, 0, 0);
+                    vkCmdDraw(command, go->graphObj.shapes[settings->vert_indx].vParam.verticesSize, 1, 0, 0);
             }
         }
     }
@@ -110,6 +110,7 @@ void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render)
     setting.fragShader = &_binary_shaders_depth_frag_spv_start;
     setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_spv_size);
     setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
     //setting.flags |= ENGINE_PIPELINE_FLAG_BIAS;
@@ -177,19 +178,14 @@ void GameObject3DDestroy(GameObject3D* go){
 
     free(go->images);
 
-    if(!go->graphObj.shape.linked)
+    for(int i=0; i < go->graphObj.num_shapes; i++)
     {
-        if(go->graphObj.shape.vParam.verticesSize)
-            free(go->graphObj.shape.vParam.vertices);
+        if(go->graphObj.shapes[i].vParam.verticesSize)
+            free(go->graphObj.shapes[i].vParam.vertices);
 
-        if(go->graphObj.shape.iParam.indexesSize)
-            free(go->graphObj.shape.iParam.indices);
+        if(go->graphObj.shapes[i].iParam.indexesSize)
+            free(go->graphObj.shapes[i].iParam.indices);
     }
-}
-
-void GameObject3DSetLinkedShape(GameObject3D *go)
-{
-    go->graphObj.shape.linked = true;
 }
 
 void GameObject3DInit(GameObject3D *go){
@@ -207,7 +203,6 @@ void GameObject3DInit(GameObject3D *go){
 
     go->graphObj.gItems.perspective = true;
 
-    go->graphObj.shape.linked = false;
     go->enable_light = false;
     go->wired = false;
 }

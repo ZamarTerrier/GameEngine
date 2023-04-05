@@ -3,6 +3,8 @@
 
 #include "engine_includes.h"
 
+#define MAX_SHAPES 10
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -59,15 +61,16 @@ typedef struct{
 typedef struct{
     char vertShader[256];
     char fragShader[256];
-    EIVertexInputBindingDescription* bindingDescription;
-    EIVertexInputAttributeDescription* attr;
-    size_t countAttr;
 } aboutShader;
 
 typedef struct{
     indexParam iParam;
     vertexParam vParam;
-    bool linked;
+
+    EIVertexInputBindingDescription* bindingDescription;
+    EIVertexInputAttributeDescription* attr;
+    size_t countAttr;
+
     bool init;
 } Shape;
 

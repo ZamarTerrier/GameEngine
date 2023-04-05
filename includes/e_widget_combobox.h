@@ -20,8 +20,8 @@ typedef struct{
     int size_y;
 } EWidgetCombobox;
 
-void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, EWidget *parent);
-void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text);
+void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, DrawParam *dParam, EWidget *parent);
+void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text, DrawParam *dParam);
 
 #ifdef __cplusplus
 }

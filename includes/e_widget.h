@@ -123,7 +123,7 @@ void WidgetConfirmTrigger(EWidget* widget, int trigger, void *entry);
 void WidgetConnect(EWidget *widget, int trigger, widget_callback callback, void *args);
 void WidgetRecreate(EWidget *widget);
 void WidgetEventsPipe(EWidget *widget);
-uint32_t WidgetDraw(EWidget *widget, EWidget **widgets);
+void WidgetDraw(EWidget *widget);
 void WidgetDestroy(EWidget * widget);
 
 #ifdef __cplusplus

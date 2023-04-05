@@ -65,7 +65,7 @@ void TextWidgetDrawDefault(EWidgetText* wt)
                 vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
 
                 VkDeviceSize offsets = 0;
-                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &wt->widget.go.graphObj.shape.vParam.vertexBuffer, &offsets);
+                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &wt->widget.go.graphObj.shapes[settings->vert_indx].vParam.vertexBuffer, &offsets);
                 for (uint32_t j = 0; j < wt->tData.font.numLetters; j++)
                 {
                     vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
@@ -204,14 +204,12 @@ void TextWidgetAddDefault(EWidgetText *wt, void *render)
 
     PipelineSettingSetDefault(&wt->widget.go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_text_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
-        setting.fragShader = &_binary_shaders_text_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_text_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
+    setting.fragShader = &_binary_shaders_text_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
+    setting.fromFile = 0;
+    setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
     GameObject2DAddSettingPipeline(wt, nums, &setting);

@@ -95,14 +95,16 @@ void WidgetUpdateScissor(EWidget *widget, EIRect2D *scissor, vec2 *parent_pos, v
 
 void WidgetUniformUpdate(EWidget *ew){
 
-    GUIBuffer gb = {};
+    GUIBuffer gb;
+    memset(&gb, 0, sizeof(GUIBuffer));
+
     gb.offset.x = ew->offset.x > 0 ? ew->offset.x / (WIDTH) : 0;
     gb.offset.y = ew->offset.y > 0 ? ew->offset.y / (HEIGHT) : 0;
 
     vec2 offset = {0, 0};
     if(ew->parent != NULL)
     {
-        offset = v2_div(ew->parent->offset, (vec2){ WIDTH, HEIGHT});
+        offset = v2_div(ew->parent->offset, (vec2){ WIDTH, HEIGHT });
         ew->position = v2_add(v2_add(ew->go.transform.position, ew->parent->position), offset);
     }
     else
@@ -229,10 +231,8 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     GameObject2DInit(&ew->go);
 
-    GraphicsObjectSetVertexSize(&ew->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
-
-    GameObject2DSetLinkedShape(ew);
+    GraphicsObjectSetVertexSize(&ew->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&ew->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(&ew->go, (void *)WidgetUniformUpdate);
 
@@ -280,14 +280,11 @@ void WidgetAddDefault(EWidget *widget, void *render)
 
     PipelineSettingSetDefault(&widget->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
-        setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
+    setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_frag_spv_size);
+    setting.fromFile = 0;
 
     GameObject2DAddSettingPipeline(&widget->go, nums, &setting);
 
@@ -429,24 +426,19 @@ void WidgetEventsPipe(EWidget* widget)
 
 }
 
-uint32_t WidgetDraw(EWidget * widget, EWidget **widgets)
+void WidgetDraw(EWidget * widget)
 {
-    uint32_t count = 0;
     if(!(widget->widget_flags & ENGINE_FLAG_WIDGET_VISIBLE))
         return;
 
     ChildStack *child = widget->child;
+    EngineDraw(widget);
     while(child != NULL)
     {
-        count += WidgetDraw(child->node, widgets);
+        WidgetDraw(child->node);
 
         child = child->next;
     }
-    widgets[count] = widget;
-
-    count ++;
-
-    return count;
 }
 
 void WidgetRecreate(EWidget * widget){

@@ -42,9 +42,11 @@ int RollerMouseMove(EWidget *widget, void *entry, void *args)
     return 0;
 }
 
-void RollerWidgetInit(EWidgetRoller *roller, EWidget *parent)
+void RollerWidgetInit(EWidgetRoller *roller, DrawParam *dParam, EWidget *parent)
 {
-    WidgetInit(roller, NULL, parent);
+    WidgetInit(roller, dParam, parent);
+    WidgetAddDefault(roller, dParam->render);
+    GameObject2DInitDraw(roller);
 
     memcpy(roller->widget.go.name, "Widget_Roller", 11);
     roller->widget.type = ENGINE_WIDGET_TYPE_ROLLER;

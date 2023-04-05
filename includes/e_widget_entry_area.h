@@ -13,7 +13,7 @@ typedef struct{
     float textHeight;
 } EWidgetEntryArea;
 
-void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent);
+void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, DrawParam *dParam, EWidget* parent);
 void EntryAreaUpdateLine();
 void EntryAreaWidgetInsertText(EWidgetEntryArea *area, const char *src);
 

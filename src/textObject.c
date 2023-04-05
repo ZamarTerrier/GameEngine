@@ -71,7 +71,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
 
             //--------------------
             //Создаем буфер вершин для плоскости
-            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory);
 
             return;
         }
@@ -93,7 +93,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
 
             //--------------------
             //Создаем буфер вершин для плоскости
-            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory);
             return;
         }else
             exit(1);
@@ -148,7 +148,7 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
 
     //--------------------
     //Создаем буфер вершин для плоскости
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shape.vParam.vertexBuffer, &go->graphObj.shape.vParam.vertexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory);
 
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -243,18 +243,21 @@ void TextObjectDrawDefault(TextObject* to, void *command)
 
             for(int j=0; j < pack->num_pipelines; j++){
                 vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
-                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 PipelineSetting *settings = &to->go.graphObj.blueprints.blue_print_packs[i].settings[j];
 
-                vkCmdSetViewport(command, 0, 1, &settings->viewport);
-                vkCmdSetScissor(command, 0, 1, &settings->scissor);
+                if(settings->flags & ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW){
+                    vkCmdSetViewport(command, 0, 1, &settings->viewport);
+                    vkCmdSetScissor(command, 0, 1, &settings->scissor);
+                }
 
                 VkDeviceSize offsets = 0;
-                vkCmdBindVertexBuffers(command, 0, 1, &to->go.graphObj.shape.vParam.vertexBuffer, &offsets);
-                for (uint32_t j = 0; j < to->textData.font.numLetters; j++)
+                vkCmdBindVertexBuffers(command, 0, 1, &to->go.graphObj.shapes[0].vParam.vertexBuffer, &offsets);
+                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
+
+                for (uint32_t l = 0; l < to->textData.font.numLetters; l++)
                 {
-                    vkCmdDraw(command, 4, 1, j * 4, 0);
+                    vkCmdDraw(command, 4, 1, l * 4, 0);
                 }
             }
         }
@@ -285,11 +288,11 @@ void TextImageClearText(GameObject2D* go, TextData *tData)
 
     Vertex2D* mapped = NULL;
 
-    vkMapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
+    vkMapMemory(e_device, go->graphObj.shapes[0].vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
 
     memset(mapped, 0, BUFFER_SIZE * 4 * sizeof(Vertex2D));
 
-    vkUnmapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory);
+    vkUnmapMemory(e_device, go->graphObj.shapes[0].vParam.vertexBufferMemory);
     mapped = NULL;
 }
 
@@ -319,7 +322,7 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
     Vertex2D* mapped = NULL;
     stbtt_aligned_quad q;
 
-    vkMapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
+    vkMapMemory(e_device, go->graphObj.shapes[0].vParam.vertexBufferMemory, 0, VK_WHOLE_SIZE, 0, (void **)&mapped);
     tData->font.numLetters = 0;
 
     float mulX = tData->font.fontSize / WIDTH / fontResizer;
@@ -375,7 +378,7 @@ void TextImageSetText(const uint32_t* text, GameObject2D* go, TextData *tData){
         ++tempI;
     }
 
-    vkUnmapMemory(e_device, go->graphObj.shape.vParam.vertexBufferMemory);
+    vkUnmapMemory(e_device, go->graphObj.shapes[0].vParam.vertexBufferMemory);
     mapped = NULL;
 
     tData->textWidth = x;
@@ -401,26 +404,32 @@ void TextObjectSetTextU8(TextObject* to, const char* text)
 //Не корректно
 void TextObjectRecreate(TextObject* to){
 
-    /*
-    PipelineSetting *settings = (PipelineSetting *)to->go.graphObj.gItems.settings;
-
-    for(int i=0; i < to->go.graphObj.gItems.settingsCount;i++)
+    for(int i=0; i < to->go.graphObj.gItems.num_shader_packs;i++)
     {
-        settings[i].scissor.offset.x = 0;
-        settings[i].scissor.offset.y = 0;
-        settings[i].scissor.extent.height = HEIGHT;
-        settings[i].scissor.extent.width = WIDTH;
-        settings[i].viewport.x = 0;
-        settings[i].viewport.y = 0;
-        settings[i].viewport.height = HEIGHT;
-        settings[i].viewport.width = WIDTH;
+        BluePrintPack *pack = &to->go.graphObj.blueprints.blue_print_packs[i];
+
+        PipelineSetting *settings = pack->settings;
+
+        for(int i=0; i < pack->num_settings;i++)
+        {
+            settings[i].scissor.offset.x = 0;
+            settings[i].scissor.offset.y = 0;
+            settings[i].scissor.extent.height = HEIGHT;
+            settings[i].scissor.extent.width = WIDTH;
+            settings[i].viewport.x = 0;
+            settings[i].viewport.y = 0;
+            settings[i].viewport.height = HEIGHT;
+            settings[i].viewport.width = WIDTH;
+        }
     }
 
     TextObjectRecreateUniform(to);
-    GraphicsObjectCreateDrawItems(&to->go.graphObj, false);
-    PipelineCreateGraphics(&to->go.graphObj, false);
+
+    GraphicsObjectCreateDrawItems(&to->go.graphObj);
+    PipelineCreateGraphics(&to->go.graphObj);
+
     Transform2DReposition(to);
-    TextObjectMakeLastText(to);*/
+    TextObjectMakeLastText(to);
 }
 
 void TextDataInit(TextData *tData, int fontSize, char* fontPath){
@@ -444,6 +453,8 @@ void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 
     //Загружаем шрифт и настраеваем его на работу
     TextDataInit(&to->textData, fontSize, fontPath);
+
+    to->go.graphObj.num_shapes = 1;
 }
 
 void TextObjectAddDefault(TextObject* to, void *render)
@@ -459,16 +470,13 @@ void TextObjectAddDefault(TextObject* to, void *render)
 
     PipelineSettingSetDefault(&to->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_text_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
-        setting.fragShader = &_binary_shaders_text_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
-        setting.fromFile = 0;
-    }
-
+    setting.vertShader = &_binary_shaders_text_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
+    setting.fragShader = &_binary_shaders_text_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
+    setting.fromFile = 0;
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
 
     GameObject2DAddSettingPipeline(to, nums, &setting);
 

@@ -18,6 +18,8 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent);
 
 void ImageWidgetAddDefault(EWidgetImage *img, void *render);
 
+void ImageWidgetInitDefault(EWidgetImage *img, char *image_path, DrawParam *dParam, EWidget *parent);
+
 #ifdef __cplusplus
 }
 #endif

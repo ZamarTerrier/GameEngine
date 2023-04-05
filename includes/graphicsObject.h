@@ -16,13 +16,14 @@ typedef struct{
     GraphicItems gItems;
     aboutShader aShader;
     bool lock;
-    Shape shape;
+    Shape shapes[MAX_SHAPES];
+    uint32_t num_shapes;
 } GraphicsObject;
 
 void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type);
 
-void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t type_v_size, uint32_t type_i_size);
-void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t *inx, int indxCount);
+void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t vert_pack, uint32_t type_v_size, uint32_t type_i_size);
+void GraphicsObjectSetVertex(GraphicsObject* graphObj, uint32_t vert_pack, void *vert, int vertCount, uint32_t *inx, int indxCount);
 
 void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj);
 void GraphicsObjectCleanPipelines(GraphicsObject *graphObj);

@@ -35,6 +35,8 @@
 RenderTexture **renders;
 uint32_t num_renders;
 
+EngineDrawItems drawItems;
+
 typedef void (*e_charCallback)(GLFWwindow*, uint32_t);
 typedef void (*e_keyCallback)(GLFWwindow*, int , int , int , int );
 
@@ -74,6 +76,8 @@ void EngineInitVulkan(){
     ToolsCreateDepthResources();
     BuffersCreateCommand();
     EngineCreateSyncobjects();
+
+    memset(&drawItems, 0, sizeof(EngineDrawItems));
 
     charCallbacks = (e_charCallback *) calloc(0, sizeof(e_charCallback));
     keyCallbacks = (e_keyCallback *) calloc(0, sizeof(e_keyCallback));
@@ -297,33 +301,19 @@ void EngineCreateSyncobjects() {
     }
 }
 
-void EngineDraw(void *obj, uint32_t count){
+void EngineDraw(void *obj){
 
-    GameObject **go = obj;
+    for(int i=0; i < drawItems.size;i++)
+        if(drawItems.objects[i] == obj)
+            return;
 
-    for(int i=0;i < count;i++)
-        GameObjectUpdate(go[i]);
+    drawItems.objects[drawItems.size] = obj;
 
-    for(int i=0;i < num_renders;i++)
-    {
-        RenderTexture *render = renders[i];
+    drawItems.size ++;
 
-
-        if((render->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && (render->flags & ENGINE_RENDER_FLAG_SHOOTED))
-            continue;
-
-        current_render = render;
-
-        RenderTextureBeginRendering(current_render, commandBuffers[imageIndex]);
-
-        for(int j=0;j < count;j++)
-            GameObjectDraw(go[j], commandBuffers[imageIndex]);
-
-        RenderTextureEndRendering(commandBuffers[imageIndex]);
-    }
 }
 
-void EngineBeginDraw(void *point_renders, uint32_t count ){
+void EngineLoop(void *point_renders, uint32_t count ){
 
     renders = point_renders;
     num_renders = count;
@@ -332,7 +322,7 @@ void EngineBeginDraw(void *point_renders, uint32_t count ){
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR && framebufferwasResized) {
         EnginereRecreateSwapChain(renders, num_renders);
-        return;
+        return 1;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         printf("failed to acquire swap chain image!");
         exit(1);
@@ -356,9 +346,29 @@ void EngineBeginDraw(void *point_renders, uint32_t count ){
     }
 
     free(beginInfo);
-}
 
-void EngineEndDraw(){
+    for(int i=0;i < num_renders;i++)
+    {
+        if((renders[i]->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && (renders[i]->flags & ENGINE_RENDER_FLAG_SHOOTED))
+            continue;
+
+        current_render = renders[i];
+
+        RenderTextureBeginRendering(current_render, commandBuffers[imageIndex]);
+
+        for(int j=0; j < drawItems.size;j++)
+        {
+            GameObjectUpdate(drawItems.objects[j]);
+
+
+            GameObjectDraw(drawItems.objects[j], commandBuffers[imageIndex]);
+
+        }
+
+        RenderTextureEndRendering(commandBuffers[imageIndex]);
+    }
+
+    memset(&drawItems, 0, sizeof(EngineDrawItems));
 
     if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
         printf("failed to record command buffer!");
@@ -398,7 +408,7 @@ void EngineEndDraw(){
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+    result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
     vkQueueWaitIdle(presentQueue);
 
@@ -411,18 +421,23 @@ void EngineEndDraw(){
         exit(1);
     }
 
-    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-
-    for(int i=0;i < num_renders;i++)
+    for(int i=0; i < num_renders;i++)
     {
-        if((renders[i]->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && !(renders[i]->flags & ENGINE_RENDER_FLAG_SHOOTED))
-            renders[i]->flags |= ENGINE_RENDER_FLAG_SHOOTED;
+        RenderTexture *render = renders[i];
+
+        if((render->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && !(render->flags & ENGINE_RENDER_FLAG_SHOOTED))
+            render->flags |= ENGINE_RENDER_FLAG_SHOOTED;
     }
+
+    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
     free(e_var_lights);
     e_var_lights = calloc(0, sizeof(LightObject *));
     e_var_num_lights = 0;
+}
+
+void EngineEndDraw(){
+
 }
 
 void EngineCleanUp(){

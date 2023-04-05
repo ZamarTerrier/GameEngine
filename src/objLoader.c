@@ -313,19 +313,19 @@ void Load3DObjModel(ModelObject3D * mo, char *filepath, DrawParam *dParam){
 
   model->graphObj.gItems.perspective = true;
 
-  model->graphObj.shape.vParam.vertices = (ModelVertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(ModelVertex3D));
-  model->graphObj.shape.iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
+  model->graphObj.shapes[0].vParam.vertices = (ModelVertex3D *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(ModelVertex3D));
+  model->graphObj.shapes[0].iParam.indices = (uint32_t *) calloc(obj->attrib.num_face_num_verts * 3, sizeof(uint32_t));
 
-  ParseSomeStruct(mo, model->graphObj.shape.vParam.vertices );
+  ParseSomeStruct(mo, model->graphObj.shapes[0].vParam.vertices );
 
-  model->graphObj.shape.vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
-  model->graphObj.shape.iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
+  model->graphObj.shapes[0].vParam.verticesSize = obj->attrib.num_face_num_verts * 3;
+  model->graphObj.shapes[0].iParam.indexesSize = obj->attrib.num_face_num_verts * 3;
 
-  for(int i=0; i < model->graphObj.shape.iParam.indexesSize;i++)
-      model->graphObj.shape.iParam.indices[i] = i;
+  for(int i=0; i < model->graphObj.shapes[0].iParam.indexesSize;i++)
+      model->graphObj.shapes[0].iParam.indices[i] = i;
 
-  GraphicsObjectSetVertexSize(&model->graphObj, sizeof(ModelVertex3D), sizeof(uint32_t));
-  GraphicsObjectSetVertex(&model->graphObj, model->graphObj.shape.vParam.vertices, model->graphObj.shape.vParam.verticesSize, model->graphObj.shape.iParam.indices, model->graphObj.shape.iParam.indexesSize);
+  GraphicsObjectSetVertexSize(&model->graphObj, 0, sizeof(ModelVertex3D), sizeof(uint32_t));
+  GraphicsObjectSetVertex(&model->graphObj, 0, model->graphObj.shapes[0].vParam.vertices, model->graphObj.shapes[0].vParam.verticesSize, model->graphObj.shapes[0].iParam.indices, model->graphObj.shapes[0].iParam.indexesSize);
 
 
   if(dParam != NULL)

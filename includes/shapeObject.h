@@ -44,7 +44,9 @@ typedef struct{
     uint32_t type;
 } ShapeObject;
 
-void ShapeObjectInit(ShapeObject *so, DrawParam dParam, ShapeType type, void *param);
+void ShapeObjectInit(ShapeObject *so, DrawParam *dParam, ShapeType type, void *param);
+
+void ShapeObjectInitDefault(ShapeObject *so, DrawParam *dParam, ShapeType type, void *param);
 
 void ShapeObjectAddDefault(ShapeObject *so, void *render);
 

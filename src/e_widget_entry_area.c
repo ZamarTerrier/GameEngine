@@ -258,7 +258,7 @@ int EntryAreaWidgetKeyRepeatInput(EWidget* widget, int key, void *arg)
 }
 
 
-void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent){
+void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, DrawParam *dParam, EWidget* parent){
 
     if(fontSize > 16)
         fontSize = 16;
@@ -266,6 +266,8 @@ void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent)
         fontSize = 2;
 
     WidgetInit(&entry->entry.widget, NULL, parent);
+    WidgetAddDefault(&entry->entry.widget, dParam->render);
+    GameObject2DInitDraw(&entry->entry.widget);
 
     GameObjectSetDestroyFunc(entry, (void *)EntryWidgetDestroyDefault);
 
@@ -275,6 +277,8 @@ void EntryAreaWidgetInit(EWidgetEntryArea *entry, int fontSize, EWidget* parent)
     entry->entry.widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
     TextWidgetInit(&entry->entry.text, fontSize, NULL, &entry->entry.widget);
+    TextWidgetAddDefault(&entry->entry.text, dParam->render);
+    GameObject2DInitDraw(&entry->entry.text);
     Transform2DSetPosition(&entry->entry.text, 0, fontSize * 3);
     entry->entry.num_texts = 1;
     entry->entry.curr_texts = 0;

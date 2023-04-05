@@ -23,9 +23,11 @@ int ListWidgetPressItem(EWidget *widget, void *entry, int id){
     return -1;
 }
 
-void ListWidgetInit(EWidgetList *list, int size_x, int size_y, EWidget *parent){
+void ListWidgetInit(EWidgetList *list, int size_x, int size_y, DrawParam *dParam, EWidget *parent){
 
-    WidgetInit(list, NULL, parent);
+    WidgetInit(list, dParam, parent);
+    WidgetAddDefault(list, dParam->render);
+    GameObject2DInitDraw(list);
 
     memcpy(list->widget.go.name, "Widget_List", 11);
     list->widget.type = ENGINE_WIDGET_TYPE_LIST;
@@ -53,13 +55,13 @@ void ListWidgetSetColor(EWidgetList *list, vec4 color){
 }
 
 //Max 256 for some times...
-EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text){
+EWidgetButton *ListWidgetAddItem(EWidgetList *list, const char *text, DrawParam *dParam){
     list->size ++;
 
     EWidgetButton *item = (EWidgetButton *) calloc(1, sizeof(EWidgetButton));
 
     Transform2DSetScale(&list->widget, list->size_x, list->size_y * list->size);
-    ButtonWidgetInit(item, text, &list->widget);
+    ButtonWidgetInit(item, text, dParam, &list->widget);
     item->widget.widget_flags |= ENGINE_FLAG_WIDGET_ALLOCATED;
     ButtonWidgetSetColor(item, list->widget.color.x, list->widget.color.y, list->widget.color.z);
     TextWidgetSetText(&item->text, text);

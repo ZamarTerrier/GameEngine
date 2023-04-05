@@ -20,6 +20,7 @@ typedef enum{
     ENGINE_PIPELINE_FLAG_DRAW_INDEXED = 0x4,
     ENGINE_PIPELINE_FLAG_PERSPECTIVE = 0x8,
     ENGINE_PIPELINE_FLAG_BIAS = 0x10,
+    ENGINE_PIPELINE_FLAG_SPECIAL = 0x20
 } EnginePipelineFlags;
 
 typedef struct{
@@ -35,6 +36,7 @@ typedef struct{
     EPViewport viewport;
     EIRect2D scissor;
     uint32_t flags;
+    uint32_t vert_indx;
 } PipelineSetting;
 
 #endif // E_PIPELINE_VARIABLES_H

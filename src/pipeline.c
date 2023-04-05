@@ -15,6 +15,8 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
     PipelineSetting *setting = arg;
 
+    memset(setting, 0, sizeof(PipelineSetting));
+
     setting->poligonMode = VK_POLYGON_MODE_FILL;
     setting->topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting->vertShader = graphObj->aShader.vertShader;
@@ -144,9 +146,9 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.vertexAttributeDescriptionCount = graphObj->aShader.countAttr;
-    vertexInputInfo.pVertexBindingDescriptions = graphObj->aShader.bindingDescription;
-    vertexInputInfo.pVertexAttributeDescriptions = graphObj->aShader.attr;
+    vertexInputInfo.vertexAttributeDescriptionCount = graphObj->shapes[setting->vert_indx].countAttr;
+    vertexInputInfo.pVertexBindingDescriptions = graphObj->shapes[setting->vert_indx].bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = graphObj->shapes[setting->vert_indx].attr;
 
 
     VkPipelineDynamicStateCreateInfo dynamicState;

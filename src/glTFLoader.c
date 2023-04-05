@@ -643,7 +643,7 @@ void DefaultglTFUpdate(ModelObject3D *mo)
           LightSpaceMatrix lsm;
           //mbo.model = edenMat;
           mbo.view = lsm.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
-          mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_CAMERA_VIEW_DISTANCE, MAX_CAMERA_VIEW_DISTANCE);
+          mbo.proj = lsm.proj = m4_ortho(-ORITO_SIZE, ORITO_SIZE, -ORITO_SIZE, ORITO_SIZE, -MAX_SHADOW_VIEW_DISTANCE, MAX_SHADOW_VIEW_DISTANCE);
 
           DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 1, 1, &lsm, sizeof(lsm));
           DescriptorUpdate(&mo->nodes[i].models[j].graphObj.blueprints, 0, 0, &mbo, sizeof(mbo));
@@ -872,8 +872,10 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
 
                       model->graphObj.gItems.perspective = true;
 
-                      GraphicsObjectSetVertexSize(&model->graphObj, sizeof(ModelVertex3D), sizeof(uint32_t));
-                      GraphicsObjectSetVertex(&model->graphObj, mesh->verts, mesh->num_verts, mesh->indices, mesh->num_indices);
+                      GraphicsObjectSetVertexSize(&model->graphObj, 0, sizeof(ModelVertex3D), sizeof(uint32_t));
+                      GraphicsObjectSetVertex(&model->graphObj, 0, mesh->verts, mesh->num_verts, mesh->indices, mesh->num_indices);
+
+                      model->graphObj.num_shapes = 1;
 
                       ModelDefaultInit(model, dParam);
                   }

@@ -33,10 +33,8 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GameObject2DInit(go);
 
-    GraphicsObjectSetVertexSize(&go->graphObj, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&go->graphObj, projPlaneVert, 4, projPlaneIndx, 6);
-
-    GameObject2DSetLinkedShape(go);
+    GraphicsObjectSetVertexSize(&go->graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&go->graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(go, (void *)ProjectionPlaneUpdate);
 
@@ -55,14 +53,12 @@ void ProjectionPlaneAddDefault(GameObject2D *go, void *render)
 
     PipelineSettingSetDefault(&go->graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-        setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
-        setting.fromFile = 0;
-    }
+    setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
+    setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
 
     GameObject2DAddSettingPipeline(go, nums, &setting);
 

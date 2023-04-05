@@ -131,14 +131,18 @@ void TopMenuWidgetResize(EWidgetTopMenu *top_menu)
     }
 }
 
-void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window)
+void TopMenuWidgetInit(EWidgetTopMenu *top_menu, DrawParam *dParam,EWidgetWindow *window)
 {
     WidgetInit(&top_menu->widget, NULL, window);
+    WidgetAddDefault(&top_menu->widget, dParam);
+    GameObject2DInitDraw(&top_menu->widget);
 
     memcpy(top_menu->widget.go.name, "Widget_Menu", 10);
     top_menu->widget.type = ENGINE_WIDGET_TYPE_MENU;
 
     WidgetInit(&top_menu->top, NULL, &top_menu->widget);
+    WidgetAddDefault(&top_menu->top, dParam->render);
+    GameObject2DInitDraw(&top_menu->widget);
     top_menu->widget.transparent = 0.0f;
     top_menu->window = window;
 
@@ -148,14 +152,16 @@ void TopMenuWidgetInit(EWidgetTopMenu *top_menu, EWidgetWindow *window)
     TopMenuWidgetResize(top_menu);
 
     WidgetConnect(&top_menu->widget, ENGINE_WIDGET_TRIGGER_WIDGET_FOCUS, TopMenuWidgetFocus, NULL);
+
+    top_menu->render = dParam->render;
 }
 
-int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name)
+int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name, DrawParam *dParam)
 {
     top_menu->num_elems ++;
 
     EWidgetButton *b_menu = calloc(1, sizeof(EWidgetButton));
-    ButtonWidgetInit(b_menu, name, &top_menu->top);
+    ButtonWidgetInit(b_menu, name, dParam, &top_menu->top);
 
     Transform2DSetPosition(b_menu, (top_menu->num_elems - 1) * 240, 0);
     Transform2DSetScale(b_menu, 120, 20);
@@ -165,13 +171,13 @@ int TopMenuWidgetAddMenu(EWidgetTopMenu *top_menu, char *name)
     return top_menu->num_elems - 1;
 }
 
-void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name)
+void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name, DrawParam *dParam)
 {
     EWidgetButton *button;
 
     if(top_menu->list[num_menu].list != NULL)
     {
-        button = ListWidgetAddItem(top_menu->list[num_menu].list, name);
+        button = ListWidgetAddItem(top_menu->list[num_menu].list, name, dParam);
 
         return top_menu->list[num_menu].list;
     }
@@ -185,7 +191,7 @@ void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name)
     else
         point = top_menu->window;
 
-    ListWidgetInit(l_menu, 110, 20, point);
+    ListWidgetInit(l_menu, 110, 20, point, dParam);
     ListWidgetSetColor(l_menu, (vec4){ 0.6, 0.6, 0.6, 1.0});
 
     vec2 pos = Transform2DGetPosition(top_menu->list[top_menu->num_elems - 1].button);
@@ -193,7 +199,7 @@ void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name)
     l_menu->widget.widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
     top_menu->list[num_menu].list = l_menu;
 
-    button = ListWidgetAddItem(top_menu->list[num_menu].list, name);
+    button = ListWidgetAddItem(top_menu->list[num_menu].list, name, dParam);
 
     WidgetConnect(top_menu->list[top_menu->num_elems - 1].list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, MenuPressItem, NULL);
     WidgetConnect(top_menu->list[top_menu->num_elems - 1].button, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, ToggleMenu, top_menu->list[top_menu->num_elems - 1].list);

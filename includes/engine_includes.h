@@ -17,10 +17,14 @@
 #define MAX_UNIFORMS 10
 #define MAX_BLUE_PRINTS 10
 
+#define MAX_DRAW_OBJECTS 256
+
 #define MAX_GUI_CALLBACKS 25
 
-#define MAX_CAMERA_VIEW_DISTANCE 1000
-#define ORITO_SIZE 0.0007
+#define MAX_CAMERA_VIEW_DISTANCE 500
+#define MAX_SHADOW_VIEW_DISTANCE 20
+
+#define ORITO_SIZE 0.006
 
 #ifdef __cplusplus
 extern "C"
@@ -31,6 +35,13 @@ extern "C"
 
 typedef enum { false, true} bool;
 #endif
+
+struct GameObject;
+
+typedef struct{
+    struct GameObject *objects[MAX_DRAW_OBJECTS];
+    uint32_t size;
+} EngineDrawItems;
 
 typedef enum{
     ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW = 0x1,

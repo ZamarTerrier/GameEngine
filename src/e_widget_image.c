@@ -81,7 +81,7 @@ void ImageWidgetCreateQuad(EWidgetImage *wi)
 
     memcpy(tIndx, indx, 6 * sizeof(uint32_t));
 
-    GraphicsObjectSetVertex(&wi->widget.go.graphObj, verts, 4, tIndx, 6);
+    GraphicsObjectSetVertex(&wi->widget.go.graphObj, 0, verts, 4, tIndx, 6);
 }
 
 
@@ -94,7 +94,7 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
     memcpy(img->widget.go.name, "Widget_Image", 10);
     img->widget.type = ENGINE_WIDGET_TYPE_IMAGE;
 
-    GraphicsObjectSetVertexSize(&img->widget.go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertexSize(&img->widget.go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
 
     ImageWidgetCreateQuad(img);
 
@@ -152,4 +152,11 @@ void ImageWidgetAddDefault(EWidgetImage *img, void *render)
     GameObject2DAddSettingPipeline(&img->widget.go, 0, &setting);
 
     img->widget.go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void ImageWidgetInitDefault(EWidgetImage *img, char *image_path, DrawParam *dParam, EWidget *parent)
+{
+    ImageWidgetInit(img, image_path, parent);
+    ImageWidgetAddDefault(img, dParam->render);
+    GameObject2DInitDraw(img);
 }

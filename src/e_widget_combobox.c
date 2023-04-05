@@ -49,14 +49,16 @@ int ComboboxWidgetPressSub(EWidget* widget, int id, EWidgetCombobox *cmb){
     return 0;
 }
 
-void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, EWidget *parent){
+void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, DrawParam *dParam, EWidget *parent){
 
-    WidgetInit(&combobox->widget, NULL, parent);
+    WidgetInit(&combobox->widget, dParam, parent);
+    WidgetAddDefault(&combobox->widget, dParam->render);
+    GameObject2DInitDraw(&combobox->widget);
 
     memcpy(combobox->widget.go.name, "Combobox", 8);
     combobox->widget.type = ENGINE_WIDGET_TYPE_COMBOBOX;
 
-    ButtonWidgetInit(&combobox->button, " ", &combobox->widget);
+    ButtonWidgetInit(&combobox->button, " ", dParam, &combobox->widget);
     ButtonWidgetSetColor(&combobox->button, 0.4, 0.4, 0.4);
 
     combobox->size_x = scale.x;
@@ -66,7 +68,7 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, EWidget *parent){
     Transform2DSetScale(&combobox->widget, combobox->size_x, combobox->size_y);
     Transform2DSetScale(&combobox->button, combobox->size_x, combobox->size_y);
 
-    ListWidgetInit(&combobox->list, combobox->size_x, combobox->size_y, &combobox->widget);
+    ListWidgetInit(&combobox->list, combobox->size_x, combobox->size_y, dParam, &combobox->widget);
     WidgetConnect(&combobox->button, ENGINE_WIDGET_TRIGGER_BUTTON_PRESS, ComboboxWidgetPressMain,  combobox);
     WidgetConnect(&combobox->list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, ComboboxWidgetPressSub,  combobox);
 
@@ -75,8 +77,8 @@ void ComboboxWidgetInit(EWidgetCombobox *combobox, vec2 scale, EWidget *parent){
 
 }
 
-void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text){
-    EWidgetButton *butt = ListWidgetAddItem(&combobox->list, text);
+void ComboboxWidgetAddItem(EWidgetCombobox *combobox, const char* text, DrawParam *dParam){
+    EWidgetButton *butt = ListWidgetAddItem(&combobox->list, text, dParam);
 
     butt->widget.widget_flags |= ENGINE_FLAG_WIDGET_ALLOCATED;
     Transform2DSetScale(&combobox->list, combobox->size_x, (combobox->list.size + 1) * combobox->size_y);

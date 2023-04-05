@@ -161,14 +161,36 @@ void WindowWidgetUniformUpdate(EWidget *ew){
     DescriptorUpdate(&ew->go.graphObj.blueprints, 0, 0, &gb, sizeof(gb));
 }
 
+void WindowWidgetAddDefault(EWidgetWindow *window, void *render)
+{
+    uint32_t nums = window->top.go.graphObj.blueprints.num_blue_print_packs;
+    window->top.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&window->top.go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    BluePrintAddTextureImage(&window->top.go.graphObj.blueprints, nums, window->top.go.image);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&window->top.go.graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_gui_widget_window_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_window_vert_spv_size);
+    setting.fragShader = &_binary_shaders_gui_widget_window_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_window_frag_spv_size);
+    setting.fromFile = 0;
+
+    GameObject2DAddSettingPipeline(&window->top.go, nums, &setting);
+
+    window->top.go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
 void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     GameObject2DInit(&widget->go);
 
-    GraphicsObjectSetVertexSize(&widget->go.graphObj, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&widget->go.graphObj, projPlaneVert, 4, projPlaneIndx, 6);
-
-    GameObject2DSetLinkedShape(widget);
+    GraphicsObjectSetVertexSize(&widget->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
+    GraphicsObjectSetVertex(&widget->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
 
     GameObjectSetUpdateFunc(&widget->go, (void *)WindowWidgetUniformUpdate);
 
@@ -212,36 +234,11 @@ void WindowWidgetInitDraw(EWidgetWindow *window)
     PipelineCreateGraphics(&window->top.go.graphObj);
 }
 
-void WindowWidgetAddDefault(EWidgetWindow *window, void *render)
-{
-    uint32_t nums = window->top.go.graphObj.blueprints.num_blue_print_packs;
-    window->top.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
-
-    BluePrintAddUniformObject(&window->top.go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    BluePrintAddTextureImage(&window->top.go.graphObj.blueprints, nums, window->top.go.image);
-
-    PipelineSetting setting;
-
-    PipelineSettingSetDefault(&window->top.go.graphObj, &setting);
-
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
-    {
-        setting.vertShader = &_binary_shaders_gui_widget_window_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_window_vert_spv_size);
-        setting.fragShader = &_binary_shaders_gui_widget_window_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_window_frag_spv_size);
-        setting.fromFile = 0;
-    }
-
-    GameObject2DAddSettingPipeline(&window->top.go, nums, &setting);
-
-    window->top.go.graphObj.blueprints.num_blue_print_packs ++;
-}
-
 void InitName(EWidget* widget, uint32_t* name, DrawParam *dParam, EWidget *parent)
 {
     TextWidgetInit(widget, 9, dParam, parent);
+    TextWidgetAddDefault(widget, dParam->render);
+    GameObject2DInitDraw(widget);
 
     TextWidgetSetText(widget, name);
 
@@ -251,6 +248,8 @@ void InitName(EWidget* widget, uint32_t* name, DrawParam *dParam, EWidget *paren
 void InitBot(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
+    WidgetAddDefault(widget, dParam->render);
+    GameObject2DInitDraw(widget);
 
     memcpy(widget->go.name, "Widget_Window", 12);
     widget->type = ENGINE_WIDGET_TYPE_WINDOW;
@@ -266,6 +265,8 @@ void InitBot(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 void InitClose(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
+    WidgetAddDefault(widget, dParam->render);
+    GameObject2DInitDraw(widget);
 
     widget->color = (vec4){ 1.0f, 0.0f, 0.0f, 1.0f};
 
@@ -276,6 +277,8 @@ void InitClose(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 void InitResize(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
+    WidgetAddDefault(widget, dParam->render);
+    GameObject2DInitDraw(widget);
 
     widget->color = (vec4){ 0.0f, 1.0f, 0.0f, 1.0};
 
@@ -286,6 +289,8 @@ void InitResize(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 void InitHide(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
     WidgetInit(widget, dParam, parent);
+    WidgetAddDefault(widget, dParam->render);
+    GameObject2DInitDraw(widget);
 
     widget->color = (vec4){ 0.0f, 0.0f, 1.0f, 1.0f};
 
@@ -299,8 +304,8 @@ void WindowWidgetInit(EWidgetWindow *ww, char* name, vec2 size, DrawParam *dPara
     InitName(&ww->name, name, dParam, &ww->top);
     InitBot(&ww->widget, dParam, size, &ww->top);
 
-    if(dParam != NULL)
-        memset(dParam->diffuse, 0, 256);
+    WindowWidgetAddDefault(ww, dParam->render);
+    GameObject2DInitDraw(&ww->top);
 
     InitClose(&ww->close, dParam, size, &ww->top);
     InitResize(&ww->resize, dParam, size, &ww->top);
@@ -345,11 +350,7 @@ void WindowWidgetDraw(EWidgetWindow *ww){
     if(!ww->show)
         return;
 
-    EWidget *widgets[MAX_WIDGET_DRAW];
-
-    uint32_t count = WidgetDraw(&ww->top, widgets);
-
-    EngineDraw(widgets, count);
+    WidgetDraw(&ww->top);
 }
 
 void WindowWidgetDestroy(EWidgetWindow *ww){

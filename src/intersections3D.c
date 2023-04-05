@@ -177,7 +177,7 @@ int IntersectionSphereTerrain(void *sph_obj, void *terr_obj, float *distance, fl
     int pos_x = floor(pos.x * terrain->width) / terrain->width;
     int pos_z = floor(pos.z * terrain->height) / terrain->height;
 
-    TerrainVertex *verts = terrain->go.graphObj.shape.vParam.vertices;
+    TerrainVertex *verts = terrain->go.graphObj.shapes[0].vParam.vertices;
 
     vec3 some_pos = verts[pos_x * (terrain->width + 1) + pos_z].position;
 
@@ -255,8 +255,8 @@ int IntersectionCapsuleShape(void *obj1, void *shape, float *dist, float *depth,
     GameObject3D *model = (GameObject3D *)shape;
     InterCapsuleParam *obj = (InterCapsuleParam *)obj1;
 
-    vertexParam *vParam = &model->graphObj.shape.vParam;
-    indexParam *iParam = &model->graphObj.shape.iParam;
+    vertexParam *vParam = &model->graphObj.shapes[0].vParam;
+    indexParam *iParam = &model->graphObj.shapes[0].iParam;
 
     if(vParam->verticesSize <= 0)
         return;
@@ -311,8 +311,8 @@ int IntersectionSphereShape(void *obj1, void *shape, float *dist, float *depth, 
     GameObject3D *model = (GameObject3D *)shape;
     InterSphereParam *obj = (InterSphereParam *)obj1;
 
-    vertexParam *vParam = &model->graphObj.shape.vParam;
-    indexParam *iParam = &model->graphObj.shape.iParam;
+    vertexParam *vParam = &model->graphObj.shapes[0].vParam;
+    indexParam *iParam = &model->graphObj.shapes[0].iParam;
 
     if(vParam->verticesSize <= 0)
         return;

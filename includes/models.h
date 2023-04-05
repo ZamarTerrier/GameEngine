@@ -15,7 +15,7 @@ extern "C"
 #endif
 
 typedef struct{
-    GraphicsObject graphObj;    
+    GraphicsObject graphObj;
     GameObjectImage *diffuse;
     GameObjectImage *specular;
     GameObjectImage *normal;
@@ -43,7 +43,7 @@ typedef struct{
     uint32_t obj_size;
 } ModelObject3D;
 
-void ModelDefaultDraw(ModelObject3D* mo);
+void ModelDefaultDraw(ModelObject3D* mo, void *command);
 void ModelDefaultUpdate(ModelObject3D* mo);
 void ModelClean(ModelObject3D* mo);
 void ModelRecreate(ModelObject3D* mo);

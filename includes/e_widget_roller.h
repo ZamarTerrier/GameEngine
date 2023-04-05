@@ -16,7 +16,7 @@ typedef struct{
     float stable_val;
 } EWidgetRoller;
 
-void RollerWidgetInit(EWidgetRoller *roller, EWidget *parent);
+void RollerWidgetInit(EWidgetRoller *roller, DrawParam *dParam, EWidget *parent);
 void RollerWidgetSetSource(EWidgetRoller *roller, float *source);
 
 #ifdef __cplusplus
