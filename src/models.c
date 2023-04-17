@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <GLFW/glfw3.h>
+
 #include "camera.h"
 #include "gameObject.h"
 #include "lightObject.h"
@@ -157,7 +159,8 @@ void ModelLightModelUpdate2(ModelObject3D* mo, uint32_t indx_node, BluePrintDesc
     mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
     mbo.model = mo->nodes[indx_node].model;
-    mbo.view = m4_look_at(cam->position, v3_add(render->position, render->rotation), cameraUp);
+    mbo.view = m4_look_at(some_point_light.position, v3_add(some_point_light.position, render->rotation), cameraUp);
+
 
     if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
         mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
@@ -187,8 +190,12 @@ void ModelLightMatrixUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDesc
         else
             lsm.mats[i].proj = m4_ortho(-renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_distance, renders[i]->ortg_view_distance);
 
-        lsm.cascadeSplits[i] = renders[i]->cascadeSplit;
     }
+
+    lsm.cascadeSplits.x = renders[3]->cascadeSplit;
+    lsm.cascadeSplits.y = renders[2]->cascadeSplit;
+    lsm.cascadeSplits.z = renders[1]->cascadeSplit;
+    lsm.cascadeSplits.w = renders[0]->cascadeSplit;
 
     DescriptorUpdate(descriptor, &lsm, sizeof(lsm));
 }
@@ -231,7 +238,7 @@ void ModelDescriptorLightPosUpdate(ModelObject3D* mo, uint32_t indx_node, BluePr
 
     LightPosBuff lpb;
 
-    lpb.light_pos = (vec3){ 0, 0, 0};
+    lpb.light_pos = some_point_light.position;
     lpb.view_pos = cam->position;
 
     DescriptorUpdate(descriptor, &lpb, sizeof(lpb));

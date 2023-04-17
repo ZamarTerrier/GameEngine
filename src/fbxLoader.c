@@ -352,8 +352,8 @@ void DefaultFBXUpdate(ModelObject3D *mo)
                   lbo.lights[0].position.y = 0;
                   lbo.lights[0].position.z = 9.5f;
 
-                  lbo.num_points = 0;
-                  lbo.num_spots = 0;
+                  lbo.status.num_points = 0;
+                  lbo.status.num_spots = 0;
 
                   vkMapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
                   memcpy(data, &lbo, sizeof(lbo));

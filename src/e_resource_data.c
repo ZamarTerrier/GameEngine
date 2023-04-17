@@ -17,6 +17,7 @@ void* cam2D;
 void* cam3D;
 
 SomeDirLight some_light;
+SomeDirLight some_point_light;
 
 void *shadow_array;
 uint32_t num_shadows;

@@ -62,12 +62,16 @@ typedef struct{
 } DirLight;
 
 typedef struct{
-    DirLight dir;
-    PointLight lights[MAX_LIGHTS];
-    SpotLight spots [MAX_LIGHTS];
     int num_points;
     int num_spots;
     int light_react;
+} LightStatus;
+
+typedef struct{
+    DirLight dir;
+    PointLight lights[MAX_LIGHTS];
+    SpotLight spots [MAX_LIGHTS];
+    LightStatus status __attribute__ ((aligned (16)));
 } LightBuffer3D;
 
 typedef struct{
@@ -76,18 +80,18 @@ typedef struct{
 } LightPosBuff;
 
 typedef struct{
-    mat4 proj;
-    mat4 view;
+    mat4 proj __attribute__ ((aligned (16)));
+    mat4 view __attribute__ ((aligned (16)));
 } LightMatrix;
 
 typedef struct{
     LightMatrix mats[MAX_LIGHT_MATRIX];
-    float cascadeSplits[MAX_LIGHT_MATRIX];
+    vec4 cascadeSplits __attribute__ ((aligned (16)));
 } LightSpaceMatrix;
 
 typedef struct{
     mat4 mats[MAX_BONES] __attribute__ ((aligned (16)));
-    int size __attribute__ ((aligned (16)));
+    float size __attribute__ ((aligned (16)));
 } InvMatrixsBuffer;
 
 #endif // E_BUFFERS_VARIABLES_H

@@ -51,7 +51,7 @@ typedef struct{
     double ortg_view_distance;
     double ortg_view_size;
 
-    double cascadeSplit;
+    float cascadeSplit;
 
     vec3 position;
     vec3 rotation;

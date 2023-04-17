@@ -19,29 +19,29 @@ void LightObjectFillLights(LightBuffer3D *lbo, bool enable_light)
                     lbo->dir.direction = lights[i]->direction;
                     break;
                 case ENGINE_LIGHT_TYPE_POINT:
-                    lbo->num_points++;
+                    lbo->status.num_points++;
 
-                    lbo->lights[lbo->num_points - 1].position = lights[i]->position;
-                    lbo->lights[lbo->num_points - 1].constant = lights[i]->constant;
-                    lbo->lights[lbo->num_points - 1].linear = lights[i]->linear;
-                    lbo->lights[lbo->num_points - 1].quadratic = lights[i]->quadratic;
-                    lbo->lights[lbo->num_points - 1].ambient = lights[i]->ambient;
-                    lbo->lights[lbo->num_points - 1].diffuse = lights[i]->diffuse;
-                    lbo->lights[lbo->num_points - 1].specular = lights[i]->specular;
+                    lbo->lights[lbo->status.num_points - 1].position = lights[i]->position;
+                    lbo->lights[lbo->status.num_points - 1].constant = lights[i]->constant;
+                    lbo->lights[lbo->status.num_points - 1].linear = lights[i]->linear;
+                    lbo->lights[lbo->status.num_points - 1].quadratic = lights[i]->quadratic;
+                    lbo->lights[lbo->status.num_points - 1].ambient = lights[i]->ambient;
+                    lbo->lights[lbo->status.num_points - 1].diffuse = lights[i]->diffuse;
+                    lbo->lights[lbo->status.num_points - 1].specular = lights[i]->specular;
 
                     break;
                 case ENGINE_LIGHT_TYPE_SPOT:
-                    lbo->num_spots++;
+                    lbo->status.num_spots++;
 
-                    lbo->lights[lbo->num_spots - 1].position = lights[i]->position;
-                    lbo->lights[lbo->num_spots - 1].constant = lights[i]->constant;
-                    lbo->lights[lbo->num_spots - 1].linear = lights[i]->linear;
-                    lbo->lights[lbo->num_spots - 1].quadratic = lights[i]->quadratic;
-                    lbo->lights[lbo->num_spots - 1].ambient = lights[i]->ambient;
-                    lbo->lights[lbo->num_spots - 1].diffuse = lights[i]->diffuse;
-                    lbo->lights[lbo->num_spots - 1].specular = lights[i]->specular;
-                    lbo->spots[lbo->num_spots - 1].direction =  lights[i]->direction;
-                    lbo->spots[lbo->num_spots - 1].cutOff = lights[i]->cutOff;
+                    lbo->lights[lbo->status.num_spots - 1].position = lights[i]->position;
+                    lbo->lights[lbo->status.num_spots - 1].constant = lights[i]->constant;
+                    lbo->lights[lbo->status.num_spots - 1].linear = lights[i]->linear;
+                    lbo->lights[lbo->status.num_spots - 1].quadratic = lights[i]->quadratic;
+                    lbo->lights[lbo->status.num_spots - 1].ambient = lights[i]->ambient;
+                    lbo->lights[lbo->status.num_spots - 1].diffuse = lights[i]->diffuse;
+                    lbo->lights[lbo->status.num_spots - 1].specular = lights[i]->specular;
+                    lbo->spots[lbo->status.num_spots - 1].direction =  lights[i]->direction;
+                    lbo->spots[lbo->status.num_spots - 1].cutOff = lights[i]->cutOff;
                     break;
                 default:
                     break;
@@ -49,7 +49,7 @@ void LightObjectFillLights(LightBuffer3D *lbo, bool enable_light)
         }
     }
 
-    lbo->light_react = enable_light;
+    lbo->status.light_react = enable_light;
 }
 
 void LightObjectInit(LightObject *lo, ELightType type)

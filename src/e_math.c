@@ -711,6 +711,7 @@ mat4 m4_rotation_mat_quternion(mat4 m1, vec4 quaternion)
 }
 
 mat4 m4_look_at(vec3 from, vec3 to, vec3 up) {
+
     vec3 z = v3_muls(v3_norm(v3_sub(to, from)), -1);
     vec3 x = v3_norm(v3_cross(up, z));
     vec3 y = v3_cross(z, x);

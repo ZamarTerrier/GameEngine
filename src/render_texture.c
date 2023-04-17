@@ -290,7 +290,7 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 
     render->persp_view_distance = 500;
     render->persp_view_near = 0.01;
-    render->persp_view_angle = 90;
+    render->persp_view_angle = 75;
 
     render->ortg_view_distance = 500;
     render->ortg_view_size = 0.007;
@@ -387,22 +387,22 @@ void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)
         switch (render->currFrame)
         {
         case 0: // POSITIVE_X
-            viewMatrix = m4_look_at(render->position, v3_add(render->position, (vec3){ 1.0, 0.0, 0.0}), (vec3){ 0.0, -1.0, 0.0});
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ -1.0, 0.0, 0.0}), (vec3){ 0.0, 1.0, 0.0});
             break;
         case 1:	// NEGATIVE_X
-            viewMatrix = m4_look_at(render->position, v3_add(render->position, (vec3){ -1.0, 0.0, 0.0}), (vec3){ 0.0, -1.0, 0.0});
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 1.0, 0.0, 0.0}), (vec3){ 0.0, 1.0, 0.0});
             break;
         case 2:	// POSITIVE_Y
-            viewMatrix = m4_look_at(render->position, v3_add(render->position, (vec3){ 0.0, 1.0, 0.0}), (vec3){ 0.0, 0.0, 1.0});
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, 1.0, 0.0}), (vec3){ 0.0, 0.0, 1.0});
             break;
         case 3:	// NEGATIVE_Y
-            viewMatrix = m4_look_at(render->position, v3_add(render->position, (vec3){ 0.0, -1.0, 0.0}), (vec3){ 0.0, 0.0, 1.0});
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, -1.0, 0.0}), (vec3){ 0.0, 0.0, -1.0});
             break;
         case 4:	// POSITIVE_Z
-            viewMatrix = m4_look_at(render->position, v3_add(render->position, (vec3){ 0.0, 0.0, 1.0}), (vec3){ 0.0, -1.0, 0.0});
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, 0.0, -1.0}), (vec3){ 0.0, 1.0, 0.0});
             break;
         case 5:	// NEGATIVE_Z
-            viewMatrix = m4_look_at(render->position, v3_add(render->position, (vec3){ 0.0, 0.0, -1.0}), (vec3){ 0.0, -1.0, 0.0});
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, 0.0, 1.0}), (vec3){ 0.0, 1.0, 0.0});
             break;
         }
 
