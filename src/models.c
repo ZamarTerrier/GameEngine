@@ -162,8 +162,10 @@ void ModelLightModelUpdate2(ModelObject3D* mo, uint32_t indx_node, BluePrintDesc
     mbo.view = m4_look_at(some_point_light.position, v3_add(some_point_light.position, render->rotation), cameraUp);
 
 
-    if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
+    if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE)){
         mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }
     else
         mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
 

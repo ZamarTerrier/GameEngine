@@ -113,9 +113,14 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
         if(pack->render_point == current_render)
         {
+            RenderTexture *render = current_render;
+
             ShaderPack *pack = &go->graphObj.gItems.shader_packs[i];
 
             for(int j=0; j < pack->num_pipelines; j++){
+
+                if(render->type == ENGINE_RENDER_TYPE_CUBEMAP)
+                    vkCmdPushConstants( command, pack->pipelines[j].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4), &render->view);
 
                 PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
 

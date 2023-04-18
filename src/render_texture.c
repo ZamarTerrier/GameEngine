@@ -387,22 +387,30 @@ void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)
         switch (render->currFrame)
         {
         case 0: // POSITIVE_X
-            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ -1.0, 0.0, 0.0}), (vec3){ 0.0, 1.0, 0.0});
+            /*viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(0.0f, 1.0f, 0.0f));
+            viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, vec3_f( -1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
             break;
         case 1:	// NEGATIVE_X
-            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 1.0, 0.0, 0.0}), (vec3){ 0.0, 1.0, 0.0});
+            /*viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(0.0f, 1.0f, 0.0f));
+            viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, vec3_f( 1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
             break;
         case 2:	// POSITIVE_Y
-            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, 1.0, 0.0}), (vec3){ 0.0, 0.0, 1.0});
+            //viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(1.0f, 0.0f, 0.0f));
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, vec3_f( 0.0, -1.0, 0.0)), vec3_f( 0.0, 0.0, -1.0));
             break;
         case 3:	// NEGATIVE_Y
-            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, -1.0, 0.0}), (vec3){ 0.0, 0.0, -1.0});
+            //viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(1.0f, 0.0f, 0.0f));
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, vec3_f( 0.0, 1.0, 0.0)), vec3_f( 0.0, 0.0, 1.0));
             break;
         case 4:	// POSITIVE_Z
-            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, 0.0, -1.0}), (vec3){ 0.0, 1.0, 0.0});
+            //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(0.0f, 0.0f, 1.0f));
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, vec3_f( 0.0, 0.0, -1.0)), vec3_f( 0.0, 1.0, 0.0));
             break;
         case 5:	// NEGATIVE_Z
-            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, (vec3){ 0.0, 0.0, 1.0}), (vec3){ 0.0, 1.0, 0.0});
+            //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));
+            viewMatrix = m4_look_at(some_point_light.position, v3_add(some_point_light.position, vec3_f( 0.0, 0.0, 1.0)), vec3_f( 0.0, 1.0, 0.0));
             break;
         }
 

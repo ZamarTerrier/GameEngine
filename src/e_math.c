@@ -217,7 +217,7 @@ float v2_length(vec2 v) { return sqrtf(v.x*v.x + v.y*v.y); }
 float v2_dot (vec2 a, vec2 b) { return a.x*b.x + a.y*b.y; }
 float  v2_distance(vec2 v1, vec2 v2) { return sqrt(pow((v1.x - v2.x), 2) + pow((v1.y - v2.y), 2)); }
 
-
+vec3 vec3_f(float x, float y, float z){ return (vec3){ x, y, z };}
 vec3 v3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
 vec3 v3_adds  (vec3 a, float s) { return (vec3){ a.x + s,   a.y + s,   a.z + s   }; }
 vec3 v3_sub   (vec3 a, vec3 b) { return (vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
@@ -842,32 +842,19 @@ mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
 {
 
   float aspect_ratio = ((float)swapChainExtent.width) / ((float) swapChainExtent.height);
-
-  float range = far_plane  - near_plane;
   float tan_half_fov = tanf((fov_degrees * (M_PI / 180)) / 2.0);
 
   mat4 matrix;
   memset(&matrix, 0, sizeof(mat4));
 
-  matrix.m[0][0] = 1.0f / (tan_half_fov * aspect_ratio);
-  matrix.m[0][1] = 0.0f;
-  matrix.m[0][2] = 0.0f;
-  matrix.m[0][3] = 0.0f;
+  float f  = 1.0f / tan_half_fov;
+  float fn = 1.0f / (near_plane - far_plane);
 
-  matrix.m[1][0] = 0.0f;
-  matrix.m[1][1] = 1.0f / tan_half_fov;
-  matrix.m[1][2] = 0.0f;
-  matrix.m[1][3] = 0.0f;
-
-  matrix.m[2][0] = 0.0f;
-  matrix.m[2][1] = 0.0f;
-  matrix.m[2][2] = far_plane / (float) range;
+  matrix.m[0][0] = f / aspect_ratio;
+  matrix.m[1][1] = f;
+  matrix.m[2][2] =-(near_plane + far_plane) * fn;
   matrix.m[2][3] = 1.0f;
-
-  matrix.m[3][0] = 0.0f;
-  matrix.m[3][1] = 0.0f;
-  matrix.m[3][2] = -(far_plane * near_plane) / (float) range;
-  matrix.m[3][3] = 0.0f;
+  matrix.m[3][2] = 2.0f * near_plane * far_plane * fn;
 
   return matrix;
 }
