@@ -99,7 +99,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    if(render->type != ENGINE_RENDER_TYPE_DEPTH && (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
+    if(render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH) && (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
     {
         colorBlendAttachment.blendEnable = VK_TRUE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -117,7 +117,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
-    if(render->type == ENGINE_RENDER_TYPE_DEPTH)
+    if(render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH))
     {
         colorBlending.logicOp = VK_LOGIC_OP_COPY;
         colorBlending.blendConstants[0] = 0.0f;

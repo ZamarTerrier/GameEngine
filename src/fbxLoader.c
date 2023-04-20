@@ -333,7 +333,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
                   mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
                   mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-                  mbo.proj = m4_perspective(cam->view_angle, cam->view_near, cam->view_distance);
+                  mbo.proj = edenMat;//m4_perspective(cam->view_angle, cam->view_near, cam->view_distance);
                   mbo.proj.m[1][1] *= -1;
 
                   vkMapMemory(e_device, pack->descriptors[0].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);

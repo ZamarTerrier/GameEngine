@@ -39,6 +39,13 @@ extern char _binary_shaders_depth_vert_omni_spv_end;
 extern int _binary_shaders_depth_vert_omni_spv_size;
 extern char _binary_shaders_depth_vert_omni_spv_start;
 
+extern char _binary_shaders_depth_frag_spot_spv_end;
+extern int _binary_shaders_depth_frag_spot_spv_size;
+extern char _binary_shaders_depth_frag_spot_spv_start;
+extern char _binary_shaders_depth_vert_spot_spv_end;
+extern int _binary_shaders_depth_vert_spot_spv_size;
+extern char _binary_shaders_depth_vert_spot_spv_start;
+
 extern char _binary_shaders_terrain_frag_spv_end;
 extern int _binary_shaders_terrain_frag_spv_size;
 extern char _binary_shaders_terrain_frag_spv_start;

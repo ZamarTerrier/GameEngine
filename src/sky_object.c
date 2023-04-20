@@ -28,7 +28,7 @@ void SkyObjectSkyBufferUpdate(SkyObject *so, BluePrintDescriptor *descriptor)
     SkyBuffer sb;
     sb.time = time;
     sb.cam_pos = cam->position;
-    sb.cam_rot = v3_divs(cam->rotation, -2);
+    sb.cam_rot = v3_divs(cam->rotation, 2);
 
     sb.dir_light.x = 0.5f;
     sb.dir_light.y = 0.3f;

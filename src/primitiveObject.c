@@ -180,11 +180,14 @@ void PrimitiveObjectLightModelUpdate2(GameObject3D* go, BluePrintDescriptor *des
 
 
     if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE)){
-        mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
         mbo.proj.m[1][1] *= -1;
     }
-    else
-        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+    else{
+        mbo.proj = m4_frustum(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, render->ortg_view_size, render->ortg_view_distance);
+        mbo.proj.m[1][1] *= -1;
+        //mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+    }
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
 }

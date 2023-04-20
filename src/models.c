@@ -109,10 +109,9 @@ void ModelModelBufferUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDesc
 
     mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
-
     mbo.model = mo->nodes[indx_node].model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(cam->view_angle, cam->view_near, cam->view_distance);
+    mbo.proj = m4_perspective(render->width, render->height, cam->view_angle, cam->view_near, cam->view_distance);
     mbo.proj.m[1][1] *= -1;
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
@@ -135,38 +134,13 @@ void ModelLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescr
 
     mbo.view = m4_look_at(render->position, v3_add(render->position, render->rotation), render->up_vector);
 
-    if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
-        mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
-    else
-        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
-
-    DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
-}
-
-void ModelLightModelUpdate2(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
-{
-    glTFStruct *gltf = mo->obj;
-
-    Camera3D* cam = (Camera3D*) cam3D;
-
-    ModelBuffer3D mbo = {};
-    vec3 cameraUp = {0.0f,1.0f, 0.0f};
-
-    RenderTexture *render = current_render;
-
-    engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
-
-    mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
-
-    mbo.model = mo->nodes[indx_node].model;
-    mbo.view = m4_look_at(some_point_light.position, v3_add(some_point_light.position, render->rotation), cameraUp);
-
-
-    if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE)){
-        mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
         mbo.proj.m[1][1] *= -1;
-    }
-    else
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
         mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
@@ -187,12 +161,28 @@ void ModelLightMatrixUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDesc
     {
         lsm.mats[i].view = m4_look_at(renders[i]->position, v3_add(renders[i]->position, renders[i]->rotation), renders[i]->up_vector);
 
-        if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
-           lsm.mats[i].proj = m4_perspective(renders[i]->persp_view_angle, renders[i]->persp_view_near, renders[i]->persp_view_distance);
-        else
+        if(renders[i]->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+            lsm.mats[i].proj = m4_perspective(renders[i]->width, renders[i]->height, renders[i]->persp_view_angle, renders[i]->persp_view_near, renders[i]->persp_view_distance);
+            lsm.mats[i].proj.m[1][1] *= -1;
+        }else if(renders[i]->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+            lsm.mats[i].proj = m4_frustum(-renders[i]->frust_side, renders[i]->frust_side, -renders[i]->frust_side, renders[i]->frust_side, renders[i]->frust_near, renders[i]->frust_far);
+            lsm.mats[i].proj.m[1][1] *= -1;
+        }else
             lsm.mats[i].proj = m4_ortho(-renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_distance, renders[i]->ortg_view_distance);
-
     }
+
+    RenderTexture *spot = shadow_spot;
+
+    lsm.mats[4].view = m4_look_at(spot->position, v3_add(spot->position, spot->rotation), spot->up_vector);
+
+    if(spot->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        lsm.mats[4].proj = m4_perspective(spot->width, spot->height, spot->persp_view_angle, spot->persp_view_near, spot->persp_view_distance);
+        lsm.mats[4].proj.m[1][1] *= -1;
+    }else if(spot->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        lsm.mats[4].proj = m4_frustum(-spot->frust_side, spot->frust_side, -spot->frust_side, spot->frust_side, spot->frust_near, spot->frust_far);
+        lsm.mats[4].proj.m[1][1] *= -1;
+    }else
+        lsm.mats[4].proj = m4_ortho(-spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_distance, spot->ortg_view_distance);
 
     lsm.cascadeSplits.x = renders[3]->cascadeSplit;
     lsm.cascadeSplits.y = renders[2]->cascadeSplit;
@@ -417,7 +407,7 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render)
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
 
-    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelLightModelUpdate2);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelLightModelUpdate);
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightPosBuff), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelDescriptorLightPosUpdate);
 
     BluePrintAddPushConstant(&model->graphObj.blueprints, num, sizeof(mat4), VK_SHADER_STAGE_VERTEX_BIT, 0);
@@ -435,14 +425,14 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render)
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
     //setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
     setting.vert_indx = 1;
-    setting.cull_mode = VK_CULL_MODE_NONE;
+    setting.cull_mode = VK_CULL_MODE_FRONT_BIT;
 
     ModelAddSettingPipeline(model, num, setting);
 
     model->graphObj.blueprints.num_blue_print_packs ++;
 }
 
-void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, void *cube_shadow)
+void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, void *cube_shadow, void *spot_shadow)
 {
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
@@ -464,6 +454,7 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, v
 
     BluePrintAddRenderImageArray(&model->graphObj.blueprints, num, array, num_shadows);
     BluePrintAddRenderImage(&model->graphObj.blueprints, num, cube_shadow);
+    BluePrintAddRenderImage(&model->graphObj.blueprints, num, spot_shadow);
 
     BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
     //TextureImageAdd(&model->graphObj.blueprints, model->specular);
@@ -489,6 +480,8 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     num_shadows = dParam->num_shadow;
 
+    shadow_spot = dParam->spot_shadow;
+
     RenderTexture *renders = dParam->shadow;
 
     for(int i=0;i < num_shadows;i++)
@@ -496,7 +489,9 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     ModelSetOmniShadowDescriptor(model, dParam->cube_shadow);
 
-    ModelSetDefaultDescriptor(model, dParam->render, dParam->shadow, dParam->cube_shadow);
+    ModelSetShadowDescriptor(model, dParam->spot_shadow);
+
+    ModelSetDefaultDescriptor(model, dParam->render, dParam->shadow, dParam->cube_shadow, dParam->spot_shadow);
 
     {
         GraphicsObjectSetVertexSize(&model->graphObj, 1, sizeof(Vertex3D), sizeof(uint32_t));

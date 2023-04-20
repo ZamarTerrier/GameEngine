@@ -22,6 +22,8 @@ SomeDirLight some_point_light;
 void *shadow_array;
 uint32_t num_shadows;
 
+void *shadow_spot;
+
 char *rootDirPath;
 
 void *e_var_images;

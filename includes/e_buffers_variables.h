@@ -85,7 +85,7 @@ typedef struct{
 } LightMatrix;
 
 typedef struct{
-    LightMatrix mats[MAX_LIGHT_MATRIX];
+    LightMatrix mats[MAX_LIGHT_MATRIX] __attribute__ ((aligned (16)));
     vec4 cascadeSplits __attribute__ ((aligned (16)));
 } LightSpaceMatrix;
 

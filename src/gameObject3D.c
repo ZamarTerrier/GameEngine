@@ -32,7 +32,7 @@ void GameObject3DDescriptorModelUpdate(GameObject3D* go, BluePrintDescriptor *de
 
     mbo.model = go->transform.model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+    mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
     mbo.proj.m[1][1] *= -1;
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));

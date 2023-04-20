@@ -22,6 +22,8 @@ extern SomeDirLight some_point_light;
 extern void *shadow_array;
 extern uint32_t num_shadows;
 
+extern void *shadow_spot;
+
 extern char *rootDirPath;
 
 extern void *e_var_images;
