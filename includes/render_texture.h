@@ -61,8 +61,6 @@ typedef struct{
 
     float cascadeSplit;
 
-    vec3 position;
-    vec3 rotation;
     vec3 up_vector;
 
     mat4 view;

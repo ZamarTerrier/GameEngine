@@ -303,6 +303,7 @@ void read_scene(ModelObject3D *mo, ufbx_scene *scene)
     }
 }
 
+// Не корректно
 void DefaultFBXUpdate(ModelObject3D *mo)
 {
   FBXStruct *fbx = mo->obj;
@@ -318,7 +319,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
               if(pack->render_point == current_render)
               {
 
-                  if(pack->descriptors == NULL)
+                  /*if(pack->descriptors == NULL)
                       return;
 
                   Camera3D* cam = (Camera3D*) cam3D;
@@ -357,7 +358,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
                   vkMapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
                   memcpy(data, &lbo, sizeof(lbo));
-                  vkUnmapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex]);
+                  vkUnmapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex]);*/
 
               }
           }

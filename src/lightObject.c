@@ -2,54 +2,96 @@
 
 #include "e_resource_data.h"
 
-void LightObjectFillLights(LightBuffer3D *lbo, bool enable_light)
+void LightObjectFillDirLights(DirLightBuffer *blb)
 {
-    if(e_var_num_lights > 0 && enable_light)
+    uint32_t num_dirs = 0;
+
+    if(e_var_num_lights > 0)
     {
         LightObject **lights = e_var_lights;
 
         for(int i=0;i < e_var_num_lights; i++)
         {
+            if (lights[i]->type == ENGINE_LIGHT_TYPE_DIRECTIONAL){
+                blb->dir[num_dirs].ambient = lights[i]->ambient;
+                blb->dir[num_dirs].diffuse = lights[i]->diffuse;
+                blb->dir[num_dirs].specular = lights[i]->specular;
+                blb->dir[num_dirs].direction = lights[i]->direction;
+                blb->dir[num_dirs].position = lights[i]->position;
+            }
+        }
+    }
+}
 
-            switch (lights[i]->type) {
+void LightObjectFillPointLights(PointLightBuffer *plb)
+{
+    uint32_t num_points = 0;
+
+    if(e_var_num_lights > 0)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+            if (lights[i]->type == ENGINE_LIGHT_TYPE_POINT){
+                plb->points[num_points].position = lights[i]->position;
+                plb->points[num_points].constant = lights[i]->constant;
+                plb->points[num_points].linear = lights[i]->linear;
+                plb->points[num_points].quadratic = lights[i]->quadratic;
+                plb->points[num_points].ambient = lights[i]->ambient;
+                plb->points[num_points].diffuse = lights[i]->diffuse;
+                plb->points[num_points].specular = lights[i]->specular;
+            }
+        }
+    }
+}
+
+void LightObjectFillSpotLights(SpotLightBuffer *slb)
+{
+    uint32_t num_spots = 0;
+
+    if(e_var_num_lights > 0)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+            if (lights[i]->type == ENGINE_LIGHT_TYPE_SPOT){
+                slb->spots[num_spots].position = lights[i]->position;
+                slb->spots[num_spots].constant = lights[i]->constant;
+                slb->spots[num_spots].linear = lights[i]->linear;
+                slb->spots[num_spots].quadratic = lights[i]->quadratic;
+                slb->spots[num_spots].ambient = lights[i]->ambient;
+                slb->spots[num_spots].diffuse = lights[i]->diffuse;
+                slb->spots[num_spots].specular = lights[i]->specular;
+                slb->spots[num_spots].direction =  lights[i]->direction;
+                slb->spots[num_spots].cutOff = lights[i]->cutOff;
+            }
+        }
+    }
+}
+
+void LightObjectFillLightStatus(LightStatusBuffer *lsb)
+{
+    if(e_var_num_lights > 0)
+    {
+        LightObject **lights = e_var_lights;
+
+        for(int i=0;i < e_var_num_lights; i++)
+        {
+            switch(lights[i]->type){
                 case ENGINE_LIGHT_TYPE_DIRECTIONAL:
-                    lbo->dir.ambient = lights[i]->ambient;
-                    lbo->dir.diffuse = lights[i]->diffuse;
-                    lbo->dir.specular = lights[i]->specular;
-                    lbo->dir.direction = lights[i]->direction;
+                    lsb->num_dirs ++;
                     break;
                 case ENGINE_LIGHT_TYPE_POINT:
-                    lbo->status.num_points++;
-
-                    lbo->lights[lbo->status.num_points - 1].position = lights[i]->position;
-                    lbo->lights[lbo->status.num_points - 1].constant = lights[i]->constant;
-                    lbo->lights[lbo->status.num_points - 1].linear = lights[i]->linear;
-                    lbo->lights[lbo->status.num_points - 1].quadratic = lights[i]->quadratic;
-                    lbo->lights[lbo->status.num_points - 1].ambient = lights[i]->ambient;
-                    lbo->lights[lbo->status.num_points - 1].diffuse = lights[i]->diffuse;
-                    lbo->lights[lbo->status.num_points - 1].specular = lights[i]->specular;
-
+                    lsb->num_points ++;
                     break;
                 case ENGINE_LIGHT_TYPE_SPOT:
-                    lbo->status.num_spots++;
-
-                    lbo->lights[lbo->status.num_spots - 1].position = lights[i]->position;
-                    lbo->lights[lbo->status.num_spots - 1].constant = lights[i]->constant;
-                    lbo->lights[lbo->status.num_spots - 1].linear = lights[i]->linear;
-                    lbo->lights[lbo->status.num_spots - 1].quadratic = lights[i]->quadratic;
-                    lbo->lights[lbo->status.num_spots - 1].ambient = lights[i]->ambient;
-                    lbo->lights[lbo->status.num_spots - 1].diffuse = lights[i]->diffuse;
-                    lbo->lights[lbo->status.num_spots - 1].specular = lights[i]->specular;
-                    lbo->spots[lbo->status.num_spots - 1].direction =  lights[i]->direction;
-                    lbo->spots[lbo->status.num_spots - 1].cutOff = lights[i]->cutOff;
-                    break;
-                default:
+                    lsb->num_spots ++;
                     break;
             }
         }
     }
-
-    lbo->status.light_react = enable_light;
 }
 
 void LightObjectInit(LightObject *lo, ELightType type)
@@ -74,7 +116,6 @@ vec3 LightObjectGetPosition(LightObject *lo)
 {
     return lo->position;
 }
-
 
 void LightObjectSetDirection(LightObject *lo, float x, float y, float z)
 {
