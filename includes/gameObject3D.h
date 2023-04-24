@@ -29,6 +29,7 @@ void GameObject3DDescriptorLghtMatrixUpdate(GameObject3D* go, BluePrintDescripto
 void GameObject3DDescriptorDirLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 void GameObject3DDescriptorPointLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 void GameObject3DDescriptorSpotLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DLigtStatusBufferUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 
 void GameObject3DInitDraw(GameObject3D *go);
 void GameObject3DClean(GameObject3D* go);

@@ -7,6 +7,13 @@ extern char _binary_shaders_model_frag_spv_start;
 extern char _binary_shaders_model_vert_spv_end;
 extern int _binary_shaders_model_vert_spv_size;
 extern char _binary_shaders_model_vert_spv_start;
+extern char _binary_shaders_model_shadow_frag_spv_end;
+extern int _binary_shaders_model_shadow_frag_spv_size;
+extern char _binary_shaders_model_shadow_frag_spv_start;
+extern char _binary_shaders_model_shadow_vert_spv_end;
+extern int _binary_shaders_model_shadow_vert_spv_size;
+extern char _binary_shaders_model_shadow_vert_spv_start;
+
 
 extern char _binary_shaders_text_frag_spv_end;
 extern int _binary_shaders_text_frag_spv_size;
@@ -115,6 +122,12 @@ extern char _binary_shaders_3d_object_frag_spv_start;
 extern char _binary_shaders_3d_object_vert_spv_end;
 extern int _binary_shaders_3d_object_vert_spv_size;
 extern char _binary_shaders_3d_object_vert_spv_start;
+extern char _binary_shaders_3d_object_shadow_frag_spv_end;
+extern int _binary_shaders_3d_object_shadow_frag_spv_size;
+extern char _binary_shaders_3d_object_shadow_frag_spv_start;
+extern char _binary_shaders_3d_object_shadow_vert_spv_end;
+extern int _binary_shaders_3d_object_shadow_vert_spv_size;
+extern char _binary_shaders_3d_object_shadow_vert_spv_start;
 
 extern char _binary_shaders_3d_object_line_frag_spv_end;
 extern int _binary_shaders_3d_object_line_frag_spv_size;

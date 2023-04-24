@@ -537,7 +537,7 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render)
     model->graphObj.blueprints.num_blue_print_packs ++;
 }
 
-void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, void *cube_shadow, void *spot_shadow)
+void ModelSetShadowDefaultDescriptor(ModelStruct *model, void *render, void *shadow, void *cube_shadow, void *spot_shadow)
 {
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
@@ -570,6 +570,38 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, v
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
+    setting.vertShader = &_binary_shaders_model_shadow_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_model_shadow_vert_spv_size);
+    setting.fragShader = &_binary_shaders_model_shadow_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_model_shadow_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    ModelAddSettingPipeline(model, num, setting);
+
+    model->graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void ModelSetDefaultDescriptor(ModelStruct *model, void *render)
+{
+    uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
+    model->graphObj.blueprints.blue_print_packs[num].render_point = render;
+
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelModelBufferUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelInvMatrixBuffer);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorDirLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorPointLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorSpotLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelLigtStatusBufferUpdate);
+
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+    //TextureImageAdd(&model->graphObj.blueprints, model->specular);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&model->graphObj, &setting);
+
     setting.vertShader = &_binary_shaders_model_vert_spv_start;
     setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
     setting.fragShader = &_binary_shaders_model_frag_spv_start;
@@ -582,8 +614,45 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, v
     model->graphObj.blueprints.num_blue_print_packs ++;
 }
 
-void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
+void ModelPopulateVertex3D(ModelStruct *model)
+{
+    uint32_t num = model->graphObj.num_shapes;
 
+    GraphicsObjectSetVertexSize(&model->graphObj, num, sizeof(Vertex3D), sizeof(uint32_t));
+
+    model->graphObj.shapes[num].bindingDescription = &Bind3DDescription;
+    model->graphObj.shapes[num].attr = cubeAttributeDescription;
+    model->graphObj.shapes[num].countAttr = 3;
+
+    model->graphObj.shapes[num].iParam.indices = calloc(model->graphObj.shapes[0].iParam.indexesSize, sizeof(uint32_t));
+    model->graphObj.shapes[num].iParam.indexesSize = model->graphObj.shapes[0].iParam.indexesSize;
+    memcpy(model->graphObj.shapes[num].iParam.indices, model->graphObj.shapes[0].iParam.indices, sizeof(uint32_t) * model->graphObj.shapes[0].iParam.indexesSize);
+
+    model->graphObj.shapes[num].vParam.vertices = calloc(model->graphObj.shapes[0].vParam.verticesSize, sizeof(Vertex3D));
+    model->graphObj.shapes[num].vParam.verticesSize = model->graphObj.shapes[0].vParam.verticesSize;
+
+    ModelVertex3D *m_verts = model->graphObj.shapes[0].vParam.vertices;
+    Vertex3D *verts = model->graphObj.shapes[num].vParam.vertices;
+
+    for(int i=0;i < model->graphObj.shapes[0].vParam.verticesSize;i++)
+    {
+        verts[i].position = m_verts[i].position;
+        verts[i].normal = m_verts[i].normal;
+        verts[i].texCoord = m_verts[i].texCoord;
+    }
+
+    BuffersCreateVertex(&model->graphObj.shapes[num].vParam);
+    BuffersCreateIndex(&model->graphObj.shapes[num].iParam);
+    BuffersUpdateVertex(&model->graphObj.shapes[num].vParam);
+    BuffersUpdateIndex(&model->graphObj.shapes[num].iParam);
+
+    model->graphObj.shapes[num].init = true;
+
+    model->graphObj.num_shapes ++;
+}
+
+void ModelApplyShadows(ModelStruct *model, DrawParam *dParam)
+{
     num_shadows = dParam->num_shadow;
 
     shadow_spot = dParam->spot_shadow;
@@ -597,41 +666,17 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
     ModelSetShadowDescriptor(model, ENGINE_LIGHT_TYPE_SPOT, dParam->spot_shadow);
 
-    ModelSetDefaultDescriptor(model, dParam->render, dParam->shadow, dParam->cube_shadow, dParam->spot_shadow);
+    ModelSetShadowDefaultDescriptor(model, dParam->render, dParam->shadow, dParam->cube_shadow, dParam->spot_shadow);
 
-    {
-        GraphicsObjectSetVertexSize(&model->graphObj, 1, sizeof(Vertex3D), sizeof(uint32_t));
+    ModelPopulateVertex3D(model);
+}
 
-        model->graphObj.shapes[1].bindingDescription = &Bind3DDescription;
-        model->graphObj.shapes[1].attr = cubeAttributeDescription;
-        model->graphObj.shapes[1].countAttr = 3;
+void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
-        model->graphObj.shapes[1].iParam.indices = calloc(model->graphObj.shapes[0].iParam.indexesSize, sizeof(uint32_t));
-        model->graphObj.shapes[1].iParam.indexesSize = model->graphObj.shapes[0].iParam.indexesSize;
-        memcpy(model->graphObj.shapes[1].iParam.indices, model->graphObj.shapes[0].iParam.indices, sizeof(uint32_t) * model->graphObj.shapes[0].iParam.indexesSize);
-
-        model->graphObj.shapes[1].vParam.vertices = calloc(model->graphObj.shapes[0].vParam.verticesSize, sizeof(Vertex3D));
-        model->graphObj.shapes[1].vParam.verticesSize = model->graphObj.shapes[0].vParam.verticesSize;
-
-        ModelVertex3D *m_verts = model->graphObj.shapes[0].vParam.vertices;
-        Vertex3D *verts = model->graphObj.shapes[1].vParam.vertices;
-
-        for(int i=0;i < model->graphObj.shapes[0].vParam.verticesSize;i++)
-        {
-            verts[i].position = m_verts[i].position;
-            verts[i].normal = m_verts[i].normal;
-            verts[i].texCoord = m_verts[i].texCoord;
-        }
-
-        BuffersCreateVertex(&model->graphObj.shapes[1].vParam);
-        BuffersCreateIndex(&model->graphObj.shapes[1].iParam);
-        BuffersUpdateVertex(&model->graphObj.shapes[1].vParam);
-        BuffersUpdateIndex(&model->graphObj.shapes[1].iParam);
-
-        model->graphObj.shapes[1].init = true;
-
-        model->graphObj.num_shapes ++;
-    }
+    if(dParam->flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
+        ModelApplyShadows(model, dParam);
+    else
+        ModelSetDefaultDescriptor(model, dParam->render);
 
     GraphicsObjectCreateDrawItems(&model->graphObj);
 
