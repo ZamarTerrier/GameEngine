@@ -217,7 +217,7 @@ float v2_length(vec2 v) { return sqrtf(v.x*v.x + v.y*v.y); }
 float v2_dot (vec2 a, vec2 b) { return a.x*b.x + a.y*b.y; }
 float  v2_distance(vec2 v1, vec2 v2) { return sqrt(pow((v1.x - v2.x), 2) + pow((v1.y - v2.y), 2)); }
 
-
+vec3 vec3_f(float x, float y, float z){ return (vec3){ x, y, z };}
 vec3 v3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
 vec3 v3_adds  (vec3 a, float s) { return (vec3){ a.x + s,   a.y + s,   a.z + s   }; }
 vec3 v3_sub   (vec3 a, vec3 b) { return (vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
@@ -711,6 +711,7 @@ mat4 m4_rotation_mat_quternion(mat4 m1, vec4 quaternion)
 }
 
 mat4 m4_look_at(vec3 from, vec3 to, vec3 up) {
+
     vec3 z = v3_muls(v3_norm(v3_sub(to, from)), -1);
     vec3 x = v3_norm(v3_cross(up, z));
     vec3 y = v3_cross(z, x);
@@ -837,38 +838,45 @@ mat4 m4_scale(mat4 mat, vec3 scale){
     return mat;
 }
 
-mat4 m4_perspective(float fov_degrees, float near_plane, float far_plane)
+mat4 m4_frustum(float left, float right, float bottom, float top, float nearZ, float farZ) {
+
+    mat4  res = edenMat;
+    float rl, tb, fn, nv;
+
+    rl = 1.0f / (right  - left);
+    tb = 1.0f / (top    - bottom);
+    fn =-1.0f / (farZ - nearZ);
+    nv = 2.0f * nearZ;
+
+    res.m[0][0] = nv * rl;
+    res.m[1][1] = nv * tb;
+    res.m[2][0] = (right  + left)    * rl;
+    res.m[2][1] = (top    + bottom)  * tb;
+    res.m[2][2] =-(farZ + nearZ) * fn;
+    res.m[2][3] = 1.0f;
+    res.m[3][2] = farZ * nv * fn;
+
+    return res;
+}
+
+mat4 m4_perspective(uint32_t width, uint32_t height, float fov_degrees, float near_plane, float far_plane)
 {
+    float aspect_ratio = ((float)width) / ((float)height);
+    float tan_half_fov = tanf((fov_degrees * (M_PI / 180)) / 2.0);
 
-  float aspect_ratio = ((float)swapChainExtent.width) / ((float) swapChainExtent.height);
+    mat4 matrix;
+    memset(&matrix, 0, sizeof(mat4));
 
-  float range = far_plane  - near_plane;
-  float tan_half_fov = tanf((fov_degrees * (M_PI / 180)) / 2.0);
+    float f  = 1.0f / tan_half_fov;
+    float fn = 1.0f / (near_plane - far_plane);
 
-  mat4 matrix;
-  memset(&matrix, 0, sizeof(mat4));
+    matrix.m[0][0] = f / aspect_ratio;
+    matrix.m[1][1] = f;
+    matrix.m[2][2] =-(near_plane + far_plane) * fn;
+    matrix.m[2][3] = 1.0f;
+    matrix.m[3][2] = 2.0f * near_plane * far_plane * fn;
 
-  matrix.m[0][0] = 1.0f / (tan_half_fov * aspect_ratio);
-  matrix.m[0][1] = 0.0f;
-  matrix.m[0][2] = 0.0f;
-  matrix.m[0][3] = 0.0f;
-
-  matrix.m[1][0] = 0.0f;
-  matrix.m[1][1] = 1.0f / tan_half_fov;
-  matrix.m[1][2] = 0.0f;
-  matrix.m[1][3] = 0.0f;
-
-  matrix.m[2][0] = 0.0f;
-  matrix.m[2][1] = 0.0f;
-  matrix.m[2][2] = far_plane / (float) range;
-  matrix.m[2][3] = 1.0f;
-
-  matrix.m[3][0] = 0.0f;
-  matrix.m[3][1] = 0.0f;
-  matrix.m[3][2] = -(far_plane * near_plane) / (float) range;
-  matrix.m[3][3] = 0.0f;
-
-  return matrix;
+    return matrix;
 }
 
 mat4 m4_ortho(float top, float bottom, float left, float right, float zFar, float zNear)

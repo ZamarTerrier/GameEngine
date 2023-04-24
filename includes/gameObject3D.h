@@ -22,9 +22,14 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command);
 
 
 void GameObject3DDescriptorModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
-void GameObject3DDescriptorLghtModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DDirLightModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DSpotLightModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DOmniLightModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 void GameObject3DDescriptorLghtMatrixUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
-void GameObject3DDescriptorLightObjectsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DDescriptorDirLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DDescriptorPointLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DDescriptorSpotLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DLigtStatusBufferUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 
 void GameObject3DInitDraw(GameObject3D *go);
 void GameObject3DClean(GameObject3D* go);
@@ -33,7 +38,7 @@ void GameObject3DDestroy(GameObject3D* go);
 
 void GameObject3DInit(GameObject3D *go);
 
-void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render);
+void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *render);
 
 void GameObject3DEnableLight(GameObject3D *go, bool enable);
 

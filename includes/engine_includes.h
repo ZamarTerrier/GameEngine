@@ -135,6 +135,7 @@ typedef struct{
     void *render;
     void *shadow;
     void *cube_shadow;
+    void *spot_shadow;
     uint32_t num_shadow;
 } DrawParam;
 

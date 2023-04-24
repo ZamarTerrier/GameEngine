@@ -38,7 +38,7 @@ void TextureCreateEmptyDefault(Texture2D *texture);
 
 void TextureCreateTextureImageView(Texture2D *texture, uint32_t type);
 
-void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews, uint32_t format);
+void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews, uint32_t format, uint32_t aspect_mask);
 void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32_t aspectFlags) ;
 
 void TextureCreateSampler(void *sampler, uint32_t texture_type);

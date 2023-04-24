@@ -385,7 +385,7 @@ void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32
     return imageView;
 }
 
-void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews, uint32_t format) {
+void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews, uint32_t format, uint32_t aspect_mask) {
 
     VkImageView *some_views = shadowCubeMapFaceImageViews;
 
@@ -394,8 +394,7 @@ void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews
     viewInfo->image = image;
     viewInfo->viewType = VK_IMAGE_VIEW_TYPE_CUBE; //VK_IMAGE_VIEW_TYPE_2D;
     viewInfo->format = format; //VK_FORMAT_R8G8B8A8_SRGB;
-    viewInfo->components.r = VK_COMPONENT_SWIZZLE_R;
-    viewInfo->subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo->subresourceRange.aspectMask = aspect_mask;
     viewInfo->subresourceRange.baseMipLevel = 0;
     viewInfo->subresourceRange.levelCount = 1;
     viewInfo->subresourceRange.baseArrayLayer = 0;

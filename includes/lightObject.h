@@ -26,10 +26,13 @@ typedef struct{
     float quadratic;
     float cutOff;
 
-    char type;
-}LightObject;
+    ELightType type;
+} LightObject;
 
-void LightObjectFillLights(LightBuffer3D *lbo, bool enable_light);
+void LightObjectFillDirLights(DirLightBuffer *blb);
+void LightObjectFillPointLights(PointLightBuffer *plb);
+void LightObjectFillSpotLights(SpotLightBuffer *slb);
+void LightObjectFillLightStatus(LightStatusBuffer *lsb);
 
 void LightObjectInit(LightObject *lo, ELightType type);
 

@@ -276,8 +276,6 @@ void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow)
     to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
     BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate);
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorLghtMatrixUpdate);
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorLightObjectsUpdate);
 
     BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
     BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, to->render);
@@ -305,9 +303,7 @@ void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
     to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
     BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate);
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorLghtMatrixUpdate);
     BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TextureBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)TerrainObjectDescriptorTextureUpdate);
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorLightObjectsUpdate);
 
 
     BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);

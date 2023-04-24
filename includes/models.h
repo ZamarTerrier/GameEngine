@@ -42,7 +42,6 @@ typedef struct{
 } ModelObject3D;
 
 void ModelModelBufferUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor);
-void ModelLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor);
 void ModelLightMatrixUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor);
 void ModelInvMatrixBuffer(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor);
 void ModelDescriptorLightObjectsUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor);

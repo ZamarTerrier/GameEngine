@@ -303,6 +303,7 @@ void read_scene(ModelObject3D *mo, ufbx_scene *scene)
     }
 }
 
+// Не корректно
 void DefaultFBXUpdate(ModelObject3D *mo)
 {
   FBXStruct *fbx = mo->obj;
@@ -318,7 +319,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
               if(pack->render_point == current_render)
               {
 
-                  if(pack->descriptors == NULL)
+                  /*if(pack->descriptors == NULL)
                       return;
 
                   Camera3D* cam = (Camera3D*) cam3D;
@@ -333,7 +334,7 @@ void DefaultFBXUpdate(ModelObject3D *mo)
 
                   mbo.model = mat4_mult_transform(mo->nodes[i].model, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
                   mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-                  mbo.proj = m4_perspective(cam->view_angle, cam->view_near, cam->view_distance);
+                  mbo.proj = edenMat;//m4_perspective(cam->view_angle, cam->view_near, cam->view_distance);
                   mbo.proj.m[1][1] *= -1;
 
                   vkMapMemory(e_device, pack->descriptors[0].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(mbo), 0, &data);
@@ -352,12 +353,12 @@ void DefaultFBXUpdate(ModelObject3D *mo)
                   lbo.lights[0].position.y = 0;
                   lbo.lights[0].position.z = 9.5f;
 
-                  lbo.num_points = 0;
-                  lbo.num_spots = 0;
+                  lbo.status.num_points = 0;
+                  lbo.status.num_spots = 0;
 
                   vkMapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex], 0, sizeof(lbo), 0, &data);
                   memcpy(data, &lbo, sizeof(lbo));
-                  vkUnmapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex]);
+                  vkUnmapMemory(e_device, pack->descriptors[2].uniform.uniformBuffersMemory[imageIndex]);*/
 
               }
           }

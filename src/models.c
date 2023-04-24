@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <GLFW/glfw3.h>
+
 #include "camera.h"
 #include "gameObject.h"
 #include "lightObject.h"
@@ -107,16 +109,81 @@ void ModelModelBufferUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDesc
 
     mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
-
     mbo.model = mo->nodes[indx_node].model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(cam->view_angle, cam->view_near, cam->view_distance);
+    mbo.proj = m4_perspective(render->width, render->height, cam->view_angle, cam->view_near, cam->view_distance);
     mbo.proj.m[1][1] *= -1;
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
 }
 
-void ModelLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+void ModelDirLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+{
+    glTFStruct *gltf = mo->obj;
+
+    ModelBuffer3D mbo = {};
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+
+    RenderTexture *render = current_render;
+
+    DirLightBuffer dlb = {};
+    memset(&dlb, 0, sizeof(DirLightBuffer));
+
+    LightObjectFillDirLights(&dlb);
+
+    engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
+
+    mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
+
+    mbo.model = mo->nodes[indx_node].model;
+    mbo.view = m4_look_at(dlb.dir[0].position, v3_add(dlb.dir[0].position, dlb.dir[0].direction), cameraUp);
+
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
+        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+
+    DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
+}
+
+void ModelOmniLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+{
+    glTFStruct *gltf = mo->obj;
+
+    ModelBuffer3D mbo = {};
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+
+    RenderTexture *render = current_render;
+
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+
+    LightObjectFillPointLights(&plb);
+
+    engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
+
+    mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
+
+    mbo.model = mo->nodes[indx_node].model;
+    mbo.view = m4_look_at(plb.points[0].position, vec3_f(0, 0, 0), cameraUp);
+
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
+        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+
+    DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
+}
+
+void ModelSpotLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
 {
     glTFStruct *gltf = mo->obj;
 
@@ -131,67 +198,25 @@ void ModelLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescr
 
     mbo.model = mo->nodes[indx_node].model;
 
-    mbo.view = m4_look_at(render->position, v3_add(render->position, render->rotation), render->up_vector);
+    SpotLightBuffer slb = {};
+    memset(&slb, 0, sizeof(SpotLightBuffer));
 
-    if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
-        mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
-    else
+    LightObjectFillSpotLights(&slb);
+
+    mbo.view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), cameraUp);
+
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
         mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
 }
 
-void ModelLightModelUpdate2(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
-{
-    glTFStruct *gltf = mo->obj;
-
-    Camera3D* cam = (Camera3D*) cam3D;
-
-    ModelBuffer3D mbo = {};
-    vec3 cameraUp = {0.0f,1.0f, 0.0f};
-
-    RenderTexture *render = current_render;
-
-    engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
-
-    mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
-
-    mbo.model = mo->nodes[indx_node].model;
-    mbo.view = m4_look_at(cam->position, v3_add(render->position, render->rotation), cameraUp);
-
-    if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
-        mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
-    else
-        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
-
-    DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
-}
-
-void ModelLightMatrixUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
-{
-    RenderTexture *render = current_render;
-
-    LightSpaceMatrix lsm;
-    memset(&lsm, 0, sizeof(LightSpaceMatrix));
-
-    vec3 cameraUp = {0.0f,1.0f, 0.0f};
-
-    RenderTexture **renders = shadow_array;
-
-    for(int i=0;i < num_shadows;i++)
-    {
-        lsm.mats[i].view = m4_look_at(renders[i]->position, v3_add(renders[i]->position, renders[i]->rotation), renders[i]->up_vector);
-
-        if((render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE))
-           lsm.mats[i].proj = m4_perspective(renders[i]->persp_view_angle, renders[i]->persp_view_near, renders[i]->persp_view_distance);
-        else
-            lsm.mats[i].proj = m4_ortho(-renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_distance, renders[i]->ortg_view_distance);
-
-        lsm.cascadeSplits[i] = renders[i]->cascadeSplit;
-    }
-
-    DescriptorUpdate(descriptor, &lsm, sizeof(lsm));
-}
 
 void ModelInvMatrixBuffer(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
 {
@@ -215,23 +240,100 @@ void ModelInvMatrixBuffer(ModelObject3D* mo, uint32_t indx_node, BluePrintDescri
     DescriptorUpdate(descriptor, &imb, sizeof(imb));*/
 }
 
-void ModelDescriptorLightObjectsUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+void ModelDescriptorDirLightsUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
 {
-    LightBuffer3D lbo = {};
-    memset(&lbo, 0, sizeof(LightBuffer3D));
+    RenderTexture *render = current_render;
 
-    LightObjectFillLights(&lbo, (mo->self.flags & ENGINE_GAME_OBJECT_FLAG_LIGHT));
+    DirLightBuffer dlb = {};
+    memset(&dlb, 0, sizeof(DirLightBuffer));
 
-    DescriptorUpdate(descriptor, &lbo, sizeof(lbo));
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+
+    LightObjectFillDirLights(&dlb);
+
+    RenderTexture **renders = shadow_array;
+
+    for(int i=0;i < num_shadows;i++)
+    {
+        dlb.mats[i].view = m4_look_at( dlb.dir[0].position, v3_add( dlb.dir[0].position, dlb.dir[0].direction), renders[i]->up_vector);
+
+        if(renders[i]->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+            dlb.mats[i].proj = m4_perspective(renders[i]->width, renders[i]->height, renders[i]->persp_view_angle, renders[i]->persp_view_near, renders[i]->persp_view_distance);
+            dlb.mats[i].proj.m[1][1] *= -1;
+        }else if(renders[i]->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+            dlb.mats[i].proj = m4_frustum(-renders[i]->frust_side, renders[i]->frust_side, -renders[i]->frust_side, renders[i]->frust_side, renders[i]->frust_near, renders[i]->frust_far);
+            dlb.mats[i].proj.m[1][1] *= -1;
+        }else
+            dlb.mats[i].proj = m4_ortho(-renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_distance, renders[i]->ortg_view_distance);
+    }
+    dlb.cascadeSplits.x = renders[3]->cascadeSplit;
+    dlb.cascadeSplits.y = renders[2]->cascadeSplit;
+    dlb.cascadeSplits.z = renders[1]->cascadeSplit;
+    dlb.cascadeSplits.w = renders[0]->cascadeSplit;
+
+    DescriptorUpdate(descriptor, &dlb, sizeof(dlb));
+}
+
+void ModelDescriptorPointLightsUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+{
+    Camera3D* cam = (Camera3D*) cam3D;
+
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+    LightObjectFillPointLights(&plb);
+
+    plb.pos[0].light_pos = plb.points[0].position;
+    plb.pos[0].view_pos = cam->position;
+
+    DescriptorUpdate(descriptor, &plb, sizeof(plb));
+}
+
+void ModelDescriptorSpotLightsUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+{
+    SpotLightBuffer slb;
+    memset(&slb, 0, sizeof(SpotLightBuffer));
+
+    LightObjectFillSpotLights(&slb);
+
+    RenderTexture *spot = shadow_spot;
+
+    slb.mats[0].view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), spot->up_vector);
+
+    if(spot->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        slb.mats[0].proj = m4_perspective(spot->width, spot->height, spot->persp_view_angle, spot->persp_view_near, spot->persp_view_distance);
+        slb.mats[0].proj.m[1][1] *= -1;
+    }else if(spot->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        slb.mats[0].proj = m4_frustum(-spot->frust_side, spot->frust_side, -spot->frust_side, spot->frust_side, spot->frust_near, spot->frust_far);
+        slb.mats[0].proj.m[1][1] *= -1;
+    }else
+        slb.mats[0].proj = m4_ortho(-spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_distance, spot->ortg_view_distance);
+
+    DescriptorUpdate(descriptor, &slb, sizeof(slb));
+}
+
+void ModelLigtStatusBufferUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
+{
+
+    LightStatusBuffer lsb;
+    memset(&lsb, 0, sizeof(LightStatusBuffer));
+
+    LightObjectFillLightStatus(&lsb);
+
+    DescriptorUpdate(descriptor, &lsb, sizeof(lsb));
 }
 
 void ModelDescriptorLightPosUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDescriptor *descriptor)
 {
     Camera3D* cam = (Camera3D*) cam3D;
 
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+
+    LightObjectFillPointLights(&plb);
+
     LightPosBuff lpb;
 
-    lpb.light_pos = (vec3){ 0, 0, 0};
+    lpb.light_pos = plb.points[0].position;
     lpb.view_pos = cam->position;
 
     DescriptorUpdate(descriptor, &lpb, sizeof(lpb));
@@ -347,7 +449,6 @@ void ModelDestroy(ModelObject3D* mo){
 
 void ModelAddSettingPipeline(ModelStruct* model, uint32_t indx_pack, PipelineSetting setting){
 
-
     uint32_t indx = model->graphObj.blueprints.blue_print_packs[indx_pack].num_settings;
 
     PipelineSetting *settings = &model->graphObj.blueprints.blue_print_packs[indx_pack].settings;
@@ -377,12 +478,15 @@ void ModelSetSelCameraEnable(void *obj, bool enable)
         mo->self.flags &= ~(ENGINE_GAME_OBJECT_FLAG_SELF_CAMERA);
 }
 
-void ModelSetShadowDescriptor(ModelStruct *model, void *render)
+void ModelSetShadowDescriptor(ModelStruct *model, uint32_t type, void *render)
 {
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
 
-    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelLightModelUpdate);
+    if(type == ENGINE_LIGHT_TYPE_DIRECTIONAL)
+        BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelDirLightModelUpdate);
+    else
+        BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelSpotLightModelUpdate);
 
     PipelineSetting setting;
 
@@ -408,7 +512,7 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render)
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
 
-    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelLightModelUpdate2);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelOmniLightModelUpdate);
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightPosBuff), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelDescriptorLightPosUpdate);
 
     BluePrintAddPushConstant(&model->graphObj.blueprints, num, sizeof(mat4), VK_SHADER_STAGE_VERTEX_BIT, 0);
@@ -426,23 +530,24 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render)
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
     //setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
     setting.vert_indx = 1;
-    setting.cull_mode = VK_CULL_MODE_NONE;
+    setting.cull_mode = VK_CULL_MODE_FRONT_BIT;
 
     ModelAddSettingPipeline(model, num, setting);
 
     model->graphObj.blueprints.num_blue_print_packs ++;
 }
 
-void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, void *cube_shadow)
+void ModelSetShadowDefaultDescriptor(ModelStruct *model, void *render, void *shadow, void *cube_shadow, void *spot_shadow)
 {
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
 
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelModelBufferUpdate);
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelInvMatrixBuffer);
-    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightPosBuff), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelDescriptorLightPosUpdate);
-    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorLightObjectsUpdate);
-    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelLightMatrixUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorDirLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorPointLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorSpotLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelLigtStatusBufferUpdate);
 
     shadow_array = calloc(num_shadows, sizeof(RenderTexture *));
 
@@ -455,6 +560,39 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, v
 
     BluePrintAddRenderImageArray(&model->graphObj.blueprints, num, array, num_shadows);
     BluePrintAddRenderImage(&model->graphObj.blueprints, num, cube_shadow);
+    BluePrintAddRenderImage(&model->graphObj.blueprints, num, spot_shadow);
+
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+    //TextureImageAdd(&model->graphObj.blueprints, model->specular);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&model->graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_model_shadow_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_model_shadow_vert_spv_size);
+    setting.fragShader = &_binary_shaders_model_shadow_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_model_shadow_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    ModelAddSettingPipeline(model, num, setting);
+
+    model->graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void ModelSetDefaultDescriptor(ModelStruct *model, void *render)
+{
+    uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
+    model->graphObj.blueprints.blue_print_packs[num].render_point = render;
+
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelModelBufferUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelInvMatrixBuffer);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorDirLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorPointLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorSpotLightsUpdate);
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelLigtStatusBufferUpdate);
 
     BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
     //TextureImageAdd(&model->graphObj.blueprints, model->specular);
@@ -476,52 +614,69 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shadow, v
     model->graphObj.blueprints.num_blue_print_packs ++;
 }
 
-void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
+void ModelPopulateVertex3D(ModelStruct *model)
+{
+    uint32_t num = model->graphObj.num_shapes;
 
+    GraphicsObjectSetVertexSize(&model->graphObj, num, sizeof(Vertex3D), sizeof(uint32_t));
+
+    model->graphObj.shapes[num].bindingDescription = &Bind3DDescription;
+    model->graphObj.shapes[num].attr = cubeAttributeDescription;
+    model->graphObj.shapes[num].countAttr = 3;
+
+    model->graphObj.shapes[num].iParam.indices = calloc(model->graphObj.shapes[0].iParam.indexesSize, sizeof(uint32_t));
+    model->graphObj.shapes[num].iParam.indexesSize = model->graphObj.shapes[0].iParam.indexesSize;
+    memcpy(model->graphObj.shapes[num].iParam.indices, model->graphObj.shapes[0].iParam.indices, sizeof(uint32_t) * model->graphObj.shapes[0].iParam.indexesSize);
+
+    model->graphObj.shapes[num].vParam.vertices = calloc(model->graphObj.shapes[0].vParam.verticesSize, sizeof(Vertex3D));
+    model->graphObj.shapes[num].vParam.verticesSize = model->graphObj.shapes[0].vParam.verticesSize;
+
+    ModelVertex3D *m_verts = model->graphObj.shapes[0].vParam.vertices;
+    Vertex3D *verts = model->graphObj.shapes[num].vParam.vertices;
+
+    for(int i=0;i < model->graphObj.shapes[0].vParam.verticesSize;i++)
+    {
+        verts[i].position = m_verts[i].position;
+        verts[i].normal = m_verts[i].normal;
+        verts[i].texCoord = m_verts[i].texCoord;
+    }
+
+    BuffersCreateVertex(&model->graphObj.shapes[num].vParam);
+    BuffersCreateIndex(&model->graphObj.shapes[num].iParam);
+    BuffersUpdateVertex(&model->graphObj.shapes[num].vParam);
+    BuffersUpdateIndex(&model->graphObj.shapes[num].iParam);
+
+    model->graphObj.shapes[num].init = true;
+
+    model->graphObj.num_shapes ++;
+}
+
+void ModelApplyShadows(ModelStruct *model, DrawParam *dParam)
+{
     num_shadows = dParam->num_shadow;
+
+    shadow_spot = dParam->spot_shadow;
 
     RenderTexture *renders = dParam->shadow;
 
     for(int i=0;i < num_shadows;i++)
-        ModelSetShadowDescriptor(model, &renders[i]);
+        ModelSetShadowDescriptor(model, ENGINE_LIGHT_TYPE_DIRECTIONAL, &renders[i]);
 
     ModelSetOmniShadowDescriptor(model, dParam->cube_shadow);
 
-    ModelSetDefaultDescriptor(model, dParam->render, dParam->shadow, dParam->cube_shadow);
+    ModelSetShadowDescriptor(model, ENGINE_LIGHT_TYPE_SPOT, dParam->spot_shadow);
 
-    {
-        GraphicsObjectSetVertexSize(&model->graphObj, 1, sizeof(Vertex3D), sizeof(uint32_t));
+    ModelSetShadowDefaultDescriptor(model, dParam->render, dParam->shadow, dParam->cube_shadow, dParam->spot_shadow);
 
-        model->graphObj.shapes[1].bindingDescription = &Bind3DDescription;
-        model->graphObj.shapes[1].attr = cubeAttributeDescription;
-        model->graphObj.shapes[1].countAttr = 3;
+    ModelPopulateVertex3D(model);
+}
 
-        model->graphObj.shapes[1].iParam.indices = calloc(model->graphObj.shapes[0].iParam.indexesSize, sizeof(uint32_t));
-        model->graphObj.shapes[1].iParam.indexesSize = model->graphObj.shapes[0].iParam.indexesSize;
-        memcpy(model->graphObj.shapes[1].iParam.indices, model->graphObj.shapes[0].iParam.indices, sizeof(uint32_t) * model->graphObj.shapes[0].iParam.indexesSize);
+void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
 
-        model->graphObj.shapes[1].vParam.vertices = calloc(model->graphObj.shapes[0].vParam.verticesSize, sizeof(Vertex3D));
-        model->graphObj.shapes[1].vParam.verticesSize = model->graphObj.shapes[0].vParam.verticesSize;
-
-        ModelVertex3D *m_verts = model->graphObj.shapes[0].vParam.vertices;
-        Vertex3D *verts = model->graphObj.shapes[1].vParam.vertices;
-
-        for(int i=0;i < model->graphObj.shapes[0].vParam.verticesSize;i++)
-        {
-            verts[i].position = m_verts[i].position;
-            verts[i].normal = m_verts[i].normal;
-            verts[i].texCoord = m_verts[i].texCoord;
-        }
-
-        BuffersCreateVertex(&model->graphObj.shapes[1].vParam);
-        BuffersCreateIndex(&model->graphObj.shapes[1].iParam);
-        BuffersUpdateVertex(&model->graphObj.shapes[1].vParam);
-        BuffersUpdateIndex(&model->graphObj.shapes[1].iParam);
-
-        model->graphObj.shapes[1].init = true;
-
-        model->graphObj.num_shapes ++;
-    }
+    if(dParam->flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
+        ModelApplyShadows(model, dParam);
+    else
+        ModelSetDefaultDescriptor(model, dParam->render);
 
     GraphicsObjectCreateDrawItems(&model->graphObj);
 

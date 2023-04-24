@@ -6,8 +6,6 @@
 #define MAX_BONES 128
 #define MAX_LIGHTS 16
 
-#define MAX_LIGHT_MATRIX 16
-
 typedef struct {
     vec2 position;
     vec2 rotation;
@@ -54,6 +52,7 @@ typedef struct {
 } SpotLight;
 
 typedef struct{
+    vec3 position __attribute__ ((aligned (16)));
     vec3 direction __attribute__ ((aligned (16)));
 
     vec3 ambient __attribute__ ((aligned (16)));
@@ -62,13 +61,9 @@ typedef struct{
 } DirLight;
 
 typedef struct{
-    DirLight dir;
-    PointLight lights[MAX_LIGHTS];
-    SpotLight spots [MAX_LIGHTS];
-    int num_points;
-    int num_spots;
-    int light_react;
-} LightBuffer3D;
+    mat4 proj;
+    mat4 view;
+} LightMatrix;
 
 typedef struct{
     vec3 light_pos __attribute__ ((aligned (16)));
@@ -76,18 +71,31 @@ typedef struct{
 } LightPosBuff;
 
 typedef struct{
-    mat4 proj;
-    mat4 view;
-} LightMatrix;
+    DirLight dir[MAX_LIGHTS];
+    LightMatrix mats[MAX_LIGHTS];
+    vec4 cascadeSplits __attribute__ ((aligned (16)));
+} DirLightBuffer;
 
 typedef struct{
-    LightMatrix mats[MAX_LIGHT_MATRIX];
-    float cascadeSplits[MAX_LIGHT_MATRIX];
-} LightSpaceMatrix;
+    PointLight points[MAX_LIGHTS];
+    LightPosBuff pos[MAX_LIGHTS];
+} PointLightBuffer;
+
+typedef struct{
+    SpotLight spots[MAX_LIGHTS];
+    LightMatrix mats[MAX_LIGHTS];
+} SpotLightBuffer;
+
+typedef struct{
+    int num_dirs;
+    int num_points;
+    int num_spots;
+    int isEnable;
+} LightStatusBuffer;
 
 typedef struct{
     mat4 mats[MAX_BONES] __attribute__ ((aligned (16)));
-    int size __attribute__ ((aligned (16)));
+    float size __attribute__ ((aligned (16)));
 } InvMatrixsBuffer;
 
 #endif // E_BUFFERS_VARIABLES_H

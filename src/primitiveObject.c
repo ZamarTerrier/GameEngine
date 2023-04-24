@@ -152,26 +152,107 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam *dParam, char type, void
 
 }
 
-void PrimitiveObjectInitDefault(PrimitiveObject *po, DrawParam *dParam, char type, void *params)
+void PrimitiveObjectLightPosUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
 {
-        PrimitiveObjectInit(po, dParam, type, params);
+    Camera3D* cam = (Camera3D*) cam3D;
 
-        if(dParam->flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
-            GameObject3DAddShadowDescriptor(po, dParam->shadow);
+    LightPosBuff lpb;
 
-        PrimitiveObjectAddDefault(po, dParam->render);
-        BluePrintAddRenderImage(&po->go.graphObj.blueprints, 1, dParam->shadow);
-        GameObject3DInitDraw(po);
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+
+    LightObjectFillPointLights(&plb);
+
+    lpb.light_pos = plb.points[0].position;
+    lpb.view_pos = cam->position;
+
+    DescriptorUpdate(descriptor, &lpb, sizeof(lpb));
 }
 
-void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render)
+void PrimitiveObjectAddOmiShadow(PrimitiveObject *po, void *render)
+{
+    uint32_t num = po->go.graphObj.blueprints.num_blue_print_packs;
+    po->go.graphObj.blueprints.blue_print_packs[num].render_point = render;
+
+
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DOmniLightModelUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, num, sizeof(LightPosBuff), VK_SHADER_STAGE_VERTEX_BIT, (void *)PrimitiveObjectLightPosUpdate);
+
+    BluePrintAddPushConstant(&po->go.graphObj.blueprints, num, sizeof(mat4), VK_SHADER_STAGE_VERTEX_BIT, 0);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&po->go.graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_depth_vert_omni_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_omni_spv_size);
+    setting.fragShader = &_binary_shaders_depth_frag_omni_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_omni_spv_size);
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    setting.fromFile = 0;
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
+    //setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
+    setting.vert_indx = 0;
+    setting.cull_mode = VK_CULL_MODE_NONE;
+
+    GameObject3DAddSettingPipeline(po, num, &setting);
+
+    po->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void PrimitiveObjectSetShadowDefaultDescriptor(PrimitiveObject *po, DrawParam *dParam)
 {
     uint32_t nums = po->go.graphObj.blueprints.num_blue_print_packs;
-    po->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+    po->go.graphObj.blueprints.blue_print_packs[nums].render_point = dParam->render;
 
     BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate);
-    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorLghtMatrixUpdate);
-    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorLightObjectsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorDirLightsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorPointLightsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorSpotLightsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DLigtStatusBufferUpdate);
+
+    shadow_array = calloc(num_shadows, sizeof(RenderTexture *));
+
+    RenderTexture **array = shadow_array;
+
+    RenderTexture *renders = dParam->shadow;
+
+    for(int i=0;i < num_shadows;i++)
+        array[i] = &renders[i];
+
+    BluePrintAddRenderImageArray(&po->go.graphObj.blueprints, nums, array, num_shadows);
+    BluePrintAddRenderImage(&po->go.graphObj.blueprints, nums, dParam->cube_shadow);
+    BluePrintAddRenderImage(&po->go.graphObj.blueprints, nums, dParam->spot_shadow);
+
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0]);
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1]);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&po->go.graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_3d_object_shadow_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_shadow_vert_spv_size);
+    setting.fragShader = &_binary_shaders_3d_object_shadow_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_shadow_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    GameObject3DAddSettingPipeline(po, nums, &setting);
+
+    po->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void PrimitiveObjectSetDefaultDescriptor(PrimitiveObject *po, DrawParam *dParam)
+{
+    uint32_t nums = po->go.graphObj.blueprints.num_blue_print_packs;
+    po->go.graphObj.blueprints.blue_print_packs[nums].render_point = dParam->render;
+
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorDirLightsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorPointLightsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorSpotLightsUpdate);
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DLigtStatusBufferUpdate);
 
     BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0]);
     BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1]);
@@ -195,6 +276,35 @@ void PrimitiveObjectAddDefault(PrimitiveObject *po, void *render)
 void *PrimitiveObjectGetVertex(PrimitiveObject *po)
 {
     return &po->go.graphObj.shapes[0].vParam;
+}
+
+void PrimitiveObjectAddShadow(PrimitiveObject *po, DrawParam *dParam)
+{
+    num_shadows = dParam->num_shadow;
+
+    shadow_spot = dParam->spot_shadow;
+
+    RenderTexture *renders = dParam->shadow;
+
+    for(int i=0;i < num_shadows;i++)
+        GameObject3DAddShadowDescriptor(po, ENGINE_LIGHT_TYPE_DIRECTIONAL, &renders[i]);
+
+    PrimitiveObjectAddOmiShadow(po, dParam->cube_shadow);
+    GameObject3DAddShadowDescriptor(po, ENGINE_LIGHT_TYPE_SPOT, dParam->spot_shadow);
+
+    PrimitiveObjectSetShadowDefaultDescriptor(po, dParam);
+}
+
+void PrimitiveObjectInitDefault(PrimitiveObject *po, DrawParam *dParam, char type, void *params)
+{
+        PrimitiveObjectInit(po, dParam, type, params);
+
+        if(dParam->flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
+            PrimitiveObjectAddShadow(po, dParam);
+        else
+            PrimitiveObjectSetDefaultDescriptor(po, dParam);
+
+        GameObject3DInitDraw(po);
 }
 
 //Не корректно

@@ -32,55 +32,186 @@ void GameObject3DDescriptorModelUpdate(GameObject3D* go, BluePrintDescriptor *de
 
     mbo.model = go->transform.model;
     mbo.view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), cameraUp);
-    mbo.proj = m4_perspective(render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+    mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
     mbo.proj.m[1][1] *= -1;
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
 }
 
-void GameObject3DDescriptorLghtModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+void GameObject3DDirLightModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
 {
     Camera3D* cam = (Camera3D*) cam3D;
-
-    RenderTexture *render = current_render;
 
     ModelBuffer3D mbo = {};
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
 
-    go->transform.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
+    RenderTexture *render = current_render;
 
-    mbo.model = go->transform.model;
-    mbo.view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
-    mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+    DirLightBuffer dlb = {};
+    memset(&dlb, 0, sizeof(DirLightBuffer));
+
+    LightObjectFillDirLights(&dlb);
+
+    mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
+    mbo.view =  m4_look_at( dlb.dir[0].position, v3_add( dlb.dir[0].position, dlb.dir[0].direction ), cameraUp);
+
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
+        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
 
     DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
 }
 
-void GameObject3DDescriptorLghtMatrixUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+void GameObject3DOmniLightModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
 {
     Camera3D* cam = (Camera3D*) cam3D;
 
+    ModelBuffer3D mbo = {};
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+
     RenderTexture *render = current_render;
+
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+
+    LightObjectFillPointLights(&plb);
+
+    mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
+    mbo.view = m4_look_at(plb.points[0].position, vec3_f(0, 0, 0), cameraUp);
+
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
+        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+
+    DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
+}
+
+void GameObject3DSpotLightModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+{
+    Camera3D* cam = (Camera3D*) cam3D;
+
+    ModelBuffer3D mbo = {};
+    vec3 cameraUp = {0.0f,1.0f, 0.0f};
+
+    RenderTexture *render = current_render;
+
+    SpotLightBuffer slb = {};
+    memset(&slb, 0, sizeof(SpotLightBuffer));
+
+    LightObjectFillSpotLights(&slb);
+
+    mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
+    mbo.view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), cameraUp);
+
+    if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+        mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+        mbo.proj.m[1][1] *= -1;
+    }else if(render->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+        mbo.proj = m4_frustum(-render->frust_side, render->frust_side, -render->frust_side, render->frust_side, render->frust_near, render->frust_far);
+        mbo.proj.m[1][1] *= -1;
+    }else
+        mbo.proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+
+    DescriptorUpdate(descriptor, &mbo, sizeof(mbo));
+}
+
+void GameObject3DDescriptorDirLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+{
+    RenderTexture *render = current_render;
+
+    DirLightBuffer dlb = {};
+    memset(&dlb, 0, sizeof(DirLightBuffer));
 
     vec3 cameraUp = {0.0f,1.0f, 0.0f};
 
-    LightSpaceMatrix lsm;
-    memset(&lsm, 0, sizeof(LightSpaceMatrix));
+    LightObjectFillDirLights(&dlb);
 
-    lsm.mats[0].view = m4_look_at(some_light.position, v3_add(some_light.position, some_light.rotation), cameraUp);
-    lsm.mats[0].proj = m4_ortho(-render->ortg_view_size, render->ortg_view_size, -render->ortg_view_size, render->ortg_view_size, -render->ortg_view_distance, render->ortg_view_distance);
+    if(shadow_array != NULL)
+    {
+        RenderTexture **renders = shadow_array;
 
-    DescriptorUpdate(descriptor, &lsm, sizeof(lsm));
+        for(int i=0;i < num_shadows;i++)
+        {
+            dlb.mats[i].view = m4_look_at( dlb.dir[0].position, v3_add( dlb.dir[0].position, dlb.dir[0].direction), renders[i]->up_vector);
+
+            if(renders[i]->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+                dlb.mats[i].proj = m4_perspective(renders[i]->width, renders[i]->height, renders[i]->persp_view_angle, renders[i]->persp_view_near, renders[i]->persp_view_distance);
+                dlb.mats[i].proj.m[1][1] *= -1;
+            }else if(renders[i]->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+                dlb.mats[i].proj = m4_frustum(-renders[i]->frust_side, renders[i]->frust_side, -renders[i]->frust_side, renders[i]->frust_side, renders[i]->frust_near, renders[i]->frust_far);
+                dlb.mats[i].proj.m[1][1] *= -1;
+            }else
+                dlb.mats[i].proj = m4_ortho(-renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_size, renders[i]->ortg_view_size, -renders[i]->ortg_view_distance, renders[i]->ortg_view_distance);
+        }
+
+        dlb.cascadeSplits.x = renders[3]->cascadeSplit;
+        dlb.cascadeSplits.y = renders[2]->cascadeSplit;
+        dlb.cascadeSplits.z = renders[1]->cascadeSplit;
+        dlb.cascadeSplits.w = renders[0]->cascadeSplit;
+    }
+
+    DescriptorUpdate(descriptor, &dlb, sizeof(dlb));
 }
 
-void GameObject3DDescriptorLightObjectsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+void GameObject3DDescriptorPointLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
 {
-    LightBuffer3D lbo = {};
-    memset(&lbo, 0, sizeof(LightBuffer3D));
+    Camera3D* cam = (Camera3D*) cam3D;
 
-    LightObjectFillLights(&lbo, (go->self.flags & ENGINE_GAME_OBJECT_FLAG_LIGHT));
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
 
-    DescriptorUpdate(descriptor, &lbo, sizeof(lbo));
+    LightObjectFillPointLights(&plb);
+
+    plb.pos[0].light_pos = plb.points[0].position;
+    plb.pos[0].view_pos = cam->position;
+
+    DescriptorUpdate(descriptor, &plb, sizeof(plb));
+}
+
+void GameObject3DDescriptorSpotLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+{
+    SpotLightBuffer slb = {};
+    memset(&slb, 0, sizeof(SpotLightBuffer));
+
+    LightObjectFillSpotLights(&slb);
+
+    if(shadow_spot != NULL)
+    {
+        RenderTexture *spot = shadow_spot;
+
+        slb.mats[0].view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), spot->up_vector);
+
+        if(spot->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+            slb.mats[0].proj = m4_perspective(spot->width, spot->height, spot->persp_view_angle, spot->persp_view_near, spot->persp_view_distance);
+            slb.mats[0].proj.m[1][1] *= -1;
+        }else if(spot->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+            slb.mats[0].proj = m4_frustum(-spot->frust_side, spot->frust_side, -spot->frust_side, spot->frust_side, spot->frust_near, spot->frust_far);
+            slb.mats[0].proj.m[1][1] *= -1;
+        }else
+            slb.mats[0].proj = m4_ortho(-spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_distance, spot->ortg_view_distance);
+    }
+
+    DescriptorUpdate(descriptor, &slb, sizeof(slb));
+}
+
+void GameObject3DLigtStatusBufferUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+{
+    LightStatusBuffer lsb;
+    memset(&lsb, 0, sizeof(LightStatusBuffer));
+
+    LightObjectFillLightStatus(&lsb);
+
+    DescriptorUpdate(descriptor, &lsb, sizeof(lsb));
 }
 
 void GameObject3DDefaultUpdate(GameObject3D* go) {
@@ -113,9 +244,14 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
         if(pack->render_point == current_render)
         {
+            RenderTexture *render = current_render;
+
             ShaderPack *pack = &go->graphObj.gItems.shader_packs[i];
 
             for(int j=0; j < pack->num_pipelines; j++){
+
+                if(render->type == ENGINE_RENDER_TYPE_CUBEMAP)
+                    vkCmdPushConstants( command, pack->pipelines[j].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4), &render->view);
 
                 PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
 
@@ -150,12 +286,15 @@ void GameObject3DInitDraw(GameObject3D *go)
     PipelineCreateGraphics(&go->graphObj);
 }
 
-void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render)
+void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *render)
 {
     uint32_t nums = go->graphObj.blueprints.num_blue_print_packs;
     go->graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorLghtModelUpdate);
+    if(type == ENGINE_LIGHT_TYPE_DIRECTIONAL)
+        BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDirLightModelUpdate);
+    else
+        BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DSpotLightModelUpdate);
 
     PipelineSetting setting;
 
@@ -166,11 +305,10 @@ void GameObject3DAddShadowDescriptor(GameObject3D *go, void *render)
     setting.fragShader = &_binary_shaders_depth_frag_spv_start;
     setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_spv_size);
     setting.fromFile = 0;
-    setting.vert_indx = 0;
-
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
     //setting.flags |= ENGINE_PIPELINE_FLAG_BIAS;
-    setting.cull_mode = VK_CULL_MODE_NONE;
+    setting.vert_indx = 0;
+    setting.cull_mode = VK_CULL_MODE_FRONT_BIT;
 
     GameObject3DAddSettingPipeline(go, nums, &setting);
 

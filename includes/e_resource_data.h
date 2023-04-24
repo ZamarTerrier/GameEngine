@@ -16,10 +16,10 @@ extern void *e_var_current_entry;
 extern void* cam2D;
 extern void* cam3D;
 
-extern SomeDirLight some_light;
-
 extern void *shadow_array;
 extern uint32_t num_shadows;
+
+extern void *shadow_spot;
 
 extern char *rootDirPath;
 
