@@ -3,7 +3,7 @@
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
-#include "camera.h"
+#include "e_camera.h"
 
 #include "e_math.h"
 

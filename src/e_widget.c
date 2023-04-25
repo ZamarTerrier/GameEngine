@@ -11,7 +11,7 @@
 #include "engine.h"
 
 #include "pipeline.h"
-#include "buffers.h"
+#include "e_buffer.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
@@ -273,8 +273,8 @@ void WidgetAddDefault(EWidget *widget, void *render)
     uint32_t nums = widget->go.graphObj.blueprints.num_blue_print_packs;
     widget->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetGUIBufferUpdate);
-    BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetMaskObjectUpdate);
+    BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetGUIBufferUpdate, 0);
+    BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetMaskObjectUpdate, 0);
 
     BluePrintAddTextureImage(&widget->go.graphObj.blueprints, nums, widget->go.image);
 

@@ -2,7 +2,7 @@
 
 #include "vulkan/vulkan.h"
 
-#include "buffers.h"
+#include "e_buffer.h"
 #include "graphicsItems.h"
 
 #include "e_math.h"
@@ -187,7 +187,7 @@ void TextWidgetAddDefault(EWidgetText *wt, void *render)
     uint32_t nums = wt->widget.go.graphObj.blueprints.num_blue_print_packs;
     wt->widget.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&wt->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate);
+    BluePrintAddUniformObject(&wt->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
 
     TextWidgetAddTexture(wt, nums);
 

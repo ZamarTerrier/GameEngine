@@ -3,9 +3,9 @@
 #include <vulkan/vulkan.h>
 #include <math.h>
 
-#include "buffers.h"
+#include "e_buffer.h"
 #include "pipeline.h"
-#include "camera.h"
+#include "e_camera.h"
 
 #include "e_math.h"
 

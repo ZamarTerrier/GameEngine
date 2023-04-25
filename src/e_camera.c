@@ -1,4 +1,4 @@
-#include "camera.h"
+#include "e_camera.h"
 
 #include "e_resource_data.h"
 

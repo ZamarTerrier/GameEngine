@@ -113,8 +113,8 @@ void ImageWidgetAddDefault(EWidgetImage *img, void *render)
     uint32_t nums = img->widget.go.graphObj.blueprints.num_blue_print_packs;
     img->widget.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *) GameObject2DTransformBufferUpdate);
-    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *) GameObject2DImageBuffer);
+    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *) GameObject2DTransformBufferUpdate, 0);
+    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *) GameObject2DImageBuffer, 0);
 
     BluePrintAddTextureImage(&img->widget.go.graphObj.blueprints, nums, img->widget.go.image);
 

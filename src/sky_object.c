@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
-#include "camera.h"
+#include "e_camera.h"
 
 #include "lightObject.h"
 
@@ -95,7 +95,7 @@ void SkyObjectAddDefault(SkyObject *so, void *render)
     uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
     so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(SkyBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)SkyObjectSkyBufferUpdate);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(SkyBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)SkyObjectSkyBufferUpdate, 0);
 
     PipelineSetting setting;
 

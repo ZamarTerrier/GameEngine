@@ -6,12 +6,12 @@
 
 #include "lightObject.h"
 
-#include "buffers.h"
-#include "texture.h"
+#include "e_buffer.h"
+#include "e_texture.h"
 
 #include "e_math.h"
 
-#include "tools.h"
+#include "e_tools.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
@@ -419,48 +419,6 @@ void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)
     }
 
     vkCmdBeginRenderPass(cmd_buff, renderBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    if(render->type == ENGINE_RENDER_TYPE_CUBEMAP)
-    {
-        PointLightBuffer plb = {};
-        memset(&plb, 0, sizeof(PointLightBuffer));
-
-        LightObjectFillPointLights(&plb);
-
-        mat4 viewMatrix = edenMat;
-
-        switch (render->currFrame)
-        {
-        case 0: // POSITIVE_X
-            /*viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(0.0f, 1.0f, 0.0f));
-            viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
-            viewMatrix = m4_look_at(plb.points[0].position, v3_add(plb.points[0].position, vec3_f( -1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
-            break;
-        case 1:	// NEGATIVE_X
-            /*viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(0.0f, 1.0f, 0.0f));
-            viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
-            viewMatrix = m4_look_at(plb.points[0].position, v3_add(plb.points[0].position, vec3_f( 1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
-            break;
-        case 2:	// POSITIVE_Y
-            //viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(1.0f, 0.0f, 0.0f));
-            viewMatrix = m4_look_at(plb.points[0].position, v3_add(plb.points[0].position, vec3_f( 0.0, -1.0, 0.0)), vec3_f( 0.0, 0.0, -1.0));
-            break;
-        case 3:	// NEGATIVE_Y
-            //viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(1.0f, 0.0f, 0.0f));
-            viewMatrix = m4_look_at(plb.points[0].position, v3_add(plb.points[0].position, vec3_f( 0.0, 1.0, 0.0)), vec3_f( 0.0, 0.0, 1.0));
-            break;
-        case 4:	// POSITIVE_Z
-            //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(0.0f, 0.0f, 1.0f));
-            viewMatrix = m4_look_at(plb.points[0].position, v3_add(plb.points[0].position, vec3_f( 0.0, 0.0, -1.0)), vec3_f( 0.0, 1.0, 0.0));
-            break;
-        case 5:	// NEGATIVE_Z
-            //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));
-            viewMatrix = m4_look_at(plb.points[0].position, v3_add(plb.points[0].position, vec3_f( 0.0, 0.0, 1.0)), vec3_f( 0.0, 1.0, 0.0));
-            break;
-        }
-
-        render->view = viewMatrix;
-    }
 
     free(renderBeginInfo);
 }

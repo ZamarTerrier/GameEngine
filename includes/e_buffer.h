@@ -1,11 +1,11 @@
-#ifndef BUFFERS_H
-#define BUFFERS_H
+#ifndef E_BUFFER_H
+#define E_BUFFER_H
 
 #include "engine_includes.h"
 
 #include "e_blue_print.h"
 
-#include "tools.h"
+#include "e_tools.h"
 
 #define MAX_VERTEX_COUNT 65536
 #define MAX_INDEX_COUNT MAX_VERTEX_COUNT * 3
@@ -32,4 +32,4 @@ void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** bu
 void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size);
 
 
-#endif // BUFFERS_H
+#endif // E_BUFFER_H

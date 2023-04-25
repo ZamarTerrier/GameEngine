@@ -3,8 +3,8 @@
 
 #include "engine_includes.h"
 
-#include "texture.h"
-#include "tools.h"
+#include "e_texture.h"
+#include "e_tools.h"
 
 #ifdef __cplusplus
 extern "C"

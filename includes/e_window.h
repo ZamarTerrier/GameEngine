@@ -2,7 +2,7 @@
 #define WINENGINE_H
 
 #include "engine_includes.h"
-#include "debuger.h"
+#include "e_debuger.h"
 
 #ifdef __cplusplus
 extern "C"

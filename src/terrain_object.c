@@ -4,18 +4,18 @@
 
 #include "engine.h"
 
-#include "camera.h"
+#include "e_camera.h"
 #include "graphicsObject.h"
 #include "lightObject.h"
 #include "render_texture.h"
 
-#include "buffers.h"
+#include "e_buffer.h"
 #include "pipeline.h"
-#include "texture.h"
+#include "e_texture.h"
 
 #include "e_math.h"
 
-#include "tools.h"
+#include "e_tools.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
@@ -154,7 +154,6 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 
     for(int i = 0;i <= to->width; i++)
     {
-
         for(int j = 0;j <= to->height; j++)
         {
             if(i > 0 && i < to->width && j > 0 && j < to->height)
@@ -179,13 +178,127 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
                 verts[iter].normal = norm;
 
             }
-
         }
     }
 
     memcpy(to->height_map, verts, vParam->verticesSize * sizeof(TerrainVertex));
 
     BuffersUpdateVertex(vParam);
+}
+
+void TerrainObjectSetShadowDefaultDescriptor(TerrainObject *to, DrawParam *dParam)
+{
+    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
+    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = dParam->render;
+
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TextureBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)TerrainObjectDescriptorTextureUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorDirLightsUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorPointLightsUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorSpotLightsUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DLigtStatusBufferUpdate, 0);
+
+    RenderTexture **renders = dir_shadow_array;
+
+    if(num_dir_shadows > 1)
+        BluePrintAddRenderImageArray(&to->go.graphObj.blueprints, nums, renders, num_dir_shadows);
+    else
+        BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, renders[0]);
+
+    renders = point_shadow_array;
+
+    if(num_point_shadows > 1)
+        BluePrintAddRenderImageArray(&to->go.graphObj.blueprints, nums, renders, num_point_shadows);
+    else
+        BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, renders[0]);
+
+    renders = spot_shadow_array;
+
+    if(num_spot_shadows > 1)
+        BluePrintAddRenderImageArray(&to->go.graphObj.blueprints, nums, renders, num_spot_shadows);
+    else
+        BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, renders[0]);
+
+    if(!(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
+    {
+        to->go.images[0].flags = ENGINE_TEXTURE_FLAG_URGB;
+        BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[0]);
+    }else{
+
+        //Карта для текстур
+        GameObjectImage g_img;
+        memset(&g_img, 0, sizeof(GameObjectImage));
+
+        g_img.imgWidth = to->t_t_param.texture_width;
+        g_img.imgHeight = to->t_t_param.texture_height;
+        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
+
+        to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img);
+    }
+
+    BluePrintAddTextureImageArray(&to->go.graphObj.blueprints, nums, &to->go.images[1], to->t_t_param.num_textures);
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&to->go.graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_terrain_shadow_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_shadow_vert_spv_size);
+    setting.fragShader = &_binary_shaders_terrain_shadow_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_shadow_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    GameObject3DAddSettingPipeline(to, nums, &setting);
+
+    to->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void TerrainObjectAddDefault(TerrainObject *to, DrawParam *dParam)
+{
+    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
+    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = dParam->render;
+
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TextureBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)TerrainObjectDescriptorTextureUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(DirLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorDirLightsUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(PointLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorPointLightsUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorSpotLightsUpdate, 0);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DLigtStatusBufferUpdate, 0);
+
+    if(!(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
+    {
+        to->go.images[0].flags = ENGINE_TEXTURE_FLAG_URGB;
+        BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[0]);
+    }else{
+
+        //Карта для текстур
+        GameObjectImage g_img;
+        memset(&g_img, 0, sizeof(GameObjectImage));
+
+        g_img.imgWidth = to->t_t_param.texture_width;
+        g_img.imgHeight = to->t_t_param.texture_height;
+        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
+
+        to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img);
+    }
+
+    BluePrintAddTextureImageArray(&to->go.graphObj.blueprints, nums, &to->go.images[1], to->t_t_param.num_textures);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&to->go.graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_terrain_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_vert_spv_size);
+    setting.fragShader = &_binary_shaders_terrain_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_spv_size);
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    GameObject3DAddSettingPipeline(to, nums, &setting);
+
+    to->go.graphObj.blueprints.num_blue_print_packs ++;
+
 }
 
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam)
@@ -265,6 +378,39 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     to->go.graphObj.num_shapes = 1;
 }
 
+void TerrainObjectApplyShadows(TerrainObject *to, DrawParam *dParam)
+{
+    RenderTexture **renders = dir_shadow_array;
+
+    for(int i=0;i < num_dir_shadows;i++)
+        GameObject3DAddShadowDescriptor(to, ENGINE_LIGHT_TYPE_DIRECTIONAL, renders[i], i);
+
+    renders = point_shadow_array;
+
+    for(int i=0;i < num_point_shadows;i++)
+        GameObject3DAddOmiShadow(to, renders[i], i);
+
+    renders = spot_shadow_array;
+
+    for(int i=0;i < num_spot_shadows;i++)
+        GameObject3DAddShadowDescriptor(to, ENGINE_LIGHT_TYPE_SPOT, renders[i], i);
+
+    TerrainObjectSetShadowDefaultDescriptor(to, dParam);
+}
+
+void TerrainObjectDefaultInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam)
+{
+
+    TerrainObjectInit(to, dParam, tParam);
+
+    if(dParam->flags & ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW)
+        TerrainObjectApplyShadows(to, dParam);
+    else
+        TerrainObjectAddDefault(to, dParam);
+
+    GameObject3DInitDraw(to);
+}
+
 void TerrainObjectAddTextureRender(TerrainObject *to, void *render)
 {
     to->render = render;
@@ -275,7 +421,7 @@ void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow)
     uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
     to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate, 0);
 
     BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
     BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, to->render);
@@ -294,55 +440,6 @@ void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow)
     GameObject3DAddSettingPipeline(to, nums, &setting);
 
     to->go.graphObj.blueprints.num_blue_print_packs ++;
-
-}
-
-void TerrainObjectAddDefault(TerrainObject *to, void *render, void *shadow)
-{
-    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
-    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
-
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate);
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TextureBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)TerrainObjectDescriptorTextureUpdate);
-
-
-    BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
-
-    if(!(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE))
-    {
-        to->go.images[0].flags = ENGINE_TEXTURE_FLAG_URGB;
-        BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &to->go.images[0]);
-    }else{
-
-        //Карта для текстур
-        GameObjectImage g_img;
-        memset(&g_img, 0, sizeof(GameObjectImage));
-
-        g_img.imgWidth = to->t_t_param.texture_width;
-        g_img.imgHeight = to->t_t_param.texture_height;
-        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
-
-        to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img);
-
-    }
-
-    BluePrintAddTextureImageArray(&to->go.graphObj.blueprints, nums, &to->go.images[1], to->t_t_param.num_textures);
-
-    PipelineSetting setting;
-
-    PipelineSettingSetDefault(&to->go.graphObj, &setting);
-
-    setting.vertShader = &_binary_shaders_terrain_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_vert_spv_size);
-    setting.fragShader = &_binary_shaders_terrain_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_spv_size);
-    setting.fromFile = 0;
-    setting.vert_indx = 0;
-
-    GameObject3DAddSettingPipeline(to, nums, &setting);
-
-    to->go.graphObj.blueprints.num_blue_print_packs ++;
-
 }
 
 

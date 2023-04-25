@@ -5,8 +5,8 @@
 
 #include "e_descriptor.h"
 #include "pipeline.h"
-#include "buffers.h"
-#include "texture.h"
+#include "e_buffer.h"
+#include "e_texture.h"
 
 #include "e_resource_data.h"
 #include "e_resource_descriptors.h"
@@ -185,7 +185,6 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
                         }
                     }
 
-                    free(textures[0]);
                     free(descriptor->textures);
 
                 }else if((descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE)){

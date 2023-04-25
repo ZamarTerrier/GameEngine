@@ -7,7 +7,7 @@
 
 #include "graphicsObject.h"
 
-#include "tools.h"
+#include "e_tools.h"
 #include "e_descriptor.h"
 
 #ifdef __cplusplus

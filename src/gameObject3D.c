@@ -2,14 +2,14 @@
 
 #include <vulkan/vulkan.h>
 
-#include "camera.h"
+#include "e_camera.h"
 
 #include "lightObject.h"
 #include "render_texture.h"
 
 #include "pipeline.h"
-#include "buffers.h"
-#include "texture.h"
+#include "e_buffer.h"
+#include "e_texture.h"
 
 #include "e_math.h"
 
@@ -52,8 +52,10 @@ void GameObject3DDirLightModelUpdate(GameObject3D* go, BluePrintDescriptor *desc
 
     LightObjectFillDirLights(&dlb);
 
+    uint32_t layer_indx = descriptor->indx_layer;
+
     mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
-    mbo.view =  m4_look_at( dlb.dir[0].position, v3_add( dlb.dir[0].position, dlb.dir[0].direction ), cameraUp);
+    mbo.view =  m4_look_at( dlb.dir[layer_indx].position, v3_add( dlb.dir[layer_indx].position, dlb.dir[layer_indx].direction ), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
@@ -81,8 +83,10 @@ void GameObject3DOmniLightModelUpdate(GameObject3D* go, BluePrintDescriptor *des
 
     LightObjectFillPointLights(&plb);
 
+    uint32_t layer_indx = descriptor->indx_layer;
+
     mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
-    mbo.view = m4_look_at(plb.points[0].position, vec3_f(0, 0, 0), cameraUp);
+    mbo.view = m4_look_at(plb.points[layer_indx].position, vec3_f(0, 0, 0), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
@@ -110,8 +114,10 @@ void GameObject3DSpotLightModelUpdate(GameObject3D* go, BluePrintDescriptor *des
 
     LightObjectFillSpotLights(&slb);
 
+    uint32_t layer_indx = descriptor->indx_layer;
+
     mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
-    mbo.view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), cameraUp);
+    mbo.view = m4_look_at(slb.spots[layer_indx].position, v3_add(slb.spots[layer_indx].position, slb.spots[layer_indx].direction), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
@@ -136,11 +142,11 @@ void GameObject3DDescriptorDirLightsUpdate(GameObject3D* go, BluePrintDescriptor
 
     LightObjectFillDirLights(&dlb);
 
-    if(shadow_array != NULL)
+    if(dir_shadow_array != NULL)
     {
-        RenderTexture **renders = shadow_array;
+        RenderTexture **renders = dir_shadow_array;
 
-        for(int i=0;i < num_shadows;i++)
+        for(int i=0;i < num_dir_shadows;i++)
         {
             dlb.mats[i].view = m4_look_at( dlb.dir[0].position, v3_add( dlb.dir[0].position, dlb.dir[0].direction), renders[i]->up_vector);
 
@@ -172,8 +178,11 @@ void GameObject3DDescriptorPointLightsUpdate(GameObject3D* go, BluePrintDescript
 
     LightObjectFillPointLights(&plb);
 
-    plb.pos[0].light_pos = plb.points[0].position;
-    plb.pos[0].view_pos = cam->position;
+    if(num_point_shadows > 0)
+        for(int i=0;i < num_point_shadows;i++){
+            plb.pos[i].light_pos = plb.points[i].position;
+            plb.pos[i].view_pos = cam->position;
+        }
 
     DescriptorUpdate(descriptor, &plb, sizeof(plb));
 }
@@ -185,20 +194,26 @@ void GameObject3DDescriptorSpotLightsUpdate(GameObject3D* go, BluePrintDescripto
 
     LightObjectFillSpotLights(&slb);
 
-    if(shadow_spot != NULL)
+    if(spot_shadow_array != NULL)
     {
-        RenderTexture *spot = shadow_spot;
 
-        slb.mats[0].view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), spot->up_vector);
+        RenderTexture **renders = spot_shadow_array;
 
-        if(spot->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
-            slb.mats[0].proj = m4_perspective(spot->width, spot->height, spot->persp_view_angle, spot->persp_view_near, spot->persp_view_distance);
-            slb.mats[0].proj.m[1][1] *= -1;
-        }else if(spot->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
-            slb.mats[0].proj = m4_frustum(-spot->frust_side, spot->frust_side, -spot->frust_side, spot->frust_side, spot->frust_near, spot->frust_far);
-            slb.mats[0].proj.m[1][1] *= -1;
-        }else
-            slb.mats[0].proj = m4_ortho(-spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_distance, spot->ortg_view_distance);
+        for(int i=0;i < num_spot_shadows;i++)
+        {
+            RenderTexture *spot = renders[i];
+
+            slb.mats[i].view = m4_look_at(slb.spots[i].position, v3_add(slb.spots[i].position, slb.spots[i].direction), spot->up_vector);
+
+            if(spot->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
+                slb.mats[i].proj = m4_perspective(spot->width, spot->height, spot->persp_view_angle, spot->persp_view_near, spot->persp_view_distance);
+                slb.mats[i].proj.m[1][1] *= -1;
+            }else if(spot->flags & ENGINE_RENDER_FLAG_FRUSTRUM){
+                slb.mats[i].proj = m4_frustum(-spot->frust_side, spot->frust_side, -spot->frust_side, spot->frust_side, spot->frust_near, spot->frust_far);
+                slb.mats[i].proj.m[1][1] *= -1;
+            }else
+                slb.mats[i].proj = m4_ortho(-spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_size, spot->ortg_view_size, -spot->ortg_view_distance, spot->ortg_view_distance);
+        }
     }
 
     DescriptorUpdate(descriptor, &slb, sizeof(slb));
@@ -211,7 +226,28 @@ void GameObject3DLigtStatusBufferUpdate(GameObject3D* go, BluePrintDescriptor *d
 
     LightObjectFillLightStatus(&lsb);
 
+    lsb.isEnable = (go->self.flags & ENGINE_GAME_OBJECT_FLAG_LIGHT);
+
     DescriptorUpdate(descriptor, &lsb, sizeof(lsb));
+}
+
+void GameObject3DLightPosUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+{
+    Camera3D* cam = (Camera3D*) cam3D;
+
+    LightPosBuff lpb;
+
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+
+    LightObjectFillPointLights(&plb);
+
+    uint32_t layer_indx = descriptor->indx_layer;
+
+    lpb.light_pos = plb.points[layer_indx].position;
+    lpb.view_pos = cam->position;
+
+    DescriptorUpdate(descriptor, &lpb, sizeof(lpb));
 }
 
 void GameObject3DDefaultUpdate(GameObject3D* go) {
@@ -286,15 +322,15 @@ void GameObject3DInitDraw(GameObject3D *go)
     PipelineCreateGraphics(&go->graphObj);
 }
 
-void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *render)
+void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *render, uint32_t layer_indx)
 {
     uint32_t nums = go->graphObj.blueprints.num_blue_print_packs;
     go->graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
     if(type == ENGINE_LIGHT_TYPE_DIRECTIONAL)
-        BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDirLightModelUpdate);
+        BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDirLightModelUpdate, layer_indx);
     else
-        BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DSpotLightModelUpdate);
+        BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DSpotLightModelUpdate, layer_indx);
 
     PipelineSetting setting;
 
@@ -311,6 +347,37 @@ void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *rend
     setting.cull_mode = VK_CULL_MODE_FRONT_BIT;
 
     GameObject3DAddSettingPipeline(go, nums, &setting);
+
+    go->graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void GameObject3DAddOmiShadow(GameObject3D *go, void *render, uint32_t layer_indx)
+{
+    uint32_t num = go->graphObj.blueprints.num_blue_print_packs;
+    go->graphObj.blueprints.blue_print_packs[num].render_point = render;
+
+
+    BluePrintAddUniformObject(&go->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DOmniLightModelUpdate, layer_indx);
+    BluePrintAddUniformObject(&go->graphObj.blueprints, num, sizeof(LightPosBuff), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DLightPosUpdate, layer_indx);
+
+    BluePrintAddPushConstant(&go->graphObj.blueprints, num, sizeof(mat4), VK_SHADER_STAGE_VERTEX_BIT, 0);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&go->graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_depth_vert_omni_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_omni_spv_size);
+    setting.fragShader = &_binary_shaders_depth_frag_omni_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_omni_spv_size);
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    setting.fromFile = 0;
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
+    //setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
+    setting.vert_indx = 0;
+    setting.cull_mode = VK_CULL_MODE_NONE;
+
+    GameObject3DAddSettingPipeline(go, num, &setting);
 
     go->graphObj.blueprints.num_blue_print_packs ++;
 }

@@ -1,5 +1,5 @@
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef E_TOOLS_H
+#define E_TOOLS_H
 
 #include "engine_includes.h"
 #include "graphicsItems.h"
@@ -70,4 +70,4 @@ void* ToolsLoadImageFromFile(size_t* len, char *filepath);
 }
 #endif
 
-#endif // TOOLS_H
+#endif // E_TOOLS_H

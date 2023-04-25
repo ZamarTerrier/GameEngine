@@ -3,9 +3,9 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
-#include <buffers.h>
+#include <e_buffer.h>
 
-#include <camera.h>
+#include <e_camera.h>
 
 #include <e_math.h>
 
@@ -173,7 +173,7 @@ void Particle2DAddDefault(ParticleObject2D* particle, void *render)
     uint32_t nums = particle->go.graphObj.blueprints.num_blue_print_packs;
     particle->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)Particle2DDefaultUpdate);
+    BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)Particle2DDefaultUpdate, 0);
 
     BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.image);
 

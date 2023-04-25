@@ -32,11 +32,17 @@ typedef enum { false, true} bool;
 #endif
 
 struct GameObject;
+struct RenderTexture;
 
 typedef struct{
     struct GameObject *objects[MAX_DRAW_OBJECTS];
     uint32_t size;
 } EngineDrawItems;
+
+typedef struct{
+    struct RenderTexture *objects[MAX_DRAW_OBJECTS];
+    uint32_t size;
+} EngineRenderItems;
 
 typedef enum{
     ENGINE_DRAW_PARAM_FLAG_ADD_SHADOW = 0x1,
@@ -133,10 +139,6 @@ typedef struct{
     char topology;
     char flags;
     void *render;
-    void *shadow;
-    void *cube_shadow;
-    void *spot_shadow;
-    uint32_t num_shadow;
 } DrawParam;
 
 typedef struct EISurfaceCapabilitiesKHR {

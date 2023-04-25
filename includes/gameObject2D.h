@@ -5,11 +5,11 @@
 
 #include "gameObject.h"
 #include "graphicsObject.h"
-#include "transform.h"
+#include "e_transform.h"
 
 #include "e_descriptor.h"
 #include "pipeline.h"
-#include "texture.h"
+#include "e_texture.h"
 
 #ifdef __cplusplus
 extern "C"

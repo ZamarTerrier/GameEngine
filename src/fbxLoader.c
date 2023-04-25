@@ -1,11 +1,11 @@
 #include "fbxLoader.h"
 
-#include "camera.h"
+#include "e_camera.h"
 #include "gameObject.h"
 #include "graphicsObject.h"
-#include "transform.h"
-#include "buffers.h"
-#include "texture.h"
+#include "e_transform.h"
+#include "e_buffer.h"
+#include "e_texture.h"
 #include "pipeline.h"
 
 #include "e_math.h"

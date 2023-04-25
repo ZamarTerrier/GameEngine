@@ -2,13 +2,13 @@
 
 #include <vulkan/vulkan.h>
 
-#include "transform.h"
+#include "e_transform.h"
 
 #include "e_descriptor.h"
-#include "texture.h"
-#include "buffers.h"
+#include "e_texture.h"
+#include "e_buffer.h"
 
-#include "camera.h"
+#include "e_camera.h"
 
 #include "gameObject2D.h"
 
@@ -462,7 +462,7 @@ void TextObjectAddDefault(TextObject* to, void *render)
     uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
     to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)TextObjectTransformBufferUpdate);
+    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)TextObjectTransformBufferUpdate, 0);
 
     TextObjectAddTexture(to, nums);
 

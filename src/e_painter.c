@@ -4,7 +4,7 @@
 
 #include "graphicsObject.h"
 
-#include "buffers.h"
+#include "e_buffer.h"
 
 #include "e_resource_data.h"
 #include "e_resource_shapes.h"
@@ -59,8 +59,8 @@ void PainterObjectAddDefault(EPainter *painter, void *render)
     uint32_t nums = painter->go.graphObj.blueprints.num_blue_print_packs;
     painter->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&painter->go.graphObj.blueprints, nums, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)PainterObjectPainterBufferUpdate);
-    BluePrintAddUniformObject(&painter->go.graphObj.blueprints, nums, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)PainterObjectDrawObjectsBufferUpdate);
+    BluePrintAddUniformObject(&painter->go.graphObj.blueprints, nums, sizeof(PainterBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)PainterObjectPainterBufferUpdate, 0);
+    BluePrintAddUniformObject(&painter->go.graphObj.blueprints, nums, sizeof(DrawObjectsBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)PainterObjectDrawObjectsBufferUpdate, 0);
 
     PipelineSetting setting = {};
 
