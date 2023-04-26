@@ -135,14 +135,14 @@ void ModelDirLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDe
 
     LightObjectFillDirLights(&dlb);
 
-    uint32_t layer_indx = descriptor->indx_layer;
+    //uint32_t layer_indx = descriptor->indx_layer;
 
     engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
 
     mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
     mbo.model = mo->nodes[indx_node].model;
-    mbo.view = m4_look_at(dlb.dir[layer_indx].position, v3_add(dlb.dir[layer_indx].position, dlb.dir[layer_indx].direction), cameraUp);
+    mbo.view = m4_look_at(dlb.dir[0].position, v3_add(dlb.dir[0].position, dlb.dir[0].direction), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
