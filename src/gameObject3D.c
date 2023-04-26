@@ -276,9 +276,9 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
     for(int i=0; i < go->graphObj.gItems.num_shader_packs;i++)
     {
-        BluePrintPack *pack = &go->graphObj.blueprints.blue_print_packs[i];
+        BluePrintPack *blue_pack = &go->graphObj.blueprints.blue_print_packs[i];
 
-        if(pack->render_point == current_render)
+        if(blue_pack->render_point == current_render)
         {
             RenderTexture *render = current_render;
 
@@ -286,10 +286,14 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
             for(int j=0; j < pack->num_pipelines; j++){
 
-                if(render->type == ENGINE_RENDER_TYPE_CUBEMAP)
-                    vkCmdPushConstants( command, pack->pipelines[j].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4), &render->view);
+                if(render->type == ENGINE_RENDER_TYPE_CUBEMAP){
 
-                PipelineSetting *settings = &go->graphObj.blueprints.blue_print_packs[i].settings[j];
+                    mat4 res = MakeLookRender(render->currFrame, blue_pack->descriptors[j].indx_layer);
+
+                    vkCmdPushConstants( command, pack->pipelines[j].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4), &res);
+                }
+
+                PipelineSetting *settings = &blue_pack->settings[j];
 
                 vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
 

@@ -135,12 +135,14 @@ void ModelDirLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintDe
 
     LightObjectFillDirLights(&dlb);
 
+    uint32_t layer_indx = descriptor->indx_layer;
+
     engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
 
     mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
     mbo.model = mo->nodes[indx_node].model;
-    mbo.view = m4_look_at(dlb.dir[0].position, v3_add(dlb.dir[0].position, dlb.dir[0].direction), cameraUp);
+    mbo.view = m4_look_at(dlb.dir[layer_indx].position, v3_add(dlb.dir[layer_indx].position, dlb.dir[layer_indx].direction), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
@@ -168,12 +170,14 @@ void ModelOmniLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintD
 
     LightObjectFillPointLights(&plb);
 
+    uint32_t layer_indx = descriptor->indx_layer;
+
     engine_gltf_node *node = &gltf->nodes[mo->nodes[indx_node].id_node];
 
     mo->nodes[indx_node].model = mat4_mult_transform(node->global_matrix, m4_transform(mo->transform.position, mo->transform.scale, mo->transform.rotation));
 
     mbo.model = mo->nodes[indx_node].model;
-    mbo.view = m4_look_at(plb.points[0].position, vec3_f(0, 0, 0), cameraUp);
+    mbo.view = m4_look_at(plb.points[layer_indx].position, vec3_f(0, 0, 0), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
@@ -205,9 +209,11 @@ void ModelSpotLightModelUpdate(ModelObject3D* mo, uint32_t indx_node, BluePrintD
     SpotLightBuffer slb = {};
     memset(&slb, 0, sizeof(SpotLightBuffer));
 
+    uint32_t layer_indx = descriptor->indx_layer;
+
     LightObjectFillSpotLights(&slb);
 
-    mbo.view = m4_look_at(slb.spots[0].position, v3_add(slb.spots[0].position, slb.spots[0].direction), cameraUp);
+    mbo.view = m4_look_at(slb.spots[layer_indx].position, v3_add(slb.spots[layer_indx].position, slb.spots[layer_indx].direction), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
