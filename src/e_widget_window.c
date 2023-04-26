@@ -148,7 +148,7 @@ void WindowWidgetAddDefault(EWidgetWindow *window, void *render)
     uint32_t nums = window->top.go.graphObj.blueprints.num_blue_print_packs;
     window->top.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&window->top.go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetGUIBufferUpdate);
+    BluePrintAddUniformObject(&window->top.go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetGUIBufferUpdate, 0);
 
     BluePrintAddTextureImage(&window->top.go.graphObj.blueprints, nums, window->top.go.image);
 

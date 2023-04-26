@@ -6,7 +6,7 @@
 #include "gameObject.h"
 #include "gameObject2D.h"
 #include "graphicsObject.h"
-#include "transform.h"
+#include "e_transform.h"
 
 #include <wchar.h> //"Широкие" многобайтовые символы и их ввод-вывод
 #include <wctype.h> //"Классификация" широких символов

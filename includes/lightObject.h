@@ -14,6 +14,12 @@ typedef enum{
     ENGINE_LIGHT_TYPE_SPOT
 } ELightType;
 
+typedef enum{
+    ENGINE_SHADOW_TYPE_DIRECTIONAL,
+    ENGINE_SHADOW_TYPE_POINT,
+    ENGINE_SHADOW_TYPE_SPOT
+} EShadowType;
+
 typedef struct{
     vec3 position;
     vec3 direction;

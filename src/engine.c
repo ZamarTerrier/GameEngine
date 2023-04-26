@@ -7,15 +7,15 @@
 
 #include "e_texture_variables.h"
 
-#include "debuger.h"
-#include "device.h"
+#include "e_debuger.h"
+#include "e_device.h"
 
 #include "string.h"
-#include "window.h"
+#include "e_window.h"
 #include "swapchain.h"
 #include "pipeline.h"
-#include "buffers.h"
-#include "texture.h"
+#include "e_buffer.h"
+#include "e_texture.h"
 
 #include "gameObject.h"
 #include "textObject.h"
@@ -25,15 +25,14 @@
 #include "e_widget_entry.h"
 #include "e_widget_entry_area.h"
 
-#include "camera.h"
+#include "e_camera.h"
 
-#include "tools.h"
+#include "e_tools.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
-RenderTexture **renders;
-uint32_t num_renders;
+EngineRenderItems renderItems;
 
 EngineDrawItems drawItems;
 
@@ -78,12 +77,13 @@ void EngineInitVulkan(){
     EngineCreateSyncobjects();
 
     memset(&drawItems, 0, sizeof(EngineDrawItems));
+    memset(&renderItems, 0, sizeof(EngineRenderItems));
 
     charCallbacks = (e_charCallback *) calloc(0, sizeof(e_charCallback));
     keyCallbacks = (e_keyCallback *) calloc(0, sizeof(e_keyCallback));
 
     e_var_lights = calloc(0, sizeof(LightObject *));
-    e_var_num_lights = 0;
+    e_var_num_lights = num_dir_shadows = num_point_shadows = num_spot_shadows = 0;
 
     e_var_images = calloc(MAX_IMAGES, sizeof(engine_buffered_image));
     e_var_num_images = 0;
@@ -235,7 +235,7 @@ void EngineCleanupSwapChain() {
 
 }
 
-void EnginereRecreateSwapChain(RenderTexture **renders, uint32_t num_renders) {
+void EnginereRecreateSwapChain() {
 
     glfwGetFramebufferSize(e_window, &WIDTH, &HEIGHT);
 
@@ -263,9 +263,9 @@ void EnginereRecreateSwapChain(RenderTexture **renders, uint32_t num_renders) {
     PipelineCreateRenderPass();
     ToolsCreateDepthResources();
 
-    for(int i=0;i < num_renders;i++)
+    for(int i=0;i < renderItems.size;i++)
     {
-        RenderTextureRecreate(renders[i])  ;
+        RenderTextureRecreate(renderItems.objects[i])  ;
     }
 
     BuffersCreateCommand();
@@ -301,6 +301,46 @@ void EngineCreateSyncobjects() {
     }
 }
 
+void EngineAcceptShadow(void *shadow, uint32_t count, uint32_t shadow_type)
+{
+    RenderTexture **array;
+
+    switch(shadow_type){
+        case ENGINE_SHADOW_TYPE_DIRECTIONAL :
+            dir_shadow_array = calloc(count, sizeof(RenderTexture *));
+            array = dir_shadow_array;
+            num_dir_shadows = count;
+            break;
+        case ENGINE_SHADOW_TYPE_POINT :
+            point_shadow_array = calloc(count, sizeof(RenderTexture *));
+            array = point_shadow_array;
+            num_point_shadows = count;
+            break;
+        case ENGINE_SHADOW_TYPE_SPOT :
+            spot_shadow_array = calloc(count, sizeof(RenderTexture *));
+            array = spot_shadow_array;
+            num_spot_shadows = count;
+            break;
+    }
+
+    RenderTexture *renders = shadow;
+
+    for(int i=0;i < count;i++)
+        array[i] = &renders[i];
+}
+
+void EngineSetRender(void *obj, uint32_t count)
+{
+    RenderTexture *some_render = obj;
+
+    for(int i=0;i < count; i++ )
+    {
+        renderItems.objects[renderItems.size] = &some_render[i];
+
+        renderItems.size ++;
+    }
+}
+
 void EngineDraw(void *obj){
 
     for(int i=0; i < drawItems.size;i++)
@@ -313,15 +353,12 @@ void EngineDraw(void *obj){
 
 }
 
-void EngineLoop(void *point_renders, uint32_t count ){
-
-    renders = point_renders;
-    num_renders = count;
+void EngineLoop(){
 
     VkResult result = vkAcquireNextImageKHR(e_device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR && framebufferwasResized) {
-        EnginereRecreateSwapChain(renders, num_renders);
+        EnginereRecreateSwapChain();
         return 1;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         printf("failed to acquire swap chain image!");
@@ -347,10 +384,10 @@ void EngineLoop(void *point_renders, uint32_t count ){
 
     free(beginInfo);
 
-    for(int i=0;i < num_renders;i++)
+    for(int i=0;i < renderItems.size;i++)
     {
         RenderTexture *render;
-        current_render = render = renders[i];
+        current_render = render = renderItems.objects[i];
 
         if((render->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && (render->flags & ENGINE_RENDER_FLAG_SHOOTED))
             continue;
@@ -440,19 +477,21 @@ void EngineLoop(void *point_renders, uint32_t count ){
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || (framebufferResized && framebufferwasResized)) {
         framebufferResized = false;
         framebufferwasResized = false;
-        EnginereRecreateSwapChain(renders, num_renders);
+        EnginereRecreateSwapChain();
     } else if (result != VK_SUCCESS) {
         printf("failed to present swap chain image!");
         exit(1);
     }
 
-    for(int i=0; i < num_renders;i++)
+    for(int i=0; i < renderItems.size;i++)
     {
-        RenderTexture *render = renders[i];
+        RenderTexture *render = renderItems.objects[i];
 
         if((render->flags & ENGINE_RENDER_FLAG_ONE_SHOT) && !(render->flags & ENGINE_RENDER_FLAG_SHOOTED))
             render->flags |= ENGINE_RENDER_FLAG_SHOOTED;
     }
+
+    memset(&renderItems, 0, sizeof(EngineRenderItems));
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 

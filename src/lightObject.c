@@ -18,6 +18,8 @@ void LightObjectFillDirLights(DirLightBuffer *blb)
                 blb->dir[num_dirs].specular = lights[i]->specular;
                 blb->dir[num_dirs].direction = lights[i]->direction;
                 blb->dir[num_dirs].position = lights[i]->position;
+
+                num_dirs ++;
             }
         }
     }
@@ -41,6 +43,8 @@ void LightObjectFillPointLights(PointLightBuffer *plb)
                 plb->points[num_points].ambient = lights[i]->ambient;
                 plb->points[num_points].diffuse = lights[i]->diffuse;
                 plb->points[num_points].specular = lights[i]->specular;
+
+                num_points ++;
             }
         }
     }
@@ -66,6 +70,8 @@ void LightObjectFillSpotLights(SpotLightBuffer *slb)
                 slb->spots[num_spots].specular = lights[i]->specular;
                 slb->spots[num_spots].direction =  lights[i]->direction;
                 slb->spots[num_spots].cutOff = lights[i]->cutOff;
+
+                num_spots ++;
             }
         }
     }

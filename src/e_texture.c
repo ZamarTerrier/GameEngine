@@ -2,7 +2,7 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include "texture.h"
+#include "e_texture.h"
 
 #include <vulkan/vulkan.h>
 
@@ -12,12 +12,12 @@
 
 #include "render_texture.h"
 
-#include "buffers.h"
+#include "e_buffer.h"
 
 #include "e_blue_print.h"
 
 #include "e_math.h"
-#include "tools.h"
+#include "e_tools.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
@@ -271,7 +271,7 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
 
     if(temp_tex != NULL)
     {
-        descriptor->textures[descriptor->size] = temp_tex;
+        descriptor->textures[descriptor->size] = TextureFindTexture(image->path);
         return 0;
     }
 
@@ -481,6 +481,7 @@ void TextureCreate(BluePrintDescriptor *descriptor, uint32_t type, GameObjectIma
 
     int res = TextureImageCreate(image, descriptor, from_file);
 
+
     if(res)
     {
         engine_buffered_image *images = e_var_images;
@@ -499,9 +500,16 @@ void TextureCreate(BluePrintDescriptor *descriptor, uint32_t type, GameObjectIma
         image->imgWidth = texture->image_data.texWidth;
 
         e_var_num_images ++;
-    }else
-        return;
+    }else{
 
+        Texture2D *texture = descriptor->textures[descriptor->size];
+
+        texture->flags = texture->flags;
+
+        descriptor->size ++;
+
+        return;
+    }
 }
 
 void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height)
@@ -514,7 +522,6 @@ void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uin
     texture->image_data.texWidth = width;
     texture->image_data.texHeight = height;
     texture->textureType = format;
-    descriptor->size ++;
 
     TextureCreateEmpty(texture);
     TextureCreateTextureImageView(texture, VK_IMAGE_VIEW_TYPE_2D);
@@ -524,7 +531,7 @@ void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uin
 
 void TextureUpdate(BluePrintDescriptor *descriptor, void *in_data, uint32_t size_data, uint32_t offset)
 {
-    Texture2D *texture = descriptor->textures;
+    Texture2D *texture = descriptor->textures[0];
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;

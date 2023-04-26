@@ -1,5 +1,5 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef E_CAMERA_H
+#define E_CAMERA_H
 
 #include "engine_includes.h"
 
@@ -51,4 +51,4 @@ void destroyCameras();
 }
 #endif
 
-#endif // CAMERA_H
+#endif // E_CAMERA_H

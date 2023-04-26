@@ -6,13 +6,13 @@
 
 #include "models.h"
 
-#include "camera.h"
+#include "e_camera.h"
 #include "gameObject.h"
 #include "gameObject3D.h"
 #include "graphicsObject.h"
 #include "lightObject.h"
-#include "transform.h"
-#include "buffers.h"
+#include "e_transform.h"
+#include "e_buffer.h"
 #include "e_descriptor.h"
 
 #include "e_math.h"
@@ -859,10 +859,12 @@ void gltfModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shado
     uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
     model->graphObj.blueprints.blue_print_packs[num].render_point = render;
 
+    /*
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelModelBufferUpdate);
     //BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightSpaceMatrix), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelLightModelUpdate);
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(InvMatrixsBuffer), VK_SHADER_STAGE_VERTEX_BIT, (void *)gltfModelMatrixUpdate);
     //BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightBuffer3D), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorLightObjectsUpdate);
+    */
 
     BluePrintAddRenderImage(&model->graphObj.blueprints, num, shadow);
     BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);

@@ -122,6 +122,8 @@ mat4 mat4_colmnsf(float m00, float m10, float m20, float m30, float m01, float m
 mat4 mat4_rowsf(float m00, float m10, float m20, float m30, float m01, float m11, float m21, float m31, float m02, float m12, float m22, float m32, float m03, float m13, float m23, float m33);
 mat4 m4_inv(mat4 mat);
 
+mat4 MakeLookRender(uint32_t curr_frame, uint32_t layer_indx);
+
 #ifdef __cplusplus
 }
 #endif

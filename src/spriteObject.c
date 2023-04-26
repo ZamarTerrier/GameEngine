@@ -5,7 +5,7 @@
 #include "engine_includes.h"
 
 #include "pipeline.h"
-#include "buffers.h"
+#include "e_buffer.h"
 
 #include "e_blue_print.h"
 
@@ -83,8 +83,8 @@ void SpriteObjectAddDefault(SpriteObject *so, void *render)
     uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
     so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate);
-    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject2DImageBuffer);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject2DImageBuffer, 0);
 
     BluePrintAddTextureImage(&so->go.graphObj.blueprints, 0, so->go.image);
 

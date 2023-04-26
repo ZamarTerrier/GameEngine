@@ -3,16 +3,16 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
-#include "tools.h"
+#include "e_tools.h"
 
 #include "graphicsObject.h"
 
-#include "camera.h"
+#include "e_camera.h"
 #include "pipeline.h"
-#include "buffers.h"
-#include "texture.h"
+#include "e_buffer.h"
+#include "e_texture.h"
 
-#include "transform.h"
+#include "e_transform.h"
 
 #include "e_math.h"
 
@@ -162,7 +162,7 @@ void Particle3DAddDefault(ParticleObject3D* particle, void *render)
     uint32_t nums = particle->go.graphObj.blueprints.num_blue_print_packs;
     particle->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)Particle3DDefaultUpdate);
+    BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)Particle3DDefaultUpdate, 0);
 
     BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.images);
 

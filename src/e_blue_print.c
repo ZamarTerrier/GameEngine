@@ -6,9 +6,9 @@
 
 #include "render_texture.h"
 
-#include "buffers.h"
+#include "e_buffer.h"
 
-#include "texture.h"
+#include "e_texture.h"
 
 #include "e_resource_engine.h"
 
@@ -28,7 +28,7 @@ void BluePrintAddPushConstant(Blueprints *blueprints, uint32_t indx_pack, uint64
     blueprints->blue_print_packs[indx_pack].num_push_constants ++;
 }
 
-void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func){
+void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func, uint32_t layer_indx){
 
     if(blueprints->blue_print_packs[indx_pack].num_descriptors + 1 >= MAX_UNIFORMS)
     {
@@ -46,6 +46,7 @@ void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint6
     descriptor->buffsize = size;
     descriptor->image = NULL;
     descriptor->update = update_func;
+    descriptor->indx_layer = layer_indx;
 
     BuffersCreateUniform(&descriptor->uniform);
 
@@ -291,6 +292,4 @@ void BluePrintAddTextureImageArray(Blueprints *blueprints, uint32_t indx_pack, G
     descriptor->flags = ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE | ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE;
 
     pack->num_descriptors ++;
-
-    return &pack->descriptors[pack->num_descriptors - 1];
 }

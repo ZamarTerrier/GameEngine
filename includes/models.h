@@ -7,7 +7,7 @@
 
 #include "gameObject.h"
 #include "graphicsObject.h"
-#include "transform.h"
+#include "e_transform.h"
 
 #ifdef __cplusplus
 extern "C"

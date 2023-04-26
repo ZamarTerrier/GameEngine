@@ -1,5 +1,5 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#ifndef E_TEXTURE_H
+#define E_TEXTURE_H
 
 #include "engine_includes.h"
 
@@ -7,7 +7,7 @@
 
 #include "e_texture_variables.h"
 
-#include "tools.h"
+#include "e_tools.h"
 
 #define EMPTY_IMAGE_WIDTH 100
 #define EMPTY_IMAGE_HEIGHT 100
@@ -56,4 +56,4 @@ void ImageDestroyTexture(Texture2D* texture);
 }
 #endif
 
-#endif // TEXTURE_H
+#endif // E_TEXTURE_H

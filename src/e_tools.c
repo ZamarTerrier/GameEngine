@@ -1,4 +1,4 @@
-#include "tools.h"
+#include "e_tools.h"
 
 #include <vulkan/vulkan.h>
 
@@ -7,7 +7,7 @@
 
 #include "terrain_object.h"
 
-#include "texture.h"
+#include "e_texture.h"
 
 #include "e_math.h"
 

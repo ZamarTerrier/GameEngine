@@ -5,9 +5,9 @@
 
 #include "e_math.h"
 
-#include "tools.h"
+#include "e_tools.h"
 
-#include "camera.h"
+#include "e_camera.h"
 
 #include "e_blue_print.h"
 
@@ -44,7 +44,7 @@ void ProjectionPlaneAddDefault(GameObject2D *go, void *render)
     uint32_t nums = go->graphObj.blueprints.num_blue_print_packs;
     go->graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ProjDataBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ProjectionPlaneUpdate);
+    BluePrintAddUniformObject(&go->graphObj.blueprints, nums, sizeof(ProjDataBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ProjectionPlaneUpdate, 0);
 
     PipelineSetting setting;
 

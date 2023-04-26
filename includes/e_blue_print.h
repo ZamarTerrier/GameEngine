@@ -28,6 +28,7 @@ typedef struct{
     uint32_t size;
     uint32_t buffsize;
     uint32_t flags;
+    uint32_t indx_layer;
     GameObjectImage *image;
 } BluePrintDescriptor;
 
@@ -55,7 +56,7 @@ typedef struct{
 
 void BluePrintAddPushConstant(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t stage, uint32_t offset);
 
-void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func);
+void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func, uint32_t layer_indx);
 void BluePrintAddUniformShadow(BluePrintDescriptor *descriptor, uint64_t size, uint32_t flags);
 
 void BluePrintRecreateUniform(BluePrintPack *pack);

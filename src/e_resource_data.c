@@ -16,10 +16,14 @@ void *e_var_current_entry = NULL;
 void* cam2D;
 void* cam3D;
 
-void *shadow_array;
-uint32_t num_shadows;
+void *dir_shadow_array;
+uint32_t num_dir_shadows;
 
-void *shadow_spot;
+void *point_shadow_array;
+uint32_t num_point_shadows;
+
+void *spot_shadow_array;
+uint32_t num_spot_shadows;
 
 char *rootDirPath;
 

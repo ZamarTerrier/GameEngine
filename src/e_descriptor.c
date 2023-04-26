@@ -25,11 +25,25 @@ void DescriptorSetImage(VkWriteDescriptorSet* descriptorWrites, void *descr_set,
 
     VkDescriptorImageInfo* imageInfo = descriptorWrites->pImageInfo;
 
+    Texture2D **textures = blueprint_descriptor->textures;
+
     for(int i=0;i < array_size;i++)
     {
         imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo[i].imageView = texture[i].textureImageView;
-        imageInfo[i].sampler = texture[i].textureSampler;
+
+        if((blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE) && (blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE)){
+            imageInfo[i].imageView = textures[i]->textureImageView;
+            imageInfo[i].sampler = textures[i]->textureSampler;
+        }
+        else if(blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE){
+            imageInfo[i].imageView = texture->textureImageView;
+            imageInfo[i].sampler = texture->textureSampler;
+        }
+        else{
+            imageInfo[i].imageView = texture[i].textureImageView;
+            imageInfo[i].sampler = texture[i].textureSampler;
+        }
+
     }
 
     descriptorWrites->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -156,23 +170,23 @@ void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor *descrip
              }else if(blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
 
                 //Дескриптор Изображений для шейдера
-                Texture2D **texture = blueprint_descriptor->textures;
+                Texture2D **textures = blueprint_descriptor->textures;
 
                 //Если изображение еденичное и является массивом
                 if((blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE) && (blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE))
                 {
 
-                    DescriptorSetImage(&descriptorWrites[j], descriptor->descr_sets[i], j, blueprint_descriptor->size, texture[0], blueprint_descriptor);
+                    DescriptorSetImage(&descriptorWrites[j], descriptor->descr_sets[i], j, blueprint_descriptor->size, textures[0], blueprint_descriptor);
 
                 //Если изображение еденичное
                 }else if(blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE){
 
-                    DescriptorSetImage(&descriptorWrites[j], descriptor->descr_sets[i], j, 1, texture[0], blueprint_descriptor);
+                    DescriptorSetImage(&descriptorWrites[j], descriptor->descr_sets[i], j, 1, textures[0], blueprint_descriptor);
 
                 //Просто массив изображений
                 }else{
 
-                    DescriptorSetImage(&descriptorWrites[j], descriptor->descr_sets[i], j, blueprint_descriptor->size, texture[i], blueprint_descriptor);
+                    DescriptorSetImage(&descriptorWrites[j], descriptor->descr_sets[i], j, blueprint_descriptor->size, textures[i], blueprint_descriptor);
 
                 }
 

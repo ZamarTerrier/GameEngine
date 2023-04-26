@@ -3,8 +3,8 @@
 #include <vulkan/vulkan.h>
 
 #include "pipeline.h"
-#include "buffers.h"
-#include "camera.h"
+#include "e_buffer.h"
+#include "e_camera.h"
 
 #include "render_texture.h"
 
@@ -43,7 +43,7 @@ void QuadObjectAddDefault(QuadObject *qu, void *render)
     uint32_t nums = qu->go.graphObj.blueprints.num_blue_print_packs;
     qu->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&qu->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)QuadObjectUpdate);
+    BluePrintAddUniformObject(&qu->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)QuadObjectUpdate, 0);
 
     PipelineSetting setting = {};
 

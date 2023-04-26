@@ -1,5 +1,5 @@
-#ifndef TRANSFORM_H
-#define TRANSFORM_H
+#ifndef E_TRANSFORM_H
+#define E_TRANSFORM_H
 
 #include "engine_includes.h"
 
@@ -68,4 +68,4 @@ vec3 Transform3DGetRotate(struct GameObject3D* go);
 }
 #endif
 
-#endif // TRANSFORM_H
+#endif // E_TRANSFORM_H
