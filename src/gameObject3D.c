@@ -52,10 +52,10 @@ void GameObject3DDirLightModelUpdate(GameObject3D* go, BluePrintDescriptor *desc
 
     LightObjectFillDirLights(&dlb);
 
-    uint32_t layer_indx = descriptor->indx_layer;
+    //uint32_t layer_indx = descriptor->indx_layer;
 
     mbo.model = m4_transform(go->transform.position, go->transform.scale, go->transform.rotation);
-    mbo.view =  m4_look_at( dlb.dir[layer_indx].position, v3_add( dlb.dir[layer_indx].position, dlb.dir[layer_indx].direction ), cameraUp);
+    mbo.view =  m4_look_at( dlb.dir[0].position, v3_add( dlb.dir[0].position, dlb.dir[0].direction ), cameraUp);
 
     if(render->flags & ENGINE_RENDER_FLAG_PERSPECTIVE){
         mbo.proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
