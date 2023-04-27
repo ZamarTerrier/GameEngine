@@ -23,6 +23,8 @@ int BuffersCreateIndex(indexParam* ind);
 int BuffersUpdateIndex(indexParam* ind);
 
 void BuffersRecreateUniform(Blueprints* blueprints);
+
+void BuffersCreateStorage(UniformStruct* uniform);
 void BuffersCreateUniform(UniformStruct* uniform);
 
 uint32_t findMemoryType(uint32_t typeFilter, uint32_t properties);

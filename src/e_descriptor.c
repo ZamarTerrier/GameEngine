@@ -5,18 +5,33 @@
 #include "gameObject2D.h"
 #include "render_texture.h"
 
+#include "e_buffer.h"
+
 #include "e_descriptor.h"
 
 #include "e_texture_variables.h"
 
 #include "e_resource_engine.h"
 
+void DescriptorUpdateIndex(BluePrintDescriptor *descriptor, char *data, uint32_t size_data, uint32_t index){
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    BuffersCreate(descriptor->uniform->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
+    BuffersCopy(stagingBuffer,  descriptor->uniform->uniformBuffers[index], descriptor->uniform->size);
+
+    vkDestroyBuffer(e_device, stagingBuffer, NULL);
+    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+}
+
 void DescriptorUpdate(BluePrintDescriptor *descriptor, char *data, uint32_t size_data)
 {
     void *point;
-    vkMapMemory(e_device, descriptor->uniform.uniformBuffersMemory[imageIndex], 0, size_data, 0, &point);
+    vkMapMemory(e_device, descriptor->uniform->uniformBuffersMemory[imageIndex], 0, size_data, 0, &point);
     memcpy(point, data, size_data);
-    vkUnmapMemory(e_device, descriptor->uniform.uniformBuffersMemory[imageIndex]);
+    vkUnmapMemory(e_device, descriptor->uniform->uniformBuffersMemory[imageIndex]);
 }
 
 void DescriptorSetImage(VkWriteDescriptorSet* descriptorWrites, void *descr_set, uint32_t bind_indx, uint32_t array_size, Texture2D *texture, BluePrintDescriptor *blueprint_descriptor)
@@ -29,7 +44,7 @@ void DescriptorSetImage(VkWriteDescriptorSet* descriptorWrites, void *descr_set,
 
     for(int i=0;i < array_size;i++)
     {
-        imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo[i].imageLayout = textures[i]->imageLayout == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : textures[i]->imageLayout;
 
         if((blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE) && (blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE)){
             imageInfo[i].imageView = textures[i]->textureImageView;
@@ -62,7 +77,7 @@ void DescriptorSetBuffer(VkWriteDescriptorSet* descriptorWrites, void *descr_set
 
     bufferInfo->buffer = uniform_buffer;//юнибавер
     bufferInfo->offset = 0;
-    bufferInfo->range = blueprint_descriptor->uniform.size;//размер юниформ бафера
+    bufferInfo->range = blueprint_descriptor->uniform->size;//размер юниформ бафера
 
     descriptorWrites->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrites->dstSet = descr_set;
@@ -161,13 +176,13 @@ void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor *descrip
         {
             BluePrintDescriptor *blueprint_descriptor = &descriptors[j];
 
-            if(blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+            if(blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER){
 
                 //Дескриптор Юнибафферов
 
-                DescriptorSetBuffer(&descriptorWrites[j], descriptor->descr_sets[i], j, blueprint_descriptor->uniform.uniformBuffers[i], blueprint_descriptor);
+                DescriptorSetBuffer(&descriptorWrites[j], descriptor->descr_sets[i], j, blueprint_descriptor->uniform->uniformBuffers[i], blueprint_descriptor);
 
-             }else if(blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+             }else if(blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER || blueprint_descriptor->descrType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE){
 
                 //Дескриптор Изображений для шейдера
                 Texture2D **textures = blueprint_descriptor->textures;

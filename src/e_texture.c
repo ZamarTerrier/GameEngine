@@ -130,7 +130,7 @@ int ImageResize(ImageFileData *data, uint32_t width, uint32_t height)
     return 0;
 }
 
-void ImageCreateEmpty(Texture2D *texture) {
+void ImageCreateEmpty(Texture2D *texture, uint32_t usage) {
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -142,7 +142,7 @@ void ImageCreateEmpty(Texture2D *texture) {
     imageInfo.format = texture->textureType;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.usage = usage; //VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -188,7 +188,7 @@ void TextureCreateEmptyDefault(Texture2D *texture)
     memcpy(data, some_data, bufferSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    ImageCreateEmpty(texture);
+    ImageCreateEmpty(texture, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
     ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, EMPTY_IMAGE_WIDTH, EMPTY_IMAGE_HEIGHT);
@@ -215,7 +215,7 @@ void TextureCreateEmpty(Texture2D *texture)
     memset(data, 0, bufferSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    ImageCreateEmpty(texture);
+    ImageCreateEmpty(texture, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
     ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);

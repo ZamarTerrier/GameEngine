@@ -33,6 +33,7 @@ int Cubesphere(vertexParam *vParam, indexParam *iParam, float radius,int vertexC
 
 void ToolsCreateDepthResources();
 void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout);
+void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t newLayout, uint32_t aspect_mask);
 void ToolsCopyImageToBuffer(void *buffer, void *image, uint32_t width, uint32_t height) ;
 void ToolsCopyBufferToImage(void* buffer, void* image, uint32_t width, uint32_t height);
 void ToolsCopyImage(void* cmdBuffer, void* srcImageId, void* dstImageId, uint32_t width, uint32_t height);

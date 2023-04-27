@@ -388,6 +388,9 @@ void ModelDefaultUpdate(ModelObject3D *mo)
                     {
                         BluePrintDescriptor *descriptor = &pack->descriptors[k];
 
+                        if(descriptor->update == NULL)
+                            continue;
+
                         if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                         {
                             Update_Func update = descriptor->update;
@@ -507,6 +510,39 @@ void ModelSetSelCameraEnable(void *obj, bool enable)
         mo->self.flags |= ENGINE_GAME_OBJECT_FLAG_SELF_CAMERA;
     else
         mo->self.flags &= ~(ENGINE_GAME_OBJECT_FLAG_SELF_CAMERA);
+}
+
+void ModelSetGeometryDescriptor(ModelStruct *model, void *render)
+{
+    uint32_t num = model->graphObj.blueprints.num_blue_print_packs;
+    model->graphObj.blueprints.blue_print_packs[num].render_point = render;
+
+    BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)ModelModelBufferUpdate, 0);
+    BluePrintAddExistUniformStorage(&model->graphObj.blueprints, num, VK_SHADER_STAGE_FRAGMENT_BIT, geom_geometry , NULL, 0);
+
+    BluePrintAddExistTextureImage(&model->graphObj.blueprints, num, &geom_texture);
+
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+
+    BluePrintAddExistUniformStorage(&model->graphObj.blueprints, num, VK_SHADER_STAGE_FRAGMENT_BIT, geom_uniform, NULL, 0);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&model->graphObj, &setting);
+
+    setting.vertShader = &_binary_shaders_geometry_vert_spv_start;
+    setting.sizeVertShader = (size_t)(&_binary_shaders_geometry_vert_spv_size);
+    setting.fragShader = &_binary_shaders_geometry_frag_spv_start;
+    setting.sizeFragShader = (size_t)(&_binary_shaders_geometry_frag_spv_size);
+    setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    setting.fromFile = 0;
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
+    setting.vert_indx = 1;
+    setting.cull_mode = VK_CULL_MODE_FRONT_BIT;
+
+    ModelAddSettingPipeline(model, num, setting);
+
+    model->graphObj.blueprints.num_blue_print_packs ++;
 }
 
 void ModelSetShadowDescriptor(ModelStruct *model, uint32_t type, void *render, uint32_t layer_indx)
@@ -719,6 +755,7 @@ void ModelDefaultInit(ModelStruct *model, DrawParam *dParam){
         ModelApplyShadows(model, dParam);
     else
         ModelSetDefaultDescriptor(model, dParam->render);
+
 
     GraphicsObjectCreateDrawItems(&model->graphObj);
 

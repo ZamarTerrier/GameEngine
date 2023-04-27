@@ -7,7 +7,9 @@
 
 typedef enum{
     ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE = 0x1,
-    ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE = 0x2
+    ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE = 0x2,
+    ENGINE_BLUE_PRINT_FLAG_LINKED_UNIFORM = 0x4,
+    ENGINE_BLUE_PRINT_FLAG_LINKED_TEXTURE = 0x8,
 } EngineBluePrintFlag;
 
 typedef struct{
@@ -21,7 +23,7 @@ typedef struct{
     void **textures;
     uint32_t num_textures;
     uint32_t max_textures;
-    UniformStruct uniform;
+    UniformStruct *uniform;
     uint32_t descrType;
     uint32_t descrCount;
     uint32_t stageflag;
@@ -56,8 +58,9 @@ typedef struct{
 
 void BluePrintAddPushConstant(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t stage, uint32_t offset);
 
+BluePrintDescriptor *BluePrintAddExistUniformStorage(Blueprints *blueprints, uint32_t indx_pack, uint32_t flags, UniformStruct *uniform, void *update_func, uint32_t layer_indx);
+BluePrintDescriptor *BluePrintAddUniformStorage(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func, uint32_t layer_indx);
 void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func, uint32_t layer_indx);
-void BluePrintAddUniformShadow(BluePrintDescriptor *descriptor, uint64_t size, uint32_t flags);
 
 void BluePrintRecreateUniform(BluePrintPack *pack);
 
@@ -67,6 +70,7 @@ void BluePrintAddRenderImageArray(Blueprints *blueprints, uint32_t indx_pack, vo
 void BluePrintAddRenderImage(Blueprints *blueprints, uint32_t indx_pack, void *render);
 void BluePrintAddTextureImageArray(Blueprints *blueprints, uint32_t indx_pack, GameObjectImage *images, uint32_t size);
 
+BluePrintDescriptor *BluePrintAddExistTextureImage(Blueprints *blueprints, uint32_t indx_pack, void *texture);
 BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t indx_pack, GameObjectImage *image);
 
 #endif // E_BLUE_PRINT_H

@@ -17,6 +17,89 @@ void BluePrintInit()
 
 }
 
+BluePrintDescriptor *BluePrintAddExistUniformStorage(Blueprints *blueprints, uint32_t indx_pack, uint32_t flags, UniformStruct *uniform, void *update_func, uint32_t layer_indx)
+{
+
+    BluePrintPack *pack = &blueprints->blue_print_packs[indx_pack];
+
+    if(blueprints->blue_print_packs[indx_pack].num_descriptors + 1 >= MAX_UNIFORMS)
+    {
+        printf("Слишком много декрипторов!\n");
+        return;
+    }
+    BluePrintDescriptor *descriptor = &blueprints->blue_print_packs[indx_pack].descriptors[blueprints->blue_print_packs[indx_pack].num_descriptors];
+
+    descriptor->uniform = uniform;
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriptor->descrCount = 1;
+    descriptor->size = 1;
+    descriptor->stageflag = flags;
+    descriptor->buffsize = uniform->size;
+    descriptor->image = NULL;
+    descriptor->update = update_func;
+    descriptor->indx_layer = layer_indx;
+    descriptor->flags = ENGINE_BLUE_PRINT_FLAG_LINKED_UNIFORM;
+
+    blueprints->blue_print_packs[indx_pack].num_descriptors ++;
+
+    return &pack->descriptors[pack->num_descriptors - 1];
+}
+
+BluePrintDescriptor *BluePrintAddUniformStorage(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t flags, void *update_func, uint32_t layer_indx){
+
+    BluePrintPack *pack = &blueprints->blue_print_packs[indx_pack];
+
+    if(blueprints->blue_print_packs[indx_pack].num_descriptors + 1 >= MAX_UNIFORMS)
+    {
+        printf("Слишком много декрипторов!\n");
+        return;
+    }
+
+    BluePrintDescriptor *descriptor = &blueprints->blue_print_packs[indx_pack].descriptors[blueprints->blue_print_packs[indx_pack].num_descriptors];
+
+    descriptor->uniform = calloc(1, sizeof(UniformStruct));
+    descriptor->uniform->size = size;
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriptor->descrCount = 1;
+    descriptor->size = 1;
+    descriptor->stageflag = flags;
+    descriptor->buffsize = size;
+    descriptor->image = NULL;
+    descriptor->update = update_func;
+    descriptor->indx_layer = layer_indx;
+
+    BuffersCreateStorage(descriptor->uniform);
+
+    blueprints->blue_print_packs[indx_pack].num_descriptors ++;
+
+    return &pack->descriptors[pack->num_descriptors - 1];
+}
+
+BluePrintDescriptor *BluePrintAddExistTextureImage(Blueprints *blueprints, uint32_t indx_pack, void *texture)
+{
+    BluePrintPack *pack = &blueprints->blue_print_packs[indx_pack];
+
+    if(pack->num_descriptors + 1 > MAX_UNIFORMS)
+    {
+        printf("Слишком много декрипторов!\n");
+        return;
+    }
+
+    BluePrintDescriptor *descriptor = &pack->descriptors[pack->num_descriptors];
+
+    descriptor->image = NULL;
+    descriptor->size = 0;
+    descriptor->textures = texture;
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    descriptor->descrCount = 1;
+    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor->flags = ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE | ENGINE_BLUE_PRINT_FLAG_LINKED_TEXTURE;
+
+    pack->num_descriptors ++;
+
+    return &pack->descriptors[pack->num_descriptors - 1];
+}
+
 void BluePrintAddPushConstant(Blueprints *blueprints, uint32_t indx_pack, uint64_t size, uint32_t stage, uint32_t offset){
 
     BluePrintPushConstant *push_constant = &blueprints->blue_print_packs[indx_pack].push_constants[blueprints->blue_print_packs[indx_pack].num_push_constants];
@@ -38,7 +121,8 @@ void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint6
 
     BluePrintDescriptor *descriptor = &blueprints->blue_print_packs[indx_pack].descriptors[blueprints->blue_print_packs[indx_pack].num_descriptors];
 
-    descriptor->uniform.size = size;
+    descriptor->uniform = calloc(1, sizeof(UniformStruct));
+    descriptor->uniform->size = size;
     descriptor->descrType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptor->descrCount = 1;
     descriptor->size = 1;
@@ -48,23 +132,10 @@ void BluePrintAddUniformObject(Blueprints *blueprints, uint32_t indx_pack, uint6
     descriptor->update = update_func;
     descriptor->indx_layer = layer_indx;
 
-    BuffersCreateUniform(&descriptor->uniform);
+
+    BuffersCreateUniform(descriptor->uniform);
 
     blueprints->blue_print_packs[indx_pack].num_descriptors ++;
-}
-
-void BluePrintAddUniformShadow(BluePrintDescriptor *descriptor, VkDeviceSize size, VkShaderStageFlags flags){
-
-    descriptor->uniform.size = size;
-    descriptor->descrType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptor->descrCount = 1;
-    descriptor->size = 1;
-    descriptor->stageflag = flags;
-    descriptor->buffsize = size;
-    descriptor->image = NULL;
-    descriptor->flags = 0;
-
-    BuffersCreateUniform(&descriptor->uniform);
 }
 
 void BluePrintAddRenderImageArray(Blueprints *blueprints, uint32_t indx_pack, void *obj, uint32_t size)
@@ -240,7 +311,6 @@ BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t i
         else
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, image->imgWidth, image->imgHeight);
     }
-
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
