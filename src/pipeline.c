@@ -99,7 +99,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    if(render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH) && (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
+    /*if(render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH) && (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
     {
         colorBlendAttachment.blendEnable = VK_TRUE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -108,7 +108,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
         colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
         colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    }else
+    }else*/
         colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -125,6 +125,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
         colorBlending.blendConstants[2] = 0.0f;
         colorBlending.blendConstants[3] = 0.0f;
     }
+
     //---------------
     VkPipelineDepthStencilStateCreateInfo depthStencil = {};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

@@ -34,6 +34,7 @@ void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32
 
 int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, bool from_file);
 
+void ImageCreateEmpty(Texture2D *texture, uint32_t usage) ;
 void TextureCreateEmptyDefault(Texture2D *texture);
 
 void TextureCreateTextureImageView(Texture2D *texture, uint32_t type);

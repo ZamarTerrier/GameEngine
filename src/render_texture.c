@@ -30,6 +30,32 @@ void RenderTextureCreateDepthResource(RenderTexture *render, RenderFrame *frame)
 
 void RenderTextureCreateRenderPass(RenderTexture *render, void **render_pass)
 {
+
+    if(render->m_format == 0)
+    {
+        VkSubpassDescription subpassDescription;
+        memset(&subpassDescription, 0, sizeof(VkSubpassDescription));
+
+        subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+        // Geometry render pass doesn't need any output attachment.
+        VkRenderPassCreateInfo renderPassInfo;
+        memset(&renderPassInfo, 0, sizeof(VkRenderPassCreateInfo));
+
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.attachmentCount = 0;
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpassDescription;
+
+        if(vkCreateRenderPass(e_device, &renderPassInfo, NULL, render_pass) != VK_SUCCESS)
+        {
+            printf("Error create render pass for render texture.");
+            exit(1);
+        }
+
+        return;
+    }
+
     VkAttachmentDescription *colorAttachment = calloc(1, sizeof(VkAttachmentDescription));
     colorAttachment->format = render->m_format;
     colorAttachment->samples = VK_SAMPLE_COUNT_1_BIT;
@@ -192,32 +218,39 @@ void RenderTextureCreateFrames(RenderTexture *render, uint32_t flags)
 
         RenderFrame *frame = &render->frames[i];
 
-        frame->m_currentLayout = render->type == ENGINE_RENDER_TYPE_WINDOW ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
-
-        if(render->type != ENGINE_RENDER_TYPE_WINDOW)
+        if(render->m_format != 0)
         {
-            uint32_t usage = render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ?  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT :  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            frame->m_currentLayout = render->type == ENGINE_RENDER_TYPE_WINDOW ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
 
-            TextureCreateImage(render->width, render->height, render->m_format, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, flags, &frame->image, &frame->image_memory);
-
-            TextureCreateSampler(&frame->sampler, render->m_format);
-
-            if(render->type & ENGINE_RENDER_TYPE_CUBEMAP)
+            if(render->type != ENGINE_RENDER_TYPE_WINDOW)
             {
-                frame->shadowCubeMapFaceImageViews = calloc(6, sizeof(VkImageView));
-                frame->view = TextureCreateImageViewCube(frame->image, frame->shadowCubeMapFaceImageViews, render->m_format, render->flags & ENGINE_RENDER_FLAG_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
-                frame->framebufers = calloc(6, sizeof(VkFramebuffer));
+                uint32_t usage = render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ?  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT :  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+                TextureCreateImage(render->width, render->height, render->m_format, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, flags, &frame->image, &frame->image_memory);
+
+                TextureCreateSampler(&frame->sampler, render->m_format);
+
+                if(render->type & ENGINE_RENDER_TYPE_CUBEMAP)
+                {
+                    frame->shadowCubeMapFaceImageViews = calloc(6, sizeof(VkImageView));
+                    frame->view = TextureCreateImageViewCube(frame->image, frame->shadowCubeMapFaceImageViews, render->m_format, render->flags & ENGINE_RENDER_FLAG_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+                    frame->framebufers = calloc(6, sizeof(VkFramebuffer));
+                }else{
+                    frame->view = TextureCreateImageView(frame->image, VK_IMAGE_VIEW_TYPE_2D, render->m_format, render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+                    frame->framebufers = calloc(1, sizeof(VkFramebuffer));
+                }
+
+                RenderTextureCreateDepthResource(render, frame);
+
+                RenderTextureTransitionLayer(frame, render->type, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+
             }else{
-                frame->view = TextureCreateImageView(frame->image, VK_IMAGE_VIEW_TYPE_2D, render->m_format, render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+                frame->view = swapChainImageViews[i];
                 frame->framebufers = calloc(1, sizeof(VkFramebuffer));
             }
-
-            RenderTextureCreateDepthResource(render, frame);
-
-            RenderTextureTransitionLayer(frame, render->type, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
-
         }else{
-            frame->view = swapChainImageViews[i];
+            frame->m_currentLayout = VK_IMAGE_LAYOUT_GENERAL;
+
             frame->framebufers = calloc(1, sizeof(VkFramebuffer));
         }
 
@@ -228,7 +261,14 @@ void RenderTextureCreateFrames(RenderTexture *render, uint32_t flags)
         framebufferInfo->height = render->height;
         framebufferInfo->layers = 1;
 
-        if(render->type == ENGINE_RENDER_TYPE_WINDOW)
+        if(render->type == ENGINE_RENDER_TYPE_GEOMETRY)
+        {
+            if(vkCreateFramebuffer(e_device, framebufferInfo, NULL, &frame->framebufers[0]) != VK_SUCCESS)
+            {
+                printf("Error create framebuffer for render texture.");
+                exit(1);
+            }
+        }else if(render->type == ENGINE_RENDER_TYPE_WINDOW)
         {
             VkImageView attachments[2];
             attachments[0] = frame->view;
@@ -302,7 +342,25 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 {
     memset(render, 0, sizeof(RenderTexture));
 
-    render->m_format = type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : (type == ENGINE_RENDER_TYPE_CUBEMAP ? VK_FORMAT_R32_SFLOAT : swapChainImageFormat);
+    switch(type)
+    {
+        case ENGINE_RENDER_TYPE_DEPTH:
+            render->m_format = findDepthFormat();
+            break;
+        case ENGINE_RENDER_TYPE_CUBEMAP:
+            render->m_format = VK_FORMAT_R32_SFLOAT;
+            break;
+        case ENGINE_RENDER_TYPE_WINDOW:
+            render->m_format = swapChainImageFormat;
+            break;
+        case ENGINE_RENDER_TYPE_IMAGE:
+            render->m_format = swapChainImageFormat;
+            break;
+        default:
+            render->m_format = 0;
+            break;
+
+    }
 
     render->type = type;
     render->mip_levels = floor(log2(e_max(width, height))) + 1;
@@ -314,7 +372,7 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 
     render->currFrame = 0;
 
-    if(type != ENGINE_RENDER_TYPE_WINDOW )
+    if(type != ENGINE_RENDER_TYPE_WINDOW && type != ENGINE_RENDER_TYPE_GEOMETRY)
     {
         render->height = height;
         render->width = width;
@@ -389,33 +447,35 @@ void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)
     else{
         renderBeginInfo->framebuffer = frame->framebufers[0];
     }
-
     renderBeginInfo->renderArea.offset.x = 0;
     renderBeginInfo->renderArea.offset.y = 0;
     renderBeginInfo->renderArea.extent.width = render->width;
     renderBeginInfo->renderArea.extent.height = render->height;
 
-    if(render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH))
+    if(render->m_format != 0)
     {
-        VkClearValue clearValue;
+        if(render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH))
+        {
+            VkClearValue clearValue;
 
-        clearValue.depthStencil.depth = 1.0f;
-        clearValue.depthStencil.stencil = 0.0;
+            clearValue.depthStencil.depth = 1.0f;
+            clearValue.depthStencil.stencil = 0.0;
 
-        renderBeginInfo->clearValueCount = 1;
-        renderBeginInfo->pClearValues = &clearValue;
-    }else{
-        VkClearValue clearValues[2];
+            renderBeginInfo->clearValueCount = 1;
+            renderBeginInfo->pClearValues = &clearValue;
+        }else{
+            VkClearValue clearValues[2];
 
-        clearValues[0].color.float32[0] = 0.0f;
-        clearValues[0].color.float32[1] = 0.0f;
-        clearValues[0].color.float32[2] = 0.0f;
-        clearValues[0].color.float32[3] = 1.0f;
-        clearValues[1].depthStencil.depth = 1.0f;
-        clearValues[1].depthStencil.stencil = 0;
+            clearValues[0].color.float32[0] = 0.0f;
+            clearValues[0].color.float32[1] = 0.0f;
+            clearValues[0].color.float32[2] = 0.0f;
+            clearValues[0].color.float32[3] = 1.0f;
+            clearValues[1].depthStencil.depth = 1.0f;
+            clearValues[1].depthStencil.stencil = 0;
 
-        renderBeginInfo->clearValueCount = 2;
-        renderBeginInfo->pClearValues = clearValues;
+            renderBeginInfo->clearValueCount = 2;
+            renderBeginInfo->pClearValues = clearValues;
+        }
     }
 
     vkCmdBeginRenderPass(cmd_buff, renderBeginInfo, VK_SUBPASS_CONTENTS_INLINE);

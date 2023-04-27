@@ -21,6 +21,8 @@
 
 #define MAX_GUI_CALLBACKS 25
 
+#define NODE_COUNT 20
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -91,6 +93,16 @@ typedef struct{
     uint32_t flags;
 } GameObjectImage;
 
+typedef struct {
+    vec4 color;
+    float depth;
+    uint32_t next;
+} Node;
+
+typedef struct {
+    uint32_t count;
+    uint32_t maxNodeCount;
+} GeometrySBO;
 
 typedef struct FontCache{
     char path[2048];
@@ -139,6 +151,7 @@ typedef struct{
     char topology;
     char flags;
     void *render;
+    void *geom;
 } DrawParam;
 
 typedef struct EISurfaceCapabilitiesKHR {

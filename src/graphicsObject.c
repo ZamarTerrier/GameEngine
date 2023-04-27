@@ -137,15 +137,18 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
         {
             BluePrintDescriptor *descriptor = &graphObj->blueprints.blue_print_packs[i].descriptors[j];
 
-            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
-                for (int j = 0; j < imagesCount; j++) {
-                    vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
-                    vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
+            if(!(descriptor->flags & ENGINE_BLUE_PRINT_FLAG_LINKED_UNIFORM))
+            {
+                if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
+                    for (int j = 0; j < imagesCount; j++) {
+                        vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
+                        vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
+                    }
+                    free(descriptor->uniform->uniformBuffers);
+                    descriptor->uniform->uniformBuffers = NULL;
+                    free(descriptor->uniform->uniformBuffersMemory);
+                    descriptor->uniform->uniformBuffersMemory = NULL;
                 }
-                free(descriptor->uniform.uniformBuffers);
-                descriptor->uniform.uniformBuffers = NULL;
-                free(descriptor->uniform.uniformBuffersMemory);
-                descriptor->uniform.uniformBuffersMemory = NULL;
             }
         }
     }
@@ -169,7 +172,10 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
         {
             BluePrintDescriptor *descriptor = &graphObj->blueprints.blue_print_packs[i].descriptors[j];
 
-            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER){
+            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER || descriptor->descrType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE){
+
+                if(descriptor->flags & ENGINE_BLUE_PRINT_FLAG_LINKED_TEXTURE)
+                    continue;
 
                 if((descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE) && (descriptor->flags & ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE))
                 {
@@ -221,14 +227,17 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
                 descriptor->textures = NULL;
             }else{
+                if(descriptor->flags & ENGINE_BLUE_PRINT_FLAG_LINKED_UNIFORM)
+                    continue;
+
                 for (int j = 0; j < imagesCount; j++) {
-                    vkDestroyBuffer(e_device, descriptor->uniform.uniformBuffers[j], NULL);
-                    vkFreeMemory(e_device, descriptor->uniform.uniformBuffersMemory[j], NULL);
+                    vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
+                    vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
                 }
-                free(descriptor->uniform.uniformBuffers);
-                descriptor->uniform.uniformBuffers = NULL;
-                free(descriptor->uniform.uniformBuffersMemory);
-                descriptor->uniform.uniformBuffersMemory = NULL;
+                free(descriptor->uniform->uniformBuffers);
+                descriptor->uniform->uniformBuffers = NULL;
+                free(descriptor->uniform->uniformBuffersMemory);
+                descriptor->uniform->uniformBuffersMemory = NULL;
             }
         }
     }

@@ -1168,6 +1168,28 @@ void ToolsCreateDepthResources() {
 
 }
 
+void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t newLayout, uint32_t aspect_mask)
+{
+    VkImageMemoryBarrier imgBar;
+    memset(&imgBar, 0, sizeof(VkImageMemoryBarrier));
+
+    imgBar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imgBar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imgBar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imgBar.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    imgBar.oldLayout = oldLayout;
+    imgBar.newLayout = newLayout;
+    imgBar.image = image;
+    imgBar.subresourceRange.aspectMask = aspect_mask;
+    imgBar.subresourceRange.levelCount = 1;
+    imgBar.subresourceRange.layerCount = 1;
+
+    void *cmd_buff = beginSingleTimeCommands();
+
+    vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &imgBar);
+
+    endSingleTimeCommands(cmd_buff);
+}
 
 void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
