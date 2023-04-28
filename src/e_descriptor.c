@@ -44,19 +44,21 @@ void DescriptorSetImage(VkWriteDescriptorSet* descriptorWrites, void *descr_set,
 
     for(int i=0;i < array_size;i++)
     {
-        imageInfo[i].imageLayout = textures[i]->imageLayout == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : textures[i]->imageLayout;
 
         if((blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE) && (blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_ARRAY_IMAGE)){
             imageInfo[i].imageView = textures[i]->textureImageView;
             imageInfo[i].sampler = textures[i]->textureSampler;
+            imageInfo[i].imageLayout = textures[i]->imageLayout == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : textures[i]->imageLayout;
         }
         else if(blueprint_descriptor->flags & ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE){
             imageInfo[i].imageView = texture->textureImageView;
             imageInfo[i].sampler = texture->textureSampler;
+            imageInfo[i].imageLayout = texture->imageLayout == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : texture->imageLayout;
         }
         else{
             imageInfo[i].imageView = texture[i].textureImageView;
             imageInfo[i].sampler = texture[i].textureSampler;
+            imageInfo[i].imageLayout = texture[i].imageLayout == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : texture[i].imageLayout;
         }
 
     }
