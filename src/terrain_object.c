@@ -416,33 +416,6 @@ void TerrainObjectAddTextureRender(TerrainObject *to, void *render)
     to->render = render;
 }
 
-void TerrainObjectAddDefault2(TerrainObject *to, void *render, void *shadow)
-{
-    uint32_t nums = to->go.graphObj.blueprints.num_blue_print_packs;
-    to->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
-
-    BluePrintAddUniformObject(&to->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate, 0);
-
-    BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, shadow);
-    BluePrintAddRenderImage(&to->go.graphObj.blueprints, nums, to->render);
-
-    PipelineSetting setting;
-
-    PipelineSettingSetDefault(&to->go.graphObj, &setting);
-
-    setting.vertShader = &_binary_shaders_terrain_vert_2_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_terrain_vert_2_spv_size);
-    setting.fragShader = &_binary_shaders_terrain_frag_2_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_terrain_frag_2_spv_size);
-    setting.fromFile = 0;
-    setting.vert_indx = 0;
-
-    GameObject3DAddSettingPipeline(to, nums, &setting);
-
-    to->go.graphObj.blueprints.num_blue_print_packs ++;
-}
-
-
 void TerrainObjectUpdate(TerrainObject *terrain)
 {
 
