@@ -49,12 +49,19 @@ void QuadObjectAddDefault(QuadObject *qu, void *render)
 
     PipelineSettingSetDefault(&qu->go.graphObj, &setting);
 
-    if(qu->type == ENGINE_QUAD_TYPE_DEPTH){
-        setting.fragShader = &_binary_shaders_quad_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_spv_size);
-    }else if(qu->type == ENGINE_QUAD_TYPE_CUBE){
-        setting.fragShader = &_binary_shaders_quad_frag_2_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_2_spv_size);
+    switch(qu->type == ENGINE_QUAD_TYPE_DEPTH){
+        case ENGINE_QUAD_TYPE_DEPTH:
+            setting.fragShader = &_binary_shaders_quad_frag_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_spv_size);
+            break;
+        case ENGINE_QUAD_TYPE_CUBE:
+            setting.fragShader = &_binary_shaders_quad_frag_2_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_2_spv_size);
+            break;
+        case ENGINE_QUAD_TYPE_IMAGE:
+            setting.fragShader = &_binary_shaders_quad_frag_3_spv_start;
+            setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_3_spv_size);
+            break;
     }
 
     setting.vertShader = &_binary_shaders_quad_vert_spv_start;
