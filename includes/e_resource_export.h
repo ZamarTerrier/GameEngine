@@ -14,7 +14,6 @@ extern char _binary_shaders_model_shadow_vert_spv_end;
 extern int _binary_shaders_model_shadow_vert_spv_size;
 extern char _binary_shaders_model_shadow_vert_spv_start;
 
-
 extern char _binary_shaders_text_frag_spv_end;
 extern int _binary_shaders_text_frag_spv_size;
 extern char _binary_shaders_text_frag_spv_start;
@@ -28,6 +27,9 @@ extern char _binary_shaders_quad_frag_spv_start;
 extern char _binary_shaders_quad_frag_2_spv_end;
 extern int _binary_shaders_quad_frag_2_spv_size;
 extern char _binary_shaders_quad_frag_2_spv_start;
+extern char _binary_shaders_quad_frag_3_spv_end;
+extern int _binary_shaders_quad_frag_3_spv_size;
+extern char _binary_shaders_quad_frag_3_spv_start;
 extern char _binary_shaders_quad_vert_spv_end;
 extern int _binary_shaders_quad_vert_spv_size;
 extern char _binary_shaders_quad_vert_spv_start;
@@ -73,19 +75,12 @@ extern char _binary_shaders_terrain_shadow_vert_spv_end;
 extern int _binary_shaders_terrain_shadow_vert_spv_size;
 extern char _binary_shaders_terrain_shadow_vert_spv_start;
 
-extern char _binary_shaders_terrain_frag_2_spv_end;
-extern int _binary_shaders_terrain_frag_2_spv_size;
-extern char _binary_shaders_terrain_frag_2_spv_start;
-extern char _binary_shaders_terrain_vert_2_spv_end;
-extern int _binary_shaders_terrain_vert_2_spv_size;
-extern char _binary_shaders_terrain_vert_2_spv_start;
-
-extern char _binary_shaders_texture_frag_spv_end;
-extern int _binary_shaders_texture_frag_spv_size;
-extern char _binary_shaders_texture_frag_spv_start;
-extern char _binary_shaders_texture_vert_spv_end;
-extern int _binary_shaders_texture_vert_spv_size;
-extern char _binary_shaders_texture_vert_spv_start;
+extern char _binary_shaders_image_frag_spv_end;
+extern int _binary_shaders_image_frag_spv_size;
+extern char _binary_shaders_image_frag_spv_start;
+extern char _binary_shaders_image_vert_spv_end;
+extern int _binary_shaders_image_vert_spv_size;
+extern char _binary_shaders_image_vert_spv_start;
 
 extern char _binary_shaders_sky_sky_frag_spv_end;
 extern int _binary_shaders_sky_sky_frag_spv_size;
