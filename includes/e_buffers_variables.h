@@ -13,10 +13,8 @@ typedef struct {
 } TransformBuffer2D;
 
 typedef struct{
-    vec2 origin;
     vec2 offset;
     vec2 rotation;
-    vec2 scale;
 } ImageBufferObjects;
 
 typedef struct{

@@ -49,9 +49,7 @@ void PainterObjectInit(EPainter *painter)
 
     GameObject2DInit(painter);
 
-    GraphicsObjectSetVertexSize(&painter->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&painter->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
-
+    GraphicsObjectSetVertex(&painter->go.graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 }
 
 void PainterObjectAddDefault(EPainter *painter, void *render)
@@ -78,6 +76,13 @@ void PainterObjectAddDefault(EPainter *painter, void *render)
     GameObject2DAddSettingPipeline(&painter->go, nums, &setting);
 
     painter->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void PainterObjectInitDefault(EPainter *painter, DrawParam *dParam)
+{
+    PainterObjectInit(painter);
+    PainterObjectAddDefault(painter, dParam->render);
+    GameObject2DInitDraw(painter);
 }
 
 void PainterObjectSetPaintFunc(PaintDrawFunc paint_func)

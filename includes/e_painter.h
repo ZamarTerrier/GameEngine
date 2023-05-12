@@ -41,6 +41,7 @@ typedef struct{
 typedef void (*PaintDrawFunc)(EPainter *painter);
 
 void PainterObjectInit(EPainter *painter);
+void PainterObjectInitDefault(EPainter *painter, DrawParam *dParam);
 
 void PainterObjectAddDefault(EPainter *painter, void *render);
 

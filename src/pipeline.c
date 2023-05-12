@@ -11,6 +11,141 @@
 #include "e_resource_descriptors.h"
 #include "e_resource_export.h"
 
+void PipelineAcceptStack(void *pipeline, void *pipeline_layout)
+{
+    PipelineStack *stack;
+
+    if(alloc_pipeline_head->node == NULL){
+        alloc_pipeline_head->next = calloc(1, sizeof(ChildStack));
+        alloc_pipeline_head->node = calloc(1, sizeof(PipelineStack));
+
+        alloc_pipeline_head->next->before = alloc_pipeline_head;
+
+        stack = alloc_pipeline_head->node;
+        stack->GraphicsPipeline = pipeline;
+        stack->GraphicsPipelineLayout = pipeline_layout;
+    }
+    else{
+
+        ChildStack *child = alloc_pipeline_head->next;
+
+        while(child->next != NULL)
+        {
+            child = child->next;
+        }
+
+        child->next = calloc(1, sizeof(ChildStack));
+        child->next->before = child;
+        child->node = calloc(1, sizeof(PipelineStack));
+
+        stack = child->node;
+        stack->GraphicsPipeline = pipeline;
+        stack->GraphicsPipelineLayout = pipeline_layout;
+    }
+
+}
+
+void PipelineClearAll()
+{
+    ChildStack *child = alloc_pipeline_head;
+
+    PipelineStack *stack = NULL;
+
+    uint32_t counter = 0;
+
+    while(child->next != NULL)
+    {
+        stack = child->node;
+
+        PipelineDestroyStack(stack->GraphicsPipeline);
+
+        free(child->node);
+        child->node = NULL;
+
+        child = child->next;
+
+        free(child->before);
+
+        counter ++;
+    }
+
+    if(child->node != NULL){
+        stack = child->node;
+
+        PipelineDestroyStack(stack->GraphicsPipeline);
+
+        free(child->node);
+        child->node = NULL;
+
+        counter++;
+    }
+
+    free(alloc_pipeline_head);
+
+    if(counter > 0)
+        printf("Количество не очищенных пайплайнов : %i\n", counter);
+}
+
+void PipelineDestroyStack(void *pipeline)
+{
+    PipelineStack *stack = NULL;
+
+    ChildStack *child = alloc_pipeline_head;
+
+    while(child->next != NULL)
+    {
+        stack = child->node;
+
+        if(stack->GraphicsPipeline == pipeline)
+            break;
+
+        child = child->next;
+    }
+
+    stack = child->node;
+
+    if(stack == NULL){
+        perror("Такой области памяти нет!\n");
+        return;
+    }
+
+    if(child->next != NULL && child->before != NULL)
+    {
+        ChildStack *next = child->next;
+        ChildStack *before = child->before;
+
+        vkDestroyPipeline(e_device, stack->GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, stack->GraphicsPipelineLayout, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        free(child);
+        next->before = before;
+        before->next = next;
+
+    }else if(child->next != NULL){
+        vkDestroyPipeline(e_device, stack->GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, stack->GraphicsPipelineLayout, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        child->next->before = NULL;
+        alloc_pipeline_head = child->next;
+        free(child);
+
+    }else if(child->before != NULL){
+        vkDestroyPipeline(e_device, stack->GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, stack->GraphicsPipelineLayout, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        child->before->next = NULL;
+
+        free(child);
+
+    }
+}
+
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
     PipelineSetting *setting = arg;
@@ -99,7 +234,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    /*if(render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH) && (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
+    if((render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH)) || (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
     {
         colorBlendAttachment.blendEnable = VK_TRUE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -108,7 +243,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
         colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
         colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    }else*/
+    }else
         colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -246,6 +381,8 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
 
     vkDestroyShaderModule(e_device, fragShaderModule, NULL);
     vkDestroyShaderModule(e_device, vertShaderModule, NULL);
+
+    PipelineAcceptStack(pipeline->pipeline, pipeline->layout);
 }
 
 void PipelineCreateGraphics(GraphicsObject* graphObj){
@@ -335,17 +472,14 @@ void PipelineCreateRenderPass() {
     }
 
     free(dependency);
-    dependency = NULL;
+    dependency = NULL;    
 }
 
 void PipelineDestroy(ShaderPack *pack)
 {
 
     for(int i=0;i < pack->num_pipelines;i++)
-    {
-        vkDestroyPipeline(e_device, pack->pipelines[i].pipeline, NULL);
-        vkDestroyPipelineLayout(e_device, pack->pipelines[i].layout, NULL);
-    }
+        PipelineDestroyStack(pack->pipelines[i].pipeline);
 
 }
 

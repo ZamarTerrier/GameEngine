@@ -134,7 +134,7 @@ void TopMenuWidgetResize(EWidgetTopMenu *top_menu)
 void TopMenuWidgetInit(EWidgetTopMenu *top_menu, DrawParam *dParam,EWidgetWindow *window)
 {
     WidgetInit(&top_menu->widget, NULL, window);
-    WidgetAddDefault(&top_menu->widget, dParam);
+    WidgetAddDefault(&top_menu->widget, dParam->render);
     GameObject2DInitDraw(&top_menu->widget);
 
     memcpy(top_menu->widget.go.name, "Widget_Menu", 10);
@@ -142,7 +142,7 @@ void TopMenuWidgetInit(EWidgetTopMenu *top_menu, DrawParam *dParam,EWidgetWindow
 
     WidgetInit(&top_menu->top, NULL, &top_menu->widget);
     WidgetAddDefault(&top_menu->top, dParam->render);
-    GameObject2DInitDraw(&top_menu->widget);
+    GameObject2DInitDraw(&top_menu->top);
     top_menu->widget.transparent = 0.0f;
     top_menu->window = window;
 
@@ -191,7 +191,7 @@ void TopMenuWidgetAddItem(EWidgetTopMenu *top_menu, int num_menu, char *name, Dr
     else
         point = top_menu->window;
 
-    ListWidgetInit(l_menu, 110, 20, point, dParam);
+    ListWidgetInit(l_menu, 110, 20, dParam, point);
     ListWidgetSetColor(l_menu, (vec4){ 0.6, 0.6, 0.6, 1.0});
 
     vec2 pos = Transform2DGetPosition(top_menu->list[top_menu->num_elems - 1].button);

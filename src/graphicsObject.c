@@ -60,48 +60,49 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
     }
 }
 
-void GraphicsObjectSetVertexSize(GraphicsObject* graphObj, uint32_t vert_pack, uint32_t type_v_size, uint32_t type_i_size)
-{
-    graphObj->shapes[vert_pack].vParam.typeSize = type_v_size;
-    graphObj->shapes[vert_pack].iParam.typeSize = type_i_size;
-}
+void GraphicsObjectSetVertex(GraphicsObject* graphObj, void *vert, int vertCount, uint32_t type_v_size, uint32_t *inx, int indxCount, uint32_t type_i_size){
 
-void GraphicsObjectSetVertex(GraphicsObject* graphObj, uint32_t vert_pack, void *vert, int vertCount, uint32_t *inx, int indxCount){
+    uint32_t num = graphObj->num_shapes;
+
+    graphObj->shapes[num].vParam.typeSize = type_v_size;
+    graphObj->shapes[num].iParam.typeSize = type_i_size;
 
     int res = 0;
 
     if(vert != NULL)
     {
-        graphObj->shapes[vert_pack].vParam.vertices = calloc(vertCount, graphObj->shapes[vert_pack].vParam.typeSize);
-        memcpy(graphObj->shapes[vert_pack].vParam.vertices, vert, graphObj->shapes[vert_pack].vParam.typeSize * vertCount);
-        graphObj->shapes[vert_pack].vParam.verticesSize = vertCount;
+        graphObj->shapes[num].vParam.vertices = calloc(vertCount, graphObj->shapes[num].vParam.typeSize);
+        memcpy(graphObj->shapes[num].vParam.vertices, vert, graphObj->shapes[num].vParam.typeSize * vertCount);
+        graphObj->shapes[num].vParam.verticesSize = vertCount;
     }
 
     if(inx != NULL)
     {
-        graphObj->shapes[vert_pack].iParam.indices = calloc(indxCount, graphObj->shapes[vert_pack].iParam.typeSize);
-        memcpy(graphObj->shapes[vert_pack].iParam.indices, inx, graphObj->shapes[vert_pack].iParam.typeSize * indxCount);
-        graphObj->shapes[vert_pack].iParam.indexesSize = indxCount;
+        graphObj->shapes[num].iParam.indices = calloc(indxCount, graphObj->shapes[num].iParam.typeSize);
+        memcpy(graphObj->shapes[num].iParam.indices, inx, graphObj->shapes[num].iParam.typeSize * indxCount);
+        graphObj->shapes[num].iParam.indexesSize = indxCount;
     }
 
-    if(!graphObj->shapes[vert_pack].init)
+    if(!graphObj->shapes[num].init)
     {
-        res = BuffersCreateVertex(&graphObj->shapes[vert_pack].vParam);
+        res = BuffersCreateVertex(&graphObj->shapes[num].vParam);
         if(res)
             return;
 
-        res = BuffersCreateIndex(&graphObj->shapes[vert_pack].iParam);
+        res = BuffersCreateIndex(&graphObj->shapes[num].iParam);
         if(res)
             return;
 
-        graphObj->shapes[vert_pack].init = true;
+        graphObj->shapes[num].init = true;
     }
 
-    if(graphObj->shapes[vert_pack].vParam.verticesSize > 0)
-        BuffersUpdateVertex(&graphObj->shapes[vert_pack].vParam);
+    if(graphObj->shapes[num].vParam.verticesSize > 0)
+        BuffersUpdateVertex(&graphObj->shapes[num].vParam);
 
-    if(graphObj->shapes[vert_pack].iParam.indexesSize > 0)
-        BuffersUpdateIndex(&graphObj->shapes[vert_pack].iParam);
+    if(graphObj->shapes[num].iParam.indexesSize > 0)
+        BuffersUpdateIndex(&graphObj->shapes[num].iParam);
+
+    graphObj->num_shapes ++;
 }
 
 void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
@@ -126,9 +127,7 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
     {
         PipelineDestroy(&graphObj->gItems.shader_packs[i]);
 
-        vkFreeDescriptorSets(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, imagesCount, graphObj->gItems.shader_packs[i].descriptor.descr_sets);
-        vkDestroyDescriptorPool(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, NULL);
-        vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_set_layout, NULL);
+        DescriptorDestroy(&graphObj->gItems.shader_packs[i].descriptor);
     }
 
     for(int i=0;i < graphObj->blueprints.num_blue_print_packs;i++)
@@ -141,8 +140,7 @@ void GraphicsObjectClean(GraphicsObject *graphObj)
             {
                 if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER){
                     for (int j = 0; j < imagesCount; j++) {
-                        vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
-                        vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
+                        BuffersDestroyBuffer(descriptor->uniform->uniformBuffers[j]);
                     }
                     free(descriptor->uniform->uniformBuffers);
                     descriptor->uniform->uniformBuffers = NULL;
@@ -161,9 +159,7 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
     {
         PipelineDestroy(&graphObj->gItems.shader_packs[i]);
 
-        vkFreeDescriptorSets(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, imagesCount, graphObj->gItems.shader_packs[i].descriptor.descr_sets);
-        vkDestroyDescriptorPool(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_pool, NULL);
-        vkDestroyDescriptorSetLayout(e_device, graphObj->gItems.shader_packs[i].descriptor.descr_set_layout, NULL);
+        DescriptorDestroy(&graphObj->gItems.shader_packs[i].descriptor);
     }
 
     for(int i=0;i < graphObj->blueprints.num_blue_print_packs;i++)
@@ -230,10 +226,10 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
                 if(descriptor->flags & ENGINE_BLUE_PRINT_FLAG_LINKED_UNIFORM)
                     continue;
 
-                for (int j = 0; j < imagesCount; j++) {
-                    vkDestroyBuffer(e_device, descriptor->uniform->uniformBuffers[j], NULL);
-                    vkFreeMemory(e_device, descriptor->uniform->uniformBuffersMemory[j], NULL);
+                for (int k = 0; k < imagesCount; k++) {
+                    BuffersDestroyBuffer(descriptor->uniform->uniformBuffers[k]);
                 }
+
                 free(descriptor->uniform->uniformBuffers);
                 descriptor->uniform->uniformBuffers = NULL;
                 free(descriptor->uniform->uniformBuffersMemory);
@@ -244,13 +240,13 @@ void GraphicsObjectDestroy(GraphicsObject* graphObj){
 
     for(int i=0;i < graphObj->num_shapes;i++)
     {
-        vkDestroyBuffer(e_device, graphObj->shapes[i].iParam.indexBuffer, NULL);
-        vkFreeMemory(e_device, graphObj->shapes[i].iParam.indexBufferMemory, NULL);
+        if(graphObj->shapes[i].iParam.indexesSize > 0)
+            BuffersDestroyBuffer(graphObj->shapes[i].iParam.indexBuffer);
+
         graphObj->shapes[i].iParam.indexBuffer = NULL;
         graphObj->shapes[i].iParam.indexBufferMemory = NULL;
 
-        vkDestroyBuffer(e_device, graphObj->shapes[i].vParam.vertexBuffer, NULL);
-        vkFreeMemory(e_device, graphObj->shapes[i].vParam.vertexBufferMemory, NULL);
+        BuffersDestroyBuffer(graphObj->shapes[i].vParam.vertexBuffer);
         graphObj->shapes[i].vParam.vertexBuffer = NULL;
         graphObj->shapes[i].vParam.vertexBufferMemory = NULL;
     }

@@ -32,8 +32,7 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GameObject2DInit(go);
 
-    GraphicsObjectSetVertexSize(&go->graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&go->graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&go->graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 
     GraphicsObjectSetShadersPath(&go->graphObj, dParam.vertShader, dParam.fragShader);
 

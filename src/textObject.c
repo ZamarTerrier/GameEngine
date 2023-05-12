@@ -59,19 +59,21 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
 
     char name_font[] = "define_font";
 
+    descriptor->textures = calloc(1, sizeof(Texture2D *));
+
     if(font_len > 0)
     {
         temp_tex = TextFontFind(tData->font.fontpath);
 
         if(temp_tex != NULL)
         {
-            descriptor->textures = temp_tex->texture;
+            descriptor->textures[0] = temp_tex->texture;
             tData->font.info = temp_tex->info;
             tData->font.cdata = temp_tex->cdata;
 
             //--------------------
             //Создаем буфер вершин для плоскости
-            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory);
+            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory, ENGINE_BUFFER_ALLOCATE_VERTEX);
 
             return;
         }
@@ -87,13 +89,13 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
 
         if(temp_tex != NULL)
         {
-            descriptor->textures = temp_tex->texture;
+            descriptor->textures[0] = temp_tex->texture;
             tData->font.info = temp_tex->info;
             tData->font.cdata = temp_tex->cdata;
 
             //--------------------
             //Создаем буфер вершин для плоскости
-            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory);
+            BuffersCreate(vertBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory, ENGINE_BUFFER_ALLOCATE_VERTEX);
             return;
         }else
             exit(1);
@@ -144,11 +146,11 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     //--------------------
     //Создаем буфер вершин для плоскости
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &go->graphObj.shapes[0].vParam.vertexBuffer, &go->graphObj.shapes[0].vParam.vertexBufferMemory, ENGINE_BUFFER_ALLOCATE_VERTEX);
 
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -165,14 +167,13 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, tData->font.fontWidth, tData->font.fontHeight);
     ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 
     texture->textureImageView = TextureCreateImageView(texture->textureImage, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 
     TextureCreateSampler(&texture->textureSampler, texture->textureType);
 
-    descriptor->textures = fonts[e_var_num_fonts].texture;
+    descriptor->textures[0] = fonts[e_var_num_fonts].texture;
 
     e_var_num_fonts ++;
 
@@ -246,6 +247,7 @@ void TextObjectDrawDefault(TextObject* to, void *command)
                 vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].pipeline);
 
                 PipelineSetting *settings = &to->go.graphObj.blueprints.blue_print_packs[i].settings[j];
+                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW){
                     vkCmdSetViewport(command, 0, 1, &settings->viewport);
@@ -253,8 +255,7 @@ void TextObjectDrawDefault(TextObject* to, void *command)
                 }
 
                 VkDeviceSize offsets = 0;
-                vkCmdBindVertexBuffers(command, 0, 1, &to->go.graphObj.shapes[0].vParam.vertexBuffer, &offsets);
-                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
+                vkCmdBindVertexBuffers(command, 0, 1, &to->go.graphObj.shapes[settings->vert_indx].vParam.vertexBuffer, &offsets);
 
                 for (uint32_t l = 0; l < to->textData.font.numLetters; l++)
                 {

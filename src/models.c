@@ -595,7 +595,7 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render, uint32_t lay
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting.fromFile = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
-    //setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
     setting.vert_indx = 1;
     setting.cull_mode = VK_CULL_MODE_FRONT_BIT;
 
@@ -683,6 +683,7 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render)
     setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
     setting.fromFile = 0;
     setting.vert_indx = 0;
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
 
     ModelAddSettingPipeline(model, num, setting);
 
@@ -693,37 +694,23 @@ void ModelPopulateVertex3D(ModelStruct *model)
 {
     uint32_t num = model->graphObj.num_shapes;
 
-    GraphicsObjectSetVertexSize(&model->graphObj, num, sizeof(Vertex3D), sizeof(uint32_t));
-
     model->graphObj.shapes[num].bindingDescription = &Bind3DDescription;
     model->graphObj.shapes[num].attr = cubeAttributeDescription;
     model->graphObj.shapes[num].countAttr = 3;
 
-    model->graphObj.shapes[num].iParam.indices = calloc(model->graphObj.shapes[0].iParam.indexesSize, sizeof(uint32_t));
-    model->graphObj.shapes[num].iParam.indexesSize = model->graphObj.shapes[0].iParam.indexesSize;
-    memcpy(model->graphObj.shapes[num].iParam.indices, model->graphObj.shapes[0].iParam.indices, sizeof(uint32_t) * model->graphObj.shapes[0].iParam.indexesSize);
-
-    model->graphObj.shapes[num].vParam.vertices = calloc(model->graphObj.shapes[0].vParam.verticesSize, sizeof(Vertex3D));
-    model->graphObj.shapes[num].vParam.verticesSize = model->graphObj.shapes[0].vParam.verticesSize;
-
     ModelVertex3D *m_verts = model->graphObj.shapes[0].vParam.vertices;
-    Vertex3D *verts = model->graphObj.shapes[num].vParam.vertices;
+    uint32_t count = model->graphObj.shapes[0].vParam.verticesSize;
+    Vertex3D *verts = calloc(count, sizeof(Vertex3D));
 
-    for(int i=0;i < model->graphObj.shapes[0].vParam.verticesSize;i++)
+    for(int i=0;i < count;i++)
     {
         verts[i].position = m_verts[i].position;
         verts[i].normal = m_verts[i].normal;
         verts[i].texCoord = m_verts[i].texCoord;
     }
 
-    BuffersCreateVertex(&model->graphObj.shapes[num].vParam);
-    BuffersCreateIndex(&model->graphObj.shapes[num].iParam);
-    BuffersUpdateVertex(&model->graphObj.shapes[num].vParam);
-    BuffersUpdateIndex(&model->graphObj.shapes[num].iParam);
+    GraphicsObjectSetVertex(&model->graphObj, verts, count, sizeof(Vertex3D), model->graphObj.shapes[0].iParam.indices, model->graphObj.shapes[0].iParam.indexesSize, sizeof(uint32_t));
 
-    model->graphObj.shapes[num].init = true;
-
-    model->graphObj.num_shapes ++;
 }
 
 void ModelApplyShadows(ModelStruct *model, DrawParam *dParam)

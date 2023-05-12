@@ -834,10 +834,7 @@ void Load3DglTFModel(void *ptr, char *path, char *name, uint8_t type, DrawParam 
 
                       model->graphObj.gItems.perspective = true;
 
-                      GraphicsObjectSetVertexSize(&model->graphObj, 0, sizeof(ModelVertex3D), sizeof(uint32_t));
-                      GraphicsObjectSetVertex(&model->graphObj, 0, mesh->verts, mesh->num_verts, mesh->indices, mesh->num_indices);
-
-                      model->graphObj.num_shapes = 1;
+                      GraphicsObjectSetVertex(&model->graphObj, mesh->verts, mesh->num_verts, sizeof(ModelVertex3D), mesh->indices, mesh->num_indices, sizeof(uint32_t));
 
                       ModelDefaultInit(model, dParam);
                   }

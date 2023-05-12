@@ -72,8 +72,8 @@ int WindowWidgetMove(EWidget* widget, void* entry, void* args)
     }
     else
     {
-        te = v2_sub(te, e_var_mouse);
-        te = v2_add(e_var_temp, v2_muls(te, 2));
+        te = v2_muls(v2_sub(te, e_var_mouse), 2.0);
+        te = v2_add(e_var_temp, te);
         Transform2DSetPosition(widget, te.x, te.y);
     }
 
@@ -171,8 +171,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     GameObject2DInit(&widget->go);
 
-    GraphicsObjectSetVertexSize(&widget->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&widget->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&widget->go.graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 
     if(dParam != NULL)
         GraphicsObjectSetShadersPath(&widget->go.graphObj, dParam->vertShader, dParam->fragShader);
@@ -205,6 +204,7 @@ void InitTop(EWidget* widget, DrawParam *dParam, vec2 size, vec2 position){
 
     widget->color = (vec4){1, 1, 1, 1.0};
     widget->transparent = 1.0f;
+
 }
 
 void WindowWidgetInitDraw(EWidgetWindow *window)
@@ -216,7 +216,7 @@ void WindowWidgetInitDraw(EWidgetWindow *window)
 
 void InitName(EWidget* widget, uint32_t* name, DrawParam *dParam, EWidget *parent)
 {
-    TextWidgetInit(widget, 9, dParam, parent);
+    TextWidgetInit(widget, 9, NULL, parent);
     TextWidgetAddDefault(widget, dParam->render);
     GameObject2DInitDraw(widget);
 
@@ -227,7 +227,7 @@ void InitName(EWidget* widget, uint32_t* name, DrawParam *dParam, EWidget *paren
 
 void InitBot(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
-    WidgetInit(widget, dParam, parent);
+    WidgetInit(widget, NULL, parent);
     WidgetAddDefault(widget, dParam->render);
     GameObject2DInitDraw(widget);
 
@@ -244,7 +244,7 @@ void InitBot(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
 void InitClose(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
-    WidgetInit(widget, dParam, parent);
+    WidgetInit(widget, NULL, parent);
     WidgetAddDefault(widget, dParam->render);
     GameObject2DInitDraw(widget);
 
@@ -256,7 +256,7 @@ void InitClose(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
 void InitResize(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
-    WidgetInit(widget, dParam, parent);
+    WidgetInit(widget, NULL, parent);
     WidgetAddDefault(widget, dParam->render);
     GameObject2DInitDraw(widget);
 
@@ -268,7 +268,7 @@ void InitResize(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
 void InitHide(EWidget* widget, DrawParam *dParam, vec2 size, EWidget *parent){
 
-    WidgetInit(widget, dParam, parent);
+    WidgetInit(widget, NULL, parent);
     WidgetAddDefault(widget, dParam->render);
     GameObject2DInitDraw(widget);
 

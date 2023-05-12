@@ -63,8 +63,6 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
 
     so->type = type;
 
-    GraphicsObjectSetVertexSize(&so->go.graphObj, 0, sizeof(SkyVertex), sizeof(uint32_t));
-
     SkyVertex *some_vertex = calloc(4, sizeof(SkyVertex));
     some_vertex[0].position.x = -1;
     some_vertex[0].position.y = -1;
@@ -83,7 +81,7 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
     some_vertex[3].texture_uv.x = 1;
     some_vertex[3].texture_uv.y = 0;
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, some_vertex, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, some_vertex, 4, sizeof(SkyVertex), projPlaneIndx, 6, sizeof(uint32_t));
 
     free(some_vertex);
 

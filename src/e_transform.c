@@ -18,8 +18,6 @@ void Transform2DInit(Transform2D* transform){
     transform->scaleOrig.x = WIDTH;
     transform->scaleOrig.y = HEIGHT;
 
-    transform->img.scale.x = 1;
-    transform->img.scale.y = 1;    
 }
 
 void Transform3DInit(Transform3D* transform){
@@ -44,33 +42,14 @@ void Transform2DSetPosition(struct GameObject2D* go, float x, float y)
     temp->transform.positionOrig.x = x;
     temp->transform.positionOrig.y = y;
 
-    if(x != 0 )
+    if(x != 0)
         x /= WIDTH;
 
     if(y != 0)
         y /= HEIGHT;
 
-    temp->transform.position.x = x / 2;
-    temp->transform.position.y = y / 2;
-}
-
-void Transform2DSetImageOrigin(struct GameObject2D* go, float x, float y)
-{
-    GameObject2D *temp = (GameObject2D *)go;
-
-    temp->transform.img.origin.x = x / temp->image->imgWidth;
-    temp->transform.img.origin.y = y / temp->image->imgHeight;
-}
-
-vec2 Transform2DGetImageOrigin(struct GameObject2D* go)
-{
-    GameObject2D *temp = (GameObject2D *)go;
-
-    vec2 origin;
-    origin.x = temp->image->imgWidth * temp->transform.img.origin.x;
-    origin.y = temp->image->imgHeight * temp->transform.img.origin.y;
-
-    return origin;
+    temp->transform.position.x = x;
+    temp->transform.position.y = y;
 }
 
 void Transform2DReposition(struct GameObject2D* go)
@@ -86,8 +65,8 @@ vec2 Transform2DGetPosition(struct GameObject2D* go)
 
     vec2 pos = temp->transform.position;
 
-    pos.x *= WIDTH * 2;
-    pos.y *= HEIGHT * 2;
+    pos.x *= WIDTH;
+    pos.y *= HEIGHT;
 
     return pos;
 }
@@ -123,25 +102,6 @@ void Transform2DSetScale(struct GameObject2D* go, float x, float y)
 
     temp->transform.scale.x = x / 2;
     temp->transform.scale.y = y / 2;
-}
-
-void Transform2DSetImageScale(struct GameObject2D* go, float x, float y)
-{
-    GameObject2D *temp = (GameObject2D *)go;
-
-    temp->transform.img.scale.x = x / temp->image->imgWidth;
-    temp->transform.img.scale.y = y / temp->image->imgHeight;
-}
-
-vec2 Transform2DGetImageScale(struct GameObject2D* go)
-{
-    GameObject2D *temp = (GameObject2D *)go;
-
-    vec2 scale;
-    scale.x = temp->image->imgWidth * temp->transform.img.scale.x;
-    scale.y = temp->image->imgHeight * temp->transform.img.scale.y;
-
-    return scale;
 }
 
 void Transform2DRescale(struct GameObject2D* go)

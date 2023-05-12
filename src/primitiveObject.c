@@ -79,56 +79,57 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam *dParam, char type, void
     CubeSphereParam *csParam = (CubeSphereParam *)params;
     ConeParam *cParam = (ConeParam *)params;
 
-    GraphicsObjectSetVertexSize(&po->go.graphObj, 0, sizeof(Vertex3D), sizeof(uint32_t));
-
     int builded = false;
+
+    vertexParam vParam;
+    indexParam iParam;
 
     po->params = NULL;
     switch(type)
     {
         case ENGINE_PRIMITIVE3D_LINE :
-            GraphicsObjectSetVertex(&po->go.graphObj, 0, lineVert, 2, NULL, 0);
+            GraphicsObjectSetVertex(&po->go.graphObj, lineVert, 2, sizeof(Vertex3D), NULL, 0, sizeof(uint32_t));
             break;
         case ENGINE_PRIMITIVE3D_TRIANGLE :
-            GraphicsObjectSetVertex(&po->go.graphObj, 0, triVert, 3, triIndx, 3);
+            GraphicsObjectSetVertex(&po->go.graphObj, triVert, 3, sizeof(Vertex3D), triIndx, 3, sizeof(uint32_t));
             break;
         case ENGINE_PRIMITIVE3D_QUAD :
-            GraphicsObjectSetVertex(&po->go.graphObj, 0, quadVert, 4, quadIndx, 6);
+            GraphicsObjectSetVertex(&po->go.graphObj, quadVert, 4, sizeof(Vertex3D), quadIndx, 6, sizeof(uint32_t));
             break;
         case ENGINE_PRIMITIVE3D_PLANE :
-            InitPlane3D(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, pParam->sectorCount, pParam->stackCount);
+            InitPlane3D(&vParam, &iParam, pParam->sectorCount, pParam->stackCount);
             po->params = calloc(1, sizeof(PlaneParam));
             memcpy(po->params, params, sizeof(PlaneParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CUBE :
-            GraphicsObjectSetVertex(&po->go.graphObj, 0, cubeVert, 24, cubeIndx, 36);
+            GraphicsObjectSetVertex(&po->go.graphObj, cubeVert, 24, sizeof(Vertex3D), cubeIndx, 36, sizeof(uint32_t));
             break;
         case ENGINE_PRIMITIVE3D_CUBESPHERE :
-            Cubesphere(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, csParam->radius, csParam->verperrow);
+            Cubesphere(&vParam, &iParam, csParam->radius, csParam->verperrow);
             po->params = calloc(1, sizeof(CubeSphereParam));
             memcpy(po->params, params, sizeof(CubeSphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_ICOSPHERE :
-            IcoSphereGenerator(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, sParam->radius);
+            IcoSphereGenerator(&vParam, &iParam, sParam->radius);
             po->params = calloc(1, sizeof(SphereParam));
             memcpy(po->params, params, sizeof(SphereParam));
             break;
         case ENGINE_PRIMITIVE3D_SPHERE :
-            SphereGenerator3D(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            SphereGenerator3D(&vParam, &iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
             po->params = calloc(1, sizeof(SphereParam));
             memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_CONE :
-            ConeGenerator(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, cParam->height, cParam->sectorCount, cParam->stackCount);
+            ConeGenerator(&vParam, &iParam, cParam->height, cParam->sectorCount, cParam->stackCount);
             po->params = calloc(1, sizeof(ConeParam));
             memcpy(po->params, params, sizeof(ConeParam));
             builded = true;
             break;
         case ENGINE_PRIMITIVE3D_SKYBOX:
-            SphereGenerator3D(&po->go.graphObj.shapes[0].vParam, &po->go.graphObj.shapes[0].iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
+            SphereGenerator3D(&vParam, &iParam, sParam->radius, sParam->sectorCount, sParam->stackCount);
             po->params = calloc(1, sizeof(SphereParam));
             memcpy(po->params, params, sizeof(SphereParam));
             builded = true;
@@ -137,13 +138,10 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam *dParam, char type, void
 
     if(builded)
     {
-        BuffersCreateVertex(&po->go.graphObj.shapes[0].vParam);
-        BuffersCreateIndex(&po->go.graphObj.shapes[0].iParam);
-        BuffersUpdateVertex(&po->go.graphObj.shapes[0].vParam);
-        BuffersUpdateIndex(&po->go.graphObj.shapes[0].iParam);
+        GraphicsObjectSetVertex(&po->go.graphObj, vParam.vertices, vParam.verticesSize, sizeof(Vertex3D), iParam.indices, iParam.indexesSize, sizeof(uint32_t));
+        free(vParam.vertices);
+        free(iParam.indices);
     }
-
-    po->go.graphObj.num_shapes = 1;
 
     PrimitiveObjectInitTexture(po, dParam);
 

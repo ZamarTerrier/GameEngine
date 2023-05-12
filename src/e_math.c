@@ -207,6 +207,7 @@ float v2_cross(vec2 a, vec2 b)
    return a.x * b.y - a.y * b.x;
 }
 
+vec2 vec2_f(float x, float y){ return (vec2){ x, y };}
 vec2 v2_add(vec2 a, vec2 b) { return (vec2){ a.x + b.x, a.y + b.y}; }
 vec2 v2_adds  (vec2 a, float s) { return (vec2){ a.x + s,   a.y + s }; }
 vec2 v2_sub   (vec2 a, vec2 b) { return (vec2){ a.x - b.x, a.y - b.y }; }
@@ -399,6 +400,7 @@ vec3 v3_to(vec3 from, vec3 to, float t)
     return result;
 }
 
+vec4 vec4_f(float x, float y, float z, float w){ return (vec4){ x, y, z, w };}
 vec4  v4_add(vec4 a, vec4 b) { return (vec4){a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w}; }
 vec4  v4_sub(vec4 a, vec4 b) { return (vec4){a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w}; }
 vec4  v4_mul  (vec4 a, vec4 b) { return (vec4){ a.x * a.x,   a.y * a.y,   a.z * a.z,   a.w * a.w  }; }

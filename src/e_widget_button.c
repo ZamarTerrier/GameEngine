@@ -25,7 +25,7 @@ int ButtonWidgetRelease(EWidget *widget, void* entry, void *arg){
 
 void ButtonWidgetInit(EWidgetButton *button, const char *text, DrawParam *dParam, EWidget *parent){
 
-    WidgetInit(button, NULL, parent);
+    WidgetInit(button, dParam, parent);
     WidgetAddDefault(button, dParam->render);
     GameObject2DInitDraw(button);
 
@@ -46,9 +46,9 @@ void ButtonWidgetInit(EWidgetButton *button, const char *text, DrawParam *dParam
 
 }
 
-void ButtonWidgetSetImage(EWidgetButton *button, char *path)
+void ButtonWidgetSetImage(EWidgetButton *button, char *path, DrawParam *dParam)
 {
-    ImageWidgetInit(&button->image, path, button);
+    ImageWidgetInitDefault(&button->image, path, dParam, button);
 
     Transform2DSetScale(&button->image, 64, 64);
     Transform2DSetPosition(&button->image, 0, 0);

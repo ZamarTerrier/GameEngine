@@ -326,16 +326,15 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     to->t_shift = rand() % UINT16_MAX;
     to->t_shift = to->t_shift / UINT16_MAX;
 
-    GraphicsObjectSetVertexSize(&to->go.graphObj, 0, sizeof(TerrainVertex), sizeof(uint32_t));
+    vertexParam vParam;
+    indexParam iParam;
 
-    InitTerrain(&to->go.graphObj.shapes[0].vParam, &to->go.graphObj.shapes[0].iParam, tParam);
+    InitTerrain(&vParam, &iParam, tParam);
 
-    to->go.graphObj.num_shapes = 1;
+    GraphicsObjectSetVertex(&to->go.graphObj, vParam.vertices, vParam.verticesSize, sizeof(TerrainVertex), iParam.indices, iParam.indexesSize, sizeof(uint32_t));
 
-    BuffersCreateVertex(&to->go.graphObj.shapes[0].vParam);
-    BuffersCreateIndex(&to->go.graphObj.shapes[0].iParam);
-    BuffersUpdateVertex(&to->go.graphObj.shapes[0].vParam);
-    BuffersUpdateIndex(&to->go.graphObj.shapes[0].iParam);
+    free(vParam.vertices);
+    free(iParam.indices);
 
     if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS))
         TerrainObjectGenerateTerrainHeights(to);

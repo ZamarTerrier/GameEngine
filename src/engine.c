@@ -128,13 +128,12 @@ void EngineInitVulkan(){
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    BuffersCreate(u_str->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(u_str->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     for(int i=0; i < imagesCount;i++)
         BuffersCopy(stagingBuffer,  u_str->uniformBuffers[i], u_str->size);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 
     engine_buffered_image *images = e_var_images;
     TextureCreateEmptyDefault(&images[e_var_num_images].texture);
@@ -157,8 +156,9 @@ void EngineInitSystem(int width, int height, const char* name){
 
     //rootDirPath = e_GetCurrectFilePath();
 
-//    InitGLFWFun();
-//    InitVulkanVariables();
+    alloc_buffers_memory_head = calloc(1, sizeof(ChildStack));
+    alloc_descriptor_head = calloc(1, sizeof(ChildStack));
+    alloc_pipeline_head = calloc(1, sizeof(ChildStack));
 
     initWindow();
     EngineInitVulkan();
@@ -609,8 +609,7 @@ void EngineCleanUp(){
         UniformStruct *some_struct = geom_uniform;
 
         for (int j = 0; j < imagesCount; j++) {
-            vkDestroyBuffer(e_device, some_struct->uniformBuffers[j], NULL);
-            vkFreeMemory(e_device, some_struct->uniformBuffersMemory[j], NULL);
+            BuffersDestroyBuffer(some_struct->uniformBuffers[j]);
         }
 
         free(some_struct->uniformBuffers);
@@ -620,14 +619,17 @@ void EngineCleanUp(){
         some_struct = geom_geometry;
 
         for (int j = 0; j < imagesCount; j++) {
-            vkDestroyBuffer(e_device, some_struct->uniformBuffers[j], NULL);
-            vkFreeMemory(e_device, some_struct->uniformBuffersMemory[j], NULL);
+            BuffersDestroyBuffer(some_struct->uniformBuffers[j]);
         }
 
         free(some_struct->uniformBuffers);
         free(some_struct->uniformBuffersMemory);
         free(geom_geometry);
     }
+
+    BuffersClearAll();
+    DescriptorClearAll();
+    PipelineClearAll();
 
     vkDestroyDevice(e_device, NULL);
 

@@ -13,17 +13,127 @@
 
 #include "e_resource_engine.h"
 
+void DescriptorAcceptStack(ShaderDescriptor *descriptor)
+{
+    if(alloc_descriptor_head->node == NULL){
+        alloc_descriptor_head->next = calloc(1, sizeof(ChildStack));
+
+        alloc_descriptor_head->next->before = alloc_descriptor_head;
+
+        alloc_descriptor_head->node = descriptor;
+    }
+    else{
+
+        ChildStack *child = alloc_descriptor_head->next;
+
+        while(child->next != NULL)
+        {
+            child = child->next;
+        }
+
+        child->next = calloc(1, sizeof(ChildStack));
+        child->next->before = child;
+
+        child->node = descriptor;
+    }
+}
+
+void DescriptorClearAll()
+{
+    ChildStack *child = alloc_descriptor_head;
+
+    uint32_t counter = 0;
+
+    while(child->next != NULL)
+    {
+        if(child->node != NULL)
+            DescriptorDestroy(child->node);
+
+        child->node = NULL;
+
+        child = child->next;
+
+        free(child->before);
+
+        counter ++;
+    }
+
+    if(child->node != NULL){
+
+        DescriptorDestroy(child->node);
+
+        child->node = NULL;
+
+        counter++;
+    }
+
+    free(alloc_descriptor_head);
+
+    if(counter > 0)
+        printf("Количество не очищенных дескрипторов : %i\n", counter);
+
+}
+
+void DescriptorDestroy(ShaderDescriptor *descriptor)
+{
+    ChildStack *child = alloc_descriptor_head;
+
+    while(child->next != NULL)
+    {
+        if(child->node == descriptor)
+            break;
+
+        child = child->next;
+    }
+
+    if(child->next != NULL && child->before != NULL)
+    {
+        ChildStack *next = child->next;
+        ChildStack *before = child->before;
+
+        vkFreeDescriptorSets(e_device, descriptor->descr_pool, imagesCount, descriptor->descr_sets);
+        vkDestroyDescriptorPool(e_device, descriptor->descr_pool, NULL);
+        vkDestroyDescriptorSetLayout(e_device, descriptor->descr_set_layout, NULL);
+        child->node = NULL;
+
+        free(child);
+        next->before = before;
+        before->next = next;
+
+    }else if(child->next != NULL){
+        vkFreeDescriptorSets(e_device, descriptor->descr_pool, imagesCount, descriptor->descr_sets);
+        vkDestroyDescriptorPool(e_device, descriptor->descr_pool, NULL);
+        vkDestroyDescriptorSetLayout(e_device, descriptor->descr_set_layout, NULL);
+        child->node = NULL;
+
+        child->next->before = NULL;
+        alloc_descriptor_head = child->next;
+        free(child);
+
+    }else if(child->before != NULL){
+        vkFreeDescriptorSets(e_device, descriptor->descr_pool, imagesCount, descriptor->descr_sets);
+        vkDestroyDescriptorPool(e_device, descriptor->descr_pool, NULL);
+        vkDestroyDescriptorSetLayout(e_device, descriptor->descr_set_layout, NULL);
+        child->node = NULL;
+
+        child->before->next = NULL;
+
+        free(child);
+
+    }
+
+}
+
 void DescriptorUpdateIndex(BluePrintDescriptor *descriptor, char *data, uint32_t size_data, uint32_t index){
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    BuffersCreate(descriptor->uniform->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(descriptor->uniform->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     BuffersCopy(stagingBuffer,  descriptor->uniform->uniformBuffers[index], descriptor->uniform->size);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 }
 
 void DescriptorUpdate(BluePrintDescriptor *descriptor, char *data, uint32_t size_data)
@@ -226,7 +336,7 @@ void DescriptorCreate(ShaderDescriptor *descriptor, BluePrintDescriptor *descrip
         }
     }
 
-
+    DescriptorAcceptStack(descriptor);
 
 
     //--------------------------------------

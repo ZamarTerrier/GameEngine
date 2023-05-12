@@ -17,7 +17,7 @@ void SpriteObjectCreateQuad(SpriteObject *so)
 {
     Vertex2D *verts = calloc(4, sizeof(Vertex2D));
 
-    float size = 0.5f;
+    float size = 1.0f;
 
     verts[0].position.x = -size;
     verts[0].position.y = -size;
@@ -52,14 +52,12 @@ void SpriteObjectCreateQuad(SpriteObject *so)
 
     memcpy(tIndx, indx, 6 * sizeof(uint32_t));
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, verts, 4, tIndx, 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, 4, sizeof(Vertex2D), tIndx, 6, sizeof(uint32_t));
 }
 
 void SpriteObjectInit(SpriteObject *so, DrawParam *dParam){
 
     GameObject2DInit(so);
-
-    GraphicsObjectSetVertexSize(&so->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
 
     SpriteObjectCreateQuad(so);
 
@@ -109,4 +107,27 @@ void SpriteObjectInitDefault(SpriteObject *so, DrawParam *dParam)
     SpriteObjectInit(so, dParam);
     SpriteObjectAddDefault(so, dParam->render);
     GameObject2DInitDraw(so);
+}
+
+void SpriteObjectSetOffsetRect(SpriteObject *so, float x, float y, float width, float height)
+{
+    Vertex2D *verts = so->go.graphObj.shapes[0].vParam.vertices;
+
+    float temp_x = x / so->go.image->imgWidth;
+    float temp_y = y / so->go.image->imgHeight;
+
+    verts[0].texCoord.x = temp_x;
+    verts[0].texCoord.y = temp_y;
+
+    verts[1].texCoord.x = temp_x + width / so->go.image->imgWidth;
+    verts[1].texCoord.y = temp_y;
+
+    verts[2].texCoord.x = temp_x + width / so->go.image->imgWidth;
+    verts[2].texCoord.y = temp_y + height / so->go.image->imgHeight;
+
+    verts[3].texCoord.x = temp_x;
+    verts[3].texCoord.y = temp_y + height / so->go.image->imgHeight;
+
+    BuffersUpdateVertex(&so->go.graphObj.shapes[0].vParam);
+
 }

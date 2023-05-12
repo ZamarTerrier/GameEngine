@@ -7,6 +7,41 @@
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
 
+void AcceptAllocBuffer(uint32_t type, void *buffer, void *buffer_memory)
+{
+    BufferStack *stack;
+
+    if(alloc_buffers_memory_head->node == NULL){
+        alloc_buffers_memory_head->next = calloc(1, sizeof(ChildStack));
+        alloc_buffers_memory_head->node = calloc(1, sizeof(BufferStack));
+
+        alloc_buffers_memory_head->next->before = alloc_buffers_memory_head;
+
+        stack = alloc_buffers_memory_head->node;
+        stack->some_buffer = buffer;
+        stack->some_memory = buffer_memory;
+        stack->type = type;
+    }
+    else{
+
+        ChildStack *child = alloc_buffers_memory_head->next;
+
+        while(child->next != NULL)
+        {
+            child = child->next;
+        }
+
+        child->next = calloc(1, sizeof(ChildStack));
+        child->next->before = child;
+        child->node = calloc(1, sizeof(BufferStack));
+
+        stack = child->node;
+        stack->some_buffer = buffer;
+        stack->some_memory = buffer_memory;
+        stack->type = type;
+    }
+}
+
 void BuffersCreateCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(e_physicalDevice);
 
@@ -48,7 +83,7 @@ int BuffersCreateVertex(vertexParam* vert) {
     if(bufferSize == 0)
         return 1;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory, ENGINE_BUFFER_ALLOCATE_VERTEX);
 
     vert->bufferSize = bufferSize;
     vert->extend = false;
@@ -69,7 +104,7 @@ int BuffersCreateVertexInst(vertexParam* vert) {
 
     bufferSize = vert->typeSize * MAX_VERTEX_COUNT;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vert->vertexBuffer, &vert->vertexBufferMemory, ENGINE_BUFFER_ALLOCATE_VERTEX);
 
     vert->bufferSize = bufferSize;
     vert->extend = true;
@@ -101,7 +136,7 @@ int BuffersUpdateVertex(vertexParam* vert) {
         if(bufferSize != vert->bufferSize)
             return;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     //Изменение памяти
     void* data;
@@ -114,8 +149,7 @@ int BuffersUpdateVertex(vertexParam* vert) {
 
     BuffersCopy(stagingBuffer, vert->vertexBuffer, bufferSize);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 
     if(vert->extend)
         vert->bufferSize = bufferSize;
@@ -130,8 +164,7 @@ int BuffersCreateIndex(indexParam* ind) {
     if(bufferSize == 0)
         return 1;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
-
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory, ENGINE_BUFFER_ALLOCATE_INDEX);
     ind->bufferSize = bufferSize;
     ind->extend = false;
 
@@ -148,7 +181,7 @@ int BuffersCreateIndexInst(indexParam* ind) {
 
     VkDeviceSize bufferSize = ind->typeSize * MAX_INDEX_COUNT;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &ind->indexBuffer, &ind->indexBufferMemory, ENGINE_BUFFER_ALLOCATE_INDEX);
 
     ind->bufferSize = bufferSize;
     ind->extend = true;
@@ -178,7 +211,7 @@ int BuffersUpdateIndex(indexParam* ind)
         }
     }
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     void* data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -188,8 +221,7 @@ int BuffersUpdateIndex(indexParam* ind)
 
     BuffersCopy(stagingBuffer, ind->indexBuffer, bufferSize);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 
     if(ind->extend)
         ind->bufferSize = bufferSize;
@@ -203,7 +235,7 @@ void BuffersCreateUniform(UniformStruct* uniform) {
     uniform->uniformBuffersMemory = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
     for (int i = 0; i < imagesCount; i++) {
-        BuffersCreate(uniform->size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i]);
+        BuffersCreate(uniform->size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i], ENGINE_BUFFER_ALLOCATE_UNIFORM);
     }
 }
 
@@ -212,7 +244,7 @@ void BuffersCreateStorage(UniformStruct* uniform){
     uniform->uniformBuffersMemory = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
     for (int i = 0; i < imagesCount; i++) {
-        BuffersCreate(uniform->size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i]);
+        BuffersCreate(uniform->size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i], ENGINE_BUFFER_ALLOCATE_UNIFORM);
     }
 }
 
@@ -232,7 +264,7 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 
 }
 
-void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** buffer, void** bufferMemory) {
+void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** buffer, void** bufferMemory, uint32_t type) {
     VkBufferCreateInfo bufferInfo = {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -258,6 +290,111 @@ void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** bu
     }
 
     vkBindBufferMemory(e_device, *buffer, *bufferMemory, 0);
+
+    AcceptAllocBuffer(type, *buffer, *bufferMemory);
+}
+
+void BuffersClearAll()
+{
+
+    ChildStack *child = alloc_buffers_memory_head;
+
+    BufferStack *stack = NULL;
+
+    uint32_t counter = 0;
+
+    while(child->next != NULL)
+    {
+        stack = child->node;
+
+        BuffersDestroyBuffer(stack->some_buffer);
+
+        free(child->node);
+        child->node = NULL;
+
+        child = child->next;
+
+        free(child->before);
+
+        counter ++;
+    }
+
+    if(child->node != NULL){
+        stack = child->node;
+
+        BuffersDestroyBuffer(stack->some_buffer);
+
+        free(child->node);
+        child->node = NULL;
+
+        counter++;
+    }
+
+    free(alloc_buffers_memory_head);
+
+    if(counter > 0)
+        printf("Количество не очищенных буфферов : %i\n", counter);
+}
+
+void BuffersDestroyBuffer(void *buffer)
+{
+    BufferStack *stack = NULL;
+
+    ChildStack *child = alloc_buffers_memory_head;
+
+    while(child->next != NULL)
+    {
+
+        stack = child->node;
+
+        if(stack->some_buffer == buffer)
+            break;
+
+        child = child->next;
+    }
+
+    stack = child->node;
+
+    if(stack == NULL){
+        perror("Такой области памяти нет!\n");
+        return;
+    }
+
+    if(child->next != NULL && child->before != NULL)
+    {
+        ChildStack *next = child->next;
+        ChildStack *before = child->before;
+
+        vkDestroyBuffer(e_device, stack->some_buffer, NULL);
+        vkFreeMemory(e_device, stack->some_memory, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        free(child);
+        next->before = before;
+        before->next = next;
+
+    }else if(child->next != NULL){
+        vkDestroyBuffer(e_device, stack->some_buffer, NULL);
+        vkFreeMemory(e_device, stack->some_memory, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        child->next->before = NULL;
+        alloc_buffers_memory_head = child->next;
+        free(child);
+
+    }else if(child->before != NULL){
+        vkDestroyBuffer(e_device, stack->some_buffer, NULL);
+        vkFreeMemory(e_device, stack->some_memory, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        child->before->next = NULL;
+
+        free(child);
+
+    }
 }
 
 void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size) {

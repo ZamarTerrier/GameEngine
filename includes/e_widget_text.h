@@ -18,6 +18,7 @@ typedef struct{
     TextData tData;
 } EWidgetText;
 
+void TextWidgetInitDefault(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent);
 void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent);
 
 void TextWidgetAddDefault(EWidgetText *wt, void *render);

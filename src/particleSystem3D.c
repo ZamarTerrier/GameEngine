@@ -133,8 +133,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
 
-    GraphicsObjectSetVertexSize(&particle->go.graphObj, 0, sizeof(ParticleVertex3D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&particle->go.graphObj, 0, NULL, 0, NULL, 0);
+    GraphicsObjectSetVertex(&particle->go.graphObj, NULL, 0, sizeof(ParticleVertex3D), NULL, 0, sizeof(uint32_t));
 
     particle->go.graphObj.gItems.perspective = true;
     particle->go.self.flags = 0;
