@@ -90,6 +90,7 @@ typedef struct{
     int size;
     int imgWidth;
     int imgHeight;
+    uint32_t img_type;
     uint32_t flags;
 } GameObjectImage;
 

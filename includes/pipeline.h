@@ -23,7 +23,9 @@ typedef struct{
 void PipelineDestroyStack(void *pipeline);
 
 void PipelineClearAll();
+
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *setting);
+void PipelineSettingSetShader(PipelineSetting *setting, char *shader, size_t size, uint32_t type);
 
 void PipelineCreateGraphics(GraphicsObject* graphObj);
 

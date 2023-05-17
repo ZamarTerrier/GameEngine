@@ -340,10 +340,9 @@ void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *rend
 
     PipelineSettingSetDefault(&go->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_depth_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_spv_size);
-    setting.fragShader = &_binary_shaders_depth_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_vert_spv_start, (size_t)(&_binary_shaders_depth_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_frag_spv_start, (size_t)(&_binary_shaders_depth_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
     //setting.flags |= ENGINE_PIPELINE_FLAG_BIAS;
@@ -370,10 +369,9 @@ void GameObject3DAddOmiShadow(GameObject3D *go, void *render, uint32_t layer_ind
 
     PipelineSettingSetDefault(&go->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_depth_vert_omni_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_omni_spv_size);
-    setting.fragShader = &_binary_shaders_depth_frag_omni_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_omni_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_vert_omni_spv_start, (size_t)(&_binary_shaders_depth_vert_omni_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_frag_omni_spv_start, (size_t)(&_binary_shaders_depth_frag_omni_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting.fromFile = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);

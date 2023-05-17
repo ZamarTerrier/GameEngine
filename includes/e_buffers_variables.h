@@ -23,6 +23,15 @@ typedef struct{
     mat4 proj;
 } ModelBuffer3D;
 
+typedef struct{
+    vec4 lightPos;
+    vec4 frustumPlanes[6];
+    float displacementFactor;
+    float tessellationFactor;
+    vec2 viewportDim;
+    float tessellatedEdgeSize;
+} TesselationBuffer;
+
 typedef struct {
     vec3 position __attribute__ ((aligned (16)));
 

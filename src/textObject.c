@@ -471,10 +471,9 @@ void TextObjectAddDefault(TextObject* to, void *render)
 
     PipelineSettingSetDefault(&to->go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_text_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
-    setting.fragShader = &_binary_shaders_text_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_text_vert_spv_start, (size_t)(&_binary_shaders_text_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_text_frag_spv_start, (size_t)(&_binary_shaders_text_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
     setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;

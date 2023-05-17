@@ -522,7 +522,7 @@ void ModelSetGeometryDescriptor(ModelStruct *model, void *render)
 
     BluePrintAddExistTextureImage(&model->graphObj.blueprints, num, &geom_texture);
 
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     BluePrintAddExistUniformStorage(&model->graphObj.blueprints, num, VK_SHADER_STAGE_FRAGMENT_BIT, geom_uniform, NULL, 0);
 
@@ -530,10 +530,9 @@ void ModelSetGeometryDescriptor(ModelStruct *model, void *render)
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_geometry_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_geometry_vert_spv_size);
-    setting.fragShader = &_binary_shaders_geometry_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_geometry_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_geometry_vert_spv_start, (size_t)(&_binary_shaders_geometry_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_geometry_frag_spv_start, (size_t)(&_binary_shaders_geometry_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting.fromFile = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
@@ -559,10 +558,9 @@ void ModelSetShadowDescriptor(ModelStruct *model, uint32_t type, void *render, u
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_depth_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_spv_size);
-    setting.fragShader = &_binary_shaders_depth_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_vert_spv_start, (size_t)(&_binary_shaders_depth_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_frag_spv_start, (size_t)(&_binary_shaders_depth_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting.fromFile = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
@@ -588,10 +586,9 @@ void ModelSetOmniShadowDescriptor(ModelStruct *model, void *render, uint32_t lay
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_depth_vert_omni_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_depth_vert_omni_spv_size);
-    setting.fragShader = &_binary_shaders_depth_frag_omni_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_depth_frag_omni_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_vert_omni_spv_start, (size_t)(&_binary_shaders_depth_vert_omni_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_depth_frag_omni_spv_start, (size_t)(&_binary_shaders_depth_frag_omni_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     setting.fromFile = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW);
@@ -637,18 +634,17 @@ void ModelSetShadowDefaultDescriptor(ModelStruct *model, void *render)
     else
         BluePrintAddRenderImage(&model->graphObj.blueprints, num, renders[0]);
 
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse, VK_SHADER_STAGE_FRAGMENT_BIT);
     //TextureImageAdd(&model->graphObj.blueprints, model->specular);
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_model_shadow_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_model_shadow_vert_spv_size);
-    setting.fragShader = &_binary_shaders_model_shadow_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_model_shadow_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_model_shadow_vert_spv_start, (size_t)(&_binary_shaders_model_shadow_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_model_shadow_frag_spv_start, (size_t)(&_binary_shaders_model_shadow_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.vert_indx = 0;
 
@@ -669,18 +665,17 @@ void ModelSetDefaultDescriptor(ModelStruct *model, void *render)
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelDescriptorSpotLightsUpdate, 0);
     BluePrintAddUniformObject(&model->graphObj.blueprints, num, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)ModelLigtStatusBufferUpdate, 0);
 
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse, VK_SHADER_STAGE_FRAGMENT_BIT);
     //TextureImageAdd(&model->graphObj.blueprints, model->specular);
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_model_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
-    setting.fragShader = &_binary_shaders_model_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_model_vert_spv_start, (size_t)(&_binary_shaders_model_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_model_frag_spv_start, (size_t)(&_binary_shaders_model_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.vert_indx = 0;
     setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);

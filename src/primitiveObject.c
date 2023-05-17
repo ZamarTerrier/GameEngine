@@ -182,17 +182,16 @@ void PrimitiveObjectSetShadowDefaultDescriptor(PrimitiveObject *po, DrawParam *d
     else
         BluePrintAddRenderImage(&po->go.graphObj.blueprints, nums, renders[0]);
 
-    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0]);
-    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1]);
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0], VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1], VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&po->go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_3d_object_shadow_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_shadow_vert_spv_size);
-    setting.fragShader = &_binary_shaders_3d_object_shadow_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_shadow_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_shadow_vert_spv_start, (size_t)(&_binary_shaders_3d_object_shadow_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_shadow_frag_spv_start, (size_t)(&_binary_shaders_3d_object_shadow_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.vert_indx = 0;
 
@@ -212,17 +211,16 @@ void PrimitiveObjectSetDefaultDescriptor(PrimitiveObject *po, DrawParam *dParam)
     BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(SpotLightBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DDescriptorSpotLightsUpdate, 0);
     BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(LightStatusBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject3DLigtStatusBufferUpdate, 0);
 
-    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0]);
-    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1]);
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0], VK_SHADER_STAGE_FRAGMENT_BIT);
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[1], VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&po->go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_3d_object_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_3d_object_vert_spv_size);
-    setting.fragShader = &_binary_shaders_3d_object_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_3d_object_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_vert_spv_start, (size_t)(&_binary_shaders_3d_object_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_frag_spv_start, (size_t)(&_binary_shaders_3d_object_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.vert_indx = 0;
 

@@ -22,8 +22,7 @@ typedef struct{
 } TerrainTextureParam;
 
 typedef struct{
-    uint32_t columns;
-    uint32_t rows;
+    uint32_t size_patch;
     uint32_t flags;
     float vertex_step;
     TerrainGeneratorParam t_g_param;
@@ -59,6 +58,8 @@ typedef struct{
     TerrainGeneratorParam t_g_param;
     vec4_u8 tex_colors[MAX_TEXTURE_STACK];
     BluePrintDescriptor *texture_descr;
+    GameObjectImage heightMap;
+    BluePrintDescriptor *texture_height_map;
     void *render;
 } TerrainObject;
 
@@ -73,7 +74,5 @@ void TerrainObjectAddDefault(TerrainObject *to, DrawParam *dParam);
 
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer);
 uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index);
-
-void TerrainObjectUpdate(TerrainObject *terrain);
 
 #endif // TERRAIN_OBJECT_H

@@ -174,18 +174,17 @@ void Particle2DAddDefault(ParticleObject2D* particle, void *render)
 
     BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)Particle2DDefaultUpdate, 0);
 
-    BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.image);
+    BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&particle->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    if(strlen(setting.stages[0].some_shader) == 0 || strlen(setting.stages[1].some_shader) == 0)
     {
-        setting.vertShader = &_binary_shaders_particle_vert2D_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert2D_spv_size);
-        setting.fragShader = &_binary_shaders_particle_frag2D_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_particle_frag2D_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_particle_vert2D_spv_start, (size_t)(&_binary_shaders_particle_vert2D_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, &_binary_shaders_particle_frag2D_spv_start, (size_t)(&_binary_shaders_particle_frag2D_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
         setting.fromFile = 0;
     }
 

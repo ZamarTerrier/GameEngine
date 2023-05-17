@@ -277,7 +277,7 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
     memset(images[e_var_num_images].path, 0, 2048);
     memcpy(images[e_var_num_images].path, image->path, len);
     images[e_var_num_images].texture.image_data = fileData;
-    images[e_var_num_images].texture.textureType = VK_FORMAT_R8G8B8A8_SRGB;
+    images[e_var_num_images].texture.textureType = image->img_type; // VK_FORMAT_R8G8B8A8_SRGB;
 
     VkDeviceSize imageSize = fileData.texWidth * fileData.texHeight * sizeof(float);
 

@@ -64,12 +64,11 @@ void PainterObjectAddDefault(EPainter *painter, void *render)
 
     PipelineSettingSetDefault(&painter->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    if(strlen(setting.stages[0].some_shader) == 0 || strlen(setting.stages[1].some_shader) == 0)
     {
-        setting.vertShader = &_binary_shaders_gui_painter_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_painter_vert_spv_size);
-        setting.fragShader = &_binary_shaders_gui_painter_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_painter_frag_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_gui_painter_vert_spv_start, (size_t)(&_binary_shaders_gui_painter_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, &_binary_shaders_gui_painter_frag_spv_start, (size_t)(&_binary_shaders_gui_painter_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
         setting.fromFile = 0;
     }
 

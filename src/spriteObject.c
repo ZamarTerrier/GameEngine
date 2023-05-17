@@ -84,16 +84,15 @@ void SpriteObjectAddDefault(SpriteObject *so, void *render)
     BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
     BluePrintAddUniformObject(&so->go.graphObj.blueprints, 0, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject2DImageBuffer, 0);
 
-    BluePrintAddTextureImage(&so->go.graphObj.blueprints, 0, so->go.image);
+    BluePrintAddTextureImage(&so->go.graphObj.blueprints, 0, so->go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-    setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
 

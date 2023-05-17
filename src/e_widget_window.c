@@ -150,16 +150,15 @@ void WindowWidgetAddDefault(EWidgetWindow *window, void *render)
 
     BluePrintAddUniformObject(&window->top.go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetGUIBufferUpdate, 0);
 
-    BluePrintAddTextureImage(&window->top.go.graphObj.blueprints, nums, window->top.go.image);
+    BluePrintAddTextureImage(&window->top.go.graphObj.blueprints, nums, window->top.go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&window->top.go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_gui_widget_window_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_window_vert_spv_size);
-    setting.fragShader = &_binary_shaders_gui_widget_window_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_window_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_gui_widget_window_vert_spv_start, (size_t)(&_binary_shaders_gui_widget_window_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_gui_widget_window_frag_spv_start, (size_t)(&_binary_shaders_gui_widget_window_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
 
     GameObject2DAddSettingPipeline(&window->top.go, nums, &setting);

@@ -21,17 +21,26 @@ typedef enum{
     ENGINE_PIPELINE_FLAG_PERSPECTIVE = 0x8,
     ENGINE_PIPELINE_FLAG_BIAS = 0x10,
     ENGINE_PIPELINE_FLAG_SPECIAL = 0x20,
-    ENGINE_PIPELINE_FLAG_ALPHA = 0x40
+    ENGINE_PIPELINE_FLAG_ALPHA = 0x40,
+    ENGINE_PIPELINE_FLAG_FRAGMENT_SHADER = 0x80,
+    ENGINE_PIPELINE_FLAG_COMPUTED_SHADER = 0x100,
+    ENGINE_PIPELINE_FLAG_VERTEX_SHADER = 0x200,
+    ENGINE_PIPELINE_FLAG_TESSELLATION_CONTROL_SHADER = 0x400,
+    ENGINE_PIPELINE_FLAG_TESSELLATION_EVALUATION_SHADER = 0x800,
 } EnginePipelineFlags;
+
+typedef struct{
+    char* some_shader;
+    uint32_t size_some_shader;
+    uint32_t type_some_shader;
+} EngineShaderStage;
 
 typedef struct{
     char poligonMode;
     char topology;
     char cull_mode;
-    char* vertShader;
-    uint32_t sizeVertShader;
-    char* fragShader;
-    uint32_t sizeFragShader;
+    EngineShaderStage stages[6];
+    uint32_t num_stages;
     char fromFile;
     char dynamicState;
     EPViewport viewport;

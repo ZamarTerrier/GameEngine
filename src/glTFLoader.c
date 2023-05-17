@@ -864,18 +864,17 @@ void gltfModelSetDefaultDescriptor(ModelStruct *model, void *render, void *shado
     */
 
     BluePrintAddRenderImage(&model->graphObj.blueprints, num, shadow);
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->diffuse, VK_SHADER_STAGE_FRAGMENT_BIT);
     //TextureImageAdd(&model->graphObj.blueprints, model->specular);
-    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal);
+    BluePrintAddTextureImage(&model->graphObj.blueprints, num, model->normal, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&model->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_model_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_model_vert_spv_size);
-    setting.fragShader = &_binary_shaders_model_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_model_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_model_vert_spv_start, (size_t)(&_binary_shaders_model_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_model_frag_spv_start, (size_t)(&_binary_shaders_model_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.vert_indx = 0;
 

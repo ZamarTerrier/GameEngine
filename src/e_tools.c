@@ -225,60 +225,39 @@ void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
 
     TerrainParam *tParam = param;
 
-    vec3 pos = {0 , 0, 0};
-    vec3 col = {0.3 , 0.1, 0.11};
-
-    int i, j;
-
-    vParam->verticesSize = (tParam->columns + 1) * (tParam->rows + 1);
-
+    vParam->verticesSize = tParam->size_patch * tParam->size_patch;
     vParam->vertices = calloc(vParam->verticesSize, sizeof(TerrainVertex));
-
-    int vIter = 0;
 
     TerrainVertex *verts = vParam->vertices;
 
-    for(i=0; i <= tParam->columns;i++){
-        for(j=0; j <= tParam->rows;j++){
+    const float wx = 2.0f;
+    const float wy = 2.0f;
 
-            vIter = i * tParam->rows + (i > 0 ? j + i : j);
-
-            pos.x = tParam->vertex_step * i;
-            pos.y = 0;
-            pos.z = tParam->vertex_step * j;
-
-            verts[vIter].position = pos;
-            verts[vIter].normal = (vec3){0,1,0};
-
-
-            verts[vIter].texCoord = (vec2){(float)i / tParam->rows, (float)j / tParam->columns};
-
+    for(int x=0; x < tParam->size_patch;x++){
+        for(int  y=0; y < tParam->size_patch;y++){
+            uint32_t index = (x + y * tParam->size_patch);
+            verts[index].position.x = (x * wx + wx / 2.0f - (float)tParam->size_patch * wx / 2.0f) * tParam->vertex_step;
+            verts[index].position.y = tParam->vertex_step;
+            verts[index].position.z = (y * wy + wy / 2.0f - (float)tParam->size_patch * wy / 2.0f) * tParam->vertex_step;
+            verts[index].normal = vec3_f( 0, 1, 0);
+            verts[index].texCoord = v2_muls(vec2_f((float)x / tParam->size_patch, (float)y / tParam->size_patch), 1.0f); // tParam->t_t_param.texture_scale);
         }
     }
 
-    iParam->indexesSize = (tParam->columns * tParam->rows) * 6 + 6;
-
+    const uint32_t w = (tParam->size_patch - 1);
+    iParam->indexesSize = w * w * 4;
     iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
 
-    int k1, k2, it = 0, tt = 0;
-
-    for(i=0; i < tParam->columns;i++){
-        k1 = i * (tParam->rows + 1);     // beginning of current stack
-        k2 = k1 +  tParam->rows + 1 ;      // beginning of next stack
-        for(j=0; j < tParam->rows; ++j, ++k1, ++k2){
-
-            iParam->indices[it] = k1;
-            iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1 + 1;
-            it +=3;
-
-            iParam->indices[it] = k2;
-            iParam->indices[it + 1] = k2 + 1;
-            iParam->indices[it + 2] = k1 + 1;
-
-            it +=3;
-
-
+    // Indices
+    for (int x = 0; x < w; x++)
+    {
+        for (int y = 0; y < w; y++)
+        {
+            uint32_t index = (x + y * w) * 4;
+            iParam->indices[index] = (x + y * tParam->size_patch);
+            iParam->indices[index + 1] = iParam->indices[index] + tParam->size_patch;
+            iParam->indices[index + 2] = iParam->indices[index + 1] + 1;
+            iParam->indices[index + 3] = iParam->indices[index] + 1;
         }
     }
 }

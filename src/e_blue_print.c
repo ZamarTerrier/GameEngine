@@ -281,9 +281,12 @@ void BluePrintAddRenderImage(Blueprints *blueprints, uint32_t indx_pack, void *o
     blueprints->blue_print_packs[indx_pack].num_descriptors ++;
 }
 
-BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t indx_pack, GameObjectImage *image)
+BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t indx_pack, GameObjectImage *image, uint32_t stage_bit)
 {
     BluePrintPack *pack = &blueprints->blue_print_packs[indx_pack];
+
+    if(image->img_type == 0)
+        image->img_type = VK_FORMAT_R8G8B8A8_SRGB;
 
     if(pack->num_descriptors + 1 > MAX_UNIFORMS)
     {
@@ -308,13 +311,15 @@ BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t i
     {
         if(image->flags & ENGINE_TEXTURE_FLAG_URGB)
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_UINT, image->imgWidth, image->imgHeight);
+        else if(image->flags & ENGINE_TEXTURE_FLAG_R16)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R16_UNORM, image->imgWidth, image->imgHeight);
         else
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, image->imgWidth, image->imgHeight);
     }
 
     descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
-    descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptor->stageflag = stage_bit;// VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptor->flags = ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE;
 
     pack->num_descriptors ++;
@@ -325,6 +330,7 @@ BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t i
 void BluePrintAddTextureImageArray(Blueprints *blueprints, uint32_t indx_pack, GameObjectImage *images, uint32_t size)
 {
     BluePrintPack *pack = &blueprints->blue_print_packs[indx_pack];
+
 
     if(pack->num_descriptors + 1 > MAX_UNIFORMS)
     {
@@ -340,6 +346,10 @@ void BluePrintAddTextureImageArray(Blueprints *blueprints, uint32_t indx_pack, G
 
     for(int i=0;i < size;i++)
     {
+
+        if(images[i].img_type == 0)
+            images[i].img_type = VK_FORMAT_R8G8B8A8_SRGB;
+
         if(!(images[i].flags & ENGINE_TEXTURE_FLAG_SPECIFIC))
         {
             if(descriptor->image->size > 0)
