@@ -24,6 +24,7 @@ shader readFile(const char* filename);
 
 void* createShaderModule(shader shdr);
 
+void InitTreeVertices(vertexParam *vParam, indexParam *iParam);
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns);
 void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param);
 int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);

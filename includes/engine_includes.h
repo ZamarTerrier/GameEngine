@@ -142,6 +142,18 @@ typedef struct{
 } SomeDirLight;
 
 typedef struct{
+    uint32_t type;
+    vec3 orig;
+    vec3 dir;
+    float angle;
+} TreePeace;
+
+typedef struct{
+    uint32_t v_index;
+    uint32_t i_index;
+} VertextIterator;
+
+typedef struct{
     char diffuse[256];
     char specular[256];
     char normal[256];

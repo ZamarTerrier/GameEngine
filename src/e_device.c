@@ -119,6 +119,7 @@ void createLogicalDevice() {
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
     deviceFeatures.tessellationShader = VK_TRUE;
+    deviceFeatures.fillModeNonSolid = VK_TRUE;
 
     VkDeviceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

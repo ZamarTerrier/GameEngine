@@ -28,13 +28,13 @@ uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
 void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height)
 {
     tParam->size_patch = 500;
-    tParam->t_g_param.size_factor = 200;
-    tParam->t_g_param.height_factor = 60;
+    tParam->t_g_param.size_factor = 300;
+    tParam->t_g_param.height_factor = 120;
     tParam->t_g_param.frequency = 1;
     tParam->t_g_param.amplitude = 1;
     tParam->t_g_param.octaves = 6;
-    tParam->vertex_step = 2.0;
-    tParam->t_t_param.texture_scale = 80.0f;
+    tParam->vertex_step = 1.0;
+    tParam->t_t_param.texture_scale = 160.0f;
     tParam->t_t_param.texture_width = texture_width;
     tParam->t_t_param.texture_height = texture_height;
     tParam->t_t_param.num_textures = 0;
@@ -227,10 +227,10 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
                 iter = (i + 1) * to->width + j;
                 float hR = verts[iter].position.y;
 
-                iter = (i - 0) * to->width + (j - 1);
+                iter = i * to->width + (j - 1);
                 float hD = verts[iter].position.y;
 
-                iter = (i - 0) * to->width + (j + 1);
+                iter = i * to->width + (j + 1);
                 float hU = verts[iter].position.y;
 
                 norm.x = hL - hR;
@@ -238,7 +238,7 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
                 norm.z = 2.0f;
 
                 iter = i * to->width + j;
-                verts[iter].normal = norm;
+                verts[iter].normal = v3_norm(norm);
 
             }
         }

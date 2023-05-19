@@ -164,6 +164,225 @@ void* createShaderModule(shader shdr) {
     return shaderModule;
 }
 
+void MakeSomeIndex(indexParam *iParam, uint32_t size, uint32_t last_indx, VertextIterator *vi)
+{
+    int k1 = 0, k2 = 0;
+
+    for(int i=0; i < size;i++)
+    {
+        k1 = i * 2 + last_indx;
+        k2 = k1 + 2;
+
+        iParam->indices[vi->i_index] = k1 + 1;
+        iParam->indices[vi->i_index + 1] = k2;
+        iParam->indices[vi->i_index + 2] = k1;
+        vi->i_index += 3;
+
+        iParam->indices[vi->i_index] = k2 + 1;
+        iParam->indices[vi->i_index + 1] = k2;
+        iParam->indices[vi->i_index + 2] = k1 + 1;
+        vi->i_index +=3;
+    }
+}
+
+typedef struct{
+    vec3 *positions;
+    uint32_t num_positions;
+    uint32_t *indexes;
+    uint32_t num_indexes;
+} TreeVerts;
+
+vec3 type_01_v[12] = {
+    {0.5f, 0, 0},
+    {0.7f, 1, 0},
+    {-0.7f, 1, 0},
+    {-0.5f, 0, 0},
+    {0.7f, 2, 0},
+    {-0.7f, 2, 0},
+    {1.5f, 1.5f, 0},
+    {1.5f, 2.5f, 0},
+    {0.5f, 3, 0},
+    {-0.5f, 3, 0},
+    {-1.5f, 2.5f, 0},
+    {-1.5f, 1.5f, 0},
+};
+
+uint32_t type_01_i[30] = {
+    0, 1, 2, 2, 3, 0,
+    1, 4, 5, 5, 2, 1,
+    1, 6, 7, 7, 4, 1,
+    4, 8, 9, 9, 5, 4,
+    5, 10, 11, 11, 2, 5,
+};
+
+TreeVerts type_01 = {
+    .positions = type_01_v,
+    .num_positions = 12,
+    .indexes = type_01_i,
+    .num_indexes = 30
+};
+
+vec3 type_02_v[10] = {
+    {0.5f, 0, 0},
+    {0.7f, 1, 0},
+    {-0.7f, 1, 0},
+    {-0.5f, 0, 0},
+    {0.2f, 2.0f, 0},
+    {-0.2f, 2.0f, 0},
+    {1.5f, 3.0f, 0},
+    {0.5f, 3.0f, 0},
+    {-0.5f, 3.0f, 0},
+    {-1.5f, 3.0f, 0},
+};
+
+uint32_t type_02_i[24] = {
+    0, 1, 2, 2, 3, 0,
+    1, 4, 5, 5, 2, 1,
+    1, 6, 7, 7, 4, 1,
+    5, 8, 9, 9, 2, 5,
+};
+
+TreeVerts type_02 = {
+    .positions = type_02_v,
+    .num_positions = 10,
+    .indexes = type_02_i,
+    .num_indexes = 24
+};
+
+vec3 type_03_v[12] = {
+    {0.5f, 0, 0},
+    {0.7f, 1, 0},
+    {-0.7f, 1, 0},
+    {-0.5f, 0, 0},
+    {0.7f, 2, 0},
+    {-0.7f, 2, 0},
+    {1.5f, 1.5f, 0},
+    {1.5f, 2.5f, 0},
+    {0.5f, 3, 0},
+    {-0.5f, 3, 0},
+    {-1.5f, 2.5f, 0},
+    {-1.5f, 1.5f, 0},
+};
+
+uint32_t type_03_i[30] = {
+    0, 1, 2, 2, 3, 0,
+    1, 4, 5, 5, 2, 1,
+    1, 6, 7, 7, 4, 1,
+    4, 8, 9, 9, 5, 4,
+    5, 10, 11, 11, 2, 5,
+};
+
+TreeVerts type_03 = {
+    .positions = type_03_v,
+    .num_positions = 12,
+    .indexes = type_03_i,
+    .num_indexes = 30
+};
+
+void TreeMakePeace(vertexParam *vParam, indexParam *iParam, TreeVerts *tree_verts, vec3 pos, float angle, VertextIterator *vi)
+{
+    Vertex3D *verts = vParam->vertices;
+
+    uint32_t last_vertex = vi->v_index;
+
+    float t_angle = M_PI / 180 * angle;
+
+    vec3 dir;
+    dir.x = cos(t_angle) + sin(t_angle);
+    dir.y = -sin(t_angle) + cos(t_angle);
+
+    vec3 temp;
+
+    float radius = 0.5f;
+    for(int i=0; i < tree_verts->num_positions;i++)
+    {
+
+        temp = vec3_f(tree_verts->positions[i].x * radius, tree_verts->positions[i].y, tree_verts->positions[i].z * radius);
+        temp.x = temp.x * cos(t_angle) - temp.y * sin(t_angle);
+        temp.y = temp.x * sin(t_angle) + temp.y * cos(t_angle);
+        temp = v3_add(pos, temp);
+
+        verts[vi->v_index].position = temp;
+        vi->v_index ++;
+    }
+
+    for(int i=0; i < tree_verts->num_indexes;i++)
+    {
+        iParam->indices[vi->i_index] = tree_verts->indexes[i] + last_vertex;
+        vi->i_index ++;
+    }
+}
+
+uint32_t num_peaces = 0;
+TreePeace t_peaces[20];
+void AddNewBranch(vec3 point, uint32_t type)
+{
+    t_peaces[num_peaces].type = type;
+    t_peaces[num_peaces].orig = point;
+
+    num_peaces ++;
+}
+
+void InitTreeVertices(vertexParam *vParam, indexParam *iParam)
+{
+    memset(&t_peaces, 0, sizeof(TreePeace) * 20);
+
+    AddNewBranch(vec3_f(0, 0, 0), 0);
+    AddNewBranch(vec3_f(0, 3, 0), 1);
+    AddNewBranch(vec3_f(1.0, 6, 0), 2);
+    AddNewBranch(vec3_f(-1.0, 6, 0), 2);
+
+    VertextIterator vi;
+    memset(&vi, 0, sizeof(VertextIterator));
+
+    uint32_t indx_points = 0;
+    uint32_t vert_points = 0;
+
+    for(int i=0;i < num_peaces;i++){
+        switch(t_peaces[i].type){
+            case 0:
+                indx_points += type_01.num_indexes;
+                vert_points += type_01.num_positions;
+                break;
+            case 1:
+                indx_points += type_02.num_indexes;
+                vert_points += type_02.num_positions;
+                break;
+            case 2:
+                indx_points += type_03.num_indexes;
+                vert_points += type_03.num_positions;
+                break;
+        }
+    }
+
+    vParam->verticesSize = vert_points;
+    iParam->indexesSize = indx_points;
+
+    vParam->vertices = (Vertex3D *) calloc(vParam->verticesSize, sizeof(Vertex3D));
+    iParam->indices = (uint32_t *) calloc(iParam->indexesSize, sizeof(uint32_t));
+
+
+    for(int i=0;i < num_peaces;i++){
+        switch(t_peaces[i].type){
+            case 0:
+                TreeMakePeace(vParam, iParam, &type_01, t_peaces[i].orig, t_peaces[i].angle, &vi);
+                break;
+            case 1:
+            TreeMakePeace(vParam, iParam, &type_02, t_peaces[i].orig, t_peaces[i].angle, &vi);
+                break;
+            case 2:
+                TreeMakePeace(vParam, iParam, &type_03, t_peaces[i].orig, t_peaces[i].angle, &vi);
+                break;
+        }
+    }
+
+    for(int i=0;i < iParam->indexesSize;i++)
+    {
+        if(iParam->indices[i] == 0)
+            continue;
+    }
+}
+
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int sectorCount){
 
     vec3 pos = {0 , 0, 0};
@@ -1071,9 +1290,9 @@ void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, 
             // 2 triangles per sector excluding first and last stacks
             // k1 => k2 => k1+1
 
-            iParam->indices[it] = k1;
+            iParam->indices[it] = k1 + 1;
             iParam->indices[it + 1] = k2;
-            iParam->indices[it + 2] = k1 + 1;
+            iParam->indices[it + 2] = k1;
             it +=3;
 
             // k1+1 => k2 => k2+1
