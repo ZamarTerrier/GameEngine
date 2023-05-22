@@ -8,7 +8,7 @@
 
 #include "e_math.h"
 
-void ImageWidgetUpdate(EWidgetImage* img) {
+void ImageWidgetUpdate(EWidgetImage* img, BluePrintDescriptor *descriptor) {
 
     vec2 offset = {0, 0};
     if(img->widget.parent != NULL){
@@ -24,6 +24,14 @@ void ImageWidgetUpdate(EWidgetImage* img) {
     vec2 parent_pos = {0, 0};
 
     WidgetUpdateScissor(&img->widget, &settings[0].scissor, &parent_pos, &offset);
+
+    TransformBuffer2D tbo;
+
+    tbo.position = v2_subs(v2_muls(img->widget.position, 2.0f), 1.0);
+    tbo.rotation = img->widget.go.transform.rotation;
+    tbo.scale = img->widget.go.transform.scale;
+
+    DescriptorUpdate(descriptor, &tbo, sizeof(tbo));
 }
 
 void ImageWidgetCreateQuad(EWidgetImage *wi)
@@ -65,7 +73,7 @@ void ImageWidgetCreateQuad(EWidgetImage *wi)
 
     memcpy(tIndx, indx, 6 * sizeof(uint32_t));
 
-    GraphicsObjectSetVertex(&wi->widget.go.graphObj, 0, verts, 4, tIndx, 6);
+    GraphicsObjectSetVertex(&wi->widget.go.graphObj, verts, 4, sizeof(Vertex2D), tIndx, 6, sizeof(uint32_t));
 }
 
 
@@ -76,15 +84,13 @@ void ImageWidgetInit(EWidgetImage *img, char *image_path, EWidget *parent){
     memcpy(img->widget.go.name, "Widget_Image", 10);
     img->widget.type = ENGINE_WIDGET_TYPE_IMAGE;
 
-    GraphicsObjectSetVertexSize(&img->widget.go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-
     ImageWidgetCreateQuad(img);
-
 
     img->widget.go.image = calloc(1, sizeof(GameObjectImage));
 
     if(strlen(image_path) != 0)
     {
+        img->widget.go.image->path = calloc(256, sizeof(char));
         memset(img->widget.go.image->path, 0, 256);
         int len = strlen(image_path);
         img->widget.go.image->path = calloc(len + 1, sizeof(char));
@@ -113,21 +119,20 @@ void ImageWidgetAddDefault(EWidgetImage *img, void *render)
     uint32_t nums = img->widget.go.graphObj.blueprints.num_blue_print_packs;
     img->widget.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *) GameObject2DTransformBufferUpdate, 0);
+    BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *) ImageWidgetUpdate, 0);
     BluePrintAddUniformObject(&img->widget.go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *) GameObject2DImageBuffer, 0);
 
-    BluePrintAddTextureImage(&img->widget.go.graphObj.blueprints, nums, img->widget.go.image);
+    BluePrintAddTextureImage(&img->widget.go.graphObj.blueprints, nums, img->widget.go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&img->widget.go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    if(strlen(setting.stages[0].some_shader) == 0 || strlen(setting.stages[1].some_shader) == 0)
     {
-        setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-        setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
         setting.fromFile = 0;
     }
 

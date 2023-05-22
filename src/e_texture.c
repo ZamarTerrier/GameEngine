@@ -49,8 +49,6 @@ int ImageWriteFile(uint32_t indx)
          vkUnmapMemory(e_device, stagingBufferMemory);
     }
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
 
     return 0;*/
 }
@@ -178,7 +176,7 @@ void TextureCreateEmptyDefault(Texture2D *texture)
 
     VkDeviceSize bufferSize = EMPTY_IMAGE_HEIGHT * EMPTY_IMAGE_WIDTH * 4;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     char some_data[bufferSize];
     memset(some_data, 0, bufferSize);
@@ -194,8 +192,7 @@ void TextureCreateEmptyDefault(Texture2D *texture)
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, EMPTY_IMAGE_WIDTH, EMPTY_IMAGE_HEIGHT);
     ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 
     texture->image_data.texWidth = EMPTY_IMAGE_WIDTH;
     texture->image_data.texHeight = EMPTY_IMAGE_HEIGHT;
@@ -208,7 +205,7 @@ void TextureCreateEmpty(Texture2D *texture)
 
     VkDeviceSize bufferSize = texture->image_data.texWidth * texture->image_data.texHeight * 4;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     uint32_t *data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -221,8 +218,7 @@ void TextureCreateEmpty(Texture2D *texture)
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);
     ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 }
 
 Texture2D *TextureFindTexture(char *path)
@@ -281,7 +277,7 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
     memset(images[e_var_num_images].path, 0, 2048);
     memcpy(images[e_var_num_images].path, image->path, len);
     images[e_var_num_images].texture.image_data = fileData;
-    images[e_var_num_images].texture.textureType = VK_FORMAT_R8G8B8A8_SRGB;
+    images[e_var_num_images].texture.textureType = image->img_type; // VK_FORMAT_R8G8B8A8_SRGB;
 
     VkDeviceSize imageSize = fileData.texWidth * fileData.texHeight * sizeof(float);
 
@@ -298,7 +294,7 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
         return 0;
     }
 
-    BuffersCreate(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     vkMapMemory(e_device, stagingBufferMemory, 0, imageSize, 0, &data);
     memcpy(data, fileData.data, imageSize);
@@ -311,8 +307,7 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
     ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 
     return 1;
 }
@@ -538,7 +533,7 @@ void TextureUpdate(BluePrintDescriptor *descriptor, void *in_data, uint32_t size
 
     VkDeviceSize bufferSize = texture->image_data.texWidth * texture->image_data.texHeight * 4;
 
-    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
     uint32_t *data;
     vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -550,8 +545,7 @@ void TextureUpdate(BluePrintDescriptor *descriptor, void *in_data, uint32_t size
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);
     ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(e_device, stagingBuffer, NULL);
-    vkFreeMemory(e_device, stagingBufferMemory, NULL);
+    BuffersDestroyBuffer(stagingBuffer);
 }
 
 //Не корректно

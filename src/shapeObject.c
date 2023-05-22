@@ -50,7 +50,7 @@ void ShapeObjectCreateQuad(ShapeObject *so, QuadParams *param)
 
     memcpy(tIndx, indx, 6 * sizeof(uint32_t));
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, verts, 4, tIndx, 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, 4, sizeof(Vertex2D), tIndx, 6, sizeof(uint32_t));
 }
 
 void ShapeObjectCreateCircle(ShapeObject *so, CircleParams *param)
@@ -114,7 +114,7 @@ void ShapeObjectCreateCircle(ShapeObject *so, CircleParams *param)
         iter +=3;
     }
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, verts, num_verts, indx, indx_size);
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, num_verts, sizeof(Vertex2D), indx, indx_size, sizeof(uint32_t));
 }
 
 void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
@@ -187,7 +187,7 @@ void ShapeObjectCreateShape(ShapeObject *so, ShapeParams *param)
         iter +=3;
     }
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, verts, num_verts, indx, indx_size);
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, num_verts, sizeof(Vertex2D), indx, indx_size, sizeof(uint32_t));
 }
 
 void ShapeObjectCreateLine(ShapeObject *so, LineParams *line)
@@ -209,14 +209,12 @@ void ShapeObjectCreateLine(ShapeObject *so, LineParams *line)
     verts[1].color = line->color;
 
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, verts, 2, NULL, 0);
+    GraphicsObjectSetVertex(&so->go.graphObj, verts, 2, sizeof(Vertex2D), NULL, 0, sizeof(uint32_t));
 }
 
 void ShapeObjectInit(ShapeObject *so, DrawParam *dParam, ShapeType type, void *param)
 {
     GameObject2DInit(so);
-
-    GraphicsObjectSetVertexSize(&so->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
 
     switch(type)
     {
@@ -270,16 +268,15 @@ void ShapeObjectAddDefault(ShapeObject *so, void *render)
     BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
     BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject2DImageBuffer, 0);
 
-    BluePrintAddTextureImage(&so->go.graphObj.blueprints, nums, so->go.image);
+    BluePrintAddTextureImage(&so->go.graphObj.blueprints, nums, so->go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-    setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
 

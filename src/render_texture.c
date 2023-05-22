@@ -359,7 +359,6 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
         default:
             render->m_format = 0;
             break;
-
     }
 
     render->type = type;
@@ -394,6 +393,7 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
 
     render->cascadeSplit = 0;
 
+    render->clear_color = vec3_f( 0.3, 0.01f, 0.01f);
     render->up_vector = vec3_f( 0, 1, 0);
 
     if(render->type == ENGINE_RENDER_TYPE_IMAGE)
@@ -426,7 +426,10 @@ void RenderTextureRecreate(RenderTexture *render)
 {
     RenderTextureDestroy(render);
 
-    RenderTextureInit(render, render->type, render->width, render->height, render->flags);
+    if(render->type == ENGINE_RENDER_TYPE_WINDOW)
+        RenderTextureInit(render, render->type, WIDTH, HEIGHT, render->flags);
+    else
+        RenderTextureInit(render, render->type, render->width, render->height, render->flags);
 }
 
 void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)
@@ -466,9 +469,9 @@ void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)
         }else{
             VkClearValue clearValues[2];
 
-            clearValues[0].color.float32[0] = 0.0f;
-            clearValues[0].color.float32[1] = 0.0f;
-            clearValues[0].color.float32[2] = 0.0f;
+            clearValues[0].color.float32[0] = render->clear_color.x;
+            clearValues[0].color.float32[1] = render->clear_color.y;
+            clearValues[0].color.float32[2] = render->clear_color.z;
             clearValues[0].color.float32[3] = 1.0f;
             clearValues[1].depthStencil.depth = 1.0f;
             clearValues[1].depthStencil.stencil = 0;

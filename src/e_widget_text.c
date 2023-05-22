@@ -12,12 +12,12 @@
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
 
-void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
+void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt, BluePrintDescriptor *descriptor) {
 
     vec2 offset = {0, 0};
     if(wt->widget.parent != NULL){
-        offset = v2_div(wt->widget.parent->offset, (vec2){ WIDTH, HEIGHT});
-        wt->widget.position = v2_add(v2_add(wt->widget.go.transform.position, wt->widget.parent->position), offset);
+        offset = v2_div(wt->widget.parent->offset, vec2_f(WIDTH, HEIGHT));
+        wt->widget.position = v2_add(v2_add(wt->widget.go.transform.position, v2_muls(wt->widget.parent->position, 2.0)), offset);
     }
     else{
         wt->widget.position = wt->widget.go.transform.position;
@@ -29,13 +29,21 @@ void TextWidgetUpdateUniformBufferDefault(EWidgetText* wt) {
 
     WidgetUpdateScissor(&wt->widget, &settings[0].scissor, &parent_pos, &offset);
 
-    if(wt->widget.position.y + (wt->tData.font.fontSize * 2) < parent_pos.y)
+    /*if(wt->widget.position.y + (wt->tData.font.fontSize * 2) < parent_pos.y)
         wt->widget.widget_flags &= ~(ENGINE_FLAG_WIDGET_VISIBLE);
     else
-        wt->widget.widget_flags |= ENGINE_FLAG_WIDGET_VISIBLE;
+        wt->widget.widget_flags |= ENGINE_FLAG_WIDGET_VISIBLE;*/
+
+    TransformBuffer2D tbo;
+
+    tbo.position = v2_subs(wt->widget.position, 1.0f);
+    tbo.rotation = wt->widget.go.transform.rotation;
+    tbo.scale = wt->widget.go.transform.scale;
+
+    DescriptorUpdate(descriptor, &tbo, sizeof(tbo));
 }
 
-void TextWidgetDrawDefault(EWidgetText* wt)
+void TextWidgetDrawDefault(EWidgetText* wt, void *command)
 {
     for(int i=0; i < wt->widget.go.graphObj.blueprints.num_blue_print_packs; i++)
     {
@@ -47,19 +55,21 @@ void TextWidgetDrawDefault(EWidgetText* wt)
 
             for(int j=0; j < shader_pack->num_pipelines; j++){
 
-                vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, shader_pack->pipelines[j].pipeline);
-                vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, shader_pack->pipelines[j].layout, 0, 1, &shader_pack->descriptor.descr_sets[imageIndex], 0, NULL);
+                vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_GRAPHICS, shader_pack->pipelines[j].pipeline);
+                vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, shader_pack->pipelines[j].layout, 0, 1, &shader_pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 PipelineSetting *settings = &pack->settings[j];
 
-                vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &settings->viewport);
-                vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &settings->scissor);
+                if(settings->flags & ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW){
+                    vkCmdSetViewport(command, 0, 1, &settings->viewport);
+                    vkCmdSetScissor(command, 0, 1, &settings->scissor);
+                }
 
                 VkDeviceSize offsets = 0;
-                vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &wt->widget.go.graphObj.shapes[settings->vert_indx].vParam.vertexBuffer, &offsets);
+                vkCmdBindVertexBuffers(command, 0, 1, &wt->widget.go.graphObj.shapes[settings->vert_indx].vParam.vertexBuffer, &offsets);
                 for (uint32_t j = 0; j < wt->tData.font.numLetters; j++)
                 {
-                    vkCmdDraw(commandBuffers[imageIndex], 4, 1, j * 4, 0);
+                    vkCmdDraw(command, 4, 1, j * 4, 0);
                 }
 
             }
@@ -165,8 +175,6 @@ void TextWidgetInit(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* p
         TextDataInit(&wt->tData, fontSize, temp);
     }
 
-
-
     wt->widget.type = ENGINE_WIDGET_TYPE_TEXT;
     wt->widget.color = (vec4){0.4, 0.1, 0.1, 1.0};
 
@@ -187,7 +195,7 @@ void TextWidgetAddDefault(EWidgetText *wt, void *render)
     uint32_t nums = wt->widget.go.graphObj.blueprints.num_blue_print_packs;
     wt->widget.go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
 
-    BluePrintAddUniformObject(&wt->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
+    BluePrintAddUniformObject(&wt->widget.go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)TextWidgetUpdateUniformBufferDefault, 0);
 
     TextWidgetAddTexture(wt, nums);
 
@@ -195,10 +203,9 @@ void TextWidgetAddDefault(EWidgetText *wt, void *render)
 
     PipelineSettingSetDefault(&wt->widget.go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_text_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_text_vert_spv_size);
-    setting.fragShader = &_binary_shaders_text_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_text_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_text_vert_spv_start, (size_t)(&_binary_shaders_text_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_text_frag_spv_start, (size_t)(&_binary_shaders_text_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
     setting.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
@@ -206,6 +213,13 @@ void TextWidgetAddDefault(EWidgetText *wt, void *render)
     GameObject2DAddSettingPipeline(wt, nums, &setting);
 
     wt->widget.go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void TextWidgetInitDefault(EWidgetText *wt, int fontSize, DrawParam *dParam, EWidget* parent)
+{
+    TextWidgetInit(wt, fontSize, dParam, parent);
+    TextWidgetAddDefault(wt, dParam->render);
+    GameObject2DInitDraw(wt);
 }
 
 void TextWidgetSetColor(EWidgetText* wt, vec3 color)

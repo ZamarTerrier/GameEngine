@@ -21,6 +21,20 @@ extern char _binary_shaders_text_vert_spv_end;
 extern int _binary_shaders_text_vert_spv_size;
 extern char _binary_shaders_text_vert_spv_start;
 
+extern char _binary_shaders_default_frag2D_spv_end;
+extern int _binary_shaders_default_frag2D_spv_size;
+extern char _binary_shaders_default_frag2D_spv_start;
+extern char _binary_shaders_default_vert2D_spv_end;
+extern int _binary_shaders_default_vert2D_spv_size;
+extern char _binary_shaders_default_vert2D_spv_start;
+
+extern char _binary_shaders_default_frag3D_spv_end;
+extern int _binary_shaders_default_frag3D_spv_size;
+extern char _binary_shaders_default_frag3D_spv_start;
+extern char _binary_shaders_default_vert3D_spv_end;
+extern int _binary_shaders_default_vert3D_spv_size;
+extern char _binary_shaders_default_vert3D_spv_start;
+
 extern char _binary_shaders_quad_frag_spv_end;
 extern int _binary_shaders_quad_frag_spv_size;
 extern char _binary_shaders_quad_frag_spv_start;
@@ -68,12 +82,25 @@ extern char _binary_shaders_terrain_frag_spv_start;
 extern char _binary_shaders_terrain_vert_spv_end;
 extern int _binary_shaders_terrain_vert_spv_size;
 extern char _binary_shaders_terrain_vert_spv_start;
+extern char _binary_shaders_terrain_tesc_spv_end;
+extern int _binary_shaders_terrain_tesc_spv_size;
+extern char _binary_shaders_terrain_tesc_spv_start;
+extern char _binary_shaders_terrain_tese_spv_end;
+extern int _binary_shaders_terrain_tese_spv_size;
+extern char _binary_shaders_terrain_tese_spv_start;
 extern char _binary_shaders_terrain_shadow_frag_spv_end;
 extern int _binary_shaders_terrain_shadow_frag_spv_size;
 extern char _binary_shaders_terrain_shadow_frag_spv_start;
 extern char _binary_shaders_terrain_shadow_vert_spv_end;
 extern int _binary_shaders_terrain_shadow_vert_spv_size;
 extern char _binary_shaders_terrain_shadow_vert_spv_start;
+
+extern char _binary_shaders_tree_frag_spv_end;
+extern int _binary_shaders_tree_frag_spv_size;
+extern char _binary_shaders_tree_frag_spv_start;
+extern char _binary_shaders_tree_vert_spv_end;
+extern int _binary_shaders_tree_vert_spv_size;
+extern char _binary_shaders_tree_vert_spv_start;
 
 extern char _binary_shaders_image_frag_spv_end;
 extern int _binary_shaders_image_frag_spv_size;

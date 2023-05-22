@@ -39,7 +39,7 @@ void WidgetUpdateScissor(EWidget *widget, EIRect2D *scissor, vec2 *parent_pos, v
 
             parent = parent->parent;
 
-            *offset = v2_div(parent->offset, (vec2){ WIDTH, HEIGHT});
+            *offset = v2_div(parent->offset, vec2_f( WIDTH, HEIGHT));
 
             vec2 temp = v2_add(parent->position, *offset);
 
@@ -104,11 +104,11 @@ void WidgetGUIBufferUpdate(EWidget *ew, BluePrintDescriptor *descriptor)
     vec2 offset = {0, 0};
     if(ew->parent != NULL)
     {
-        offset = v2_div(ew->parent->offset, (vec2){ WIDTH, HEIGHT });
-        ew->position = v2_add(v2_add(ew->go.transform.position, ew->parent->position), offset);
+        offset = v2_div(ew->parent->offset, vec2_f( WIDTH / 2, HEIGHT / 2));
+        ew->position = v2_add(v2_add(v2_divs(ew->go.transform.position, 2.0), ew->parent->position), offset);
     }
     else
-        ew->position = ew->go.transform.position;
+        ew->position = v2_divs(ew->go.transform.position, 2.0);
 
     ew->scale = ew->go.transform.scale;
 
@@ -134,7 +134,7 @@ void WidgetMaskObjectUpdate(EWidget *ew, BluePrintDescriptor *descriptor)
 
         while(parent != NULL)
         {
-            offset = v2_div(parent->offset, (vec2){ WIDTH, HEIGHT});
+            offset = v2_div(parent->offset, vec2_f( WIDTH, HEIGHT));
             mbo.objs[iter].position = v2_add(parent->position, offset);
             mbo.objs[iter].size = v2_sub(parent->go.transform.scale, v2_divs(offset, 2));
             iter ++;
@@ -172,7 +172,6 @@ void WidgetSetParent(EWidget* ew, EWidget* parent){
             }
 
             child->next = (ChildStack *)calloc(1, sizeof(ChildStack));
-            child->next->next = NULL;
             child->next->before = child;
             child->next->node = ew;
 
@@ -235,8 +234,7 @@ void WidgetInit(EWidget* ew, DrawParam *dParam, EWidget* parent){
 
     GameObject2DInit(&ew->go);
 
-    GraphicsObjectSetVertexSize(&ew->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&ew->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&ew->go.graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 
     if(dParam != NULL)
         GraphicsObjectSetShadersPath(&ew->go.graphObj, dParam->vertShader, dParam->fragShader);
@@ -276,16 +274,15 @@ void WidgetAddDefault(EWidget *widget, void *render)
     BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(GUIBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetGUIBufferUpdate, 0);
     BluePrintAddUniformObject(&widget->go.graphObj.blueprints, nums, sizeof(MaskObjectBuffer), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)WidgetMaskObjectUpdate, 0);
 
-    BluePrintAddTextureImage(&widget->go.graphObj.blueprints, nums, widget->go.image);
+    BluePrintAddTextureImage(&widget->go.graphObj.blueprints, nums, widget->go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&widget->go.graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_gui_widget_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_gui_widget_vert_spv_size);
-    setting.fragShader = &_binary_shaders_gui_widget_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_gui_widget_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_gui_widget_vert_spv_start, (size_t)(&_binary_shaders_gui_widget_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_gui_widget_frag_spv_start, (size_t)(&_binary_shaders_gui_widget_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
 
     GameObject2DAddSettingPipeline(&widget->go, nums, &setting);
@@ -456,8 +453,10 @@ void WidgetRecreate(EWidget * widget){
 }
 
 void WidgetDestroy(EWidget *widget){
+
     ChildStack *child = widget->child;
     ChildStack *lastChild;
+
     while(child != NULL)
     {
         WidgetDestroy(child->node);
@@ -465,6 +464,7 @@ void WidgetDestroy(EWidget *widget){
         child = child->next;
         free(lastChild);
     }
+
     GameObjectDestroy(widget);
 
     free(widget->callbacks.stack);

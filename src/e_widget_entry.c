@@ -249,9 +249,7 @@ void EntryWidgetInit(EWidgetEntry *entry, int fontSize, DrawParam *dParam, EWidg
 
     entry->widget.color = (vec4){0.7, 0.7, 0.7, 1.0f};
 
-    TextWidgetInit(&entry->text, fontSize, dParam, &entry->widget);
-    TextWidgetAddDefault(&entry->text, dParam->render);
-    GameObject2DInitDraw(&entry->text);
+    TextWidgetInitDefault(&entry->text, fontSize, dParam, &entry->widget);
     Transform2DSetPosition(&entry->text, 0, 10 + (fontSize * 2) );
 
     entry->currPos = 0;

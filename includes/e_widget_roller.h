@@ -14,6 +14,7 @@ typedef struct{
     float *source;
     float move_val;
     float stable_val;
+    vec4 selfColor;
 } EWidgetRoller;
 
 void RollerWidgetInit(EWidgetRoller *roller, DrawParam *dParam, EWidget *parent);

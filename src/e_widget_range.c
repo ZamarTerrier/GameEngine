@@ -9,6 +9,8 @@ vec2 range_mouse, range_temp;
 
 int RangeWidgetPress(EWidget* widget, void* entry, void* args){
 
+    EWidgetRange *range = args;
+
     double xpos, ypos;
 
     EngineGetCursorPos(&xpos, &ypos);
@@ -17,7 +19,19 @@ int RangeWidgetPress(EWidget* widget, void* entry, void* args){
 
     range_temp = Transform2DGetPosition(widget);
 
+    range->range.color.x = range->selfColor.x - 0.2f;
+    range->range.color.y = range->selfColor.y - 0.2f;
+    range->range.color.z = range->selfColor.z - 0.2f;
+    range->range.color.w = range->selfColor.w;
+
     return 0;
+}
+
+int RangeWidgetRelease(EWidget* widget, void* entry, void* args){
+
+    EWidgetRange *range = args;
+
+    range->range.color = range->selfColor;
 }
 
 int RangeWidgetMove(EWidget* widget, void* entry, void* args){
@@ -32,7 +46,7 @@ int RangeWidgetMove(EWidget* widget, void* entry, void* args){
     te.y = ypos;
 
     te2 = Transform2DGetPosition(widget);
-    te = v2_sub(te, range_mouse);
+    te = v2_muls(v2_sub(te, range_mouse), 2);
     te.x += range_temp.x;
     te.y = te2.y;
 
@@ -63,7 +77,6 @@ int RangeWidgetMove(EWidget* widget, void* entry, void* args){
 
 void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min, float max, DrawParam *dParam, EWidget *parent){
 
-    DrawParam param = {};
     WidgetInit(&range->widget, dParam, parent);
     WidgetAddDefault(&range->widget, dParam->render);
     GameObject2DInitDraw(&range->widget);
@@ -79,12 +92,12 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
     WidgetAddDefault(&range->range, dParam->render);
     GameObject2DInitDraw(&range->range);
 
-    range->line.color = (vec4){0.7, 0.7, 0.7, 1.0};
+    range->line.color = vec4_f(0.7, 0.7, 0.7, 1.0);
     Transform2DSetScale(&range->line, size_x, 2);
     Transform2DSetPosition(&range->line, 0, size_y - 4);
     range->line.widget_flags &= ~(ENGINE_FLAG_WIDGET_ACTIVE);
 
-    range->widget.color = (vec4){0.7, 0.7, 0.7, 0.0};
+    range->widget.color = vec4_f(0.7, 0.7, 0.7, 0.0);
     range->widget.transparent = 0.0f;
     Transform2DSetScale(&range->widget, size_x, size_y);
 
@@ -92,12 +105,13 @@ void RangeWidgetInit(EWidgetRange *range, float size_x, float size_y, float min,
     range->max = max;
     range->dest = NULL;
 
-    range->range.color = (vec4){0.3, 0, 0, 1.0};
+    range->range.color = range->selfColor = vec4_f(0.3, 0, 0, 1.0);
     Transform2DSetScale(&range->range, 10, size_y);
     Transform2DSetPosition(&range->range, 0, 0);
 
-    WidgetConnect(&range->range, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, RangeWidgetPress, NULL);
+    WidgetConnect(&range->range, ENGINE_WIDGET_TRIGGER_MOUSE_PRESS, RangeWidgetPress, range);
     WidgetConnect(&range->range, ENGINE_WIDGET_TRIGGER_MOUSE_MOVE, RangeWidgetMove, range);
+    WidgetConnect(&range->range, ENGINE_WIDGET_TRIGGER_MOUSE_RELEASE, RangeWidgetRelease, range);
 }
 
 void RangeWidgetSetValueDestin(EWidgetRange *range, float *val_dest)

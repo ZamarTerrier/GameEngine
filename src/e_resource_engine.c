@@ -51,3 +51,7 @@ uint32_t glfwExtensionCount = 0;
 
 bool framebufferResized = false;
 bool framebufferwasResized = true;
+
+ChildStack *alloc_buffers_memory_head = NULL;
+ChildStack *alloc_descriptor_head = NULL;
+ChildStack *alloc_pipeline_head = NULL;

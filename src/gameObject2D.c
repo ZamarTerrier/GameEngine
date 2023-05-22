@@ -21,7 +21,7 @@ void GameObject2DTransformBufferUpdate(GameObject2D *go, BluePrintDescriptor *de
 {
     TransformBuffer2D tbo;
 
-    tbo.position = v2_subs(go->transform.position, 0.5f);
+    tbo.position = v2_subs(go->transform.position, 1.0f);
     tbo.rotation = go->transform.rotation;
     tbo.scale = go->transform.scale;
 
@@ -31,9 +31,8 @@ void GameObject2DTransformBufferUpdate(GameObject2D *go, BluePrintDescriptor *de
 void GameObject2DImageBuffer(GameObject2D *go, BluePrintDescriptor *descriptor)
 {
     ImageBufferObjects ibo;
-    ibo.origin = go->transform.img.origin;
     ibo.offset = go->transform.img.offset;
-    ibo.scale = go->transform.img.scale;
+    ibo.rotation = go->transform.img.rotation;
 
     ibo.rotation.x = 0;
     ibo.rotation.y = 0;

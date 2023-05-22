@@ -13,10 +13,8 @@ typedef struct {
 } TransformBuffer2D;
 
 typedef struct{
-    vec2 origin;
     vec2 offset;
     vec2 rotation;
-    vec2 scale;
 } ImageBufferObjects;
 
 typedef struct{
@@ -24,6 +22,15 @@ typedef struct{
     mat4 view;
     mat4 proj;
 } ModelBuffer3D;
+
+typedef struct{
+    vec4 lightPos;
+    vec4 frustumPlanes[6];
+    float displacementFactor;
+    float tessellationFactor;
+    vec2 viewportDim;
+    float tessellatedEdgeSize;
+} TesselationBuffer;
 
 typedef struct {
     vec3 position __attribute__ ((aligned (16)));

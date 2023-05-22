@@ -15,9 +15,8 @@ typedef struct{
     vec2 scale;
     vec2 scaleOrig;
     struct{
-        vec2 origin;
         vec2 offset;
-        vec2 scale;
+        vec2 rotation;
     }img;
     mat4 model;
 } Transform2D;
@@ -41,15 +40,11 @@ void Transform3DInit(Transform3D* transform);
 
 void Transform2DSetPosition(struct GameObject2D* go, float x, float y);
 vec2 Transform2DGetPosition(struct GameObject2D* go);
-void Transform2DSetImageOrigin(struct GameObject2D* go, float x, float y);
-vec2 Transform2DGetImageOrigin(struct GameObject2D* go);
 void Transform2DReposition(struct GameObject2D* go);
 void Transform2DSetImageOffset(struct GameObject2D* go, float x, float y);
 vec2 Transform2DGetImageOffset(struct GameObject2D* go);
 void Transform2DSetScale(struct GameObject2D* go, float x, float y);
 vec2 Transform2DGetScale(struct GameObject2D* go);
-void Transform2DSetImageScale(struct GameObject2D* go, float x, float y);
-vec2 Transform2DGetImageScale(struct GameObject2D* go);
 void Transform2DRescale(struct GameObject2D* go);
 
 void Transform3DSetPositionT(Transform3D* transform, float x, float y, float z);

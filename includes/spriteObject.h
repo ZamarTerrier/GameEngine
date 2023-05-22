@@ -25,6 +25,8 @@ void SpriteObjectInitDefault(SpriteObject *go, DrawParam *dParam);
 
 void SpriteObjectAddDefault(SpriteObject *so, void *render);
 
+void SpriteObjectSetOffsetRect(SpriteObject *so, float x, float y, float width, float height);
+
 #ifdef __cplusplus
 }
 #endif

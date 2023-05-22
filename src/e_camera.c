@@ -19,8 +19,8 @@ void Camera3DInit(Camera3D *cam){
     cam->scale.x = 1;
     cam->scale.y = 1;
     cam->scale.z = 1;
-    cam->view_distance = 500;
-    cam->view_angle = 45.0f;
+    cam->view_distance = 1000;
+    cam->view_angle = 75.0f;
     cam->view_near = 0.01f;
 
     Camera3DSetActive(cam);

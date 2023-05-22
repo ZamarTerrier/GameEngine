@@ -11,6 +11,141 @@
 #include "e_resource_descriptors.h"
 #include "e_resource_export.h"
 
+void PipelineAcceptStack(void *pipeline, void *pipeline_layout)
+{
+    PipelineStack *stack;
+
+    if(alloc_pipeline_head->node == NULL){
+        alloc_pipeline_head->next = calloc(1, sizeof(ChildStack));
+        alloc_pipeline_head->node = calloc(1, sizeof(PipelineStack));
+
+        alloc_pipeline_head->next->before = alloc_pipeline_head;
+
+        stack = alloc_pipeline_head->node;
+        stack->GraphicsPipeline = pipeline;
+        stack->GraphicsPipelineLayout = pipeline_layout;
+    }
+    else{
+
+        ChildStack *child = alloc_pipeline_head->next;
+
+        while(child->next != NULL)
+        {
+            child = child->next;
+        }
+
+        child->next = calloc(1, sizeof(ChildStack));
+        child->next->before = child;
+        child->node = calloc(1, sizeof(PipelineStack));
+
+        stack = child->node;
+        stack->GraphicsPipeline = pipeline;
+        stack->GraphicsPipelineLayout = pipeline_layout;
+    }
+
+}
+
+void PipelineClearAll()
+{
+    ChildStack *child = alloc_pipeline_head;
+
+    PipelineStack *stack = NULL;
+
+    uint32_t counter = 0;
+
+    while(child->next != NULL)
+    {
+        stack = child->node;
+
+        PipelineDestroyStack(stack->GraphicsPipeline);
+
+        free(child->node);
+        child->node = NULL;
+
+        child = child->next;
+
+        free(child->before);
+
+        counter ++;
+    }
+
+    if(child->node != NULL){
+        stack = child->node;
+
+        PipelineDestroyStack(stack->GraphicsPipeline);
+
+        free(child->node);
+        child->node = NULL;
+
+        counter++;
+    }
+
+    free(alloc_pipeline_head);
+
+    if(counter > 0)
+        printf("Количество не очищенных пайплайнов : %i\n", counter);
+}
+
+void PipelineDestroyStack(void *pipeline)
+{
+    PipelineStack *stack = NULL;
+
+    ChildStack *child = alloc_pipeline_head;
+
+    while(child->next != NULL)
+    {
+        stack = child->node;
+
+        if(stack->GraphicsPipeline == pipeline)
+            break;
+
+        child = child->next;
+    }
+
+    stack = child->node;
+
+    if(stack == NULL){
+        perror("Такой области памяти нет!\n");
+        return;
+    }
+
+    if(child->next != NULL && child->before != NULL)
+    {
+        ChildStack *next = child->next;
+        ChildStack *before = child->before;
+
+        vkDestroyPipeline(e_device, stack->GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, stack->GraphicsPipelineLayout, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        free(child);
+        next->before = before;
+        before->next = next;
+
+    }else if(child->next != NULL){
+        vkDestroyPipeline(e_device, stack->GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, stack->GraphicsPipelineLayout, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        child->next->before = NULL;
+        alloc_pipeline_head = child->next;
+        free(child);
+
+    }else if(child->before != NULL){
+        vkDestroyPipeline(e_device, stack->GraphicsPipeline, NULL);
+        vkDestroyPipelineLayout(e_device, stack->GraphicsPipelineLayout, NULL);
+        free(child->node);
+        child->node = NULL;
+
+        child->before->next = NULL;
+
+        free(child);
+
+    }
+}
+
 void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
     PipelineSetting *setting = arg;
@@ -19,8 +154,6 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
 
     setting->poligonMode = VK_POLYGON_MODE_FILL;
     setting->topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    setting->vertShader = graphObj->aShader.vertShader;
-    setting->fragShader = graphObj->aShader.fragShader;
     setting->fromFile = 1;
     setting->scissor.offset.x = 0;
     setting->scissor.offset.y = 0;
@@ -31,9 +164,19 @@ void PipelineSettingSetDefault(GraphicsObject* graphObj, void *arg){
     setting->viewport.height = (float) swapChainExtent.height;
     setting->viewport.minDepth = 0.0f;
     setting->viewport.maxDepth = 1.0f;
-    setting->flags = ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW | ENGINE_PIPELINE_FLAG_DRAW_INDEXED | ENGINE_PIPELINE_FLAG_BIAS | ENGINE_PIPELINE_FLAG_ALPHA;
+    setting->flags = ENGINE_PIPELINE_FLAG_DYNAMIC_VIEW | ENGINE_PIPELINE_FLAG_DRAW_INDEXED | ENGINE_PIPELINE_FLAG_BIAS |\
+                     ENGINE_PIPELINE_FLAG_ALPHA | ENGINE_PIPELINE_FLAG_FRAGMENT_SHADER | ENGINE_PIPELINE_FLAG_VERTEX_SHADER;
     setting->fromFile = 0;
     setting->cull_mode = VK_CULL_MODE_BACK_BIT;
+}
+
+void PipelineSettingSetShader(PipelineSetting *setting, char *shader, size_t size, uint32_t type)
+{
+    uint32_t num = setting->num_stages;
+    setting->stages[num].some_shader = shader;
+    setting->stages[num].size_some_shader = size;
+    setting->stages[num].type_some_shader = type;
+    setting->num_stages ++;
 }
 
 void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t indx_desc)
@@ -45,37 +188,37 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     RenderTexture *render = graphObj->blueprints.blue_print_packs[indx_pack].render_point;
 
     //Шейдеры
-    shader vertShaderCode;
-    shader fragShaderCode;
+    VkPipelineShaderStageCreateInfo shaderStages[6];
+    memset(shaderStages, 0, sizeof(VkPipelineShaderStageCreateInfo) * 6);
 
-    if(setting->fromFile)
-    {
-        vertShaderCode = readFile(setting->vertShader);
-        fragShaderCode = readFile(setting->fragShader);
-    }else{
-        vertShaderCode.code = setting->vertShader;
-        vertShaderCode.size = setting->sizeVertShader;
+    uint32_t temp = 0x80;
+    uint32_t count_stages = 0;
+    while(temp < 0x1000){
 
-        fragShaderCode.code = setting->fragShader;
-        fragShaderCode.size = setting->sizeFragShader;
+        if(setting->flags & temp)
+        {
+            shaderStages[count_stages].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            shaderStages[count_stages].stage = setting->stages[count_stages].type_some_shader;
+            shaderStages[count_stages].pName = "main";
+
+            shader some_shader_code;
+
+            if(setting->fromFile)
+                some_shader_code = readFile(setting->stages[count_stages].some_shader);
+            else{
+                some_shader_code.code = setting->stages[count_stages].some_shader;
+                some_shader_code.size = setting->stages[count_stages].size_some_shader;
+            }
+
+            shaderStages[count_stages].module = createShaderModule(some_shader_code);
+
+            count_stages ++;
+
+        }
+
+        temp *=2;
     }
 
-    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
-
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
     //-----------------
     //Информация для щейдеров
 
@@ -99,7 +242,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-    /*if(render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH) && (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
+    if((render->type != ENGINE_RENDER_TYPE_DEPTH && !(render->flags & ENGINE_RENDER_FLAG_DEPTH)) || (setting->flags & ENGINE_PIPELINE_FLAG_ALPHA))
     {
         colorBlendAttachment.blendEnable = VK_TRUE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -108,7 +251,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
         colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
         colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-    }else*/
+    }else
         colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -218,8 +361,19 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
 
     //Сам пайплайн
     VkGraphicsPipelineCreateInfo pipelineInfo = {};
+
+    VkPipelineTessellationStateCreateInfo *tessellationState;
+    if(setting->flags & (ENGINE_PIPELINE_FLAG_TESSELLATION_CONTROL_SHADER | ENGINE_PIPELINE_FLAG_TESSELLATION_EVALUATION_SHADER))
+    {
+        tessellationState = calloc( 1, sizeof(VkPipelineTessellationStateCreateInfo));
+        tessellationState->sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+        tessellationState->patchControlPoints = 4;//patchControlPoints;
+
+        pipelineInfo.pTessellationState = tessellationState;
+    }
+
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
+    pipelineInfo.stageCount = count_stages;
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -244,8 +398,10 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
 
     //-----------------------
 
-    vkDestroyShaderModule(e_device, fragShaderModule, NULL);
-    vkDestroyShaderModule(e_device, vertShaderModule, NULL);
+    for(int i=0;i < count_stages;i++)
+        vkDestroyShaderModule(e_device, shaderStages[i].module, NULL);
+
+    PipelineAcceptStack(pipeline->pipeline, pipeline->layout);
 }
 
 void PipelineCreateGraphics(GraphicsObject* graphObj){
@@ -335,17 +491,14 @@ void PipelineCreateRenderPass() {
     }
 
     free(dependency);
-    dependency = NULL;
+    dependency = NULL;    
 }
 
 void PipelineDestroy(ShaderPack *pack)
 {
 
     for(int i=0;i < pack->num_pipelines;i++)
-    {
-        vkDestroyPipeline(e_device, pack->pipelines[i].pipeline, NULL);
-        vkDestroyPipelineLayout(e_device, pack->pipelines[i].layout, NULL);
-    }
+        PipelineDestroyStack(pack->pipelines[i].pipeline);
 
 }
 

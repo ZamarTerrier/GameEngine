@@ -10,9 +10,25 @@
 #define MAX_VERTEX_COUNT 65536
 #define MAX_INDEX_COUNT MAX_VERTEX_COUNT * 3
 
+typedef enum{
+    ENGINE_BUFFER_ALLOCATE_VERTEX,
+    ENGINE_BUFFER_ALLOCATE_INDEX,
+    ENGINE_BUFFER_ALLOCATE_UNIFORM,
+    ENGINE_BUFFER_ALLOCATE_STAGING,
+} BufferAllocType;
+
+typedef struct{
+    BufferAllocType type;
+    void *some_buffer;
+    void *some_memory;
+} BufferStack;
+
 void BuffersCreateCommandPool();
 
 void BuffersCreateCommand();
+
+void BuffersClearAll();
+void BuffersDestroyBuffer(void *buffer);
 
 int BuffersCreateVertexInst(vertexParam* vert);
 int BuffersCreateVertex(vertexParam* vert);
@@ -29,7 +45,7 @@ void BuffersCreateUniform(UniformStruct* uniform);
 
 uint32_t findMemoryType(uint32_t typeFilter, uint32_t properties);
 
-void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** buffer, void** bufferMemory);
+void BuffersCreate(uint64_t size, uint32_t usage, uint32_t properties, void** buffer, void** bufferMemory, uint32_t type);
 
 void BuffersCopy(void* srcBuffer, void* dstBuffer, uint64_t size);
 

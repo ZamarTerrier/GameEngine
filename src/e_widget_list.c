@@ -1,5 +1,7 @@
 #include "e_widget_list.h"
 
+#include "e_math.h"
+
 int max_size = 2;
 
 int ListWidgetPressItem(EWidget *widget, void *entry, int id){
@@ -16,7 +18,7 @@ int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 
     button = widget;
 
-    button->widget.color.x = 0.6;
+    button->widget.color.x += 0.6;
 
     WidgetConfirmTrigger(list, ENGINE_WIDGET_TRIGGER_LIST_PRESS_ITEM, id);
 
@@ -25,14 +27,14 @@ int ListWidgetPressItem(EWidget *widget, void *entry, int id){
 
 void ListWidgetInit(EWidgetList *list, int size_x, int size_y, DrawParam *dParam, EWidget *parent){
 
-    WidgetInit(list, dParam, parent);
+    WidgetInit(list, NULL, parent);
     WidgetAddDefault(list, dParam->render);
     GameObject2DInitDraw(list);
 
     memcpy(list->widget.go.name, "Widget_List", 11);
     list->widget.type = ENGINE_WIDGET_TYPE_LIST;
 
-    list->widget.color = (vec4){ 0.4, 0.4, 0.4, 1.0};
+    list->widget.color = vec4_f(0.4, 0.4, 0.4, 1.0);
     list->widget.transparent = 0.0f;
 
     list->size_x = size_x;
@@ -87,6 +89,9 @@ void ListWidgetRemoveItem(EWidgetList *list, int num){
         return;
 
     ChildStack *child = WidgetFindChild(&list->widget, num);
+
+    if(child == NULL)
+        return;
 
     if(child->next != NULL && child->before != NULL)
     {

@@ -90,6 +90,7 @@ typedef struct{
     int size;
     int imgWidth;
     int imgHeight;
+    uint32_t img_type;
     uint32_t flags;
 } GameObjectImage;
 
@@ -139,6 +140,18 @@ typedef struct{
     vec3 position;
     vec3 rotation;
 } SomeDirLight;
+
+typedef struct{
+    uint32_t type;
+    vec3 orig;
+    vec3 dir;
+    float angle;
+} TreePeace;
+
+typedef struct{
+    uint32_t v_index;
+    uint32_t i_index;
+} VertextIterator;
 
 typedef struct{
     char diffuse[256];

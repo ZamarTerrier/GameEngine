@@ -63,8 +63,6 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
 
     so->type = type;
 
-    GraphicsObjectSetVertexSize(&so->go.graphObj, 0, sizeof(SkyVertex), sizeof(uint32_t));
-
     SkyVertex *some_vertex = calloc(4, sizeof(SkyVertex));
     some_vertex[0].position.x = -1;
     some_vertex[0].position.y = -1;
@@ -83,7 +81,7 @@ void SkyObjectInit(SkyObject *so, DrawParam *dParam, EngineSkyType type)
     some_vertex[3].texture_uv.x = 1;
     some_vertex[3].texture_uv.y = 0;
 
-    GraphicsObjectSetVertex(&so->go.graphObj, 0, some_vertex, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&so->go.graphObj, some_vertex, 4, sizeof(SkyVertex), projPlaneIndx, 6, sizeof(uint32_t));
 
     free(some_vertex);
 
@@ -103,28 +101,20 @@ void SkyObjectAddDefault(SkyObject *so, void *render)
 
     switch(so->type){
         case ENGINE_SKY_TYPE_NIGHT:
-            setting.vertShader = &_binary_shaders_sky_stars_vert_spv_start;
-            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_stars_vert_spv_size);
-            setting.fragShader = &_binary_shaders_sky_stars_frag_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_stars_frag_spv_size);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_stars_vert_spv_start, (size_t)(&_binary_shaders_sky_stars_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_stars_frag_spv_start, (size_t)(&_binary_shaders_sky_stars_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         case ENGINE_SKY_TYPE_DAY:
-            setting.vertShader = &_binary_shaders_sky_sky_vert_spv_start;
-            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_sky_vert_spv_size);
-            setting.fragShader = &_binary_shaders_sky_sky_frag_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_sky_frag_spv_size);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_sky_vert_spv_start, (size_t)(&_binary_shaders_sky_sky_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_sky_frag_spv_start, (size_t)(&_binary_shaders_sky_sky_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         case ENGINE_SKY_TYPE_ATMOSPHERIC:
-            setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
-            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
-            setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_atmospheric_vert_spv_start, (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_atmospheric_frag_spv_start, (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         default:
-            setting.vertShader = &_binary_shaders_sky_atmospheric_vert_spv_start;
-            setting.sizeVertShader = (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size);
-            setting.fragShader = &_binary_shaders_sky_atmospheric_frag_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_atmospheric_vert_spv_start, (size_t)(&_binary_shaders_sky_atmospheric_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+            PipelineSettingSetShader(&setting, &_binary_shaders_sky_atmospheric_frag_spv_start, (size_t)(&_binary_shaders_sky_atmospheric_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
     }
 

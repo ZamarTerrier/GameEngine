@@ -56,4 +56,8 @@ extern uint32_t glfwExtensionCount;
 extern bool framebufferResized;
 extern bool framebufferwasResized;
 
+extern ChildStack *alloc_buffers_memory_head;
+extern ChildStack *alloc_descriptor_head;
+extern ChildStack *alloc_pipeline_head;
+
 #endif // E_RESOURCE_ENGINE_H

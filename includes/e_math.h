@@ -33,6 +33,8 @@ mat3 m3_translation_matrix(mat3 matrix, vec2 pos);
 mat3 m3_mult(mat3 m1, mat3 m2);
 vec3 m3_v3_mult(mat3 m, vec3 v);
 
+vec2 vec2_f(float x, float y);
+
 float v2_cross(vec2 a, vec2 b);
 vec2 v2_add(vec2 a, vec2 b);
 vec2 v2_adds  (vec2 a, float s);
@@ -76,6 +78,8 @@ vec3 v3_slerp(vec3 start, vec3 end, float percent);
 vec3 v3_to(vec3 from, vec3 to, float t);
 float v3_point_segment_dist(const vec3 *P, const vec3 *x0, const vec3 *b, vec3 *witness);
 float v3_point_tri_dist(const vec3 *P, const vec3 *x0, const vec3 *B, const vec3 *C, vec3 *witness);
+
+vec4 vec4_f(float x, float y, float z, float w);
 
 vec4  v4_add(vec4 a, vec4 b) ;
 vec4  v4_sub(vec4 a, vec4 b) ;

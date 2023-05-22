@@ -32,8 +32,7 @@ void ProjectionPlaneInit(GameObject2D *go, DrawParam dParam){
 
     GameObject2DInit(go);
 
-    GraphicsObjectSetVertexSize(&go->graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&go->graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&go->graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 
     GraphicsObjectSetShadersPath(&go->graphObj, dParam.vertShader, dParam.fragShader);
 
@@ -50,10 +49,9 @@ void ProjectionPlaneAddDefault(GameObject2D *go, void *render)
 
     PipelineSettingSetDefault(&go->graphObj, &setting);
 
-    setting.vertShader = &_binary_shaders_sprite_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_sprite_vert_spv_size);
-    setting.fragShader = &_binary_shaders_sprite_frag_spv_start;
-    setting.sizeFragShader = (size_t)(&_binary_shaders_sprite_frag_spv_size);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
     setting.fromFile = 0;
     setting.vert_indx = 0;
 

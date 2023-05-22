@@ -62,6 +62,7 @@ typedef struct{
 
     float cascadeSplit;
 
+    vec3 clear_color;
     vec3 up_vector;
 
     mat4 view;

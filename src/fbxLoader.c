@@ -432,8 +432,7 @@ void Load3DFBXModel(ModelObject3D * mo, char *filepath, DrawParam *dParam)
 
           mo->nodes[i].models->graphObj.gItems.perspective = true;
 
-          GraphicsObjectSetVertexSize(&mo->nodes[i].models->graphObj, 0, sizeof(ModelVertex3D), sizeof(uint32_t));
-          GraphicsObjectSetVertex(&mo->nodes[i].models->graphObj, 0, fbx->meshes[i].verts, fbx->meshes[i].num_verts, fbx->meshes[i].indices, fbx->meshes[i].num_indices);
+          GraphicsObjectSetVertex(&mo->nodes[i].models->graphObj, fbx->meshes[i].verts, fbx->meshes[i].num_verts, sizeof(ModelVertex3D), fbx->meshes[i].indices, fbx->meshes[i].num_indices, sizeof(uint32_t));
 
           ModelDefaultInit(mo->nodes[i].models, dParam);
 

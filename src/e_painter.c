@@ -49,9 +49,7 @@ void PainterObjectInit(EPainter *painter)
 
     GameObject2DInit(painter);
 
-    GraphicsObjectSetVertexSize(&painter->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&painter->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
-
+    GraphicsObjectSetVertex(&painter->go.graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 }
 
 void PainterObjectAddDefault(EPainter *painter, void *render)
@@ -66,18 +64,24 @@ void PainterObjectAddDefault(EPainter *painter, void *render)
 
     PipelineSettingSetDefault(&painter->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    if(strlen(setting.stages[0].some_shader) == 0 || strlen(setting.stages[1].some_shader) == 0)
     {
-        setting.vertShader = &_binary_shaders_gui_painter_vert_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_gui_painter_vert_spv_size);
-        setting.fragShader = &_binary_shaders_gui_painter_frag_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_gui_painter_frag_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_gui_painter_vert_spv_start, (size_t)(&_binary_shaders_gui_painter_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, &_binary_shaders_gui_painter_frag_spv_start, (size_t)(&_binary_shaders_gui_painter_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
         setting.fromFile = 0;
     }
 
     GameObject2DAddSettingPipeline(&painter->go, nums, &setting);
 
     painter->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void PainterObjectInitDefault(EPainter *painter, DrawParam *dParam)
+{
+    PainterObjectInit(painter);
+    PainterObjectAddDefault(painter, dParam->render);
+    GameObject2DInitDraw(painter);
 }
 
 void PainterObjectSetPaintFunc(PaintDrawFunc paint_func)

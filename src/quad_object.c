@@ -30,8 +30,7 @@ void QuadObjectInit(QuadObject *qu, uint32_t type)
 {
     GameObject2DInit(qu);
 
-    GraphicsObjectSetVertexSize(&qu->go.graphObj, 0, sizeof(Vertex2D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&qu->go.graphObj, 0, projPlaneVert, 4, projPlaneIndx, 6);
+    GraphicsObjectSetVertex(&qu->go.graphObj, projPlaneVert, 4, sizeof(Vertex2D), projPlaneIndx, 6, sizeof(uint32_t));
 
     qu->type = type;
 
@@ -51,23 +50,19 @@ void QuadObjectAddDefault(QuadObject *qu, void *render)
 
     switch(qu->type == ENGINE_QUAD_TYPE_DEPTH){
         case ENGINE_QUAD_TYPE_DEPTH:
-            setting.fragShader = &_binary_shaders_quad_frag_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_spv_size);
+            PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_spv_start, (size_t)(&_binary_shaders_quad_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         case ENGINE_QUAD_TYPE_CUBE:
-            setting.fragShader = &_binary_shaders_quad_frag_2_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_2_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_2_spv_start, (size_t)(&_binary_shaders_quad_frag_2_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         case ENGINE_QUAD_TYPE_IMAGE:
-            setting.fragShader = &_binary_shaders_quad_frag_3_spv_start;
-            setting.sizeFragShader = (size_t)(&_binary_shaders_quad_frag_3_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_3_spv_start, (size_t)(&_binary_shaders_quad_frag_3_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
     }
 
-    setting.vertShader = &_binary_shaders_quad_vert_spv_start;
-    setting.sizeVertShader = (size_t)(&_binary_shaders_quad_vert_spv_size);
-    setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
+    PipelineSettingSetShader(&setting, &_binary_shaders_quad_vert_spv_start, (size_t)(&_binary_shaders_quad_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
 
+    setting.flags &= ~(ENGINE_PIPELINE_FLAG_ALPHA);
     setting.fromFile = 0;
     setting.vert_indx = 0;
 

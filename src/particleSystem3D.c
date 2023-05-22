@@ -133,8 +133,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
     Transform3DInit(&particle->go.transform);
     GraphicsObjectInit(&particle->go.graphObj, ENGINE_VERTEX_TYPE_3D_PARTICLE);
 
-    GraphicsObjectSetVertexSize(&particle->go.graphObj, 0, sizeof(ParticleVertex3D), sizeof(uint32_t));
-    GraphicsObjectSetVertex(&particle->go.graphObj, 0, NULL, 0, NULL, 0);
+    GraphicsObjectSetVertex(&particle->go.graphObj, NULL, 0, sizeof(ParticleVertex3D), NULL, 0, sizeof(uint32_t));
 
     particle->go.graphObj.gItems.perspective = true;
     particle->go.self.flags = 0;
@@ -164,18 +163,17 @@ void Particle3DAddDefault(ParticleObject3D* particle, void *render)
 
     BluePrintAddUniformObject(&particle->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)Particle3DDefaultUpdate, 0);
 
-    BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.images);
+    BluePrintAddTextureImage(&particle->go.graphObj.blueprints, 0, particle->go.images, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     PipelineSetting setting;
 
     PipelineSettingSetDefault(&particle->go.graphObj, &setting);
 
-    if(strlen(setting.vertShader) == 0 || strlen(setting.fragShader) == 0)
+    if(strlen(setting.stages[0].some_shader) == 0 || strlen(setting.stages[1].some_shader) == 0)
     {
-        setting.vertShader = &_binary_shaders_particle_vert3D_spv_start;
-        setting.sizeVertShader = (size_t)(&_binary_shaders_particle_vert3D_spv_size);
-        setting.fragShader = &_binary_shaders_particle_frag3D_spv_start;
-        setting.sizeFragShader = (size_t)(&_binary_shaders_particle_frag3D_spv_size);
+        PipelineSettingSetShader(&setting, &_binary_shaders_particle_vert3D_spv_start, (size_t)(&_binary_shaders_particle_vert3D_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, &_binary_shaders_particle_frag3D_spv_start, (size_t)(&_binary_shaders_particle_frag3D_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
         setting.fromFile = 0;
     }
 
