@@ -304,12 +304,15 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
                 vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
-                VkBuffer vertexBuffers[] = {go->graphObj.shapes[settings->vert_indx].vParam.vertexBuffer};
-                VkDeviceSize offsets[] = {0};
+                if(go->graphObj.shapes[settings->vert_indx].vParam.verticesSize > 0)
+                {
+                    VkBuffer vertexBuffers[] = {go->graphObj.shapes[settings->vert_indx].vParam.vertexBuffer};
+                    VkDeviceSize offsets[] = {0};
 
-                vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
+                    vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
+                }
 
-                if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED){
+                if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED && go->graphObj.shapes[settings->vert_indx].iParam.indexesSize > 0){
                     vkCmdBindIndexBuffer(command, go->graphObj.shapes[settings->vert_indx].iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
                     vkCmdDrawIndexed(command, go->graphObj.shapes[settings->vert_indx].iParam.indexesSize, 1, 0, 0, 0);
                 }else

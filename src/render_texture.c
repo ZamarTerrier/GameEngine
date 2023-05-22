@@ -426,7 +426,10 @@ void RenderTextureRecreate(RenderTexture *render)
 {
     RenderTextureDestroy(render);
 
-    RenderTextureInit(render, render->type, render->width, render->height, render->flags);
+    if(render->type == ENGINE_RENDER_TYPE_WINDOW)
+        RenderTextureInit(render, render->type, WIDTH, HEIGHT, render->flags);
+    else
+        RenderTextureInit(render, render->type, render->width, render->height, render->flags);
 }
 
 void RenderTextureBeginRendering(RenderTexture *render, void *cmd_buff)

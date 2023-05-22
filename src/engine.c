@@ -303,18 +303,28 @@ void EnginereRecreateSwapChain() {
 
     EngineCleanupSwapChain();
 
+    for(int i=0; i < drawItems.size;i++)
+    {
+        GameObjectClean(drawItems.objects[i]);
+    }
+
     SwapChainCreate();
     SwapChainCreateImageViews();
     PipelineCreateRenderPass();
     ToolsCreateDepthResources();
 
+
     for(int i=0;i < renderItems.size;i++)
     {
-        RenderTextureRecreate(renderItems.objects[i])  ;
+        RenderTextureRecreate(renderItems.objects[i]);
+    }
+
+    for(int i=0; i < drawItems.size;i++)
+    {
+        GameObjectRecreate(drawItems.objects[i]);
     }
 
     BuffersCreateCommand();
-
 
     framebufferwasResized = true;
 
@@ -475,8 +485,6 @@ void EngineLoop(){
 
     }
 
-    memset(&drawItems, 0, sizeof(EngineDrawItems));
-
     if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
         printf("failed to record command buffer!");
         exit(1);
@@ -527,6 +535,8 @@ void EngineLoop(){
         printf("failed to present swap chain image!");
         exit(1);
     }
+
+    memset(&drawItems, 0, sizeof(EngineDrawItems));
 
     for(int i=0; i < renderItems.size;i++)
     {

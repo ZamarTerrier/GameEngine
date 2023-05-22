@@ -6,6 +6,13 @@
 #include "gameObject3D.h"
 
 typedef struct{
+    vec3 *positions;
+    uint32_t num_positions;
+    uint32_t *indexes;
+    uint32_t num_indexes;
+} TreeVerts;
+
+typedef struct{
     GameObject3D go;
 } TreeObject;
 
