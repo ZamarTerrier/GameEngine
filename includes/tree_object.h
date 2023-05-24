@@ -5,6 +5,11 @@
 
 #include "gameObject3D.h"
 
+typedef enum{
+    ENGINE_TREE_OBJECT_TYPE_VERTEX,
+    ENGINE_TREE_OBJECT_TYPE_SDF,
+} TreeObjectType;
+
 typedef struct{
     vec3 *positions;
     uint32_t num_positions;
@@ -16,7 +21,7 @@ typedef struct{
     GameObject3D go;
 } TreeObject;
 
-void TreeObjectInit(TreeObject *to, DrawParam *dParam);
-void TreeObjectInitDefault(TreeObject *to, DrawParam *dParam);
+void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam);
+void TreeObjectInitDefault(TreeObject *to, uint32_t type, DrawParam *dParam);
 
 #endif // TREE_OBJECT_H

@@ -1,5 +1,7 @@
 #include "gameObject3D.h"
 
+#include <GLFW/glfw3.h>
+
 #include <vulkan/vulkan.h>
 
 #include "e_camera.h"
@@ -12,6 +14,7 @@
 #include "e_texture.h"
 
 #include "e_math.h"
+#include "e_tools.h"
 
 #include "e_resource_data.h"
 #include "e_resource_engine.h"
@@ -233,8 +236,6 @@ void GameObject3DLigtStatusBufferUpdate(GameObject3D* go, BluePrintDescriptor *d
 
 void GameObject3DLightPosUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
 {
-    Camera3D* cam = (Camera3D*) cam3D;
-
     LightPosBuff lpb;
 
     PointLightBuffer plb = {};
@@ -245,9 +246,28 @@ void GameObject3DLightPosUpdate(GameObject3D* go, BluePrintDescriptor *descripto
     uint32_t layer_indx = descriptor->indx_layer;
 
     lpb.light_pos = plb.points[layer_indx].position;
-    lpb.view_pos = cam->position;
+    lpb.view_pos = Camera3DGetPosition();
 
     DescriptorUpdate(descriptor, &lpb, sizeof(lpb));
+}
+
+void GameObject3DSDFBufferUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
+{
+    SDFBuffer sdfb;
+
+    RenderTexture *render = current_render;
+
+    double time = glfwGetTime();
+
+    sdfb.cam_pos = Camera3DGetPosition();
+    sdfb.cam_rot = Camera3DGetRotation();
+
+    sdfb.obj_pos = go->transform.position;
+    sdfb.obj_rot = go->transform.rotation;
+
+    sdfb.view = m4_look_at( sdfb.cam_pos, v3_add( sdfb.cam_pos, sdfb.cam_rot), vec3_f( 0, 1, 0));
+
+    DescriptorUpdate(descriptor, &sdfb, sizeof(sdfb));
 }
 
 void GameObject3DDefaultUpdate(GameObject3D* go) {

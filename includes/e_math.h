@@ -28,7 +28,7 @@ mat3 rotateY(float theta);
 mat3 rotateZ(float theta);
 
 mat3 m3_scale_matrix(vec2 scale );
-mat3 m3_rotation_matrix(float degrees);
+mat3 m3_rotation_matrix(vec3 rotation);
 mat3 m3_translation_matrix(mat3 matrix, vec2 pos);
 mat3 m3_mult(mat3 m1, mat3 m2);
 vec3 m3_v3_mult(mat3 m, vec3 v);
@@ -125,8 +125,6 @@ mat4 m4_perspective(uint32_t width, uint32_t height, float vertical_field_of_vie
 mat4 mat4_colmnsf(float m00, float m10, float m20, float m30, float m01, float m11, float m21, float m31, float m02, float m12, float m22, float m32, float m03, float m13, float m23, float m33);
 mat4 mat4_rowsf(float m00, float m10, float m20, float m30, float m01, float m11, float m21, float m31, float m02, float m12, float m22, float m32, float m03, float m13, float m23, float m33);
 mat4 m4_inv(mat4 mat);
-
-mat4 MakeLookRender(uint32_t curr_frame, uint32_t layer_indx);
 
 #ifdef __cplusplus
 }

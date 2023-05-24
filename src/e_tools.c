@@ -1132,6 +1132,66 @@ void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, 
 
 }
 
+
+float ToolsMakePipe(vertexParam *vParam, indexParam *iParam, void *args, VertextIterator *vi)
+{
+    PipeMeshParams *params = args;
+
+    float step = M_PI * 2 / params->sectors;
+
+    Vertex3D *verts = vParam->vertices;
+
+    mat3 rot_mat = m3_rotation_matrix(params->rotation);
+
+    vec3 temp;
+
+    uint32_t last_index = vi->v_index;
+
+    float radius = params->radius;
+
+    for(int y = 0; y <= params->height; y ++)
+    {
+        for(int i = 0; i <= params->sectors; i ++)
+        {
+            temp.x = cos(step * i) * radius;
+            temp.z = sin(step * i) * radius;
+            temp.y = y;
+            temp = m3_v3_mult(rot_mat, temp);
+
+            verts[vi->v_index].position = v3_add(temp, params->position);
+            vi->v_index++;
+
+            radius -=0.003f;
+        }
+    }
+
+    int k1, k2;
+    for(int i = 0; i < params->height; ++i)
+    {
+        k1 = i * (params->sectors + 1) + last_index;     // beginning of current stack
+        k2 = k1 + params->sectors + 1 ;      // beginning of next stack
+
+        for(int j = 0; j < params->sectors; ++j, ++k1, ++k2)
+        {
+            // 2 triangles per sector excluding first and last stacks
+            // k1 => k2 => k1+1
+
+            iParam->indices[vi->i_index] = k1 + 1;
+            iParam->indices[vi->i_index + 1] = k2;
+            iParam->indices[vi->i_index + 2] = k1;
+            vi->i_index +=3;
+
+            iParam->indices[vi->i_index] = k2 + 1;
+            iParam->indices[vi->i_index + 1] = k2;
+            iParam->indices[vi->i_index + 2] = k1 + 1;
+            vi->i_index +=3;
+        }
+    }
+
+    return radius;
+}
+
+
 bool hasStencilComponent(uint32_t format) {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
@@ -1401,6 +1461,49 @@ float lerp_noise(float a, float b, float t) {
 float fade(float t){
     return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
 }
+
+mat4 MakeLookRender(uint32_t curr_frame, uint32_t layer_indx)
+{
+    mat4 viewMatrix = edenMat;
+
+    PointLightBuffer plb = {};
+    memset(&plb, 0, sizeof(PointLightBuffer));
+
+    LightObjectFillPointLights(&plb);
+
+    switch (curr_frame)
+    {
+    case 0: // POSITIVE_X
+        /*viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(0.0f, 1.0f, 0.0f));
+        viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
+        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( -1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
+        break;
+    case 1:	// NEGATIVE_X
+        /*viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(0.0f, 1.0f, 0.0f));
+        viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
+        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
+        break;
+    case 2:	// POSITIVE_Y
+        //viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(1.0f, 0.0f, 0.0f));
+        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, -1.0, 0.0)), vec3_f( 0.0, 0.0, -1.0));
+        break;
+    case 3:	// NEGATIVE_Y
+        //viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(1.0f, 0.0f, 0.0f));
+        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, 1.0, 0.0)), vec3_f( 0.0, 0.0, 1.0));
+        break;
+    case 4:	// POSITIVE_Z
+        //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(0.0f, 0.0f, 1.0f));
+        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, 0.0, -1.0)), vec3_f( 0.0, 1.0, 0.0));
+        break;
+    case 5:	// NEGATIVE_Z
+        //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));
+        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, 0.0, 1.0)), vec3_f( 0.0, 1.0, 0.0));
+        break;
+    }
+
+    return viewMatrix;
+}
+
 
 float PerlinNoise1D( float x){
     // Left coordinate of the unit-line that contains the input

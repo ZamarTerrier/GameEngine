@@ -415,7 +415,7 @@ vec3 GetPos(int x, int y, int z, int i)
     }
 }
 
-void ProcessingCeil(MarchingCubeObject *mco, vertexParam *vParam, indexParam *iParam, int x, int y, int z, VertextIterator *vi)
+int ProcessingCeil(MarchingCubeObject *mco, vertexParam *vParam, indexParam *iParam, int x, int y, int z, VertextIterator *vi)
 {
     uint32_t cubeindex;
     vec3 vertlist[12];
@@ -477,6 +477,10 @@ void ProcessingCeil(MarchingCubeObject *mco, vertexParam *vParam, indexParam *iP
     uint32_t n_triangle = 0;
     /* Create the triangle */
     for (int i=0;triTable[cubeindex][i]!=-1;i+=3) {
+
+        if(vi->v_index > UINT32_MAX)
+            return 1;
+
        verts[vi->v_index].position = vertlist[triTable[cubeindex][i  ]];
        verts[vi->v_index + 1].position = vertlist[triTable[cubeindex][i+1]];
        verts[vi->v_index + 2].position = vertlist[triTable[cubeindex][i+2]];
@@ -498,9 +502,11 @@ void ProcessingCeil(MarchingCubeObject *mco, vertexParam *vParam, indexParam *iP
             vi->i_index +=3;
         }
     }
+
+    return 0;
 }
 
-void MarchingCubeObjectProcessingGrid(MarchingCubeObject *mco, vertexParam *vParam, indexParam *iParam, VertextIterator *vi)
+int MarchingCubeObjectProcessingGrid(MarchingCubeObject *mco, vertexParam *vParam, indexParam *iParam, VertextIterator *vi)
 {
     for(int x=0;x < mco->size - 1;x++)
     {
@@ -508,10 +514,18 @@ void MarchingCubeObjectProcessingGrid(MarchingCubeObject *mco, vertexParam *vPar
         {
             for(int z=0;z < mco->size - 1;z++)
             {
-                ProcessingCeil(mco, vParam, iParam, x, y, z, vi);
+                int res = ProcessingCeil(mco, vParam, iParam, x, y, z, vi);
+
+                if(res)
+                {
+                    printf("Превышена допустимая граница максимального количества вершин!\n");
+                    return 1;
+                }
             }
         }
     }
+
+    return 0;
 }
 
 void MarchingCubeObjectSetGridValue(float *grid, uint32_t size, int x, int y, int z, float value)
@@ -540,9 +554,12 @@ void MarchingCubeObjectInit(MarchingCubeObject *mco, float *grid, uint32_t size,
     VertextIterator vi;
     memset(&vi, 0, sizeof(VertextIterator));
 
-    MarchingCubeObjectProcessingGrid(mco, &vParam, &iParam, &vi);
+    int res = MarchingCubeObjectProcessingGrid(mco, &vParam, &iParam, &vi);
 
-    GraphicsObjectSetVertex(&mco->go.graphObj, vParam.vertices, vi.v_index, sizeof(Vertex3D), iParam.indices, vi.i_index, sizeof(uint32_t));
+    if(res)
+        GraphicsObjectSetVertex(&mco->go.graphObj, NULL, 0, sizeof(Vertex3D), NULL, 0, sizeof(uint32_t));
+    else
+        GraphicsObjectSetVertex(&mco->go.graphObj, vParam.vertices, vi.v_index, sizeof(Vertex3D), iParam.indices, vi.i_index, sizeof(uint32_t));
 
     free(vParam.vertices);
     free(iParam.indices);

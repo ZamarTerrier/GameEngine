@@ -23,6 +23,14 @@ typedef struct{
     mat4 proj;
 } ModelBuffer3D;
 
+typedef struct {
+    mat4 view;
+    vec3 obj_pos __attribute__ ((aligned (16)));
+    vec3 obj_rot __attribute__ ((aligned (16)));
+    vec3 cam_pos __attribute__ ((aligned (16)));
+    vec3 cam_rot __attribute__ ((aligned (16)));
+} SDFBuffer;
+
 typedef struct{
     vec4 lightPos;
     vec4 frustumPlanes[6];
