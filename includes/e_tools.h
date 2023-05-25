@@ -11,14 +11,6 @@ extern "C"
 {
 #endif
 
-typedef struct{
-    uint32_t sectors;
-    uint32_t height;
-    vec3 position;
-    vec3 rotation;
-    float radius;
-} PipeMeshParams;
-
 void* beginSingleTimeCommands();
 
 void endSingleTimeCommands(void* commandBuffer);
@@ -38,8 +30,6 @@ int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int 
 void ConeGenerator(vertexParam *vParam, indexParam *iParam, const float height, int stackCount, int sectorCount);
 int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius);
 int Cubesphere(vertexParam *vParam, indexParam *iParam, float radius,int vertexCountPerRow);
-
-float ToolsMakePipe(vertexParam *vParam, indexParam *iParam, void *params, VertextIterator *vi);
 
 void ToolsCreateDepthResources();
 void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout);
