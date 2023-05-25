@@ -162,7 +162,14 @@ TreeVerts type_05 = {
     .num_indexes = 30
 };
 
-float TreeMake3DPeace(vertexParam *vParam, indexParam *iParam, vec3 pos, vec3 rotation, uint32_t length, float radius, VertextIterator *vi)
+typedef struct{
+    float radius;
+    uint32_t point_indx[3];
+    vec3 point_vec[3];
+    vec3 rotation;
+} TreeLast;
+
+TreeLast TreeMake3DPeace(vertexParam *vParam, indexParam *iParam, vec3 pos, vec3 rotation, uint32_t length, float radius, VertextIterator *vi)
 {
     PipeMeshParams params = {
         .sectors = 6,
@@ -173,26 +180,29 @@ float TreeMake3DPeace(vertexParam *vParam, indexParam *iParam, vec3 pos, vec3 ro
     };
 
     uint32_t indx = vi->v_index;
-    float last_radius = ToolsMakePipe(vParam, iParam, &params, vi);
+    TreeLast treeLast;
+    treeLast.radius = ToolsMakePipe(vParam, iParam, &params, vi);
     uint32_t indx1 = vi->v_index - params.sectors;
 
-    vec3  orig_rot = params.rotation;
+    vec3 orig_rot = params.rotation;
 
-    params.position = pos;
-    params.position.x = - last_radius;
-    params.position.y = length + last_radius; // v3_add(pos, v3_muls(orig_dir, 25));
+    params.position = params.position;
+    params.position.x = - treeLast.radius;
+    params.position.y = length + treeLast.radius; // v3_add(pos, v3_muls(orig_dir, 25));
+    treeLast.point_vec[1] = params.position;
     params.height = 5;
-    params.radius = last_radius - 0.1f;
+    params.radius = treeLast.radius - 0.1f;
     params.rotation.z = orig_rot.z + 45.0;
 
     uint32_t indx2 = vi->v_index + 1;
     ToolsMakePipe(vParam, iParam, &params, vi);
 
-    params.position.x =  last_radius;
+    params.position.x =  treeLast.radius;
+    treeLast.point_vec[2] = params.position;
     params.rotation.z = orig_rot.z - 45.0;
 
     uint32_t indx3 = vi->v_index + 1;
-    last_radius = ToolsMakePipe(vParam, iParam, &params, vi);
+    treeLast.radius = ToolsMakePipe(vParam, iParam, &params, vi);
 
 
     uint32_t indx4 = vi->v_index;
@@ -201,6 +211,14 @@ float TreeMake3DPeace(vertexParam *vParam, indexParam *iParam, vec3 pos, vec3 ro
     {
         verts[i].position = v3_add(m3_v3_mult(m3_rotation_matrix(rotation), verts[i].position), pos);
     }
+
+    treeLast.point_vec[0] = pos;
+    treeLast.point_vec[1].x -= 4.5f;
+    treeLast.point_vec[1].y += 4.5f;
+    treeLast.point_vec[2].x += 4.5f;
+    treeLast.point_vec[2].y += 4.5f;
+    treeLast.point_vec[1] = v3_add(m3_v3_mult(m3_rotation_matrix(rotation), treeLast.point_vec[1]), pos);
+    treeLast.point_vec[2] = v3_add(m3_v3_mult(m3_rotation_matrix(rotation), treeLast.point_vec[2]), pos);
 
     //--------------------------------------
     iParam->indices[vi->i_index] = indx2 + 1;
@@ -300,7 +318,32 @@ float TreeMake3DPeace(vertexParam *vParam, indexParam *iParam, vec3 pos, vec3 ro
     iParam->indices[vi->i_index + 2] = indx1;
     vi->i_index +=3;
 
-    return last_radius;
+    treeLast.point_indx[0] = indx;
+    treeLast.point_indx[1] = indx3 - params.sectors - 1;
+    treeLast.point_indx[2] = indx4 - params.sectors - 1;
+
+    return treeLast;
+}
+
+void TreeWebLastPoints( indexParam *iParam, uint32_t sectors, uint32_t t_last_1, uint32_t t_last_2, VertextIterator *vi)
+{
+    uint32_t k1 = t_last_1 - 1, k2 = t_last_2;
+
+    for(int i=0; i < sectors;i++)
+    {
+        iParam->indices[vi->i_index] = k1 + 1;
+        iParam->indices[vi->i_index + 1] = k2;
+        iParam->indices[vi->i_index + 2] = k1;
+        vi->i_index += 3;
+
+        iParam->indices[vi->i_index] = k2 + 1;
+        iParam->indices[vi->i_index + 1] = k2;
+        iParam->indices[vi->i_index + 2] = k1 + 1;
+        vi->i_index +=3;
+
+        k1 ++;
+        k2 ++;
+    }
 }
 
 void TreeMakePeace(vertexParam *vParam, indexParam *iParam, TreeVerts *tree_verts, vec3 pos, float angle, VertextIterator *vi)
@@ -387,6 +430,60 @@ void InitTreeVertices(vertexParam *vParam, indexParam *iParam, VertextIterator *
     }
 }
 
+vec3 TreeSummRotation(vec3 rotation, vec3 summ)
+{
+    vec3 result;
+
+    if(rotation.x > 0)
+        result.x = rotation.x + summ.x;
+    else
+        result.x = rotation.x - summ.x;
+
+    if(rotation.y > 0)
+        result.y = rotation.y + summ.y;
+    else
+        result.y = rotation.y - summ.y;
+
+    if(rotation.z > 0)
+        result.z = rotation.z + summ.z;
+    else
+        result.z = rotation.z - summ.z;
+
+    return result;
+}
+
+void TreePopulateBranch(vertexParam *vParam, indexParam *iParam, TreeLast root, uint32_t iter, uint32_t max_count, VertextIterator *vi)
+{
+    TreeLast branch_res1, branch_res2;
+
+    float angle = 25;
+    float angle2 = 35;
+
+    vec3 branch1_rot = v3_add(root.rotation, vec3_f(0, angle2, angle));
+    branch_res1 = TreeMake3DPeace(vParam, iParam, root.point_vec[1], branch1_rot, 3, root.radius, vi);
+    branch_res1.rotation = branch1_rot;
+
+    TreeWebLastPoints(iParam, 6, root.point_indx[1], branch_res1.point_indx[0], vi);
+
+    iter++;
+
+    if(iter >= max_count)
+        return;
+
+    TreePopulateBranch(vParam, iParam, branch_res1, iter, max_count, vi);
+
+    vec3 branch2_rot = v3_add(root.rotation, vec3_f(-angle2, 0, -angle));
+    branch_res2 = TreeMake3DPeace(vParam, iParam, root.point_vec[2], branch2_rot, 3, root.radius, vi);
+    branch_res2.rotation = branch2_rot;
+
+    TreeWebLastPoints(iParam, 6, root.point_indx[2], branch_res2.point_indx[0], vi);
+
+    TreePopulateBranch(vParam, iParam, branch_res2, iter, max_count, vi);
+
+
+
+}
+
 void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam)
 {
     GameObject3DInit(to);
@@ -407,14 +504,33 @@ void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam)
 
         //InitTreeVertices(&vParam, &iParam, &vi);
 
-        float last_radius = TreeMake3DPeace(&vParam, &iParam, vec3_f(0, 0, 0), vec3_f(0, 0, 0), 20, 2, &vi);
-        TreeMake3DPeace(&vParam, &iParam, vec3_f(-7, 27, 0), vec3_f( 0, 0, 45), 10, last_radius, &vi);
-        last_radius = TreeMake3DPeace(&vParam, &iParam, vec3_f(7, 27, 0), vec3_f(0, 0, -45), 10, last_radius, &vi);
-        TreeMake3DPeace(&vParam, &iParam, vec3_f(14, 43, 0), vec3_f(0, 0, 0), 10, last_radius, &vi);
-        TreeMake3DPeace(&vParam, &iParam, vec3_f(-14, 43, 0), vec3_f(0, 0, 0), 10, last_radius, &vi);
+        vec3 root_rot = vec3_f(0, 0, 0);
+        TreeLast root = TreeMake3DPeace(&vParam, &iParam, vec3_f(0, 0, 0), root_rot, 10, 1.0f, &vi);
 
-        TreeMake3DPeace(&vParam, &iParam, vec3_f(-23, 34, 0), vec3_f(0, 0, 90), 10, last_radius, &vi);
-        TreeMake3DPeace(&vParam, &iParam, vec3_f(23, 34, 0), vec3_f(0, 0, -90), 10, last_radius, &vi);
+        TreePopulateBranch(&vParam, &iParam, root, 0, 5, &vi);
+
+        /*vec3 branch1_rot = v3_add(root_rot, vec3_f(0, 35, 45));
+        TreeLast branch1 = TreeMake3DPeace(&vParam, &iParam, root.point_vec[1], branch1_rot, 3, root.radius, &vi);
+        vec3 branch2_rot = v3_sub(root_rot, vec3_f(0, -65, 45));
+        TreeLast branch2 = TreeMake3DPeace(&vParam, &iParam, root.point_vec[2], branch2_rot, 3, root.radius, &vi);
+        TreeWebLastPoints(&iParam, 6, root.point_indx[1], branch1.point_indx[0], &vi);
+        TreeWebLastPoints(&iParam, 6, root.point_indx[2], branch2.point_indx[0], &vi);*/
+
+        /*vec3 branch3_rot = v3_add(branch1_rot, vec3_f(0, 0, 45));
+        TreeLast branch3 = TreeMake3DPeace(&vParam, &iParam, branch1.point_vec[1], branch3_rot, 3, branch1.radius, &vi);
+        vec3 branch4_rot = v3_sub(branch1_rot, vec3_f(0, 35, 45));
+        TreeLast branch4 = TreeMake3DPeace(&vParam, &iParam, branch1.point_vec[2], branch4_rot, 3, branch1.radius, &vi);
+        TreeWebLastPoints(&iParam, 6, branch1.point_indx[1], branch3.point_indx[0], &vi);
+        TreeWebLastPoints(&iParam, 6, branch1.point_indx[2], branch4.point_indx[0], &vi);
+
+        vec3 branch5_rot = v3_sub(branch2_rot, vec3_f(0, 25, 45));
+        TreeLast branch5 = TreeMake3DPeace(&vParam, &iParam, branch2.point_vec[2], branch5_rot, 3, branch2.radius, &vi);
+        vec3 branch6_rot = v3_add(branch2_rot, vec3_f(0, -25, 45));
+        TreeLast branch6 = TreeMake3DPeace(&vParam, &iParam, branch2.point_vec[1], branch6_rot, 3, branch2.radius, &vi);
+        TreeWebLastPoints(&iParam, 6, branch2.point_indx[2], branch5.point_indx[0], &vi);
+        TreeWebLastPoints(&iParam, 6, branch2.point_indx[1], branch6.point_indx[0], &vi);*/
+
+
 
 
         GraphicsObjectSetVertex(&to->go.graphObj, vParam.vertices, vi.v_index, sizeof(Vertex3D), iParam.indices, vi.i_index, sizeof(uint32_t));

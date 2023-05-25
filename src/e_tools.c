@@ -1161,7 +1161,7 @@ float ToolsMakePipe(vertexParam *vParam, indexParam *iParam, void *args, Vertext
             verts[vi->v_index].position = v3_add(temp, params->position);
             vi->v_index++;
 
-            radius -=0.003f;
+            radius -=0.0005f;
         }
     }
 
