@@ -145,8 +145,7 @@ mat3 m3_scale_matrix(vec2 scale ){
 }
 
 mat3 m3_rotation_matrix(vec3 rotation){
-    mat3 r = m3_mult(m3_mult(rotateX(rotation.x), rotateY(rotation.y)), rotateZ(rotation.z));
-    return r;
+    return m3_mult(m3_mult(rotateX(rotation.x), rotateY(rotation.y)), rotateZ(rotation.z));
 }
 
 mat3 m3_translation_matrix(mat3 matrix, vec2 pos){
@@ -427,6 +426,17 @@ vec4 v4_lerp(vec4 a, vec4 b, float t){
     return r;
 }
 
+mat3 mat3_f()
+{
+    mat3 res;
+    memset(&res, 0, sizeof(mat3));
+
+    res.m[0][0] = 1;
+    res.m[1][1] = 1;
+    res.m[2][2] = 1;
+
+    return res;
+}
 
 vec3 m4_v3_mult(mat4 m, vec3 v) {
     vec3 ret;

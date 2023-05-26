@@ -96,6 +96,8 @@ vec4  v4_normalize(vec4 a);
 bool v4_equal(vec4 a, vec4 b) ;
 vec4 v4_lerp(vec4 a, vec4 b, float t);
 
+mat3 mat3_f();
+
 vec3 m4_v3_mult(mat4 m, vec3 v);
 vec4 m4_v4_mult(mat4 mat, vec4 v);
 

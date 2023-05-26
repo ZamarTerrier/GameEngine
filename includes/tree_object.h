@@ -11,6 +11,15 @@ typedef enum{
 } TreeObjectType;
 
 typedef struct{
+    uint32_t height;
+    vec3 start_rotation;
+    vec3 mutable_rotation;
+    float radius;
+    float grad;
+    uint32_t max_branches;
+} TreeParams;
+
+typedef struct{
     vec3 *positions;
     uint32_t num_positions;
     uint32_t *indexes;
@@ -21,7 +30,7 @@ typedef struct{
     GameObject3D go;
 } TreeObject;
 
-void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam);
-void TreeObjectInitDefault(TreeObject *to, uint32_t type, DrawParam *dParam);
+void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam, void *arg);
+void TreeObjectInitDefault(TreeObject *to, uint32_t type, DrawParam *dParam, void *arg);
 
 #endif // TREE_OBJECT_H
