@@ -21,6 +21,29 @@ EIVertexInputAttributeDescription planeAttributeDescription[] = {
         .offset = offsetof(Vertex2D, texCoord) }
 };
 
+EIVertexInputAttributeDescription treeAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, normal) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, texCoord) },
+    {
+        .binding = 0,
+        .location = 3,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, color) }
+};
+
 EIVertexInputAttributeDescription cubeAttributeDescription[] = {
 
     {
@@ -138,6 +161,12 @@ EIVertexInputAttributeDescription SkyAttributeDescription[] = {
 EIVertexInputBindingDescription Bind2DDescription = {
     .binding = 0,
     .stride = sizeof(Vertex2D),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription BindTree3DDescription = {
+    .binding = 0,
+    .stride = sizeof(TreeVertex3D),
     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
 };
 

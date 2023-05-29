@@ -4,6 +4,7 @@
 #include "engine_includes.h"
 
 extern EIVertexInputAttributeDescription planeAttributeDescription[];
+extern EIVertexInputAttributeDescription treeAttributeDescription[];
 extern EIVertexInputAttributeDescription cubeAttributeDescription[];
 extern EIVertexInputAttributeDescription modelAttributeDescription[];
 extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
@@ -12,6 +13,7 @@ extern EIVertexInputAttributeDescription TerrainAttributeDescription[];
 extern EIVertexInputAttributeDescription SkyAttributeDescription[];
 
 extern EIVertexInputBindingDescription Bind2DDescription;
+extern EIVertexInputBindingDescription BindTree3DDescription;
 extern EIVertexInputBindingDescription Bind3DDescription;
 extern EIVertexInputBindingDescription BindModel3DDescription;
 extern EIVertexInputBindingDescription BindParticle2DDescription;

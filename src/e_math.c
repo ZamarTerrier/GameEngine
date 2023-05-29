@@ -124,7 +124,7 @@ vec3 m3_v3_mult(mat3 m, vec3 v) {
     vec3 ret;
     float *pvec = &ret;
     for (int i = 0; i < 3; i++) {
-        pvec[i] = v.x * m.m[0][i] + v.y * m.m[1][i] + v.z * m.m[2][i] + m.m[3][i];
+        pvec[i] = v.x * m.m[0][i] + v.y * m.m[1][i] + v.z * m.m[2][i];
     }
     return ret;
 }
@@ -144,9 +144,8 @@ mat3 m3_scale_matrix(vec2 scale ){
     return scale_mat;
 }
 
-mat3 m3_rotation_matrix(float degrees){
-    mat3 r = rotateX(degrees);
-    return r;
+mat3 m3_rotation_matrix(vec3 rotation){
+    return m3_mult(m3_mult(rotateX(rotation.x), rotateY(rotation.y)), rotateZ(rotation.z));
 }
 
 mat3 m3_translation_matrix(mat3 matrix, vec2 pos){
@@ -427,6 +426,17 @@ vec4 v4_lerp(vec4 a, vec4 b, float t){
     return r;
 }
 
+mat3 mat3_f()
+{
+    mat3 res;
+    memset(&res, 0, sizeof(mat3));
+
+    res.m[0][0] = 1;
+    res.m[1][1] = 1;
+    res.m[2][2] = 1;
+
+    return res;
+}
 
 vec3 m4_v3_mult(mat4 m, vec3 v) {
     vec3 ret;
@@ -998,46 +1008,4 @@ mat4 m4_inv(mat4 mat) {
     det = 1.0f / (a * dest.m[0][0] + b * dest.m[1][0] + c * dest.m[2][0] + d * dest.m[3][0]);
 
     return m4_scale_p(dest, det);
-}
-
-mat4 MakeLookRender(uint32_t curr_frame, uint32_t layer_indx)
-{
-    mat4 viewMatrix = edenMat;
-
-    PointLightBuffer plb = {};
-    memset(&plb, 0, sizeof(PointLightBuffer));
-
-    LightObjectFillPointLights(&plb);
-
-    switch (curr_frame)
-    {
-    case 0: // POSITIVE_X
-        /*viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(0.0f, 1.0f, 0.0f));
-        viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
-        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( -1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
-        break;
-    case 1:	// NEGATIVE_X
-        /*viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(0.0f, 1.0f, 0.0f));
-        viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));*/
-        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 1.0, 0.0, 0.0)), vec3_f( 0.0, 1.0, 0.0));
-        break;
-    case 2:	// POSITIVE_Y
-        //viewMatrix = m4_rotate(viewMatrix, 90.0f, vec3_f(1.0f, 0.0f, 0.0f));
-        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, -1.0, 0.0)), vec3_f( 0.0, 0.0, -1.0));
-        break;
-    case 3:	// NEGATIVE_Y
-        //viewMatrix = m4_rotate(viewMatrix, -90.0f, vec3_f(1.0f, 0.0f, 0.0f));
-        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, 1.0, 0.0)), vec3_f( 0.0, 0.0, 1.0));
-        break;
-    case 4:	// POSITIVE_Z
-        //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(0.0f, 0.0f, 1.0f));
-        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, 0.0, -1.0)), vec3_f( 0.0, 1.0, 0.0));
-        break;
-    case 5:	// NEGATIVE_Z
-        //viewMatrix = m4_rotate(viewMatrix, 180.0f, vec3_f(1.0f, 0.0f, 0.0f));
-        viewMatrix = m4_look_at(plb.points[layer_indx].position, v3_add(plb.points[layer_indx].position, vec3_f( 0.0, 0.0, 1.0)), vec3_f( 0.0, 1.0, 0.0));
-        break;
-    }
-
-    return viewMatrix;
 }

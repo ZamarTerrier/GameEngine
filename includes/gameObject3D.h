@@ -30,6 +30,7 @@ void GameObject3DDescriptorDirLightsUpdate(GameObject3D* go, BluePrintDescriptor
 void GameObject3DDescriptorPointLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 void GameObject3DDescriptorSpotLightsUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 void GameObject3DLigtStatusBufferUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
+void GameObject3DSDFBufferUpdate(GameObject3D* go, BluePrintDescriptor *descriptor);
 
 void GameObject3DInitDraw(GameObject3D *go);
 void GameObject3DClean(GameObject3D* go);
@@ -37,6 +38,7 @@ void GameObject3DRecreate(GameObject3D* go);
 void GameObject3DDestroy(GameObject3D* go);
 
 void GameObject3DInit(GameObject3D *go);
+void GameObject3DInitCopy(GameObject3D *to, GameObject3D *from);
 
 void GameObject3DAddShadowDescriptor(GameObject3D *go, uint32_t type, void *render, uint32_t layer_indx);
 void GameObject3DAddOmiShadow(GameObject3D *go, void *render, uint32_t layer_indx);

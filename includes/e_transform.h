@@ -32,6 +32,12 @@ typedef struct{
     mat4 model;
 } Transform3D;
 
+typedef struct{
+    vec3 instance_position;
+    vec3 instance_rotation;
+    float scale;
+} InstanceTransform3D;
+
 struct GameObject2D;
 struct GameObject3D;
 

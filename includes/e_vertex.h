@@ -26,6 +26,13 @@ typedef struct {
 } Vertex3D;
 
 typedef struct {
+    vec3 position;
+    vec3 normal;
+    vec2 texCoord;
+    vec3 color;
+} TreeVertex3D;
+
+typedef struct {
     vec2 position;
     float size;
     vec3 color;

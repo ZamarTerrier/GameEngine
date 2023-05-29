@@ -24,7 +24,6 @@ shader readFile(const char* filename);
 
 void* createShaderModule(shader shdr);
 
-void InitTreeVertices(vertexParam *vParam, indexParam *iParam);
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns);
 void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param);
 int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
@@ -45,6 +44,8 @@ float dot_grad2(int hash, float xf, float yf);
 vec3 perp(const vec3 v);
 
 float fade(float t);
+
+mat4 MakeLookRender(uint32_t curr_frame, uint32_t layer_indx);
 
 float PerlinNoise1D(float x);
 float PerlinNoise2D(float x, float y);
