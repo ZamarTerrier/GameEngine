@@ -17,6 +17,8 @@ typedef struct{
     float radius;
     float grad;
     uint32_t max_branches;
+    vec3 tree_color;
+    vec3 leaf_color;
 } TreeParams;
 
 typedef struct{

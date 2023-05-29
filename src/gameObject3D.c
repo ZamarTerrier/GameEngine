@@ -20,6 +20,9 @@
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
 
+#define VERTEX_BUFFER_BIND_ID 0
+#define INSTANCE_BUFFER_BIND_ID 1
+
 typedef void (*Update_Descriptor3D)(GameObject3D* go, BluePrintDescriptor *descriptor);
 
 void GameObject3DDescriptorModelUpdate(GameObject3D* go, BluePrintDescriptor *descriptor)
@@ -324,19 +327,27 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
 
                 vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
+                uint32_t num_instances = 1;
                 if(go->graphObj.shapes[settings->vert_indx].vParam.verticesSize > 0)
                 {
                     VkBuffer vertexBuffers[] = {go->graphObj.shapes[settings->vert_indx].vParam.vertexBuffer};
                     VkDeviceSize offsets[] = {0};
 
-                    vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
+                    // Binding point 0 : Mesh vertex buffer
+                    vkCmdBindVertexBuffers(command, VERTEX_BUFFER_BIND_ID, 1, vertexBuffers, offsets);
+
+                    /*if(go->num_images > 0){
+                        // Binding point 1 : Instance data buffer
+                        vkCmdBindVertexBuffers(command, INSTANCE_BUFFER_BIND_ID, 1, &go->InstanceBuffer, offsets);
+                        num_instances = go->num_instances;
+                    }*/
                 }
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED && go->graphObj.shapes[settings->vert_indx].iParam.indexesSize > 0){
                     vkCmdBindIndexBuffer(command, go->graphObj.shapes[settings->vert_indx].iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(command, go->graphObj.shapes[settings->vert_indx].iParam.indexesSize, 1, 0, 0, 0);
+                    vkCmdDrawIndexed(command, go->graphObj.shapes[settings->vert_indx].iParam.indexesSize, num_instances, 0, 0, 0);
                 }else
-                    vkCmdDraw(command, go->graphObj.shapes[settings->vert_indx].vParam.verticesSize, 1, 0, 0);
+                    vkCmdDraw(command, go->graphObj.shapes[settings->vert_indx].vParam.verticesSize, num_instances, 0, 0);
             }
         }
     }
@@ -416,7 +427,6 @@ void GameObject3DAddSettingPipeline(GameObject3D* go, uint32_t indx_pack, void *
     memcpy(&settings[indx], setting, sizeof(PipelineSetting));
 
     go->graphObj.blueprints.blue_print_packs[indx_pack].num_settings ++;
-
 }
 
 void GameObject3DClean(GameObject3D* go){
@@ -484,12 +494,54 @@ void GameObject3DInit(GameObject3D *go){
 
     go->self.obj_type = ENGINE_GAME_OBJECT_TYPE_3D;
 
-    Transform3DInit(&go->transform);
+    /*Transform3DInit(&go->transform);
+    memset(&go->instance_transforms, 0, sizeof(InstanceTransform3D) * UINT16_MAX);
+    go->num_instances = 0;*/
+
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_3D_OBJECT);
 
     go->graphObj.gItems.perspective = true;
 
     go->self.flags = 0;
+}
+
+void GameObject3DInitCopy(GameObject3D *to, GameObject3D *from)
+{
+    to->self = from->self;
+
+    Transform3DInit(&to->transform);
+    GraphicsObjectInit(&to->graphObj, ENGINE_VERTEX_TYPE_3D_OBJECT);
+
+    to->graphObj.gItems.perspective = true;
+
+    to->self.flags = 0;
+
+    memcpy(to->graphObj.shapes, from->graphObj.shapes, sizeof(Shape) * MAX_SHAPES);
+
+    Blueprints *prints_to = &to->graphObj.blueprints;
+    Blueprints *prints_from = &from->graphObj.blueprints;
+    for(int i=0;i < prints_from->num_blue_print_packs;i++)
+    {
+        prints_to->blue_print_packs[i].render_point = prints_from->blue_print_packs[i].render_point;
+
+        for(int j=0;j < prints_from->blue_print_packs[i].num_descriptors;j++)
+        {
+            BluePrintDescriptor *descriptor = &prints_from->blue_print_packs[i].descriptors[j];
+            if(descriptor->descrType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                BluePrintAddUniformObject(&to->graphObj.blueprints, i, descriptor->buffsize, descriptor->stageflag, descriptor->update, descriptor->indx_layer);
+            else
+                BluePrintAddTextureImage(&to->graphObj.blueprints, i, &descriptor->image, descriptor->stageflag);
+        }
+
+        for(int j=0;j < prints_from->blue_print_packs[i].num_settings;j++)
+        {
+            GameObject3DAddSettingPipeline(to, i, &prints_from->blue_print_packs[i].settings[j]);
+        }
+
+        prints_to->num_blue_print_packs ++;
+    }
+
+    GameObject3DInitDraw(to);
 }
 
 void GameObject3DEnableLight(GameObject3D *go, bool enable)
