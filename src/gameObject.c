@@ -44,6 +44,9 @@ void GameObjectUpdate(GameObject* go) {
 
     void (*update)(GameObject* go) = go->UpdatePoint;
 
+    if(update == NULL)
+        return;
+
     update(go);
 }
 
@@ -53,6 +56,9 @@ void GameObjectDraw(GameObject* go, void *command) {
         return;
 
     void (*draw)(GameObject* go, void *cmd) = go->DrawPoint;
+
+    if(draw == NULL)
+        return;
 
     draw(go, command);
 }

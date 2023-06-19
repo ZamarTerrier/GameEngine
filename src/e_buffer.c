@@ -96,7 +96,7 @@ int BuffersCreateVertexInst(vertexParam* vert) {
     if(vert->verticesSize >= MAX_VERTEX_COUNT)
     {
         printf("Очень много вершин!\n");
-        return;
+        return 1;
     }
 
     //Выделение памяти
@@ -116,7 +116,7 @@ int BuffersUpdateVertex(vertexParam* vert) {
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    VkDeviceSize bufferSize ;
+    VkDeviceSize bufferSize;
 
     bufferSize = vert->typeSize * vert->verticesSize;
 

@@ -69,7 +69,10 @@ typedef struct{
 
     EIVertexInputBindingDescription* bindingDescription;
     EIVertexInputAttributeDescription* attr;
-    size_t countAttr;
+    uint32_t countBind;
+    uint32_t countAttr;
+
+    uint32_t type;
 
     bool init;
 } Shape;

@@ -229,6 +229,31 @@ void PrimitiveObjectSetDefaultDescriptor(PrimitiveObject *po, DrawParam *dParam)
     po->go.graphObj.blueprints.num_blue_print_packs ++;
 }
 
+void PrimitiveObjectSetInstanceDescriptor(PrimitiveObject *po, DrawParam *dParam)
+{
+    uint32_t nums = po->go.graphObj.blueprints.num_blue_print_packs;
+    po->go.graphObj.blueprints.blue_print_packs[nums].render_point = dParam->render;
+
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate, 0);
+
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0], VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&po->go.graphObj, &setting);
+
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_instance_vert_spv_start, (size_t)(&_binary_shaders_3d_object_instance_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_instance_frag_spv_start, (size_t)(&_binary_shaders_3d_object_instance_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    GameObject3DAddSettingPipeline(po, nums, &setting);
+
+    po->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+
 void *PrimitiveObjectGetVertex(PrimitiveObject *po)
 {
     return &po->go.graphObj.shapes[0].vParam;
