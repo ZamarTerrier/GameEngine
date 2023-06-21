@@ -244,7 +244,16 @@ void BuffersCreateStorage(UniformStruct* uniform){
     uniform->uniformBuffersMemory = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
 
     for (int i = 0; i < imagesCount; i++) {
-        BuffersCreate(uniform->size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i], ENGINE_BUFFER_ALLOCATE_UNIFORM);
+        BuffersCreate(uniform->size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i], ENGINE_BUFFER_ALLOCATE_UNIFORM);
+    }
+}
+
+void BuffersCreateStorageVertex(UniformStruct* uniform){
+    uniform->uniformBuffers = (VkBuffer*) calloc(imagesCount, sizeof(VkBuffer));
+    uniform->uniformBuffersMemory = (VkDeviceMemory*) calloc(imagesCount, sizeof(VkDeviceMemory));
+
+    for (int i = 0; i < imagesCount; i++) {
+        BuffersCreate(uniform->size,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &uniform->uniformBuffers[i], &uniform->uniformBuffersMemory[i], ENGINE_BUFFER_ALLOCATE_UNIFORM);
     }
 }
 

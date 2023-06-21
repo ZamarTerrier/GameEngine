@@ -93,48 +93,6 @@ void EngineInitVulkan(){
     e_var_fonts = calloc(MAX_FONTS, sizeof(FontCache));
     e_var_num_fonts = 0;
 
-    geom_texture = calloc(1, sizeof(Texture2D));
-
-    Texture2D *temp_texture = geom_texture;
-
-    temp_texture->flags = 0;
-    temp_texture->image_data.texWidth = swapChainExtent.width;
-    temp_texture->image_data.texHeight = swapChainExtent.height;
-    temp_texture->textureType = VK_FORMAT_R32_UINT;
-    temp_texture->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-    ImageCreateEmpty(temp_texture, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
-    TextureCreateTextureImageView(temp_texture, VK_IMAGE_VIEW_TYPE_2D);
-    TextureCreateSampler(&temp_texture->textureSampler, temp_texture->textureType);
-    ToolsTransitionImageLayoutLite(temp_texture->textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT);
-
-    geometrySBO.count = 0;
-    geometrySBO.maxNodeCount = NODE_COUNT * WIDTH * HEIGHT;
-
-    geom_uniform = calloc(1, sizeof(UniformStruct));
-
-    UniformStruct *u_str = geom_uniform;
-    u_str->size = sizeof(Node) * geometrySBO.maxNodeCount;
-
-    BuffersCreateStorage(geom_uniform);
-
-    geom_geometry = calloc(1, sizeof(UniformStruct));
-
-    u_str = geom_geometry;
-    u_str->size = sizeof(Node) * geometrySBO.maxNodeCount;
-
-    BuffersCreateStorage(geom_geometry);
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-
-    BuffersCreate(u_str->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
-
-    for(int i=0; i < imagesCount;i++)
-        BuffersCopy(stagingBuffer,  u_str->uniformBuffers[i], u_str->size);
-
-    BuffersDestroyBuffer(stagingBuffer);
-
     engine_buffered_image *images = e_var_images;
     TextureCreateEmptyDefault(&images[e_var_num_images].texture);
     TextureCreateTextureImageView(&images[e_var_num_images].texture, VK_IMAGE_VIEW_TYPE_2D);
@@ -609,32 +567,6 @@ void EngineCleanUp(){
         free(e_var_lights);
         e_var_lights = NULL;
         e_var_num_lights = 0;
-    }
-
-    //Временные меры
-    {
-        ImageDestroyTexture(geom_texture);
-        free(geom_texture);
-
-        UniformStruct *some_struct = geom_uniform;
-
-        for (int j = 0; j < imagesCount; j++) {
-            BuffersDestroyBuffer(some_struct->uniformBuffers[j]);
-        }
-
-        free(some_struct->uniformBuffers);
-        free(some_struct->uniformBuffersMemory);
-        free(geom_uniform);
-
-        some_struct = geom_geometry;
-
-        for (int j = 0; j < imagesCount; j++) {
-            BuffersDestroyBuffer(some_struct->uniformBuffers[j]);
-        }
-
-        free(some_struct->uniformBuffers);
-        free(some_struct->uniformBuffersMemory);
-        free(geom_geometry);
     }
 
     BuffersClearAll();
