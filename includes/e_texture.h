@@ -21,7 +21,8 @@ extern "C"
 typedef enum{
     ENGINE_TEXTURE_FLAG_SPECIFIC = 0x1,
     ENGINE_TEXTURE_FLAG_URGB = 0x2,
-    ENGINE_TEXTURE_FLAG_R16 = 0x4
+    ENGINE_TEXTURE_FLAG_R16 = 0x4,
+    ENGINE_TEXTURE_FLAG_SRGB = 0x8
 } EngineTextureFlags;
 
 int ImageWriteFile(uint32_t indx);

@@ -25,16 +25,36 @@ uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
     return (to->tex_colors[index].w << 24) | (to->tex_colors[index].x << 16) | (to->tex_colors[index].y << 8) | (to->tex_colors[index].z);
 }
 
-void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height)
+void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height, uint32_t height_map_size)
+{
+    tParam->size_patch = 500;
+    tParam->t_g_param.size_factor = 128;
+    tParam->t_g_param.height_factor = 248.0f;
+    tParam->t_g_param.displaisment_factor = 1024.0f;
+    tParam->t_g_param.frequency = 1;
+    tParam->t_g_param.amplitude = 1;
+    tParam->t_g_param.octaves = 6;
+    tParam->vertex_step = 3.0;
+    tParam->t_t_param.height_map_scale = height_map_size;
+    tParam->t_t_param.texture_scale = 160.0f * tParam->vertex_step;
+    tParam->t_t_param.texture_width = texture_width;
+    tParam->t_t_param.texture_height = texture_height;
+    tParam->t_t_param.num_textures = 0;
+    tParam->flags = ENGINE_TERRIAN_FLAGS_REPEATE_TEXTURE | ENGINE_TERRIAN_FLAGS_GENERATE_TEXTURE | ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS ;//| ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN;
+}
+
+void TerrainObjectMakeOldDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height, uint32_t height_map_size)
 {
     tParam->size_patch = 500;
     tParam->t_g_param.size_factor = 300;
     tParam->t_g_param.height_factor = 120;
+    tParam->t_g_param.displaisment_factor = 1.0f;
     tParam->t_g_param.frequency = 1;
     tParam->t_g_param.amplitude = 1;
     tParam->t_g_param.octaves = 6;
     tParam->vertex_step = 1.0;
     tParam->t_t_param.texture_scale = 160.0f;
+    tParam->t_t_param.height_map_scale = height_map_size;
     tParam->t_t_param.texture_width = texture_width;
     tParam->t_t_param.texture_height = texture_height;
     tParam->t_t_param.num_textures = 0;
@@ -69,14 +89,14 @@ void TerrainObjectDescriptorTesselationUpdate(TerrainObject *to, BluePrintDescri
     TesselationBuffer tb;
     memset(&tb, 0, sizeof(TesselationBuffer));
 
-    tb.displacementFactor = 32.0f;
-    tb.tessellationFactor = 0.75f;
+    tb.displacementFactor = to->t_g_param.displaisment_factor;
+    tb.tessellationFactor = 0.95f;
     tb.tessellatedEdgeSize = 20.0f;
 
     tb.lightPos.y = -0.5f - tb.displacementFactor; // todo: Not uesed yet
     tb.viewportDim = vec2_f((float)WIDTH, (float)HEIGHT);
 
-    mat4 proj = m4_perspective(render->width, render->height, render->persp_view_angle, render->persp_view_near, render->persp_view_distance);
+    mat4 proj = m4_perspective(render->width, render->height, 75.0f, render->persp_view_near, render->persp_view_distance);
     mat4 view = m4_look_at(cam->position, v3_add(cam->position, cam->rotation), vec3_f(0.0f,1.0f, 0.0f));
 
     mat4 matrix = m4_mult(proj, view);
@@ -114,8 +134,7 @@ void TerrainObjectDescriptorTesselationUpdate(TerrainObject *to, BluePrintDescri
 
     for (int i = 0; i < 6; i++)
     {
-        float length = sqrtf(tb.frustumPlanes[i].x * tb.frustumPlanes[i].x + tb.frustumPlanes[i].y * tb.frustumPlanes[i].y + tb.frustumPlanes[i].z * tb.frustumPlanes[i].z);
-        tb.frustumPlanes[i] = v4_div(tb.frustumPlanes[i], length);
+        tb.frustumPlanes[i] = v4_normalize(tb.frustumPlanes[i]);
     }
 
     DescriptorUpdate(descriptor, &tb, sizeof(tb));
@@ -178,6 +197,51 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
     memset(some_map, 0, size_texture * sizeof(uint32_t));
 }
 
+void TerrainObjectGenerateTerrainHeightTextureMap(TerrainObject *to, void *buffer)
+{
+    uint32_t size_texture = to->t_t_param.height_map_scale * to->t_t_param.height_map_scale;
+
+    to->height_map = calloc(size_texture, sizeof(char));
+
+    uint32_t *some_map = buffer;
+
+    uint32_t temp = 0;
+
+    int num = 2, iter = 0;
+
+    float t_noise = 0;
+
+    float x_del = (float)to->t_t_param.height_map_scale / to->width;
+    float y_del = (float)to->t_t_param.height_map_scale / to->height;
+
+    for(int i = 0;i < to->t_t_param.height_map_scale; i++)
+    {
+        float n_val_x = ((float)i * to->t_shift) / to->t_g_param.size_factor / x_del;
+
+        for(int j = 0;j < to->t_t_param.height_map_scale; j++)
+        {
+            float n_val_y = ((float)j * to->t_shift) / to->t_g_param.size_factor / y_del;
+
+            iter = i * to->t_t_param.height_map_scale + j;
+
+            if(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_PERLIN)
+                t_noise = PerlinOctave2D(to->t_g_param.octaves, n_val_x, n_val_y, to->t_g_param.frequency, to->t_g_param.amplitude);
+            else
+                t_noise = SimplexOctave2D(to->t_g_param.octaves, n_val_x, n_val_y, to->t_g_param.frequency, to->t_g_param.amplitude);
+
+            float s_val = (t_noise + 1.0) / 2;
+            char t_val = 128 * s_val;
+
+            some_map[iter] = (0xFFFF00 << 8) | (-t_val);
+            to->height_map[iter] = -t_val;
+        }
+    }
+
+    TextureUpdate(to->texture_height_map, some_map, size_texture * sizeof(uint32_t), 0);
+
+    memset(some_map, 0, size_texture * sizeof(uint32_t));
+}
+
 void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
 {
 
@@ -205,8 +269,8 @@ void TerrainObjectGenerateTerrainHeights(TerrainObject *to)
             else
                 t_noise = SimplexOctave2D( to->t_g_param.octaves, n_x, n_y, to->t_g_param.frequency, to->t_g_param.amplitude);
 
-            if(t_noise <= -0.5f)
-                 t_noise = -0.5f;
+            /*if(t_noise <= -0.5f)
+                 t_noise = -0.5f;*/
 
             verts[iter].position.y = verts[iter].position.y * t_noise * to->t_g_param.height_factor;
         }
@@ -331,13 +395,20 @@ void TerrainObjectAddDefault(TerrainObject *to, DrawParam *dParam)
     //Height Map
     GameObjectImage g_img;
     memset(&g_img, 0, sizeof(GameObjectImage));
-    g_img.imgWidth = to->t_t_param.texture_width;
-    g_img.imgHeight = to->t_t_param.texture_height;
-    g_img.flags = ENGINE_TEXTURE_FLAG_R16 | ENGINE_TEXTURE_FLAG_SPECIFIC;
 
-    /*
-    to->heightMap.flags = ENGINE_TEXTURE_FLAG_R16;
-    to->heightMap.img_type = VK_FORMAT_R16_UNORM;*/
+    if(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_OLD){
+        g_img.imgWidth = 100;
+        g_img.imgHeight = 100;
+        g_img.flags = ENGINE_TEXTURE_FLAG_R16 | ENGINE_TEXTURE_FLAG_SPECIFIC;
+
+    }else if(to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS){
+        g_img.imgWidth = to->t_t_param.height_map_scale;
+        g_img.imgHeight = to->t_t_param.height_map_scale;
+        g_img.flags = ENGINE_TEXTURE_FLAG_SRGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
+    }else{
+        g_img = to->heightMap;
+    }
+
     to->texture_height_map = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 
     //TextureMap
@@ -417,7 +488,7 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
     free(vParam.vertices);
     free(iParam.indices);
 
-    if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS))
+    if((to->flags & ENGINE_TERRIAN_FLAGS_GENERATE_HEIGHTS_OLD))
         TerrainObjectGenerateTerrainHeights(to);
 
     to->go.images = calloc(tParam->t_t_param.num_textures + 1, sizeof(GameObjectImage));

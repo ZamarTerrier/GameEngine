@@ -313,6 +313,8 @@ BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t i
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_UINT, image->imgWidth, image->imgHeight);
         else if(image->flags & ENGINE_TEXTURE_FLAG_R16)
             TextureCreateSpecific(descriptor, VK_FORMAT_R16_UNORM, image->imgWidth, image->imgHeight);
+        else if(image->flags & ENGINE_TEXTURE_FLAG_SRGB)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SRGB, image->imgWidth, image->imgHeight);
         else
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, image->imgWidth, image->imgHeight);
     }

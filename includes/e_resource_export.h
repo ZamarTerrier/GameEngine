@@ -184,6 +184,13 @@ extern char _binary_shaders_3d_object_instance_vert_spv_end;
 extern int _binary_shaders_3d_object_instance_vert_spv_size;
 extern char _binary_shaders_3d_object_instance_vert_spv_start;
 
+extern char _binary_shaders_water_frag_spv_end;
+extern int _binary_shaders_water_frag_spv_size;
+extern char _binary_shaders_water_frag_spv_start;
+extern char _binary_shaders_water_vert_spv_end;
+extern int _binary_shaders_water_vert_spv_size;
+extern char _binary_shaders_water_vert_spv_start;
+
 extern char _binary_shaders_3d_object_line_frag_spv_end;
 extern int _binary_shaders_3d_object_line_frag_spv_size;
 extern char _binary_shaders_3d_object_line_frag_spv_start;

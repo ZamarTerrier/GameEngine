@@ -5,6 +5,8 @@
 #include "graphicsObject.h"
 #include "e_transform.h"
 
+#define MAX_INSTANCES UINT16_MAX
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -20,7 +22,7 @@ typedef struct GameObject3D{
     Transform3D transform;
     GameObjectImage *images;
     uint32_t num_images;
-    VertexInstance3D instances[UINT16_MAX];
+    VertexInstance3D instances[MAX_INSTANCES];
     InstanceBuffer buffer;
     uint32_t num_instances;
 } GameObject3D;
@@ -44,6 +46,13 @@ void GameObject3DInitDraw(GameObject3D *go);
 void GameObject3DClean(GameObject3D* go);
 void GameObject3DRecreate(GameObject3D* go);
 void GameObject3DDestroy(GameObject3D* go);
+
+
+void GameObject3DAddInstance(GameObject3D *go, VertexInstance3D vertex);
+void GameObject3DSetInstance(GameObject3D *go, uint32_t indx, VertexInstance3D vertex);
+void GameObject3DRemoveInstance(GameObject3D *go, uint32_t indx);
+
+void GameObject3DInitTextures(GameObject3D *go, DrawParam *dParam);
 
 void GameObject3DInit(GameObject3D *go);
 void GameObject3DInitInstances(GameObject3D *go);

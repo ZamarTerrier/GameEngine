@@ -698,9 +698,9 @@ void TreeObjectInitInstances(GameObject3D *go){
 
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_TREE_INSTANCE);
 
-    memset(go->instances, 0, sizeof(VertexInstance3D) * UINT16_MAX);
+    memset(go->instances, 0, sizeof(VertexInstance3D) * MAX_INSTANCES);
 
-    bufferSize = sizeof(VertexInstance3D) * UINT16_MAX;
+    bufferSize = sizeof(VertexInstance3D) * MAX_INSTANCES;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &go->buffer.buffer, &go->buffer.buffer_memory, ENGINE_BUFFER_ALLOCATE_VERTEX);
 

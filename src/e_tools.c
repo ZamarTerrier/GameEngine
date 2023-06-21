@@ -185,12 +185,42 @@ void MakeSomeIndex(indexParam *iParam, uint32_t size, uint32_t last_indx, Vertex
     }
 }
 
+
+void InitGrass3D(vertexParam *vParam, indexParam *iParam)
+{
+    uint32_t planes = 2;
+
+    vParam->verticesSize = planes * 4;
+    vParam->vertices = calloc(vParam->verticesSize, sizeof(Vertex3D));
+    iParam->indexesSize = planes * 6;
+    iParam->indices = calloc(iParam->indexesSize , sizeof(uint32_t));
+
+    Vertex3D some_pos[] = {
+        {{-1.0f, 1.0f, 0}, {-1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{1.0f, 1.0f, 0}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{1.0f, -1.0f, 0}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-1.0f, -1.0f, 0}, {-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
+
+
+        {{0, 1.0f, -1.0f}, {-1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0, 1.0f,  1.0f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0,-1.0f,  1.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{0,-1.0f, -1.0f}, {-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
+    };
+
+    uint32_t some_indxs[] = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4
+    };
+
+    memcpy(vParam->vertices, some_pos, sizeof(Vertex3D) * vParam->verticesSize);
+    memcpy(iParam->indices, some_indxs, sizeof(uint32_t) * iParam->indexesSize);
+}
+
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int sectorCount){
 
     vec3 pos = {0 , 0, 0};
     vec3 col = {0.3 , 0.1, 0.11};
-
-    int i, j;
 
     vParam->verticesSize = (stackCount + 1) * (sectorCount + 1);
 
@@ -200,19 +230,22 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
 
     Vertex3D *verts = vParam->vertices;
 
-    for(i=0; i <= stackCount;i++){
-        for(j=0; j <= sectorCount;j++){
+    const float wx = 2.0f;
+    const float wy = 2.0f;
 
-            vIter = i * sectorCount + (i > 0 ? j + i : j);
+    uint32_t vertex_step = 1.0;
+    for(int x=0; x <= stackCount;x++){
+        for(int z=0; z <= sectorCount;z++){
 
-            pos.x = 0.5 * i;
-            pos.z = 0.5 * j;
+            vIter = x * sectorCount + (x > 0 ? z + x : z);
 
-            verts[vIter].position = pos;
+            verts[vIter].position.x = (x * wx + wx / 2.0f - (float)stackCount * wx / 2.0f) * vertex_step;
+            verts[vIter].position.y = 0;
+            verts[vIter].position.z = (z * wy + wy / 2.0f - (float)sectorCount * wy / 2.0f) * vertex_step;
             verts[vIter].normal = vec3_f(0, 1, 0);
 
 
-            verts[vIter].texCoord = vec2_f((float)i / sectorCount, (float)j / stackCount);
+            verts[vIter].texCoord = vec2_f((float)x / sectorCount, (float)z / stackCount);
 
         }
     }
@@ -223,10 +256,10 @@ void InitPlane3D(vertexParam *vParam, indexParam *iParam, int stackCount, int se
 
     int k1, k2, it = 0, tt = 0;
 
-    for(i=0; i < stackCount;i++){
+    for(int i=0; i < stackCount;i++){
         k1 = i * (sectorCount + 1);     // beginning of current stack
         k2 = k1 +  sectorCount + 1 ;      // beginning of next stack
-        for(j=0; j < sectorCount; ++j, ++k1, ++k2){
+        for(int j=0; j < sectorCount; ++j, ++k1, ++k2){
 
             iParam->indices[it] = k1;
             iParam->indices[it + 1] = k2;
@@ -255,13 +288,13 @@ void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param){
     const float wy = 2.0f;
 
     for(int x=0; x < tParam->size_patch;x++){
-        for(int  y=0; y < tParam->size_patch;y++){
-            uint32_t index = (x + y * tParam->size_patch);
+        for(int z=0; z < tParam->size_patch;z++){
+            uint32_t index = (x + z * tParam->size_patch);
             verts[index].position.x = (x * wx + wx / 2.0f - (float)tParam->size_patch * wx / 2.0f) * tParam->vertex_step;
             verts[index].position.y = tParam->vertex_step;
-            verts[index].position.z = (y * wy + wy / 2.0f - (float)tParam->size_patch * wy / 2.0f) * tParam->vertex_step;
+            verts[index].position.z = (z * wy + wy / 2.0f - (float)tParam->size_patch * wy / 2.0f) * tParam->vertex_step;
             verts[index].normal = vec3_f( 0, 1, 0);
-            verts[index].texCoord = v2_muls(vec2_f((float)x / tParam->size_patch, (float)y / tParam->size_patch), 1.0f); // tParam->t_t_param.texture_scale);
+            verts[index].texCoord = v2_muls(vec2_f((float)x / tParam->size_patch, (float)z / tParam->size_patch), 1.0f); // tParam->t_t_param.texture_scale);
         }
     }
 

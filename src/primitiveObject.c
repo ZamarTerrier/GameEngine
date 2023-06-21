@@ -21,43 +21,6 @@
 #include "e_resource_descriptors.h"
 #include "e_resource_export.h"
 
-void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
-{
-    po->go.images = calloc(3, sizeof(GameObjectImage));
-
-    if(dParam == NULL)
-        return;
-
-    if(strlen(dParam->diffuse) != 0)
-    {
-        int len = strlen(dParam->diffuse);
-        po->go.images[0].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[0].path, dParam->diffuse, len);
-        po->go.images[0].path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-    if(strlen(dParam->normal) != 0)
-    {
-        int len = strlen(dParam->normal);
-        po->go.images[1].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[1].path, dParam->normal, len);
-        po->go.images[1].path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-
-    if(strlen(dParam->specular) != 0)
-    {
-        int len = strlen(dParam->specular);
-        po->go.images[2].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[2].path, dParam->specular, len);
-        po->go.images[0].path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-}
-
 void PrimitiveObjectDestroy(PrimitiveObject *po)
 {
     GameObject3DDestroy(po);
@@ -143,7 +106,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam *dParam, char type, void
         free(iParam.indices);
     }
 
-    PrimitiveObjectInitTexture(po, dParam);
+    GameObject3DInitTextures(po, dParam);
 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
         Transform3DSetScale(po, -500, -500, -500);
