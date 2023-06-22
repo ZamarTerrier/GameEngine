@@ -90,7 +90,7 @@ BluePrintDescriptor *BluePrintAddExistTextureImage(Blueprints *blueprints, uint3
     descriptor->image = NULL;
     descriptor->size = 0;
     descriptor->textures = texture;
-    descriptor->descrType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptor->flags = ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE | ENGINE_BLUE_PRINT_FLAG_LINKED_TEXTURE;

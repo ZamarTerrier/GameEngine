@@ -53,7 +53,7 @@ enum ENGINE_TERRIAN_FLAGS{
 typedef struct{
     GameObject3D go;
     uint32_t flags;
-    char *height_map;
+    void *height_map;
     uint32_t width;
     uint32_t height;
     float t_shift;
@@ -66,6 +66,8 @@ typedef struct{
     void *render;
 } TerrainObject;
 
+float TerrainObjectGetHeight(TerrainObject *to, uint32_t x, uint32_t z);
+
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
 void TerrainObjectDefaultInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam);
 
@@ -77,7 +79,7 @@ void TerrainObjectAddTextureRender(TerrainObject *to, void *render);
 void TerrainObjectAddDefault(TerrainObject *to, DrawParam *dParam);
 
 void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer);
-void TerrainObjectGenerateTerrainHeightTextureMap(TerrainObject *to, void *buffer);
+void TerrainObjectGenerateTerrainHeightTextureMap(TerrainObject *to);
 
 uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index);
 
