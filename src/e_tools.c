@@ -1194,14 +1194,14 @@ uint32_t findDepthFormat() {
 void ToolsCreateDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    TextureCreateImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &depthImage, &depthImageMemory);
-    depthImageView = TextureCreateImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    TextureCreateImage(swapChainExtent.width, swapChainExtent.height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &depthImage, &depthImageMemory);
+    depthImageView = TextureCreateImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-    ToolsTransitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    ToolsTransitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 
 }
 
-void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t newLayout, uint32_t aspect_mask)
+void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t newLayout, uint32_t aspect_mask, uint32_t mip_levels)
 {
     VkImageMemoryBarrier imgBar;
     memset(&imgBar, 0, sizeof(VkImageMemoryBarrier));
@@ -1214,7 +1214,7 @@ void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t ne
     imgBar.newLayout = newLayout;
     imgBar.image = image;
     imgBar.subresourceRange.aspectMask = aspect_mask;
-    imgBar.subresourceRange.levelCount = 1;
+    imgBar.subresourceRange.levelCount = mip_levels;
     imgBar.subresourceRange.layerCount = 1;
 
     void *cmd_buff = beginSingleTimeCommands();
@@ -1224,7 +1224,7 @@ void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t ne
     endSingleTimeCommands(cmd_buff);
 }
 
-void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout) {
+void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout, uint32_t mip_levels) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
     VkPipelineStageFlags sourceStage;
@@ -1238,7 +1238,7 @@ void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = mip_levels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 

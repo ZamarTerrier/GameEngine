@@ -4,12 +4,13 @@
 #include "engine_includes.h"
 #include "gameObject3D.h"
 
-#define MAX_TEXTURE_STACK 21
+#define MAX_TEXTURE_STACK 4
 
 typedef struct{
     uint32_t size_factor;
     uint32_t height_factor;
     float displaisment_factor;
+    float tesselation_factor;
     uint32_t amplitude;
     uint32_t frequency;
     uint32_t octaves;
@@ -35,9 +36,6 @@ typedef struct{
 
 typedef struct{
     int multi_size;
-    int num_textures;
-    vec2 cam_posxz;
-    vec4 tex_colors[MAX_TEXTURE_STACK];
 } TextureBuffer;
 
 enum ENGINE_TERRIAN_FLAGS{
@@ -59,7 +57,6 @@ typedef struct{
     float t_shift;
     TerrainTextureParam t_t_param;
     TerrainGeneratorParam t_g_param;
-    vec4_u8 tex_colors[MAX_TEXTURE_STACK];
     BluePrintDescriptor *texture_descr;
     BluePrintDescriptor *texture_height_map;
     GameObjectImage heightMap;

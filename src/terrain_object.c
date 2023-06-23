@@ -21,20 +21,17 @@
 #include "e_resource_engine.h"
 #include "e_resource_export.h"
 
-uint32_t TerrainObjectGetTextureColor(TerrainObject *to, int index){
-    return (to->tex_colors[index].w << 24) | (to->tex_colors[index].x << 16) | (to->tex_colors[index].y << 8) | (to->tex_colors[index].z);
-}
-
 void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height, uint32_t height_map_size)
 {
-    tParam->size_patch = 200;
+    tParam->size_patch = 256;
     tParam->t_g_param.size_factor = 232;
     tParam->t_g_param.height_factor = 12;
-    tParam->t_g_param.displaisment_factor = 460.0f;
+    tParam->t_g_param.displaisment_factor = 512.0f;
+    tParam->t_g_param.tesselation_factor = 0.75f;
     tParam->t_g_param.frequency = 1;
     tParam->t_g_param.amplitude = 1;
-    tParam->t_g_param.octaves = 6;
-    tParam->vertex_step = 2.0;
+    tParam->t_g_param.octaves = 4;
+    tParam->vertex_step = 3.0;
     tParam->t_t_param.height_map_scale = height_map_size;
     tParam->t_t_param.texture_scale = 180.0f;
     tParam->t_t_param.texture_width = texture_width;
@@ -49,6 +46,7 @@ void TerrainObjectMakeOldDefaultParams(TerrainParam *tParam, uint32_t texture_wi
     tParam->t_g_param.size_factor = 300;
     tParam->t_g_param.height_factor = 120;
     tParam->t_g_param.displaisment_factor = 1.0f;
+    tParam->t_g_param.tesselation_factor = 0.75f;
     tParam->t_g_param.frequency = 1;
     tParam->t_g_param.amplitude = 1;
     tParam->t_g_param.octaves = 6;
@@ -66,15 +64,6 @@ void TerrainObjectDescriptorTextureUpdate(TerrainObject *to, BluePrintDescriptor
     TextureBuffer tb;
 
     tb.multi_size = to->t_t_param.texture_scale;
-    tb.num_textures = to->t_t_param.num_textures;
-
-    for(int i=0;i < to->t_t_param.num_textures;i++)
-    {
-        tb.tex_colors[i].x = to->tex_colors[i].x;
-        tb.tex_colors[i].y = to->tex_colors[i].y;
-        tb.tex_colors[i].z = to->tex_colors[i].z;
-        tb.tex_colors[i].w = to->tex_colors[i].w;
-    }
 
     DescriptorUpdate(descriptor, &tb, sizeof(tb));
 }
@@ -90,7 +79,7 @@ void TerrainObjectDescriptorTesselationUpdate(TerrainObject *to, BluePrintDescri
     memset(&tb, 0, sizeof(TesselationBuffer));
 
     tb.displacementFactor = to->t_g_param.displaisment_factor;
-    tb.tessellationFactor = 0.95f;
+    tb.tessellationFactor = to->t_g_param.tesselation_factor;
     tb.tessellatedEdgeSize = 20.0f;
 
     tb.lightPos.y = -0.5f - tb.displacementFactor; // todo: Not uesed yet
@@ -151,9 +140,9 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
 {
     uint32_t size_texture = to->t_t_param.texture_width * to->t_t_param.texture_height;
 
-    uint32_t *some_map = buffer; //[size_texture];
+    uint16_t *some_map = buffer; //[size_texture];
 
-    uint32_t temp = 0;
+    uint16_t temp = 0;
 
     int num = 2, iter = 0;
 
@@ -186,15 +175,11 @@ void TerrainObjectGenerateTerrainTextureMap(TerrainObject *to, void *buffer)
             else
                 num = 3;
 
-            temp = TerrainObjectGetTextureColor(to, num);
-
-            some_map[iter] = temp;
+            some_map[iter] = num;
         }
     }
 
-    TextureUpdate(to->texture_descr, some_map, size_texture * sizeof(uint32_t), 0);
-
-    memset(some_map, 0, size_texture * sizeof(uint32_t));
+    TextureUpdate(to->texture_descr, some_map, size_texture * sizeof(uint16_t), 0);
 }
 
 void TerrainObjectGenerateTerrainHeightTextureMap(TerrainObject *to)
@@ -420,7 +405,7 @@ void TerrainObjectAddDefault(TerrainObject *to, DrawParam *dParam)
 
         g_img.imgWidth = to->t_t_param.texture_width;
         g_img.imgHeight = to->t_t_param.texture_height;
-        g_img.flags = ENGINE_TEXTURE_FLAG_URGB | ENGINE_TEXTURE_FLAG_SPECIFIC;
+        g_img.flags = ENGINE_TEXTURE_FLAG_R16_UINT | ENGINE_TEXTURE_FLAG_SPECIFIC;
 
         to->texture_descr = BluePrintAddTextureImage(&to->go.graphObj.blueprints, nums, &g_img, VK_SHADER_STAGE_FRAGMENT_BIT);
     }
@@ -463,7 +448,7 @@ float TerrainObjectGetHeight(TerrainObject *to, uint32_t x, uint32_t y)
     i_x = i_x / scale;
     i_y = i_y / scale;
 
-    return *(heightMap + (i_x + i_y * to->t_t_param.height_map_scale) * scale) / 65535.0f * (to->t_g_param.displaisment_factor + 2);
+    return *(heightMap + (i_x + i_y * to->t_t_param.height_map_scale) * scale) / (float)UINT16_MAX * to->t_g_param.displaisment_factor;
 }
 void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tParam)
 {
@@ -513,14 +498,6 @@ void TerrainObjectInit(TerrainObject *to, DrawParam *dParam, TerrainParam *tPara
         memcpy(to->heightMap.path, tParam->texture_map, len);
         to->heightMap.path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-    for(int i=0;i < tParam->t_t_param.num_textures;i++)
-    {
-        to->tex_colors[i].x = rand() % 255;
-        to->tex_colors[i].y = rand() % 255;
-        to->tex_colors[i].z = rand() % 255;
-        to->tex_colors[i].w = rand() % 255;
     }
 
     for(int i=0;i < tParam->t_t_param.num_textures;i++)

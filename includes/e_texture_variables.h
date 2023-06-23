@@ -21,6 +21,7 @@ typedef struct{
     uint32_t texWidth;
     uint32_t texHeight;
     uint32_t texChannels;
+    uint32_t mip_levels;
 } ImageFileData;
 
 typedef struct{

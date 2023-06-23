@@ -163,6 +163,7 @@ void ImageCreateEmpty(Texture2D *texture, uint32_t usage) {
     }
 
     vkBindImageMemory(e_device, texture->textureImage, texture->textureImageMemory, 0);
+
 }
 
 void TextureCreateEmptyDefault(Texture2D *texture)
@@ -173,6 +174,7 @@ void TextureCreateEmptyDefault(Texture2D *texture)
     texture->textureType = VK_FORMAT_R8G8B8A8_SRGB;
     texture->image_data.texWidth = EMPTY_IMAGE_WIDTH;
     texture->image_data.texHeight = EMPTY_IMAGE_HEIGHT;
+    texture->image_data.mip_levels = 1;
 
     VkDeviceSize bufferSize = EMPTY_IMAGE_HEIGHT * EMPTY_IMAGE_WIDTH * 4;
 
@@ -188,14 +190,12 @@ void TextureCreateEmptyDefault(Texture2D *texture)
 
     ImageCreateEmpty(texture, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, EMPTY_IMAGE_WIDTH, EMPTY_IMAGE_HEIGHT);
-    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
     BuffersDestroyBuffer(stagingBuffer);
 
-    texture->image_data.texWidth = EMPTY_IMAGE_WIDTH;
-    texture->image_data.texHeight = EMPTY_IMAGE_HEIGHT;
 }
 
 void TextureCreateEmpty(Texture2D *texture)
@@ -204,6 +204,8 @@ void TextureCreateEmpty(Texture2D *texture)
     VkDeviceMemory stagingBufferMemory;
 
     VkDeviceSize bufferSize = texture->image_data.texWidth * texture->image_data.texHeight * 4;
+
+    texture->image_data.mip_levels = 1;
 
     BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
 
@@ -214,9 +216,9 @@ void TextureCreateEmpty(Texture2D *texture)
 
     ImageCreateEmpty(texture, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
-    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);
-    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
     BuffersDestroyBuffer(stagingBuffer);
 }
@@ -284,6 +286,10 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
+    uint32_t mip_levels = floor(log2(e_max(fileData.texWidth, fileData.texHeight)));
+
+    images[e_var_num_images].texture.image_data.mip_levels = mip_levels;
+
     void* data;
 
     if (!fileData.data) {
@@ -300,30 +306,110 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
     memcpy(data, fileData.data, imageSize);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    TextureCreateImage( fileData.texWidth, fileData.texHeight, images[e_var_num_images].texture.textureType, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &images[e_var_num_images].texture.textureImage, &images[e_var_num_images].texture.textureImageMemory);
+    TextureCreateImage( fileData.texWidth, fileData.texHeight, mip_levels, images[e_var_num_images].texture.textureType, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &images[e_var_num_images].texture.textureImage, &images[e_var_num_images].texture.textureImageMemory);
 
-    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
     ToolsCopyBufferToImage(stagingBuffer, images[e_var_num_images].texture.textureImage, fileData.texWidth, fileData.texHeight);
-    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
+    //ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
 
     BuffersDestroyBuffer(stagingBuffer);
+
+    TextureGenerateMipmaps(&images[e_var_num_images].texture);
 
     return 1;
 }
 
-void TextureCreateTextureImageView(Texture2D *texture, uint32_t type) {
-    texture->textureImageView = TextureCreateImageView(texture->textureImage, type, texture->textureType, VK_IMAGE_ASPECT_COLOR_BIT);
+void TextureGenerateMipmaps(Texture2D *texture){
+
+    VkFormatProperties formatProperties;
+    vkGetPhysicalDeviceFormatProperties(e_physicalDevice, texture->textureType, &formatProperties);
+
+    if(!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)){
+        printf("Ошибка Mipmap\n");
+        exit(1);
+    }
+
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+    VkImageMemoryBarrier barrier;
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.image = texture->textureImage;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.levelCount = 1;
+
+    int mipWidth = texture->image_data.texWidth;
+    int mipHeight = texture->image_data.texHeight;
+
+    for(int i=1;i < texture->image_data.mip_levels;i++)
+    {
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+
+        VkImageBlit blit;
+        memset(&blit.srcOffsets[0], 0, sizeof(VkOffset3D));
+        blit.srcOffsets[1].x = mipWidth;
+        blit.srcOffsets[1].y = mipHeight;
+        blit.srcOffsets[1].z = 1;
+        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.srcSubresource.mipLevel = i - 1;
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount = 1;
+        memset(&blit.dstOffsets[0], 0, sizeof(VkOffset3D));
+        blit.dstOffsets[1].x = mipWidth > 1 ? mipWidth / 2 : 1;
+        blit.dstOffsets[1].y = mipHeight > 1 ? mipHeight / 2 : 1;
+        blit.dstOffsets[1].z = 1;
+        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.dstSubresource.mipLevel = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount = 1;
+
+        vkCmdBlitImage(commandBuffer, texture->textureImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+
+        if(mipWidth > 1) mipWidth /=2;
+        if(mipHeight > 1) mipHeight /=2;
+    }
+
+
+    barrier.subresourceRange.baseMipLevel = texture->image_data.mip_levels - 1;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+
+    endSingleTimeCommands(commandBuffer);
 }
 
-void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, uint32_t flags, void** image, void** imageMemory) {
+void TextureCreateTextureImageView(Texture2D *texture, uint32_t type) {
+    texture->textureImageView = TextureCreateImageView(texture->textureImage, type, texture->textureType, VK_IMAGE_ASPECT_COLOR_BIT, texture->image_data.mip_levels);
+}
+
+void TextureCreateImage(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, uint32_t flags, void** image, void** imageMemory) {
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
+    imageInfo.mipLevels = mip_levels;
 
     if(flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT)
         imageInfo.arrayLayers = 6;
@@ -359,7 +445,7 @@ void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32
     vkBindImageMemory(e_device, *image, *imageMemory, 0);
 }
 
-void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32_t aspectFlags) {
+void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32_t aspectFlags, uint32_t mip_levels) {
     VkImageViewCreateInfo viewInfo = {};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
@@ -367,7 +453,7 @@ void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32
     viewInfo.format = format; //VK_FORMAT_R8G8B8A8_SRGB;
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.levelCount = mip_levels;
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
 
@@ -416,12 +502,12 @@ void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews
     return imageView;
 }
 
-void TextureCreateSampler(void *sampler, uint32_t texture_type) {
+void TextureCreateSampler(void *sampler, uint32_t texture_type, uint32_t mip_levels) {
 
     VkSamplerCreateInfo samplerInfo = {};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 
-    if(texture_type == VK_FORMAT_R8G8B8A8_UINT)
+    if(texture_type == VK_FORMAT_R8G8B8A8_UINT || texture_type == VK_FORMAT_R16_UINT || texture_type == VK_FORMAT_R32_UINT)
     {
         samplerInfo.magFilter = VK_FILTER_NEAREST;
         samplerInfo.minFilter = VK_FILTER_NEAREST;
@@ -447,7 +533,7 @@ void TextureCreateSampler(void *sampler, uint32_t texture_type) {
     samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = 1.0f;
+    samplerInfo.maxLod = mip_levels;
 
     if (vkCreateSampler(e_device, &samplerInfo, NULL, sampler) != VK_SUCCESS) {
         printf("failed to create texture sampler!");
@@ -486,7 +572,7 @@ void TextureCreate(BluePrintDescriptor *descriptor, uint32_t type, GameObjectIma
         texture->flags = 0;
 
         TextureCreateTextureImageView(texture, type);
-        TextureCreateSampler(&texture->textureSampler, texture->textureType);
+        TextureCreateSampler(&texture->textureSampler, texture->textureType, texture->image_data.mip_levels);
 
         descriptor->textures[descriptor->size] = texture;
         descriptor->size ++;
@@ -520,7 +606,7 @@ void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uin
 
     TextureCreateEmpty(texture);
     TextureCreateTextureImageView(texture, VK_IMAGE_VIEW_TYPE_2D);
-    TextureCreateSampler(&texture->textureSampler, texture->textureType);
+    TextureCreateSampler(&texture->textureSampler, texture->textureType,  1);
 
 }
 
@@ -541,9 +627,9 @@ void TextureUpdate(BluePrintDescriptor *descriptor, void *in_data, uint32_t size
     memcpy(data + offset, in_data, size_data);
     vkUnmapMemory(e_device, stagingBufferMemory);
 
-    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture->image_data.mip_levels);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, texture->image_data.texWidth, texture->image_data.texHeight);
-    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, texture->textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, texture->image_data.mip_levels);
 
     BuffersDestroyBuffer(stagingBuffer);
 }
