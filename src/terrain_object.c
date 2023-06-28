@@ -24,13 +24,13 @@
 void TerrainObjectMakeDefaultParams(TerrainParam *tParam, uint32_t texture_width, uint32_t texture_height, uint32_t height_map_size)
 {
     tParam->size_patch = 256;
-    tParam->t_g_param.size_factor = 232;
+    tParam->t_g_param.size_factor = 182;
     tParam->t_g_param.height_factor = 12;
     tParam->t_g_param.displaisment_factor = 512.0f;
     tParam->t_g_param.tesselation_factor = 0.75f;
     tParam->t_g_param.frequency = 1;
     tParam->t_g_param.amplitude = 1;
-    tParam->t_g_param.octaves = 4;
+    tParam->t_g_param.octaves = 6;
     tParam->vertex_step = 3.0;
     tParam->t_t_param.height_map_scale = height_map_size;
     tParam->t_t_param.texture_scale = 180.0f;
