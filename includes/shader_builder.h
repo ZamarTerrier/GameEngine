@@ -8,6 +8,7 @@
 #define SHADER_MAX_LENGTH 2048
 #define SHADER_MAX_IODATA 32
 #define SHADER_MAX_VARIABLES 256
+#define SHADER_MAX_DEBUG_NAMES 256
 #define SHADER_MAX_FUNCTIONS 32
 
 typedef enum{
@@ -33,16 +34,44 @@ typedef enum{
     SHADER_VARIABLE_TYPE_EXTENDED_IMPORT,
 } ShaderVariableType;
 
+typedef struct{
+    ShaderVariableType var_type;
+    uint32_t size;
+    uint32_t type;
+    char name[32];
+} ShaderStructConstr;
+
+typedef enum{
+    SHADER_OPERAND_TYPE_ACCESS,
+    SHADER_OPERAND_TYPE_LOAD,
+    SHADER_OPERAND_TYPE_STORE,
+    SHADER_OPERAND_TYPE_COMPOSIITE_EXTRACT,
+    SHADER_OPERAND_TYPE_COMPOSITE_CONSTRUCT,
+    SHADER_OPERAND_TYPE_ADD,
+    SHADER_OPERAND_TYPE_SUB,
+    SHADER_OPERAND_TYPE_MUL,
+    SHADER_OPERAND_TYPE_DIV,
+} ShaderOperandType;
+
 typedef enum{
     SHADER_DATA_FLAG_UNSIGNED = 0x1,
     SHADER_DATA_FLAG_OUTPUT = 0x2,
+    SHADER_DATA_FLAG_UNIFORM= 0x4,
 } ShaderDataFlags;
 
 typedef struct{
     ShaderVariableType type;
     uint32_t indx;
+    uint32_t orig_indx;
 } InputOutputData;
 
+typedef struct{
+    uint32_t indx;
+    uint32_t res_store_indx;
+    ShaderOperandType op_type;
+    uint32_t var_indx[8];
+    uint32_t num_vars;
+} ShaderOperand;
 
 typedef struct ShaderVariable{
     ShaderVariableType type;
@@ -61,13 +90,28 @@ typedef struct{
 } ShaderFuncParam;
 
 typedef struct{
+    uint32_t index;
+    ShaderOperand operands[256];
+    uint32_t num_operands;
+} ShaderLabel;
+
+typedef struct{
     uint32_t result_type_indx;
     uint32_t func_type_indx;
     uint32_t indx;
     uint32_t function_control;
     ShaderFuncParam params[6];
     uint32_t num_params;
+    ShaderLabel labels[32];
+    uint32_t num_labels;
 } ShaderFunc;
+
+typedef struct{
+    uint32_t indx;
+    char name[64];
+    char child_name[6][64];
+    uint32_t num_childs;
+} ShaderDebugInfo;
 
 typedef struct{
     uint32_t code[SHADER_MAX_LENGTH];
@@ -78,9 +122,11 @@ typedef struct{
     uint32_t num_variables;
     ShaderFunc functions[SHADER_MAX_FUNCTIONS];
     uint32_t num_functions;
+    ShaderDebugInfo infos[SHADER_MAX_DEBUG_NAMES];
+    uint32_t num_debug_infos;
     ShaderType type;
     uint32_t current_index;
-    uint32_t main_point_index;
+    ShaderFunc *main_point_index;
 } ShaderBuilder;
 
 void ShaderBuilderInit(ShaderBuilder *builder, ShaderType type);
