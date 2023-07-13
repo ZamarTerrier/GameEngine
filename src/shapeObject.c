@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "shader_builder.h"
+
 #include "e_buffer.h"
 #include "e_camera.h"
 
@@ -274,7 +276,50 @@ void ShapeObjectAddDefault(ShapeObject *so, void *render)
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
-    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    ShaderBuilder some_shader;
+
+    ShaderBuilderInit(&some_shader, SHADER_TYPE_VERTEX);
+    ShaderBuilderMake(&some_shader);
+
+    //PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+
+    PipelineSettingSetShader(&setting, some_shader.code, some_shader.size, VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    setting.fromFile = 0;
+    setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
+
+    if(so->type == ENGINE_SHAPE_OBJECT_LINE)
+    {
+        setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        setting.flags &= ~(ENGINE_PIPELINE_FLAG_DRAW_INDEXED);
+    }
+
+    GameObject2DAddSettingPipeline(so, nums, &setting);
+
+    so->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void ShapeObjectAddShaderBuilder(ShapeObject *so, void *render, void *builder)
+{
+    ShaderBuilder *point = builder;
+
+    uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
+    so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject2DImageBuffer, 0);
+
+    BluePrintAddTextureImage(&so->go.graphObj.blueprints, nums, so->go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&so->go.graphObj, &setting);
+
+
+    //PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+
+    PipelineSettingSetShader(&setting, point->code, point->size, VK_SHADER_STAGE_VERTEX_BIT);
     PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     setting.fromFile = 0;

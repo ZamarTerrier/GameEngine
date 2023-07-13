@@ -10,6 +10,7 @@
 #define SHADER_MAX_VARIABLES 256
 #define SHADER_MAX_DEBUG_NAMES 256
 #define SHADER_MAX_FUNCTIONS 32
+#define SHADER_MAX_DECORATIONS 32
 
 typedef enum{
     SHADER_TYPE_FRAGMENT,
@@ -45,7 +46,7 @@ typedef enum{
     SHADER_OPERAND_TYPE_ACCESS,
     SHADER_OPERAND_TYPE_LOAD,
     SHADER_OPERAND_TYPE_STORE,
-    SHADER_OPERAND_TYPE_COMPOSIITE_EXTRACT,
+    SHADER_OPERAND_TYPE_COMPOSITE_EXTRACT,
     SHADER_OPERAND_TYPE_COMPOSITE_CONSTRUCT,
     SHADER_OPERAND_TYPE_ADD,
     SHADER_OPERAND_TYPE_SUB,
@@ -63,6 +64,7 @@ typedef struct{
     ShaderVariableType type;
     uint32_t indx;
     uint32_t orig_indx;
+    uint32_t location;
 } InputOutputData;
 
 typedef struct{
@@ -114,6 +116,12 @@ typedef struct{
 } ShaderDebugInfo;
 
 typedef struct{
+    uint32_t indx;
+    uint32_t type;
+    uint32_t val;
+} ShaderDecoration;
+
+typedef struct{
     uint32_t code[SHADER_MAX_LENGTH];
     uint32_t size;
     InputOutputData ioData[SHADER_MAX_IODATA];
@@ -124,6 +132,8 @@ typedef struct{
     uint32_t num_functions;
     ShaderDebugInfo infos[SHADER_MAX_DEBUG_NAMES];
     uint32_t num_debug_infos;
+    ShaderDecoration decors[SHADER_MAX_DECORATIONS];
+    uint32_t num_decorations;
     ShaderType type;
     uint32_t current_index;
     ShaderFunc *main_point_index;
