@@ -137,10 +137,17 @@ typedef struct{
     ShaderType type;
     uint32_t current_index;
     ShaderFunc *main_point_index;
+    uint32_t gl_struct_indx;
 } ShaderBuilder;
 
 void ShaderBuilderInit(ShaderBuilder *builder, ShaderType type);
 void ShaderBuilderMake(ShaderBuilder *builder);
-void ShaderBuilderWriteToFile(ShaderBuilder *builder);
+void ShaderBuilderWriteToFile(ShaderBuilder *builder,  const char *path);
+
+int ShaderBuilderAddFuncAdd(ShaderBuilder *builder, ShaderLabel *label, uint32_t val_1, uint32_t val_2, uint32_t size, uint32_t res_store);
+uint32_t ShaderBuilderAddFuncMove(ShaderBuilder *builder, ShaderLabel *label, uint32_t src_indx, uint32_t src_size, uint32_t dest_indx);
+
+uint32_t ShaderBuilderAddUniform(ShaderBuilder *builder, ShaderStructConstr *struct_arr, uint32_t count, char *name);
+uint32_t ShaderBuilderAddIOData(ShaderBuilder *builder, ShaderVariableType type, ShaderDataFlags flags, ShaderStructConstr *struct_arr, uint32_t size, char *name, uint32_t location);
 
 #endif // SHADER_BUILDER_H

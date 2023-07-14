@@ -331,6 +331,10 @@ uint32_t ShaderBuilderAddUniform(ShaderBuilder *builder, ShaderStructConstr *str
         res = ShaderBuilderAddVariable(builder, SHADER_VARIABLE_TYPE_VARIABLE, SHADER_DATA_FLAG_UNIFORM, arr, 1, NULL, 0);
     }
 
+
+    builder->decors[builder->num_decorations].indx = res;
+    builder->num_decorations++;
+
     return res;
 }
 
@@ -509,6 +513,8 @@ uint32_t ShaderBuilderAcceptLoad(ShaderBuilder *builder, ShaderLabel *label, Sha
 
     if(!(variable->flags & SHADER_DATA_FLAG_UNIFORM)){
         InputOutputData *data = ShaderBuilderFindIOData(builder, val_indx);
+
+
         ShaderVariable *var_orig = ShaderBuilderFindVar(builder, data->orig_indx);
 
         if(var_orig->type == SHADER_VARIABLE_TYPE_STRUCT){
@@ -663,10 +669,10 @@ void ShaderBuilderInit(ShaderBuilder *builder, ShaderType type){
 
     memset(builder, 0, sizeof(ShaderBuilder));
 
-    ShaderBuilderAddValue(builder, SpvMagicNumber);
+    ShaderBuilderAddValue(builder, SpvMagicNumber);// Magic number
     ShaderBuilderAddValue(builder, 0x00010000);//SpvVersion);
-    ShaderBuilderAddValue(builder, 0x000D000B);
-    ShaderBuilderAddValue(builder, 48);
+    ShaderBuilderAddValue(builder, 0x000D000B);//Generator version
+    ShaderBuilderAddValue(builder, 0);//Lines code
     ShaderBuilderAddValue(builder, 0);
 
     ShaderBuilderAddOp(builder, SpvOpCapability, 2);
@@ -678,52 +684,23 @@ void ShaderBuilderInit(ShaderBuilder *builder, ShaderType type){
 
     builder->main_point_index = ShaderBuilderAddFunction(builder, SHADER_VARIABLE_TYPE_VOID, "main");
 
-    ShaderStructConstr struct_arr[] = {
-        {SHADER_VARIABLE_TYPE_VECTOR, 4, 0, "gl_Position"},
-        {SHADER_VARIABLE_TYPE_FLOAT, 32, 0, "gl_PointSize"},
-        {SHADER_VARIABLE_TYPE_ARRAY, 1,  SHADER_VARIABLE_TYPE_FLOAT, "gl_ClipDistance"},
-        {SHADER_VARIABLE_TYPE_ARRAY, 1,  SHADER_VARIABLE_TYPE_FLOAT, "gl_CullDistance"}
-    };
+    if(type == SHADER_TYPE_VERTEX){
+        ShaderStructConstr struct_arr[] = {
+            {SHADER_VARIABLE_TYPE_VECTOR, 4, 0, "gl_Position"},
+            {SHADER_VARIABLE_TYPE_FLOAT, 32, 0, "gl_PointSize"},
+            {SHADER_VARIABLE_TYPE_ARRAY, 1,  SHADER_VARIABLE_TYPE_FLOAT, "gl_ClipDistance"},
+            {SHADER_VARIABLE_TYPE_ARRAY, 1,  SHADER_VARIABLE_TYPE_FLOAT, "gl_CullDistance"}
+        };
 
-    uint32_t gl_struct = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_STRUCT, SHADER_DATA_FLAG_OUTPUT, struct_arr, 4, "gl_PerVertex", 0);
-
-    uint32_t cnst = ShaderBuilderAddConstant(builder, SHADER_VARIABLE_TYPE_INT, 0, 0, 1);
-
-    ShaderStructConstr uniform_arr[] = {
-        {SHADER_VARIABLE_TYPE_VECTOR, 2, 0, "position"},
-        {SHADER_VARIABLE_TYPE_VECTOR, 2, 0, "rotation"},
-        {SHADER_VARIABLE_TYPE_VECTOR, 2, 0, "scale"},
-    };
-
-    uint32_t uniform = ShaderBuilderAddUniform(builder, uniform_arr, 3, "TransformBufferObjects");
-    ShaderBuilderAddPointer(builder, SHADER_VARIABLE_TYPE_VECTOR, 2, SHADER_DATA_FLAG_UNIFORM);
-
-    char name[] = "tbo";
+        builder->gl_struct_indx = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_STRUCT, SHADER_DATA_FLAG_OUTPUT, struct_arr, 4, "gl_PerVertex", 0);
+    }
+    /*char name[] = "tbo";
 
     memcpy(builder->infos[builder->num_debug_infos].name, name, strlen(name));
     builder->infos[builder->num_debug_infos].indx = uniform;
     builder->infos[builder->num_debug_infos].num_childs = 0;
 
-    builder->num_debug_infos++;
-
-    builder->decors[builder->num_decorations].indx = uniform;
-    builder->num_decorations++;
-
-    uint32_t posit = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 2, "position", 0);
-
-    ShaderBuilderAddFuncAdd(builder, &builder->main_point_index->labels[0], uniform, posit, 2, gl_struct);
-
-    uint32_t clr_dst = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_VECTOR, SHADER_DATA_FLAG_OUTPUT, NULL, 3, "fragColor", 0);
-
-    uint32_t clr_indx = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 3, "color", 1);
-
-    uint32_t txt_dst = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_VECTOR, SHADER_DATA_FLAG_OUTPUT, NULL, 2, "fragTexCoord", 1);
-    uint32_t txt_indx = ShaderBuilderAddIOData(builder, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 2, "inTexCoord", 2);
-
-
-
-    ShaderBuilderAddFuncMove(builder, &builder->main_point_index->labels[0], clr_indx, 3, clr_dst);
-    ShaderBuilderAddFuncMove(builder, &builder->main_point_index->labels[0], txt_indx, 2, txt_dst);
+    builder->num_debug_infos++;*/
 
 }
 
@@ -1051,13 +1028,14 @@ void ShaderBuilderMake(ShaderBuilder *builder){
         }
     }
 
+    builder->code[3] = builder->current_index + 1;
 
     //if(builder->size % sizeof(uint32_t)) ShaderBuilderAddValue(builder, 0x0);
 }
 
-void ShaderBuilderWriteToFile(ShaderBuilder *builder){
+void ShaderBuilderWriteToFile(ShaderBuilder *builder, const char *path){
 
-    FILE *somefile = fopen("/home/ilia/temp_shader.spv", "w");
+    FILE *somefile = fopen(path, "w");
 
     fwrite(builder->code, sizeof(uint32_t), builder->size, somefile);
 

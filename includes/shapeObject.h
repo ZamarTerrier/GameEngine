@@ -49,7 +49,7 @@ void ShapeObjectInit(ShapeObject *so, DrawParam *dParam, ShapeType type, void *p
 void ShapeObjectInitDefault(ShapeObject *so, DrawParam *dParam, ShapeType type, void *param);
 
 void ShapeObjectAddDefault(ShapeObject *so, void *render);
-void ShapeObjectAddShaderBuilder(ShapeObject *so, void *render, void *builder);
+void ShapeObjectAddShaderBuilder(ShapeObject *so, void *render, void *vertex, void *fragment);
 
 #ifdef __cplusplus
 }
