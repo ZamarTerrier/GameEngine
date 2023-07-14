@@ -555,12 +555,18 @@ int ShaderBuilderAddFuncAdd(ShaderBuilder *builder, ShaderLabel *label, uint32_t
 
     uint32_t val_indx_1 = ShaderBuilderAcceptLoad(builder, label, SHADER_VARIABLE_TYPE_VECTOR, val_1, size, 0);
     uint32_t val_indx_2 = ShaderBuilderAcceptLoad(builder, label, SHADER_VARIABLE_TYPE_VECTOR, val_2, size, 0);
+    uint32_t val_indx_3 = ShaderBuilderAcceptLoad(builder, label, SHADER_VARIABLE_TYPE_VECTOR, val_1, size, 2);
 
     uint32_t type = ShaderBuilderAddVector(builder, size, NULL);
 
     uint32_t res = 0;
     {
-        uint32_t arr[] = {type, val_indx_1, val_indx_2};
+        uint32_t arr[] = {type, val_indx_2, val_indx_3};
+        res = ShaderBuilderAddOperand(builder, label, arr, 3, SHADER_OPERAND_TYPE_MUL);
+    }
+
+    {
+        uint32_t arr[] = {type, val_indx_1, res};
         res = ShaderBuilderAddOperand(builder, label, arr, 3, SHADER_OPERAND_TYPE_ADD);
     }
 
@@ -575,7 +581,6 @@ int ShaderBuilderAddFuncAdd(ShaderBuilder *builder, ShaderLabel *label, uint32_t
             arr_extract[i] = ShaderBuilderAddOperand(builder, label, arr, 3, SHADER_OPERAND_TYPE_COMPOSITE_EXTRACT);
         }
     }
-
 
     {
         uint32_t cnst = ShaderBuilderAddConstant(builder, SHADER_VARIABLE_TYPE_FLOAT, 0, 0, 1);
@@ -1024,6 +1029,13 @@ void ShaderBuilderMake(ShaderBuilder *builder){
                             break;
                         case SHADER_OPERAND_TYPE_ADD:
                             ShaderBuilderAddOp(builder, SpvOpFAdd, 5);
+                            ShaderBuilderAddValue(builder, operand->var_indx[0]);
+                            ShaderBuilderAddValue(builder, operand->indx);
+                            ShaderBuilderAddValue(builder, operand->var_indx[1]);
+                            ShaderBuilderAddValue(builder, operand->var_indx[2]);
+                            break;
+                        case SHADER_OPERAND_TYPE_MUL:
+                            ShaderBuilderAddOp(builder, SpvOpFMul, 5);
                             ShaderBuilderAddValue(builder, operand->var_indx[0]);
                             ShaderBuilderAddValue(builder, operand->indx);
                             ShaderBuilderAddValue(builder, operand->var_indx[1]);

@@ -281,9 +281,7 @@ void ShapeObjectAddDefault(ShapeObject *so, void *render)
     ShaderBuilderInit(&some_shader, SHADER_TYPE_VERTEX);
     ShaderBuilderMake(&some_shader);
 
-    //PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
-
-    PipelineSettingSetShader(&setting, some_shader.code, some_shader.size, VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
     PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     setting.fromFile = 0;
@@ -319,7 +317,7 @@ void ShapeObjectAddShaderBuilder(ShapeObject *so, void *render, void *builder)
 
     //PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
 
-    PipelineSettingSetShader(&setting, point->code, point->size, VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, point->code, point->size * sizeof(uint32_t), VK_SHADER_STAGE_VERTEX_BIT);
     PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     setting.fromFile = 0;
