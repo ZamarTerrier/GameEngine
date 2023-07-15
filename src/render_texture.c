@@ -21,10 +21,10 @@ void RenderTextureCreateDepthResource(RenderTexture *render, RenderFrame *frame)
 
     VkFormat depthFormat = findDepthFormat();
 
-    TextureCreateImage(render->width, render->height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &frame->depth_image, &frame->depth_memory);
-    frame->depth_view = TextureCreateImageView(frame->depth_image, VK_IMAGE_VIEW_TYPE_2D, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    TextureCreateImage(render->width, render->height, 1,depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &frame->depth_image, &frame->depth_memory);
+    frame->depth_view = TextureCreateImageView(frame->depth_image, VK_IMAGE_VIEW_TYPE_2D, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-    ToolsTransitionImageLayout(frame->depth_image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    ToolsTransitionImageLayout(frame->depth_image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 
 }
 
@@ -226,9 +226,9 @@ void RenderTextureCreateFrames(RenderTexture *render, uint32_t flags)
             {
                 uint32_t usage = render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ?  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT :  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-                TextureCreateImage(render->width, render->height, render->m_format, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, flags, &frame->image, &frame->image_memory);
+                TextureCreateImage(render->width, render->height, 1,render->m_format, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, flags, &frame->image, &frame->image_memory);
 
-                TextureCreateSampler(&frame->sampler, render->m_format);
+                TextureCreateSampler(&frame->sampler, render->m_format, 1);
 
                 if(render->type & ENGINE_RENDER_TYPE_CUBEMAP)
                 {
@@ -236,7 +236,7 @@ void RenderTextureCreateFrames(RenderTexture *render, uint32_t flags)
                     frame->view = TextureCreateImageViewCube(frame->image, frame->shadowCubeMapFaceImageViews, render->m_format, render->flags & ENGINE_RENDER_FLAG_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
                     frame->framebufers = calloc(6, sizeof(VkFramebuffer));
                 }else{
-                    frame->view = TextureCreateImageView(frame->image, VK_IMAGE_VIEW_TYPE_2D, render->m_format, render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+                    frame->view = TextureCreateImageView(frame->image, VK_IMAGE_VIEW_TYPE_2D, render->m_format, render->type == ENGINE_RENDER_TYPE_DEPTH || (render->flags & ENGINE_RENDER_FLAG_DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 1);
                     frame->framebufers = calloc(1, sizeof(VkFramebuffer));
                 }
 

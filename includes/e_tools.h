@@ -24,6 +24,7 @@ shader readFile(const char* filename);
 
 void* createShaderModule(shader shdr);
 
+void InitGrass3D(vertexParam *vParam, indexParam *iParam);
 void InitPlane3D(vertexParam *vParam, indexParam *iParam, int rows, int colmns);
 void InitTerrain(vertexParam *vParam, indexParam *iParam, void *param);
 int SphereGenerator3D(vertexParam *vParam, indexParam *iParam,float radius, int stackCount, int sectorCount);
@@ -32,8 +33,8 @@ int IcoSphereGenerator(vertexParam *vParam, indexParam *iParam,float radius);
 int Cubesphere(vertexParam *vParam, indexParam *iParam, float radius,int vertexCountPerRow);
 
 void ToolsCreateDepthResources();
-void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout);
-void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t newLayout, uint32_t aspect_mask);
+void ToolsTransitionImageLayout(void* image, uint32_t format, uint32_t oldLayout, uint32_t newLayout, uint32_t mip_levels);
+void ToolsTransitionImageLayoutLite(void* image, uint32_t oldLayout, uint32_t newLayout, uint32_t aspect_mask, uint32_t mip_levels);
 void ToolsCopyImageToBuffer(void *buffer, void *image, uint32_t width, uint32_t height) ;
 void ToolsCopyBufferToImage(void* buffer, void* image, uint32_t width, uint32_t height);
 void ToolsCopyImage(void* cmdBuffer, void* srcImageId, void* dstImageId, uint32_t width, uint32_t height);

@@ -21,43 +21,6 @@
 #include "e_resource_descriptors.h"
 #include "e_resource_export.h"
 
-void PrimitiveObjectInitTexture(PrimitiveObject *po, DrawParam *dParam)
-{
-    po->go.images = calloc(3, sizeof(GameObjectImage));
-
-    if(dParam == NULL)
-        return;
-
-    if(strlen(dParam->diffuse) != 0)
-    {
-        int len = strlen(dParam->diffuse);
-        po->go.images[0].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[0].path, dParam->diffuse, len);
-        po->go.images[0].path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-    if(strlen(dParam->normal) != 0)
-    {
-        int len = strlen(dParam->normal);
-        po->go.images[1].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[1].path, dParam->normal, len);
-        po->go.images[1].path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-
-    if(strlen(dParam->specular) != 0)
-    {
-        int len = strlen(dParam->specular);
-        po->go.images[2].path = calloc(len + 1, sizeof(char));
-        memcpy(po->go.images[2].path, dParam->specular, len);
-        po->go.images[0].path[len] = '\0';
-        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
-    }
-
-}
-
 void PrimitiveObjectDestroy(PrimitiveObject *po)
 {
     GameObject3DDestroy(po);
@@ -143,7 +106,7 @@ void PrimitiveObjectInit(PrimitiveObject *po, DrawParam *dParam, char type, void
         free(iParam.indices);
     }
 
-    PrimitiveObjectInitTexture(po, dParam);
+    GameObject3DInitTextures(po, dParam);
 
     if(type == ENGINE_PRIMITIVE3D_SKYBOX)
         Transform3DSetScale(po, -500, -500, -500);
@@ -228,6 +191,31 @@ void PrimitiveObjectSetDefaultDescriptor(PrimitiveObject *po, DrawParam *dParam)
 
     po->go.graphObj.blueprints.num_blue_print_packs ++;
 }
+
+void PrimitiveObjectSetInstanceDescriptor(PrimitiveObject *po, DrawParam *dParam)
+{
+    uint32_t nums = po->go.graphObj.blueprints.num_blue_print_packs;
+    po->go.graphObj.blueprints.blue_print_packs[nums].render_point = dParam->render;
+
+    BluePrintAddUniformObject(&po->go.graphObj.blueprints, nums, sizeof(ModelBuffer3D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject3DDescriptorModelUpdate, 0);
+
+    BluePrintAddTextureImage(&po->go.graphObj.blueprints, nums, &po->go.images[0], VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&po->go.graphObj, &setting);
+
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_instance_vert_spv_start, (size_t)(&_binary_shaders_3d_object_instance_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_instance_frag_spv_start, (size_t)(&_binary_shaders_3d_object_instance_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    setting.fromFile = 0;
+    setting.vert_indx = 0;
+
+    GameObject3DAddSettingPipeline(po, nums, &setting);
+
+    po->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
 
 void *PrimitiveObjectGetVertex(PrimitiveObject *po)
 {

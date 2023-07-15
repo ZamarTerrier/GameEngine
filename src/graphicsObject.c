@@ -18,7 +18,8 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
 
     graphObj->blueprints.isShadow = false;
 
-    memset(&graphObj->shapes, 0, sizeof(Shape) * MAX_SHAPES);
+    if(graphObj->num_shapes == 0)
+        memset(&graphObj->shapes, 0, sizeof(Shape) * MAX_SHAPES);
 
     switch(type)
     {
@@ -26,36 +27,71 @@ void GraphicsObjectInit(GraphicsObject* graphObj, uint32_t type)
             graphObj->shapes[0].bindingDescription = &Bind2DDescription;
             graphObj->shapes[0].attr = planeAttributeDescription;
             graphObj->shapes[0].countAttr = 3;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
             break;
         case ENGINE_VERTEX_TYPE_3D_OBJECT:
             graphObj->shapes[0].bindingDescription = &Bind3DDescription;
             graphObj->shapes[0].attr = cubeAttributeDescription;
             graphObj->shapes[0].countAttr = 3;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
+            break;
+        case ENGINE_VERTEX_TYPE_3D_INSTANCE:
+            graphObj->shapes[0].bindingDescription = calloc(2, sizeof(EIVertexInputBindingDescription));
+            graphObj->shapes[0].bindingDescription[0] = Bind3DDescription;
+            graphObj->shapes[0].bindingDescription[1] = Bind3DInstanceDescription;
+            graphObj->shapes[0].attr = instanceAttributeDescription;
+            graphObj->shapes[0].countAttr = 6;
+            graphObj->shapes[0].countBind = 2;
+            graphObj->shapes[0].type = type;
+            break;
+        case ENGINE_VERTEX_TYPE_TREE_INSTANCE:
+            graphObj->shapes[0].bindingDescription = calloc(2, sizeof(EIVertexInputBindingDescription));
+            graphObj->shapes[0].bindingDescription[0] = BindTree3DDescription;
+            graphObj->shapes[0].bindingDescription[1] = Bind3DInstanceDescription;
+            graphObj->shapes[0].attr = treeInstanceAttributeDescription;
+            graphObj->shapes[0].countAttr = 7;
+            graphObj->shapes[0].countBind = 2;
+            graphObj->shapes[0].type = type;
             break;
         case ENGINE_VERTEX_TYPE_MODEL_OBJECT:
             graphObj->shapes[0].bindingDescription = &BindModel3DDescription;
             graphObj->shapes[0].attr = modelAttributeDescription;
             graphObj->shapes[0].countAttr = 5;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
             break;
         case ENGINE_VERTEX_TYPE_2D_PARTICLE:
             graphObj->shapes[0].bindingDescription = &BindParticle2DDescription;
             graphObj->shapes[0].attr = particle2DAttributeDescription;
             graphObj->shapes[0].countAttr = 3;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
             break;
         case ENGINE_VERTEX_TYPE_3D_PARTICLE:
             graphObj->shapes[0].bindingDescription = &BindParticle3DDescription;
             graphObj->shapes[0].attr = particle3DAttributeDescription;
             graphObj->shapes[0].countAttr = 3;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
             break;
         case ENGINE_VERTEX_TYPE_TERRAIN:
             graphObj->shapes[0].bindingDescription = &BindTerrainDescription;
             graphObj->shapes[0].attr = TerrainAttributeDescription;
             graphObj->shapes[0].countAttr = 3;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
             break;
         case ENGINE_VERTEX_TYPE_SKY:
             graphObj->shapes[0].bindingDescription = &BindSkyDescription;
             graphObj->shapes[0].attr = SkyAttributeDescription;
             graphObj->shapes[0].countAttr = 2;
+            graphObj->shapes[0].countBind = 1;
+            graphObj->shapes[0].type = type;
+            break;
+        default:
+            graphObj->shapes[0].type = 0;
             break;
     }
 }

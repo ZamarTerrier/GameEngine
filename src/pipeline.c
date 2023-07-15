@@ -289,7 +289,7 @@ void PipelineMakePipeline(GraphicsObject *graphObj, uint32_t indx_pack, uint32_t
     //------------
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexBindingDescriptionCount = graphObj->shapes[setting->vert_indx].countBind;
     vertexInputInfo.vertexAttributeDescriptionCount = graphObj->shapes[setting->vert_indx].countAttr;
     vertexInputInfo.pVertexBindingDescriptions = graphObj->shapes[setting->vert_indx].bindingDescription;
     vertexInputInfo.pVertexAttributeDescriptions = graphObj->shapes[setting->vert_indx].attr;

@@ -32,7 +32,9 @@ typedef struct{
     GameObject3D go;
 } TreeObject;
 
+void TreeObjectInitInstances(GameObject3D *go);
 void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam, void *arg);
 void TreeObjectInitDefault(TreeObject *to, uint32_t type, DrawParam *dParam, void *arg);
+void TreeObjectSetInstanceDescriptor(TreeObject *to, DrawParam *dParam);
 
 #endif // TREE_OBJECT_H

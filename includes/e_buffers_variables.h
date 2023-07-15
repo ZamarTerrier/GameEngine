@@ -6,6 +6,10 @@
 #define MAX_BONES 128
 #define MAX_LIGHTS 16
 
+typedef struct{
+    vec2 position;
+} DefaultBuffer2D;
+
 typedef struct {
     vec2 position;
     vec2 rotation;

@@ -6,6 +6,8 @@
 extern EIVertexInputAttributeDescription planeAttributeDescription[];
 extern EIVertexInputAttributeDescription treeAttributeDescription[];
 extern EIVertexInputAttributeDescription cubeAttributeDescription[];
+extern EIVertexInputAttributeDescription instanceAttributeDescription[];
+extern EIVertexInputAttributeDescription treeInstanceAttributeDescription[];
 extern EIVertexInputAttributeDescription modelAttributeDescription[];
 extern EIVertexInputAttributeDescription particle2DAttributeDescription[];
 extern EIVertexInputAttributeDescription particle3DAttributeDescription[];
@@ -15,6 +17,7 @@ extern EIVertexInputAttributeDescription SkyAttributeDescription[];
 extern EIVertexInputBindingDescription Bind2DDescription;
 extern EIVertexInputBindingDescription BindTree3DDescription;
 extern EIVertexInputBindingDescription Bind3DDescription;
+extern EIVertexInputBindingDescription Bind3DInstanceDescription ;
 extern EIVertexInputBindingDescription BindModel3DDescription;
 extern EIVertexInputBindingDescription BindParticle2DDescription;
 extern EIVertexInputBindingDescription BindParticle3DDescription;

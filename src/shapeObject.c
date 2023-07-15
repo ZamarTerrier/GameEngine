@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "shader_builder.h"
+
 #include "e_buffer.h"
 #include "e_camera.h"
 
@@ -274,7 +276,79 @@ void ShapeObjectAddDefault(ShapeObject *so, void *render)
 
     PipelineSettingSetDefault(&so->go.graphObj, &setting);
 
+    ShaderBuilder some_shader;
+
+    ShaderBuilderInit(&some_shader, SHADER_TYPE_VERTEX);
+    ShaderBuilderMake(&some_shader);
+
     PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+    PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    setting.fromFile = 0;
+    setting.flags |= ENGINE_PIPELINE_FLAG_FACE_CLOCKWISE;
+
+    if(so->type == ENGINE_SHAPE_OBJECT_LINE)
+    {
+        setting.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        setting.flags &= ~(ENGINE_PIPELINE_FLAG_DRAW_INDEXED);
+    }
+
+    GameObject2DAddSettingPipeline(so, nums, &setting);
+
+    so->go.graphObj.blueprints.num_blue_print_packs ++;
+}
+
+void ShapeObjectAddShaderBuilder(ShapeObject *so, void *render, void *vertex, void *fragment)
+{
+    ShaderBuilder *vert = vertex;
+    ShaderBuilder *frag = fragment;
+
+    uint32_t nums = so->go.graphObj.blueprints.num_blue_print_packs;
+    so->go.graphObj.blueprints.blue_print_packs[nums].render_point = render;
+
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(TransformBuffer2D), VK_SHADER_STAGE_VERTEX_BIT, (void *)GameObject2DTransformBufferUpdate, 0);
+
+    ShaderStructConstr uniform_arr[] = {
+        {SHADER_VARIABLE_TYPE_VECTOR, 2, 0, "position"},
+        {SHADER_VARIABLE_TYPE_VECTOR, 2, 0, "rotation"},
+        {SHADER_VARIABLE_TYPE_VECTOR, 2, 0, "scale"},
+    };
+
+    uint32_t uniform = ShaderBuilderAddUniform(vert, uniform_arr, 3, "TransformBufferObjects");
+
+    uint32_t posit = ShaderBuilderAddIOData(vert, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 2, "position", 0);
+    uint32_t clr_indx = ShaderBuilderAddIOData(vert, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 3, "color", 1);
+    uint32_t txt_indx = ShaderBuilderAddIOData(vert, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 2, "inTexCoord", 2);
+
+    uint32_t clr_dst = ShaderBuilderAddIOData(vert, SHADER_VARIABLE_TYPE_VECTOR, SHADER_DATA_FLAG_OUTPUT, NULL, 3, "fragColor", 0);
+    uint32_t txt_dst = ShaderBuilderAddIOData(vert, SHADER_VARIABLE_TYPE_VECTOR, SHADER_DATA_FLAG_OUTPUT, NULL, 2, "fragTexCoord", 1);
+
+    ShaderBuilderAddFuncAdd(vert, &vert->main_point_index->labels[0], uniform, posit, 2, vert->gl_struct_indx);
+    ShaderBuilderAddFuncMove(vert, &vert->main_point_index->labels[0], clr_indx, 3, clr_dst);
+    ShaderBuilderAddFuncMove(vert, &vert->main_point_index->labels[0], txt_indx, 2, txt_dst);
+
+    BluePrintAddUniformObject(&so->go.graphObj.blueprints, nums, sizeof(ImageBufferObjects), VK_SHADER_STAGE_FRAGMENT_BIT, (void *)GameObject2DImageBuffer, 0);
+
+
+    uint32_t fragColor = ShaderBuilderAddIOData(frag, SHADER_VARIABLE_TYPE_VECTOR, 0, NULL, 3, "fragColor", 0);
+    uint32_t outColor = ShaderBuilderAddIOData(frag, SHADER_VARIABLE_TYPE_VECTOR, SHADER_DATA_FLAG_OUTPUT, NULL, 4, "outColor", 1);
+
+    ShaderBuilderAddFuncMove(frag, &frag->main_point_index->labels[0], fragColor, 4, outColor);
+
+    BluePrintAddTextureImage(&so->go.graphObj.blueprints, nums, so->go.image, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+
+    ShaderBuilderMake(vertex);
+    ShaderBuilderMake(frag);
+
+    PipelineSetting setting;
+
+    PipelineSettingSetDefault(&so->go.graphObj, &setting);
+
+
+    //PipelineSettingSetShader(&setting, &_binary_shaders_sprite_vert_spv_start, (size_t)(&_binary_shaders_sprite_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+
+    PipelineSettingSetShader(&setting, vert->code, vert->size * sizeof(uint32_t), VK_SHADER_STAGE_VERTEX_BIT);
     PipelineSettingSetShader(&setting, &_binary_shaders_sprite_frag_spv_start, (size_t)(&_binary_shaders_sprite_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     setting.fromFile = 0;
