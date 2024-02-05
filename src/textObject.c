@@ -161,17 +161,17 @@ void TextImageMakeTexture(GameObject2D *go, TextData *tData, BluePrintDescriptor
 
     Texture2D *texture = fonts[e_var_num_fonts].texture;
 
-    TextureCreateImage(tData->font.fontWidth, tData->font.fontHeight, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &texture->textureImage, &texture->textureImageMemory);
+    TextureCreateImage(tData->font.fontWidth, tData->font.fontHeight, 1,VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, &texture->textureImage, &texture->textureImageMemory);
 
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
     ToolsCopyBufferToImage(stagingBuffer, texture->textureImage, tData->font.fontWidth, tData->font.fontHeight);
-    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ToolsTransitionImageLayout(texture->textureImage, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
     BuffersDestroyBuffer(stagingBuffer);
 
-    texture->textureImageView = TextureCreateImageView(texture->textureImage, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    texture->textureImageView = TextureCreateImageView(texture->textureImage, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-    TextureCreateSampler(&texture->textureSampler, texture->textureType);
+    TextureCreateSampler(&texture->textureSampler, texture->textureType, 1);
 
     descriptor->textures[0] = fonts[e_var_num_fonts].texture;
 

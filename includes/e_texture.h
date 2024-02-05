@@ -21,7 +21,11 @@ extern "C"
 typedef enum{
     ENGINE_TEXTURE_FLAG_SPECIFIC = 0x1,
     ENGINE_TEXTURE_FLAG_URGB = 0x2,
-    ENGINE_TEXTURE_FLAG_R16 = 0x4
+    ENGINE_TEXTURE_FLAG_R16 = 0x4,
+    ENGINE_TEXTURE_FLAG_R16_UINT = 0x8,
+    ENGINE_TEXTURE_FLAG_R32 = 0x16,
+    ENGINE_TEXTURE_FLAG_R32_UINT = 0x32,
+    ENGINE_TEXTURE_FLAG_SRGB = 0x64
 } EngineTextureFlags;
 
 int ImageWriteFile(uint32_t indx);
@@ -31,9 +35,11 @@ int ImageResize(ImageFileData *data, uint32_t width, uint32_t height);
 
 Texture2D *TextureFindTexture(char *image);
 
-void TextureCreateImage(uint32_t width, uint32_t height, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, uint32_t flags, void** image, void** imageMemory);
+void TextureCreateImage(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t format, uint32_t tiling, uint32_t usage, uint32_t properties, uint32_t flags, void** image, void** imageMemory);
 
 int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, bool from_file);
+
+void TextureGenerateMipmaps(Texture2D *texture);
 
 void ImageCreateEmpty(Texture2D *texture, uint32_t usage) ;
 void TextureCreateEmptyDefault(Texture2D *texture);
@@ -41,9 +47,9 @@ void TextureCreateEmptyDefault(Texture2D *texture);
 void TextureCreateTextureImageView(Texture2D *texture, uint32_t type);
 
 void* TextureCreateImageViewCube(void* image, void **shadowCubeMapFaceImageViews, uint32_t format, uint32_t aspect_mask);
-void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32_t aspectFlags) ;
+void* TextureCreateImageView(void* image, uint32_t type, uint32_t format, uint32_t aspectFlags, uint32_t mip_levels) ;
 
-void TextureCreateSampler(void *sampler, uint32_t texture_type);
+void TextureCreateSampler(void *sampler, uint32_t texture_type, uint32_t mip_levels);
 
 void TextureCreate( BluePrintDescriptor *descriptor, uint32_t type, GameObjectImage *image, bool from_file);
 void TextureCreateSpecific(BluePrintDescriptor *descriptor, uint32_t format, uint32_t width, uint32_t height);

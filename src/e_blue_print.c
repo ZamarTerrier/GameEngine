@@ -90,7 +90,7 @@ BluePrintDescriptor *BluePrintAddExistTextureImage(Blueprints *blueprints, uint3
     descriptor->image = NULL;
     descriptor->size = 0;
     descriptor->textures = texture;
-    descriptor->descrType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    descriptor->descrType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptor->descrCount = 1;
     descriptor->stageflag = VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptor->flags = ENGINE_BLUE_PRINT_FLAG_SINGLE_IMAGE | ENGINE_BLUE_PRINT_FLAG_LINKED_TEXTURE;
@@ -198,10 +198,10 @@ void BluePrintAddRenderImageVector(Blueprints *blueprints, uint32_t indx_pack, v
         {
             if(renders[j]->flags & ENGINE_RENDER_FLAG_ONE_SHOT)
             {
-                textures[i][j].textureImageView = TextureCreateImageView(renders[j]->frames[0].image, VK_IMAGE_VIEW_TYPE_2D_ARRAY, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : swapChainImageFormat, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+                textures[i][j].textureImageView = TextureCreateImageView(renders[j]->frames[0].image, VK_IMAGE_VIEW_TYPE_2D_ARRAY, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : swapChainImageFormat, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 1);
                 textures[i][j].textureSampler = renders[j]->frames[0].sampler;
             }else{
-                textures[i][j].textureImageView = TextureCreateImageView(renders[j]->frames[i].image, VK_IMAGE_VIEW_TYPE_2D_ARRAY, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : swapChainImageFormat, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+                textures[i][j].textureImageView = TextureCreateImageView(renders[j]->frames[i].image, VK_IMAGE_VIEW_TYPE_2D_ARRAY, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? findDepthFormat() : swapChainImageFormat, renders[j]->type == ENGINE_RENDER_TYPE_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 1);
                 textures[i][j].textureSampler = renders[j]->frames[i].sampler;
             }
             textures[i][j].flags |= ENGINE_TEXTURE2D_FLAG_VIEW;
@@ -313,6 +313,14 @@ BluePrintDescriptor *BluePrintAddTextureImage(Blueprints *blueprints, uint32_t i
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_UINT, image->imgWidth, image->imgHeight);
         else if(image->flags & ENGINE_TEXTURE_FLAG_R16)
             TextureCreateSpecific(descriptor, VK_FORMAT_R16_UNORM, image->imgWidth, image->imgHeight);
+        else if(image->flags & ENGINE_TEXTURE_FLAG_R16_UINT)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R16_UINT, image->imgWidth, image->imgHeight);
+        else if(image->flags & ENGINE_TEXTURE_FLAG_R32)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R32_SINT, image->imgWidth, image->imgHeight);
+        else if(image->flags & ENGINE_TEXTURE_FLAG_R32_UINT)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R32_UINT, image->imgWidth, image->imgHeight);
+        else if(image->flags & ENGINE_TEXTURE_FLAG_SRGB)
+            TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SRGB, image->imgWidth, image->imgHeight);
         else
             TextureCreateSpecific(descriptor, VK_FORMAT_R8G8B8A8_SINT, image->imgWidth, image->imgHeight);
     }

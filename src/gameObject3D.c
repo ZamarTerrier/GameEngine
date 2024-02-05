@@ -328,7 +328,8 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
                 vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_GRAPHICS, pack->pipelines[j].layout, 0, 1, &pack->descriptor.descr_sets[imageIndex], 0, NULL);
 
                 uint32_t num_instances = 1;
-                if(go->graphObj.shapes[settings->vert_indx].vParam.verticesSize > 0)
+                uint32_t num_verts = go->graphObj.shapes[settings->vert_indx].vParam.verticesSize;
+                if(num_verts > 0)
                 {
                     VkBuffer vertexBuffers[] = {go->graphObj.shapes[settings->vert_indx].vParam.vertexBuffer};
                     VkDeviceSize offsets[] = {0};
@@ -336,12 +337,15 @@ void GameObject3DDefaultDraw(GameObject3D* go, void *command){
                     // Binding point 0 : Mesh vertex buffer
                     vkCmdBindVertexBuffers(command, VERTEX_BUFFER_BIND_ID, 1, vertexBuffers, offsets);
 
-                    /*if(go->num_images > 0){
+                    if(go->num_instances > 0){
                         // Binding point 1 : Instance data buffer
-                        vkCmdBindVertexBuffers(command, INSTANCE_BUFFER_BIND_ID, 1, &go->InstanceBuffer, offsets);
+                        vkCmdBindVertexBuffers(command, INSTANCE_BUFFER_BIND_ID, 1, &go->buffer.buffer, offsets);
                         num_instances = go->num_instances;
-                    }*/
+                    }
                 }
+
+                if(num_instances == 0)
+                    continue;
 
                 if(settings->flags & ENGINE_PIPELINE_FLAG_DRAW_INDEXED && go->graphObj.shapes[settings->vert_indx].iParam.indexesSize > 0){
                     vkCmdBindIndexBuffer(command, go->graphObj.shapes[settings->vert_indx].iParam.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
@@ -482,6 +486,44 @@ void GameObject3DDestroy(GameObject3D* go){
         if(go->graphObj.shapes[i].iParam.indexesSize)
             free(go->graphObj.shapes[i].iParam.indices);
     }
+
+    if(go->num_instances > 0)
+        BuffersDestroyBuffer(go->buffer.buffer);
+}
+
+void GameObject3DInitTextures(GameObject3D *go, DrawParam *dParam)
+{
+    go->images = calloc(3, sizeof(GameObjectImage));
+
+    if(dParam == NULL)
+        return;
+
+    if(strlen(dParam->diffuse) != 0)
+    {
+        int len = strlen(dParam->diffuse);
+        go->images[0].path = calloc(len + 1, sizeof(char));
+        memcpy(go->images[0].path, dParam->diffuse, len);
+        go->images[0].path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    if(strlen(dParam->normal) != 0)
+    {
+        int len = strlen(dParam->normal);
+        go->images[1].path = calloc(len + 1, sizeof(char));
+        memcpy(go->images[1].path, dParam->normal, len);
+        go->images[1].path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
+
+    if(strlen(dParam->specular) != 0)
+    {
+        int len = strlen(dParam->specular);
+        go->images[2].path = calloc(len + 1, sizeof(char));
+        memcpy(go->images[2].path, dParam->specular, len);
+        go->images[2].path[len] = '\0';
+        //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
+    }
 }
 
 void GameObject3DInit(GameObject3D *go){
@@ -494,9 +536,8 @@ void GameObject3DInit(GameObject3D *go){
 
     go->self.obj_type = ENGINE_GAME_OBJECT_TYPE_3D;
 
-    /*Transform3DInit(&go->transform);
-    memset(&go->instance_transforms, 0, sizeof(InstanceTransform3D) * UINT16_MAX);
-    go->num_instances = 0;*/
+    Transform3DInit(&go->transform);
+    go->num_instances = 0;
 
     GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_3D_OBJECT);
 
@@ -505,12 +546,91 @@ void GameObject3DInit(GameObject3D *go){
     go->self.flags = 0;
 }
 
+void GameObject3DAddInstance(GameObject3D *go, VertexInstance3D vertex){
+
+    if(go->num_instances + 1 >= MAX_INSTANCES){
+        printf("Слишком много инстансов!\n");
+        return;
+    }
+
+    go->instances[go->num_instances] = vertex;
+
+    go->num_instances ++;
+}
+
+void GameObject3DSetInstance(GameObject3D *go, uint32_t indx, VertexInstance3D vertex){
+    go->instances[indx] = vertex;
+}
+
+void GameObject3DRemoveInstance(GameObject3D *go, uint32_t indx){
+
+    if(go->num_instances <= indx)
+        return;
+
+    VertexInstance3D instances[MAX_INSTANCES];
+    memcpy(instances, go->instances, sizeof(VertexInstance3D) * MAX_INSTANCES);
+
+    memset(go->instances, 0, sizeof(VertexInstance3D) * MAX_INSTANCES);
+
+    go->num_instances --;
+
+    uint32_t iter = 0;
+    for(int i=0;i < go->num_instances;i++)
+    {
+        if(i != indx){
+            go->instances[iter] = instances[i];
+            iter++;
+        }
+    }
+}
+
+void GameObject3DInitInstances(GameObject3D *go){
+
+    VkDeviceSize bufferSize;
+
+    uint16_t num_verts = go->graphObj.shapes[0].vParam.verticesSize;
+    GraphicsObjectInit(&go->graphObj, ENGINE_VERTEX_TYPE_3D_INSTANCE);
+
+    num_verts = go->graphObj.shapes[0].vParam.verticesSize;
+    memset(go->instances, 0, sizeof(VertexInstance3D) * MAX_INSTANCES);
+
+    bufferSize = sizeof(VertexInstance3D) * MAX_INSTANCES;
+
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &go->buffer.buffer, &go->buffer.buffer_memory, ENGINE_BUFFER_ALLOCATE_VERTEX);
+
+}
+
+void GameObject3DUpdateInstances(GameObject3D *go){
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    VkDeviceSize bufferSize;
+
+    bufferSize = sizeof(VertexInstance3D) * MAX_INSTANCES;
+
+    BuffersCreate(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory, ENGINE_BUFFER_ALLOCATE_STAGING);
+
+    //Изменение памяти
+    void* data;
+    vkMapMemory(e_device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memset(data, 0, bufferSize);
+    memcpy(data, go->instances, (size_t) go->num_instances * sizeof(VertexInstance3D));
+    vkUnmapMemory(e_device, stagingBufferMemory);
+
+    //-------------
+
+    BuffersCopy(stagingBuffer, go->buffer.buffer, bufferSize);
+
+    BuffersDestroyBuffer(stagingBuffer);
+
+}
+
 void GameObject3DInitCopy(GameObject3D *to, GameObject3D *from)
 {
     to->self = from->self;
 
     Transform3DInit(&to->transform);
-    GraphicsObjectInit(&to->graphObj, ENGINE_VERTEX_TYPE_3D_OBJECT);
+    GraphicsObjectInit(&to->graphObj, from->graphObj.shapes[0].type);
 
     to->graphObj.gItems.perspective = true;
 

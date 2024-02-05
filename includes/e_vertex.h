@@ -4,8 +4,11 @@
 #include "e_math_variables.h"
 
 typedef enum{
+    ENGINE_VERTEX_TYPE_NONE,
     ENGINE_VERTEX_TYPE_2D_OBJECT,
     ENGINE_VERTEX_TYPE_3D_OBJECT,
+    ENGINE_VERTEX_TYPE_3D_INSTANCE,
+    ENGINE_VERTEX_TYPE_TREE_INSTANCE,
     ENGINE_VERTEX_TYPE_MODEL_OBJECT,
     ENGINE_VERTEX_TYPE_2D_PARTICLE,
     ENGINE_VERTEX_TYPE_3D_PARTICLE,
@@ -18,6 +21,13 @@ typedef struct {
     vec3 color;
     vec2 texCoord;
 } Vertex2D;
+
+
+typedef struct {
+    vec3 position;
+    vec3 rotation;
+    float scale;
+} VertexInstance3D;
 
 typedef struct {
     vec3 position;

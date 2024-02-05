@@ -133,7 +133,7 @@ void SwapChainCreateImageViews() {
     swapChainImageViews = (VkImageView *) calloc(imagesCount, sizeof(VkImageView));
 
     for (size_t i = 0; i < imagesCount; i++) {
-        swapChainImageViews[i] = TextureCreateImageView(swapChainImages[i], VK_IMAGE_VIEW_TYPE_2D, swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        swapChainImageViews[i] = TextureCreateImageView(swapChainImages[i], VK_IMAGE_VIEW_TYPE_2D, swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
     }
 
 }

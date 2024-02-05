@@ -25,12 +25,6 @@ extern uint32_t num_point_shadows;
 extern void *spot_shadow_array;
 extern uint32_t num_spot_shadows;
 
-extern void *geom_texture;
-extern void *geom_uniform;
-extern void *geom_geometry;
-
-extern GeometrySBO geometrySBO;
-
 extern char *rootDirPath;
 
 extern void *e_var_images;

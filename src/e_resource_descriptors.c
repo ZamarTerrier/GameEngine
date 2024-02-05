@@ -63,6 +63,79 @@ EIVertexInputAttributeDescription cubeAttributeDescription[] = {
         .offset = offsetof(Vertex3D, texCoord) }
 };
 
+EIVertexInputAttributeDescription instanceAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(Vertex3D, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(Vertex3D, normal) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(Vertex3D, texCoord) },
+    //-----------------------------------------------------
+    {
+        .binding = 1,
+        .location = 3,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(VertexInstance3D, position) },
+    {
+        .binding = 1,
+        .location = 4,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(VertexInstance3D, rotation) },
+    {
+        .binding = 1,
+        .location = 5,
+        .format = VK_FORMAT_R32_SFLOAT,
+        .offset = offsetof(VertexInstance3D, scale) }
+};
+
+EIVertexInputAttributeDescription treeInstanceAttributeDescription[] = {
+    {
+        .binding = 0,
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, position) },
+    {
+        .binding = 0,
+        .location = 1,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, normal) },
+    {
+        .binding = 0,
+        .location = 2,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, texCoord) },
+    {
+        .binding = 0,
+        .location = 3,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(TreeVertex3D, color) },
+    //-----------------------------------------------------
+    {
+        .binding = 1,
+        .location = 4,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(VertexInstance3D, position) },
+    {
+        .binding = 1,
+        .location = 5,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(VertexInstance3D, rotation) },
+    {
+        .binding = 1,
+        .location = 6,
+        .format = VK_FORMAT_R32_SFLOAT,
+        .offset = offsetof(VertexInstance3D, scale) }
+};
+
 EIVertexInputAttributeDescription modelAttributeDescription[] = {
     {
         .binding = 0,
@@ -174,6 +247,12 @@ EIVertexInputBindingDescription Bind3DDescription = {
     .binding = 0,
     .stride = sizeof(Vertex3D),
     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+};
+
+EIVertexInputBindingDescription Bind3DInstanceDescription = {
+    .binding = 1,
+    .stride = sizeof(VertexInstance3D),
+    .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE
 };
 
 EIVertexInputBindingDescription BindModel3DDescription = {

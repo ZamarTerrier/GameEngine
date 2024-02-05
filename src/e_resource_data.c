@@ -25,12 +25,6 @@ uint32_t num_point_shadows;
 void *spot_shadow_array;
 uint32_t num_spot_shadows;
 
-void *geom_texture;
-void *geom_uniform;
-void *geom_geometry;
-
-GeometrySBO geometrySBO;
-
 char *rootDirPath;
 
 void *e_var_images;

@@ -53,10 +53,10 @@ void QuadObjectAddDefault(QuadObject *qu, void *render)
             PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_spv_start, (size_t)(&_binary_shaders_quad_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         case ENGINE_QUAD_TYPE_CUBE:
-        PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_2_spv_start, (size_t)(&_binary_shaders_quad_frag_2_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+            PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_2_spv_start, (size_t)(&_binary_shaders_quad_frag_2_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
         case ENGINE_QUAD_TYPE_IMAGE:
-        PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_3_spv_start, (size_t)(&_binary_shaders_quad_frag_3_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+            PipelineSettingSetShader(&setting, &_binary_shaders_quad_frag_3_spv_start, (size_t)(&_binary_shaders_quad_frag_3_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
             break;
     }
 
