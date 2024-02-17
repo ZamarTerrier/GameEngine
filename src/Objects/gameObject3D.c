@@ -502,7 +502,7 @@ void GameObject3DInitTextures(GameObject3D *go, DrawParam *dParam)
         int len = strlen(dParam->diffuse);
         go->images[0].path = calloc(len + 1, sizeof(char));
         memcpy(go->images[0].path, dParam->diffuse, len);
-        go->images[0].path[len] = '/0';
+        go->images[0].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
@@ -511,7 +511,7 @@ void GameObject3DInitTextures(GameObject3D *go, DrawParam *dParam)
         int len = strlen(dParam->normal);
         go->images[1].path = calloc(len + 1, sizeof(char));
         memcpy(go->images[1].path, dParam->normal, len);
-        go->images[1].path[len] = '/0';
+        go->images[1].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 
@@ -520,7 +520,7 @@ void GameObject3DInitTextures(GameObject3D *go, DrawParam *dParam)
         int len = strlen(dParam->specular);
         go->images[2].path = calloc(len + 1, sizeof(char));
         memcpy(go->images[2].path, dParam->specular, len);
-        go->images[2].path[len] = '/0';
+        go->images[2].path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 }
@@ -548,7 +548,7 @@ void GameObject3DInit(GameObject3D *go){
 void GameObject3DAddInstance(GameObject3D *go, VertexInstance3D vertex){
 
     if(go->num_instances + 1 >= MAX_INSTANCES){
-        printf("Слишком много инстансов!/n");
+        printf("Слишком много инстансов!\n");
         return;
     }
 

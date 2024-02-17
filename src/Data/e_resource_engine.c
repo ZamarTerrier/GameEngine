@@ -1,6 +1,6 @@
 #include "Data/e_resource_engine.h"
 
-bool enableValidationLayers = true;
+bool enableValidationLayers = false;
 
 EIExtent2D swapChainExtent;
 

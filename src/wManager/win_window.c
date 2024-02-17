@@ -19,9 +19,117 @@ extern void applyAspectRatio(wManagerWindow* window, int edge, RECT* area);
 extern char* _wManagerCreateUTF8FromWideStringWin32(const WCHAR* source);
 extern WCHAR* _wManagerCreateWideStringFromUTF8Win32(const char* source);
 
-int _wManager_min(int a, int b)
+extern void _wManagerCenterCursorInContentArea(wManagerWindow* window);
+
+
+// Update window framebuffer transparency
+//
+static void updateFramebufferTransparency(const wManagerWindow* window)
 {
-    return a < b ? a : b;
+    /*BOOL composition, opaque;
+    DWORD color;
+
+    if (!IsWindowsVistaOrGreater())
+        return;
+
+    if (FAILED(DwmIsCompositionEnabled(&composition)) || !composition)
+       return;
+
+    if (IsWindows8OrGreater() ||
+        (SUCCEEDED(DwmGetColorizationColor(&color, &opaque)) && !opaque))
+    {
+        HRGN region = CreateRectRgn(0, 0, -1, -1);
+        DWM_BLURBEHIND bb = {0};
+        bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+        bb.hRgnBlur = region;
+        bb.fEnable = TRUE;
+
+        DwmEnableBlurBehindWindow(((wManagerWin *)window->WindowData)->handle, &bb);
+        DeleteObject(region);
+    }
+    else
+    {
+        // HACK: Disable framebuffer transparency on Windows 7 when the
+        //       colorization color is opaque, because otherwise the window
+        //       contents is blended additively with the previous frame instead
+        //       of replacing it
+        DWM_BLURBEHIND bb = {0};
+        bb.dwFlags = DWM_BB_ENABLE;
+        DwmEnableBlurBehindWindow(((wManagerWin *)window->WindowData)->handle, &bb);
+    }*/
+}
+
+// Enables WM_INPUT messages for the mouse for the specified window
+//
+void enableRawMouseMotion(wManagerWindow* window)
+{
+    const RAWINPUTDEVICE rid = { 0x01, 0x02, 0, ((wManagerWin *)window->WindowData)->handle };
+
+    if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+    {
+        printf("Win32: Failed to register raw input device\n");
+    }
+}
+
+// Disables WM_INPUT messages for the mouse
+//
+void disableRawMouseMotion(wManagerWindow* window)
+{
+    const RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, NULL };
+
+    if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+    {
+        printf("Win32: Failed to remove raw input device\n");
+    }
+}
+
+int32_t cursorInContentArea(wManagerWindow* window)
+{
+    RECT area;
+    POINT pos;
+
+    if (!GetCursorPos(&pos))
+        return false;
+
+    if (WindowFromPoint(pos) != ((wManagerWin *)window->WindowData)->handle)
+        return false;
+
+    GetClientRect(((wManagerWin *)window->WindowData)->handle, &area);
+    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &area.left);
+    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &area.right);
+
+    return PtInRect(&area, pos);
+}
+
+extern void _wManagerInputWindowCloseRequest(wManagerWindow* window);
+
+// Notifies shared code that a window has lost or received input focus
+//
+void _wManagerInputWindowFocus(wManagerWindow* window, int32_t focused)
+{
+
+    if (window->callbacks.focus)
+        window->callbacks.focus((wManagerWindow*) window, focused);
+
+    if (!focused)
+    {
+        int key, button;
+
+        for (key = 0;  key <= ENGINE_KEY_LAST;  key++)
+        {
+            if (window->keys[key] == ENGINE_PRESS)
+            {
+                const int scancode = ((wManagerWin *)_wMWindow.WindowData)->scancodes[key];
+                _wManagerInputKey(window, key, scancode, ENGINE_RELEASE, 0);
+            }
+        }
+
+        for (button = 0;  button <= ENGINE_MOUSE_BUTTON_LAST;  button++)
+        {
+            if (window->mouseButtons[button] == ENGINE_PRESS)
+                _wManagerInputMouseClick(window, button, ENGINE_RELEASE, 0);
+        }
+    }
 }
 
 // Manually maximize the window, for when SW_MAXIMIZE cannot be used
@@ -96,13 +204,13 @@ int32_t _wManagerFramebufferTransparentWin32(wManagerWindow* window)
     DWORD color;
 
     /*if (!window->win32.transparent)
-        return GLFW_FALSE;
+        return false;
 
     if (!IsWindowsVistaOrGreater())
-        return GLFW_FALSE;
+        return false;
 
     if (FAILED(DwmIsCompositionEnabled(&composition)) || !composition)
-        return GLFW_FALSE;
+        return false;
 
     if (!IsWindows8OrGreater())
     {
@@ -111,7 +219,7 @@ int32_t _wManagerFramebufferTransparentWin32(wManagerWindow* window)
         //       contents is blended additively with the previous frame instead
         //       of replacing it
         if (FAILED(DwmGetColorizationColor(&color, &opaque)) || opaque)
-            return GLFW_FALSE;
+            return false;
     }*/
 
     return true;
@@ -204,6 +312,75 @@ void updateWindowStyles(const wManagerWindow* window)
                  rect.left, rect.top,
                  rect.right - rect.left, rect.bottom - rect.top,
                  SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+}
+
+
+// Updates the cursor image according to its cursor mode
+//
+void updateCursorImage(wManagerWindow *window)
+{
+    if (window->cursorMode == ENGINE_CURSOR_NORMAL ||
+        window->cursorMode == ENGINE_CURSOR_CAPTURED)
+    {
+        /*if (window->cursor)
+            SetCursor(window->cursor->win32.handle);
+        else*/
+            SetCursor(LoadCursorW(NULL, IDC_ARROW));
+    }
+    else
+        //Connected via Remote Desktop, NULL cursor will present SetCursorPos the move the cursor.
+        //using a blank cursor fix that.
+        //When not via Remote Desktop, win32.blankCursor should be NULL
+        SetCursor(NULL);
+
+    //SetCursor(LoadCursorW(NULL, IDC_ARROW));
+}
+
+// Sets the cursor clip rect to the window content area
+//
+void captureCursor(wManagerWindow *window)
+{
+    RECT clipRect;
+    GetClientRect(((wManagerWin *)window->WindowData)->handle, &clipRect);
+    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &clipRect.left);
+    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &clipRect.right);
+    ClipCursor(&clipRect);
+    ((wManagerWin *)window->WindowData)->capturedCursorWindow = window;
+}
+
+// Disabled clip cursor
+//
+void releaseCursor(wManagerWindow *window)
+{
+    ClipCursor(NULL);
+    ((wManagerWin *)window->WindowData)->capturedCursorWindow = NULL;
+}
+
+void _wManagerSetCursorPosWin32(wManagerWindow *window, double xpos, double ypos)
+{
+    POINT pos = { (int) xpos, (int) ypos };
+
+    // Store the new position so it can be recognized later
+    ((wManagerWin* )window->WindowData)->lastCursorPosX = pos.x;
+    ((wManagerWin* )window->WindowData)->lastCursorPosY = pos.y;
+
+    ClientToScreen(((wManagerWin *)window->WindowData)->handle, &pos);
+    SetCursorPos(pos.x, pos.y);
+}
+
+void _wManagerGetCursorPosWin32(wManagerWindow *window, double* xpos, double* ypos)
+{
+    POINT pos;
+
+    if (GetCursorPos(&pos))
+    {
+        ScreenToClient(((wManagerWin *)window->WindowData)->handle, &pos);
+
+        if (xpos)
+            *xpos = pos.x;
+        if (ypos)
+            *ypos = pos.y;
+    }
 }
 
 void _wManagerSetWindowResizableWin32(wManagerWindow* window, int32_t enabled)
@@ -323,7 +500,7 @@ const char* _wManagerGetClipboardStringWin32(void)
 
         if (tries == 3)
         {
-            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+            _glfwInputErrorWin32(ENGINE_PLATFORM_ERROR,
                                  "Win32: Failed to open clipboard");
             return NULL;
         }
@@ -352,48 +529,6 @@ const char* _wManagerGetClipboardStringWin32(void)
     CloseClipboard();
 
     return ((wManagerWin* )_wMWindow.WindowData)->clipboardString;
-}
-
-// Enables WM_INPUT messages for the mouse for the specified window
-//
-void enableRawMouseMotion(wManagerWindow* window)
-{
-    const RAWINPUTDEVICE rid = { 0x01, 0x02, 0, ((wManagerWin *)window->WindowData)->handle };
-
-    if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
-    {
-        printf("Win32: Failed to register raw input device\n");
-    }
-}
-
-// Disables WM_INPUT messages for the mouse
-//
-void disableRawMouseMotion(wManagerWindow* window)
-{
-    const RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, NULL };
-
-    if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
-    {
-        printf("Win32: Failed to remove raw input device\n");
-    }
-}
-
-int32_t cursorInContentArea(wManagerWindow* window)
-{
-    RECT area;
-    POINT pos;
-
-    if (!GetCursorPos(&pos))
-        return false;
-
-    if (WindowFromPoint(pos) != ((wManagerWin *)window->WindowData)->handle)
-        return false;
-
-    GetClientRect(((wManagerWin *)window->WindowData)->handle, &area);
-    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &area.left);
-    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &area.right);
-
-    return PtInRect(&area, pos);
 }
 
 void _wManagerGetWindowSizeWin32(wManagerWindow *window, int* width, int* height)
@@ -579,74 +714,6 @@ void _wManagerSetCursorModeWin32(wManagerWindow* window, int mode)
         updateCursorImage(window);
 }
 
-void _wManagerSetCursorPosWin32(wManagerWindow *window, double xpos, double ypos)
-{
-    POINT pos = { (int) xpos, (int) ypos };
-
-    // Store the new position so it can be recognized later
-    ((wManagerWin* )window->WindowData)->lastCursorPosX = pos.x;
-    ((wManagerWin* )window->WindowData)->lastCursorPosY = pos.y;
-
-    ClientToScreen(((wManagerWin *)window->WindowData)->handle, &pos);
-    SetCursorPos(pos.x, pos.y);
-}
-
-void _wManagerGetCursorPosWin32(wManagerWindow *window, double* xpos, double* ypos)
-{
-    POINT pos;
-
-    if (GetCursorPos(&pos))
-    {
-        ScreenToClient(((wManagerWin *)window->WindowData)->handle, &pos);
-
-        if (xpos)
-            *xpos = pos.x;
-        if (ypos)
-            *ypos = pos.y;
-    }
-}
-
-// Updates the cursor image according to its cursor mode
-//
-void updateCursorImage(wManagerWindow *window)
-{
-    if (window->cursorMode == ENGINE_CURSOR_NORMAL ||
-        window->cursorMode == ENGINE_CURSOR_CAPTURED)
-    {
-        /*if (window->cursor)
-            SetCursor(window->cursor->win32.handle);
-        else*/
-            SetCursor(LoadCursorW(NULL, IDC_ARROW));
-    }
-    else
-        //Connected via Remote Desktop, NULL cursor will present SetCursorPos the move the cursor.
-        //using a blank cursor fix that.
-        //When not via Remote Desktop, win32.blankCursor should be NULL
-        SetCursor(NULL);
-
-    //SetCursor(LoadCursorW(NULL, IDC_ARROW));
-}
-
-// Sets the cursor clip rect to the window content area
-//
-void captureCursor(wManagerWindow *window)
-{
-    RECT clipRect;
-    GetClientRect(((wManagerWin *)window->WindowData)->handle, &clipRect);
-    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &clipRect.left);
-    ClientToScreen(((wManagerWin *)window->WindowData)->handle, (POINT*) &clipRect.right);
-    ClipCursor(&clipRect);
-    ((wManagerWin *)window->WindowData)->capturedCursorWindow = window;
-}
-
-// Disabled clip cursor
-//
-void releaseCursor(wManagerWindow *window)
-{
-    ClipCursor(NULL);
-    ((wManagerWin *)window->WindowData)->capturedCursorWindow = NULL;
-}
-
 // Apply disabled cursor mode to a focused window
 //
 void disableCursor(wManagerWindow *window)
@@ -680,6 +747,9 @@ void enableCursor(wManagerWindow *window)
                                ((wManagerWin *)window->WindowData)->restoreCursorPosY);
     updateCursorImage(window);
 }
+
+extern void _wManagerInputWindowDamage(wManagerWindow* window);
+extern void _wManagerInputWindowPos(wManagerWindow* window, int x, int y);
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -1399,25 +1469,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
-
-int _wManagerCreateWindowWin32(wManagerWindow *window,
-                               const _wManagerwndconfig* wndconfig,
-                               const _wManagerctxconfig* ctxconfig,
-                               const _wManagerfbconfig* fbconfig)
+int createNativeWindow(wManagerWindow* window,
+                              const _wManagerwndconfig* wndconfig,
+                              const _wManagerfbconfig* fbconfig)
 {
-    DWORD windows_error;
-
-    LPTSTR buffer;
+    int frameX, frameY, frameWidth, frameHeight;
 
     ((wManagerWin *)_wMWindow.WindowData)->handle = GetModuleHandleW(0);
-
-    if(!((wManagerWin *)_wMWindow.WindowData)->handle)
-    {
-        windows_error = GetLastError();
-        GetErrorMessage(windows_error, &buffer);
-        printf("Win32: Failed to retrieve own module handle | Error : %s\n", buffer);
-        return false;
-    }
 
     DWORD style = getWindowStyle(window);
     DWORD exStyle = getWindowExStyle(window);
@@ -1439,14 +1497,6 @@ int _wManagerCreateWindowWin32(wManagerWindow *window,
 
     ((wManagerWin *)_wMWindow.WindowData)->mainWindowClass = RegisterClassW(&wc);
 
-    if (!((wManagerWin *)_wMWindow.WindowData)->mainWindowClass)
-    {
-        windows_error = GetLastError();
-        GetErrorMessage(windows_error, &buffer);
-        printf("Win32: Failed to register window class | Error : %s \n", buffer);
-        return false;
-    }
-
     ((wManagerWin *)window->WindowData)->handle = CreateWindowExW(exStyle,
                                      MAKEINTATOM(((wManagerWin *)_wMWindow.WindowData)->mainWindowClass),
                                      wideTitle,
@@ -1460,15 +1510,200 @@ int _wManagerCreateWindowWin32(wManagerWindow *window,
 
     free(wideTitle);
 
-    if (!((wManagerWin *)window->WindowData)->handle)
+    if (window->monitor)
+       {
+           MONITORINFO mi = { sizeof(mi) };
+           GetMonitorInfoW(((_wManagerMonitorWin32 *)window->monitor->MonitorData)->handle, &mi);
+
+           // NOTE: This window placement is temporary and approximate, as the
+           //       correct position and size cannot be known until the monitor
+           //       video mode has been picked in _glfwSetVideoModeWin32
+           frameX = mi.rcMonitor.left;
+           frameY = mi.rcMonitor.top;
+           frameWidth  = mi.rcMonitor.right - mi.rcMonitor.left;
+           frameHeight = mi.rcMonitor.bottom - mi.rcMonitor.top;
+       }
+       else
+       {
+           RECT rect = { 0, 0, wndconfig->width, wndconfig->height };
+
+           window->hints.window.maximized = wndconfig->maximized;
+           if (wndconfig->maximized)
+               style |= WS_MAXIMIZE;
+
+           AdjustWindowRectEx(&rect, style, FALSE, exStyle);
+
+           if (wndconfig->xpos == ENGINE_ANY_POSITION && wndconfig->ypos == ENGINE_ANY_POSITION)
+           {
+               frameX = CW_USEDEFAULT;
+               frameY = CW_USEDEFAULT;
+           }
+           else
+           {
+               frameX = wndconfig->xpos + rect.left;
+               frameY = wndconfig->ypos + rect.top;
+           }
+
+           frameWidth  = rect.right - rect.left;
+           frameHeight = rect.bottom - rect.top;
+       }
+
+       wideTitle = _wManagerCreateWideStringFromUTF8Win32(wndconfig->title);
+       if (!wideTitle)
+           return false;
+
+       ((wManagerWin *)window->WindowData)->handle = CreateWindowExW(exStyle,
+                                              MAKEINTATOM(((wManagerWin *)_wMWindow.WindowData)->mainWindowClass),
+                                              wideTitle,
+                                              style,
+                                              frameX, frameY,
+                                              frameWidth, frameHeight,
+                                              NULL, // No parent window
+                                              NULL, // No window menu
+                                              ((wManagerWin *)_wMWindow.WindowData)->instance,
+                                              (LPVOID) wndconfig);
+
+       free(wideTitle);
+
+       if (!((wManagerWin *)window->WindowData)->handle)
+       {
+           printf("Win32: Failed to create window\n");
+           return false;
+       }
+
+       SetPropW(((wManagerWin *)window->WindowData)->handle, L"ZEngine", window);
+
+       window->scaleToMonitor = wndconfig->scaleToMonitor;
+       window->keymenu = wndconfig->win32.keymenu;
+       window->showDefault = wndconfig->win32.showDefault;
+
+       if (!window->monitor)
+       {
+           RECT rect = { 0, 0, wndconfig->width, wndconfig->height };
+           WINDOWPLACEMENT wp = { sizeof(wp) };
+           const HMONITOR mh = MonitorFromWindow(((wManagerWin *)window->WindowData)->handle,
+                                                 MONITOR_DEFAULTTONEAREST);
+
+           // Adjust window rect to account for DPI scaling of the window frame and
+           // (if enabled) DPI scaling of the content area
+           // This cannot be done until we know what monitor the window was placed on
+           // Only update the restored window rect as the window may be maximized
+
+           /*if (wndconfig->scaleToMonitor)
+           {
+               float xscale, yscale;
+               _wManagerGetHMONITORContentScaleWin32(mh, &xscale, &yscale);
+
+               if (xscale > 0.f && yscale > 0.f)
+               {
+                   rect.right = (int) (rect.right * xscale);
+                   rect.bottom = (int) (rect.bottom * yscale);
+               }
+           }*/
+
+           AdjustWindowRectEx(&rect, style, FALSE, exStyle);
+
+           GetWindowPlacement(((wManagerWin *)window->WindowData)->handle, &wp);
+           OffsetRect(&rect,
+                      wp.rcNormalPosition.left - rect.left,
+                      wp.rcNormalPosition.top - rect.top);
+
+           wp.rcNormalPosition = rect;
+           wp.showCmd = SW_HIDE;
+           SetWindowPlacement(((wManagerWin *)window->WindowData)->handle, &wp);
+
+           // Adjust rect of maximized undecorated window, because by default Windows will
+           // make such a window cover the whole monitor instead of its workarea
+
+           if (wndconfig->maximized && !wndconfig->decorated)
+           {
+               MONITORINFO mi = { sizeof(mi) };
+               GetMonitorInfoW(mh, &mi);
+
+               SetWindowPos(((wManagerWin *)window->WindowData)->handle, HWND_TOP,
+                            mi.rcWork.left,
+                            mi.rcWork.top,
+                            mi.rcWork.right - mi.rcWork.left,
+                            mi.rcWork.bottom - mi.rcWork.top,
+                            SWP_NOACTIVATE | SWP_NOZORDER);
+           }
+       }
+
+       DragAcceptFiles(((wManagerWin *)window->WindowData)->handle, TRUE);
+
+       if (fbconfig->transparent)
+       {
+           updateFramebufferTransparency(window);
+           window->transparent = true;
+       }
+
+       _wManagerGetWindowSizeWin32(window, &window->width, &window->height);
+
+       return true;
+
+    return true;
+}
+
+void fitToMonitor(wManagerWindow* window)
+{
+    MONITORINFO mi = { sizeof(mi) };
+    GetMonitorInfoW(((wManagerWin *)window->monitor->MonitorData)->handle, &mi);
+    SetWindowPos(((wManagerWin *)window->monitor->MonitorData)->handle, HWND_TOPMOST,
+                 mi.rcMonitor.left,
+                 mi.rcMonitor.top,
+                 mi.rcMonitor.right - mi.rcMonitor.left,
+                 mi.rcMonitor.bottom - mi.rcMonitor.top,
+                 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+}
+
+// Make the specified window and its video mode active on its monitor
+//
+void acquireMonitor(wManagerWindow* window)
+{
+    /*if (!((wManagerWin *)_wMWindow.WindowData)->acquiredMonitorCount)
     {
-        windows_error = GetLastError();
-        GetErrorMessage(windows_error, &buffer);
-        printf("Win32: Failed to create window | Error : %s\n", buffer);
-        return false;
+        SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED);
+
+        // HACK: When mouse trails are enabled the cursor becomes invisible when
+        //       the OpenGL ICD switches to page flipping
+        SystemParametersInfoW(SPI_GETMOUSETRAILS, 0, &((wManagerWin *)_wMWindow.WindowData)->mouseTrailSize, 0);
+        SystemParametersInfoW(SPI_SETMOUSETRAILS, 0, 0, 0);
     }
 
-    SetPropW(((wManagerWin *)window->WindowData)->handle, L"ZEngine", window);
+    if (!window->monitor->window)
+        ((wManagerWin *)_wMWindow.WindowData)->acquiredMonitorCount++;
+
+    _wManagerSetVideoModeWin32(window->monitor, &window->videoMode);
+    _wManagerInputMonitorWindow(window->monitor, window);*/
+}
+
+// Remove the window and restore the original video mode
+//
+void releaseMonitor(wManagerWindow* window)
+{
+    /*if (window->monitor->window != window)
+        return;
+
+    ((wManagerWin *)_wMWindow.WindowData)->acquiredMonitorCount--;
+    if (!((wManagerWin *)_wMWindow.WindowData)->acquiredMonitorCount)
+    {
+        SetThreadExecutionState(ES_CONTINUOUS);
+
+        // HACK: Restore mouse trail length saved in acquireMonitor
+        SystemParametersInfoW(SPI_SETMOUSETRAILS, ((wManagerWin *)_wMWindow.WindowData)->mouseTrailSize, 0, 0);
+    }
+
+    _wManagerInputMonitorWindow(window->monitor, NULL);
+    _wManagerRestoreVideoModeWin32(window->monitor);*/
+}
+
+int _wManagerCreateWindowWin32(wManagerWindow *window,
+                               const _wManagerwndconfig* wndconfig,
+                               const _wManagerfbconfig* fbconfig)
+{
+
+    if (!createNativeWindow(window, wndconfig, fbconfig))
+            return false;
 
     /*if (window->monitor)
     {
@@ -1490,20 +1725,16 @@ int _wManagerCreateWindowWin32(wManagerWindow *window,
         }
     }
 
-    ShowWindow(((wManagerWin *)window->WindowData)->handle, SW_SHOW);
-
-    _wManagerGetWindowSizeWin32(window, &window->width, &window->height);
-
     return true;
 }
 
 void _wManagerDestroyWindowWin32(wManagerWindow* window)
 {
-    /*if (window->monitor)
+    if (window->monitor)
         releaseMonitor(window);
 
     if (window->context.destroy)
-        window->context.destroy(window);*/
+        window->context.destroy(window);
 
     if (((wManagerWin* )_wMWindow.WindowData)->disabledCursorWindow == window)
         enableCursor(window);
@@ -1513,7 +1744,7 @@ void _wManagerDestroyWindowWin32(wManagerWindow* window)
 
     if (((wManagerWin *)window->WindowData)->handle)
     {
-        RemovePropW(((wManagerWin *)window->WindowData)->handle, L"GLFW");
+        RemovePropW(((wManagerWin *)window->WindowData)->handle, L"ZEngine");
         DestroyWindow(((wManagerWin *)window->WindowData)->handle);
         ((wManagerWin *)window->WindowData)->handle = NULL;
     }
@@ -1538,7 +1769,7 @@ void _wManagerSetWindowTitleWin32(wManagerWindow* window, const char* title)
 
 void _wManagerSetWindowIconWin32(wManagerWindow* window, int count, void* images)
 {
-    HICON bigIcon = NULL, smallIcon = NULL;
+    //HICON bigIcon = NULL, smallIcon = NULL;
 
     /*if (count)
     {
@@ -1549,8 +1780,8 @@ void _wManagerSetWindowIconWin32(wManagerWindow* window, int count, void* images
                                                   GetSystemMetrics(SM_CXSMICON),
                                                   GetSystemMetrics(SM_CYSMICON));
 
-        bigIcon = createIcon(bigImage, 0, 0, GLFW_TRUE);
-        smallIcon = createIcon(smallImage, 0, 0, GLFW_TRUE);
+        bigIcon = createIcon(bigImage, 0, 0, ENGINE_TRUE);
+        smallIcon = createIcon(smallImage, 0, 0, ENGINE_TRUE);
     }
     else
     {
@@ -1605,6 +1836,8 @@ void _wManagerGetRequiredInstanceExtensionsWin32(char** extensions)
     extensions[1] = "VK_KHR_win32_surface";
 }
 
+extern const char* _wManagerGetVulkanResultString(VkResult result);
+
 int32_t _wManagerGetPhysicalDevicePresentationSupportWin32(VkInstance instance,
                                                         VkPhysicalDevice device,
                                                         uint32_t queuefamily)
@@ -1621,6 +1854,7 @@ int32_t _wManagerGetPhysicalDevicePresentationSupportWin32(VkInstance instance,
 
     return vkGetPhysicalDeviceWin32PresentationSupportKHR(device, queuefamily);
 }
+
 
 VkResult _wManagerCreateWindowSurfaceWin32(VkInstance instance,
                                        wManagerWindow* window,
@@ -1752,43 +1986,100 @@ void _wManagerPostEmptyEventWin32(void)
     //PostMessageW(((wManagerWin* )_wMWindow.WindowData)->helperWindowHandle, WM_NULL, 0, 0);
 }
 
-// Notifies shared code that the user wishes to close a window
-//
-void _wManagerInputWindowCloseRequest(wManagerWindow* window)
+extern void _wManagerInputWindowMonitor(wManagerWindow* window, _wManagerMonitor* monitor);
+
+void _wManagerSetWindowMonitorWin32(wManagerWindow* window,
+                                _wManagerMonitor* monitor,
+                                int xpos, int ypos,
+                                int width, int height,
+                                int refreshRate)
 {
-    _wMWindow.shouldClose = true;
-
-    if (window->callbacks.close)
-        window->callbacks.close((wManagerWindow*) window);
-}
-
-// Notifies shared code that a window has lost or received input focus
-//
-void _wManagerInputWindowFocus(wManagerWindow* window, int32_t focused)
-{
-
-    if (window->callbacks.focus)
-        window->callbacks.focus((wManagerWindow*) window, focused);
-
-    if (!focused)
+    /*if (window->monitor == monitor)
     {
-        int key, button;
-
-        for (key = 0;  key <= ENGINE_KEY_LAST;  key++)
+        if (monitor)
         {
-            if (window->keys[key] == ENGINE_PRESS)
+            if (monitor->window == window)
             {
-                const int scancode = ((wManagerWin *)_wMWindow.WindowData)->scancodes[key];
-                _wManagerInputKey(window, key, scancode, ENGINE_RELEASE, 0);
+                acquireMonitor(window);
+                fitToMonitor(window);
             }
         }
-
-        for (button = 0;  button <= ENGINE_MOUSE_BUTTON_LAST;  button++)
+        else
         {
-            if (window->mouseButtons[button] == ENGINE_PRESS)
-                _wManagerInputMouseClick(window, button, ENGINE_RELEASE, 0);
+            RECT rect = { xpos, ypos, xpos + width, ypos + height };
+
+
+            AdjustWindowRectEx(&rect, getWindowStyle(window),
+                               FALSE, getWindowExStyle(window));
+
+            SetWindowPos(((wManagerWin *)window->WindowData)->handle, HWND_TOP,
+                         rect.left, rect.top,
+                         rect.right - rect.left, rect.bottom - rect.top,
+                         SWP_NOCOPYBITS | SWP_NOACTIVATE | SWP_NOZORDER);
         }
+
+        return;
     }
+
+    if (window->monitor)
+        releaseMonitor(window);
+
+    _wManagerInputWindowMonitor(window, monitor);
+
+    if (window->monitor)
+    {
+        MONITORINFO mi = { sizeof(mi) };
+        UINT flags = SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOCOPYBITS;
+
+        if (window->decorated)
+        {
+            DWORD style = GetWindowLongW(((wManagerWin *)window->WindowData)->handle, GWL_STYLE);
+            style &= ~WS_OVERLAPPEDWINDOW;
+            style |= getWindowStyle(window);
+            SetWindowLongW(((wManagerWin *)window->WindowData)->handle, GWL_STYLE, style);
+            flags |= SWP_FRAMECHANGED;
+        }
+
+        acquireMonitor(window);
+
+        GetMonitorInfoW(((_wManagerMonitorWin32 *)window->monitor->MonitorData)->handle, &mi);
+        SetWindowPos(((wManagerWin *)window->WindowData)->handle, HWND_TOPMOST,
+                     mi.rcMonitor.left,
+                     mi.rcMonitor.top,
+                     mi.rcMonitor.right - mi.rcMonitor.left,
+                     mi.rcMonitor.bottom - mi.rcMonitor.top,
+                     flags);
+    }
+    else
+    {
+        HWND after;
+        RECT rect = { xpos, ypos, xpos + width, ypos + height };
+        DWORD style = GetWindowLongW(((wManagerWin *)window->WindowData)->handle, GWL_STYLE);
+        UINT flags = SWP_NOACTIVATE | SWP_NOCOPYBITS;
+
+        if (window->decorated)
+        {
+            style &= ~WS_POPUP;
+            style |= getWindowStyle(window);
+            SetWindowLongW(((wManagerWin *)window->WindowData)->handle, GWL_STYLE, style);
+
+            flags |= SWP_FRAMECHANGED;
+        }
+
+        if (window->floating)
+            after = HWND_TOPMOST;
+        else
+            after = HWND_NOTOPMOST;
+
+
+        AdjustWindowRectEx(&rect, getWindowStyle(window),
+                           FALSE, getWindowExStyle(window));
+
+        SetWindowPos(((wManagerWin *)window->WindowData)->handle, after,
+                     rect.left, rect.top,
+                     rect.right - rect.left, rect.bottom - rect.top,
+                     flags);
+    }*/
 }
 
 #endif

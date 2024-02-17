@@ -179,10 +179,18 @@ void PrimitiveObjectSetDefaultDescriptor(PrimitiveObject *po, DrawParam *dParam)
 
     PipelineSettingSetDefault(&po->go.graphObj, &setting);
 
-    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_vert_spv_start, (size_t)(&_binary_shaders_3d_object_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
-    PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_frag_spv_start, (size_t)(&_binary_shaders_3d_object_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
+    if(strlen(dParam->vertShader) == 0){
+        PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_vert_spv_start, (size_t)(&_binary_shaders_3d_object_vert_spv_size), VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, &_binary_shaders_3d_object_frag_spv_start, (size_t)(&_binary_shaders_3d_object_frag_spv_size), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    setting.fromFile = 0;
+        setting.fromFile = 0;
+    }else{
+        PipelineSettingSetShader(&setting, dParam->vertShader, 0, VK_SHADER_STAGE_VERTEX_BIT);
+        PipelineSettingSetShader(&setting, dParam->fragShader, 0, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+        setting.fromFile = 1;
+    }
+
     setting.vert_indx = 0;
 
     GameObject3DAddSettingPipeline(po, nums, &setting);

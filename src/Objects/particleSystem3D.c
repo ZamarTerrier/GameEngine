@@ -146,7 +146,7 @@ void Particle3DInit(ParticleObject3D* particle, DrawParam dParam){
         int len = strlen(dParam.diffuse);
         particle->go.images->path = calloc(len + 1, sizeof(char));
         memcpy(particle->go.images->path, dParam.diffuse, len);
-        particle->go.images->path[len] = '/0';
+        particle->go.images->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 

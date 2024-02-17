@@ -651,6 +651,10 @@ void TreePopulateBranch(vertexParam *vParam, indexParam *iParam, TreeLast root, 
 void TreeObjectInit(TreeObject *to, uint32_t type, DrawParam *dParam, void *arg)
 {
 
+    char *name = "Tree_Object";
+
+    memcpy(to->go.name, name, strlen(name));
+
     TreeParams *params = arg;
 
     GameObject3DInit(to);

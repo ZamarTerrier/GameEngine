@@ -378,7 +378,7 @@ void RenderTextureInit(RenderTexture *render, uint32_t type, uint32_t width, uin
         render->width = swapChainExtent.width;
     }
 
-    render->persp_view_distance = 500;
+    render->persp_view_distance = 100;
     render->persp_view_near = 0.01;
     render->persp_view_angle = 45;
 

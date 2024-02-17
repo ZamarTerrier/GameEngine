@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 
+typedef void (*wManagerMonitorFun)(_wManagerMonitor* monitor, int event);
 
 typedef void (*wManagerWindowCloseFun)(wManagerWindow* window);
 typedef void (*wManagerCursorEnter)(wManagerWindow* , int32_t);
@@ -42,23 +43,34 @@ typedef struct wManagerWindow{
 
     struct wManagerWindow *next;
 
-    uint32_t frameAction;
-    uint32_t cursorTracked;
-    uint32_t iconified;
-    uint32_t maximized;
-    uint32_t transparent;
-    uint32_t scaleToMonitor;
-    uint32_t keymenu;
-    uint32_t rawMouseMotion;
+    struct wManagerWindow *windowListHead;
+
+    wManagerVidmode         videoMode;
+    _wManagerMonitor*       monitor;
+
+    _wManagerMonitor**      monitors;
+    int                 monitorCount;
+
+    int32_t frameAction;
+    int32_t cursorTracked;
+    int32_t iconified;
+    int32_t maximized;
+    int32_t transparent;
+    int32_t scaleToMonitor;
+    int32_t keymenu;
+    int32_t rawMouseMotion;
+    int32_t showDefault;
+    int32_t decorated;
+    int32_t floating;
 
     int32_t shouldClose;
 
-    int32_t            stickyKeys;
-    int32_t            stickyMouseButtons;
-    int32_t            lockKeyMods;
-    int                cursorMode;
-    char                mouseButtons[ENGINE_MOUSE_BUTTON_LAST + 1];
-    char                keys[ENGINE_KEY_LAST + 1];
+    int32_t stickyKeys;
+    int32_t stickyMouseButtons;
+    int32_t lockKeyMods;
+    int     cursorMode;
+    char    mouseButtons[ENGINE_MOUSE_BUTTON_LAST + 1];
+    char    keys[ENGINE_KEY_LAST + 1];
 
     double virtualCursorPosX, virtualCursorPosY;
 
@@ -77,11 +89,16 @@ typedef struct wManagerWindow{
     uint64_t time_clock;
     uint64_t time_offset;
 
+    _wManagercontext context;
+
+    _wManagertls   errorSlot;
+    _wManagertls   contextSlot;
+    _wManagermutex errorLock;
+
     struct {
             _wManagerinitconfig init;
             _wManagerfbconfig   framebuffer;
             _wManagerwndconfig  window;
-            _wManagerctxconfig  context;
             int             refreshRate;
         } hints;
 
@@ -103,6 +120,8 @@ typedef struct wManagerWindow{
             wManagerCharacterFunc character;
             wManagerCharModsFunc charmods;
             wManagerDropFun drop;
+
+            wManagerMonitorFun  monitor;
         } callbacks;
 
 } wManagerWindow;
@@ -167,6 +186,7 @@ void wManagerGetFramebufferSize(wManagerWindow *window, int *width, int *height)
 const char** wManagerGetRequiredInstanceExtensions(int *counter);
 
 void wManagerWaitEvents();
+void WManagerWaitEventsTimeout(double timeout);
 
 void wManagerTerminate();
 

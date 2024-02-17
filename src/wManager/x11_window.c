@@ -1267,16 +1267,7 @@ static void writeEmptyEvent(void)
     }
 }
 
-// Notifies shared code that the user wishes to close a window
-//
-void _wManagerInputWindowCloseRequest(wManagerWindow* window)
-{
-    _wMWindow.shouldClose = true;
-
-    if (window->callbacks.close)
-        window->callbacks.close((wManagerWindow*) window);
-}
-
+extern void _wManagerInputWindowCloseRequest(wManagerWindow* window);
 // Notifies shared code that a window has lost or received input focus
 //
 void _wManagerInputWindowFocus(wManagerWindow* window, int32_t focused)
@@ -2230,12 +2221,12 @@ void _wManagerPollEventsX11(void)
     }
 
 
-    /*wManagerWindow* window = wX11->disabledCursorWindow;
-
-    wManagerX11 *x11 = window->WindowData;
+    wManagerWindow* window = wX11->disabledCursorWindow;
 
     if (window)
     {
+        wManagerX11 *x11 = window->WindowData;
+
         int width, height;
         _wManagerGetWindowSizeX11(window, &width, &height);
 
@@ -2246,7 +2237,7 @@ void _wManagerPollEventsX11(void)
         {
             _wManagerSetCursorPosX11(window, width / 2, height / 2);
         }
-    }*/
+    }
 
     XFlush(wX11->display);
 }
@@ -2257,7 +2248,10 @@ void _wManagerPollEventsX11(void)
 //
 uint32_t waitForAnyEvent(double* timeout)
 {
-    /*nfds_t count = 2;
+
+    wManagerX11 *wX11 = _wMWindow.WindowData;
+
+    nfds_t count = 2;
     struct pollfd fds[3] =
     {
         { ConnectionNumber(wX11->display), POLLIN },
@@ -2271,7 +2265,7 @@ uint32_t waitForAnyEvent(double* timeout)
 
     while (!XPending(wX11->display))
     {
-        if (!_glfwPollPOSIX(fds, count, timeout))
+        if (!_wManagerPollPOSIX(fds, count, timeout))
             return false;
 
         for (int i = 1; i < count; i++)
@@ -2279,7 +2273,7 @@ uint32_t waitForAnyEvent(double* timeout)
             if (fds[i].revents & POLLIN)
                 return true;
         }
-    }*/
+    }
 
     return true;
 }

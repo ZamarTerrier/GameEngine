@@ -158,7 +158,7 @@ void Particle2DInit(ParticleObject2D* particle, DrawParam dParam){
         int len = strlen(dParam.diffuse);
         particle->go.image->path = calloc(len + 1, sizeof(char));
         memcpy(particle->go.image->path, dParam.diffuse, len);
-        particle->go.image->path[len] = '/0';
+        particle->go.image->path[len] = '\0';
         //go->image->buffer = ToolsLoadImageFromFile(&go->image->size, dParam.filePath);
     }
 

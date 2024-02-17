@@ -79,7 +79,7 @@ int wManagerVulkanInit()
         {
             printf("Vulkan: Failed to retrieve vkEnumerateInstanceExtensionProperties\n");
 
-            //_wMInfoTerminateVulkan();
+            //_wManagerTerminateVulkan();
 
             return false;
         }
@@ -94,7 +94,7 @@ int wManagerVulkanInit()
                                     _wMInfoGetVulkanResultString(err));
             }
 
-            //_wMInfoTerminateVulkan();*/
+            //_wManagerTerminateVulkan();*/
             return false;
         }
 
@@ -107,7 +107,7 @@ int wManagerVulkanInit()
                             _wManagerGetVulkanResultString(err));
 
             free(ep);
-            //_wMInfoTerminateVulkan();
+            //_wManagerTerminateVulkan();
             return false;
         }
 
@@ -134,13 +134,6 @@ int wManagerVulkanInit()
         _wMInfo.vk.available = true;
 
         wManagerInfo *info = &_wMInfo;
-
-
-        /*if (!_wMInfo.vk.KHR_surface || !_wMInfo.vk.KHR_win32_surface)
-            return;
-
-        _wMInfo.vk.extensions[0] = "VK_KHR_surface";
-        _wMInfo.vk.extensions[1] = "VK_KHR_win32_surface";*/
 
         _wMWindow.platform.getRequiredInstanceExtensions(_wMInfo.vk.extensions);
 

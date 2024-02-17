@@ -5,6 +5,26 @@ extern wManagerWindow _wMWindow;
 
 #ifdef _WIN_
 
+int _wManager_min(int a, int b)
+{
+    return a < b ? a : b;
+}
+
+void* _wManagerPlatformLoadModule(const char* path)
+{
+    return LoadLibraryA(path);
+}
+
+void _wManagerPlatformFreeModule(void* module)
+{
+    FreeLibrary((HMODULE) module);
+}
+
+void* _wManagerPlatformGetModuleSymbol(void* module, const char* name)
+{
+    return (void*) GetProcAddress((HMODULE) module, name);
+}
+
 void _wManagerPlatformInitTimer(void)
 {
     QueryPerformanceFrequency((LARGE_INTEGER*) &_wMWindow.time_freq);

@@ -144,16 +144,12 @@ void GraphicsObjectCreateDrawItems(GraphicsObject* graphObj){
 
     memset(graphObj->gItems.shader_packs, 0, sizeof(ShaderPack) * MAX_BLUE_PRINTS);
 
-
     for(int i=0;i< graphObj->blueprints.num_blue_print_packs;i++)
     {
-
         BluePrintPack *pack = &graphObj->blueprints.blue_print_packs[i];
 
         DescriptorCreate(&graphObj->gItems.shader_packs[i].descriptor, pack->descriptors, &graphObj->blueprints, pack->num_descriptors, imagesCount);
-
     }
-
 }
 
 void GraphicsObjectClean(GraphicsObject *graphObj)

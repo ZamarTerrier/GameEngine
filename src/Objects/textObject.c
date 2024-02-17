@@ -443,7 +443,9 @@ void TextDataInit(TextData *tData, int fontSize, char* fontPath){
 
 void TextObjectInit(TextObject* to, int fontSize, const char* fontPath)
 {
-    memcpy(to->go.name, "Object_Text", 10);
+    char *name = "Object_Text";
+
+    memcpy(to->go.name, name, strlen(name));
 
     GameObject2DInit(to);
 

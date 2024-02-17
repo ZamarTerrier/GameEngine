@@ -77,7 +77,7 @@ int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, 
 
     int res = ImageLoadFile(&f_data, 1);
     if(res)
-        printf("Ошибка!\n");
+        printf("Ошибка загрузки изображения!\n");
 
     if(f_data.texChannels < 4)
     {
@@ -87,7 +87,7 @@ int ImageSetTile(const char *path, char *data, uint32_t width, uint32_t height, 
 
     res = ImageResize(&f_data, tile_size, tile_size);
     if(res)
-        printf("Ошибка!\n");
+        printf("Ошибка изменения размера!\n");
 
     uint32_t iter_x = 0, iter_y = 0;
 
@@ -309,11 +309,11 @@ int TextureImageCreate(GameObjectImage *image, BluePrintDescriptor *descriptor, 
 
     ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
     ToolsCopyBufferToImage(stagingBuffer, images[e_var_num_images].texture.textureImage, fileData.texWidth, fileData.texHeight);
-    ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
+    //ToolsTransitionImageLayout(images[e_var_num_images].texture.textureImage, images[e_var_num_images].texture.textureType, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
 
     BuffersDestroyBuffer(stagingBuffer);
 
-    //TextureGenerateMipmaps(&images[e_var_num_images].texture);
+    TextureGenerateMipmaps(&images[e_var_num_images].texture);
 
     return 1;
 }
@@ -331,6 +331,7 @@ void TextureGenerateMipmaps(Texture2D *texture){
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
     VkImageMemoryBarrier barrier;
+    memset(&barrier, 0, sizeof(VkImageMemoryBarrier));
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.image = texture->textureImage;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;

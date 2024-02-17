@@ -64,7 +64,6 @@ void initWindow(){
 
     wManagerInit();
 
-    wManagerWindowHint(ENGINE_CLIENT_API,  ENGINE_NO_API);
     wManagerWindowHint(ENGINE_RESIZABLE, false);
     if(!wManagerCreateWindow(e_window, WIDTH, HEIGHT, app_name)){
         wManagerTerminate();

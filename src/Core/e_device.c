@@ -20,6 +20,8 @@ bool checkDeviceExtensionSupport(void* arg) {
     {
         for(int j=0;j<num_dev_extensions;j++)
         {
+            char *name = availableExtensions[i].extensionName;
+
             if(strcmp(deviceExtensions[j], availableExtensions[i].extensionName) == 0)
             {
                 requiredExtensions[j] = (char *) calloc(strlen(availableExtensions[i].extensionName), sizeof(char));

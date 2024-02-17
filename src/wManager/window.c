@@ -46,3 +46,19 @@ void _wManagerInputWindowSize(wManagerWindow *window, int width, int height){
         window->callbacks.fbsize((wManagerWindow*) window, width, height);
 
 }
+
+// Notifies shared code that the user wishes to close a window
+//
+void _wManagerInputWindowCloseRequest(wManagerWindow* window)
+{
+    _wMWindow.shouldClose = true;
+
+    if (window->callbacks.close)
+        window->callbacks.close((wManagerWindow*) window);
+}
+
+void _wManagerInputWindowMonitor(wManagerWindow* window, _wManagerMonitor* monitor)
+{
+    window->monitor = monitor;
+}
+

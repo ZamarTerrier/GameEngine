@@ -6,182 +6,42 @@
 #else
     #define APIENTRY
 #endif
+#include "key_defines.h"
 
 #include <vulkan/vulkan.h>
 
 #include <stdint.h>
 
-#define ENGINE_MOD_SHIFT           0x0001
-#define ENGINE_MOD_CONTROL         0x0002
-#define ENGINE_MOD_ALT             0x0004
-#define ENGINE_MOD_SUPER           0x0008
-#define ENGINE_MOD_CAPS_LOCK       0x0010
-#define ENGINE_MOD_NUM_LOCK        0x0020
+// Swaps the provided pointers
+#define _ENGINE_SWAP(type, x, y) \
+    {                          \
+        type t;                \
+        t = x;                 \
+        x = y;                 \
+        y = t;                 \
+    }
 
-#define ENGINE_MOUSE_BUTTON_1         0
-#define ENGINE_MOUSE_BUTTON_2         1
-#define ENGINE_MOUSE_BUTTON_3         2
-#define ENGINE_MOUSE_BUTTON_4         3
-#define ENGINE_MOUSE_BUTTON_5         4
-#define ENGINE_MOUSE_BUTTON_6         5
-#define ENGINE_MOUSE_BUTTON_7         6
-#define ENGINE_MOUSE_BUTTON_8         7
-#define ENGINE_MOUSE_BUTTON_LAST      ENGINE_MOUSE_BUTTON_8
-#define ENGINE_MOUSE_BUTTON_LEFT      ENGINE_MOUSE_BUTTON_1
-#define ENGINE_MOUSE_BUTTON_RIGHT     ENGINE_MOUSE_BUTTON_2
-#define ENGINE_MOUSE_BUTTON_MIDDLE    ENGINE_MOUSE_BUTTON_3
+#define _ENGINE_INSERT_FIRST      0
+#define _ENGINE_INSERT_LAST       1
 
-#define ENGINE_JOYSTICK_1             0
-#define ENGINE_JOYSTICK_2             1
-#define ENGINE_JOYSTICK_3             2
-#define ENGINE_JOYSTICK_4             3
-#define ENGINE_JOYSTICK_5             4
-#define ENGINE_JOYSTICK_6             5
-#define ENGINE_JOYSTICK_7             6
-#define ENGINE_JOYSTICK_8             7
-#define ENGINE_JOYSTICK_9             8
-#define ENGINE_JOYSTICK_10            9
-#define ENGINE_JOYSTICK_11            10
-#define ENGINE_JOYSTICK_12            11
-#define ENGINE_JOYSTICK_13            12
-#define ENGINE_JOYSTICK_14            13
-#define ENGINE_JOYSTICK_15            14
-#define ENGINE_JOYSTICK_16            15
-#define ENGINE_JOYSTICK_LAST          ENGINE_JOYSTICK_16
-
-#define ENGINE_RELEASE                0
-#define ENGINE_PRESS                  1
-#define ENGINE_REPEAT                 2
-
-#define ENGINE_DONT_CARE              -1
-
-#define ENGINE_KEY_UNKNOWN            -1
-
-/* Printable keys */
-#define ENGINE_KEY_SPACE              32
-#define ENGINE_KEY_APOSTROPHE         39  /* ' */
-#define ENGINE_KEY_COMMA              44  /* , */
-#define ENGINE_KEY_MINUS              45  /* - */
-#define ENGINE_KEY_PERIOD             46  /* . */
-#define ENGINE_KEY_SLASH              47  /* / */
-#define ENGINE_KEY_0                  48
-#define ENGINE_KEY_1                  49
-#define ENGINE_KEY_2                  50
-#define ENGINE_KEY_3                  51
-#define ENGINE_KEY_4                  52
-#define ENGINE_KEY_5                  53
-#define ENGINE_KEY_6                  54
-#define ENGINE_KEY_7                  55
-#define ENGINE_KEY_8                  56
-#define ENGINE_KEY_9                  57
-#define ENGINE_KEY_SEMICOLON          59  /* ; */
-#define ENGINE_KEY_EQUAL              61  /* = */
-#define ENGINE_KEY_A                  65
-#define ENGINE_KEY_B                  66
-#define ENGINE_KEY_C                  67
-#define ENGINE_KEY_D                  68
-#define ENGINE_KEY_E                  69
-#define ENGINE_KEY_F                  70
-#define ENGINE_KEY_G                  71
-#define ENGINE_KEY_H                  72
-#define ENGINE_KEY_I                  73
-#define ENGINE_KEY_J                  74
-#define ENGINE_KEY_K                  75
-#define ENGINE_KEY_L                  76
-#define ENGINE_KEY_M                  77
-#define ENGINE_KEY_N                  78
-#define ENGINE_KEY_O                  79
-#define ENGINE_KEY_P                  80
-#define ENGINE_KEY_Q                  81
-#define ENGINE_KEY_R                  82
-#define ENGINE_KEY_S                  83
-#define ENGINE_KEY_T                  84
-#define ENGINE_KEY_U                  85
-#define ENGINE_KEY_V                  86
-#define ENGINE_KEY_W                  87
-#define ENGINE_KEY_X                  88
-#define ENGINE_KEY_Y                  89
-#define ENGINE_KEY_Z                  90
-#define ENGINE_KEY_LEFT_BRACKET       91  /* [ */
-#define ENGINE_KEY_BACKSLASH          92  /* \ */
-#define ENGINE_KEY_RIGHT_BRACKET      93  /* ] */
-#define ENGINE_KEY_GRAVE_ACCENT       96  /* ` */
-#define ENGINE_KEY_WORLD_1            161 /* non-US #1 */
-#define ENGINE_KEY_WORLD_2            162 /* non-US #2 */
-
-/* Function keys */
-#define ENGINE_KEY_ESCAPE             256
-#define ENGINE_KEY_ENTER              257
-#define ENGINE_KEY_TAB                258
-#define ENGINE_KEY_BACKSPACE          259
-#define ENGINE_KEY_INSERT             260
-#define ENGINE_KEY_DELETE             261
-#define ENGINE_KEY_RIGHT              262
-#define ENGINE_KEY_LEFT               263
-#define ENGINE_KEY_DOWN               264
-#define ENGINE_KEY_UP                 265
-#define ENGINE_KEY_PAGE_UP            266
-#define ENGINE_KEY_PAGE_DOWN          267
-#define ENGINE_KEY_HOME               268
-#define ENGINE_KEY_END                269
-#define ENGINE_KEY_CAPS_LOCK          280
-#define ENGINE_KEY_SCROLL_LOCK        281
-#define ENGINE_KEY_NUM_LOCK           282
-#define ENGINE_KEY_PRINT_SCREEN       283
-#define ENGINE_KEY_PAUSE              284
-#define ENGINE_KEY_F1                 290
-#define ENGINE_KEY_F2                 291
-#define ENGINE_KEY_F3                 292
-#define ENGINE_KEY_F4                 293
-#define ENGINE_KEY_F5                 294
-#define ENGINE_KEY_F6                 295
-#define ENGINE_KEY_F7                 296
-#define ENGINE_KEY_F8                 297
-#define ENGINE_KEY_F9                 298
-#define ENGINE_KEY_F10                299
-#define ENGINE_KEY_F11                300
-#define ENGINE_KEY_F12                301
-#define ENGINE_KEY_F13                302
-#define ENGINE_KEY_F14                303
-#define ENGINE_KEY_F15                304
-#define ENGINE_KEY_F16                305
-#define ENGINE_KEY_F17                306
-#define ENGINE_KEY_F18                307
-#define ENGINE_KEY_F19                308
-#define ENGINE_KEY_F20                309
-#define ENGINE_KEY_F21                310
-#define ENGINE_KEY_F22                311
-#define ENGINE_KEY_F23                312
-#define ENGINE_KEY_F24                313
-#define ENGINE_KEY_F25                314
-#define ENGINE_KEY_KP_0               320
-#define ENGINE_KEY_KP_1               321
-#define ENGINE_KEY_KP_2               322
-#define ENGINE_KEY_KP_3               323
-#define ENGINE_KEY_KP_4               324
-#define ENGINE_KEY_KP_5               325
-#define ENGINE_KEY_KP_6               326
-#define ENGINE_KEY_KP_7               327
-#define ENGINE_KEY_KP_8               328
-#define ENGINE_KEY_KP_9               329
-#define ENGINE_KEY_KP_DECIMAL         330
-#define ENGINE_KEY_KP_DIVIDE          331
-#define ENGINE_KEY_KP_MULTIPLY        332
-#define ENGINE_KEY_KP_SUBTRACT        333
-#define ENGINE_KEY_KP_ADD             334
-#define ENGINE_KEY_KP_ENTER           335
-#define ENGINE_KEY_KP_EQUAL           336
-#define ENGINE_KEY_LEFT_SHIFT         340
-#define ENGINE_KEY_LEFT_CONTROL       341
-#define ENGINE_KEY_LEFT_ALT           342
-#define ENGINE_KEY_LEFT_SUPER         343
-#define ENGINE_KEY_RIGHT_SHIFT        344
-#define ENGINE_KEY_RIGHT_CONTROL      345
-#define ENGINE_KEY_RIGHT_ALT          346
-#define ENGINE_KEY_RIGHT_SUPER        347
-#define ENGINE_KEY_MENU               348
-
-#define ENGINE_KEY_LAST               ENGINE_KEY_MENU
+#define GL_VERSION 0x1f02
+#define GL_NONE 0
+#define GL_COLOR_BUFFER_BIT 0x00004000
+#define GL_UNSIGNED_BYTE 0x1401
+#define GL_EXTENSIONS 0x1f03
+#define GL_NUM_EXTENSIONS 0x821d
+#define GL_CONTEXT_FLAGS 0x821e
+#define GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT 0x00000001
+#define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
+#define GL_CONTEXT_PROFILE_MASK 0x9126
+#define GL_CONTEXT_COMPATIBILITY_PROFILE_BIT 0x00000002
+#define GL_CONTEXT_CORE_PROFILE_BIT 0x00000001
+#define GL_RESET_NOTIFICATION_STRATEGY_ARB 0x8256
+#define GL_LOSE_CONTEXT_ON_RESET_ARB 0x8252
+#define GL_NO_RESET_NOTIFICATION_ARB 0x8261
+#define GL_CONTEXT_RELEASE_BEHAVIOR 0x82fb
+#define GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH 0x82fc
+#define GL_CONTEXT_FLAG_NO_ERROR_BIT_KHR 0x00000008
 
 #define ENGINE_NO_API                          0
 
@@ -250,20 +110,94 @@
 #define ENGINE_EGL_CONTEXT_API        0x00036002
 #define ENGINE_OSMESA_CONTEXT_API     0x00036003
 
-#define ENGINE_CURSOR                 0x00033001
-#define ENGINE_STICKY_KEYS            0x00033002
-#define ENGINE_STICKY_MOUSE_BUTTONS   0x00033003
-#define ENGINE_LOCK_KEY_MODS          0x00033004
-#define ENGINE_RAW_MOUSE_MOTION       0x00033005
+#define ENGINE_NO_ROBUSTNESS                   0
+#define ENGINE_NO_RESET_NOTIFICATION  0x00031001
+#define ENGINE_LOSE_CONTEXT_ON_RESET  0x00031002
 
-#define ENGINE_CURSOR_NORMAL          0x00034001
-#define ENGINE_CURSOR_HIDDEN          0x00034002
-#define ENGINE_CURSOR_DISABLED        0x00034003
-#define ENGINE_CURSOR_CAPTURED        0x00034004
+#define ENGINE_OPENGL_ANY_PROFILE              0
+#define ENGINE_OPENGL_CORE_PROFILE    0x00032001
+#define ENGINE_OPENGL_COMPAT_PROFILE  0x00032002
 
-#define ENGINE_ANY_POSITION           0x80000000
+#define ENGINE_ANY_RELEASE_BEHAVIOR            0
+#define ENGINE_RELEASE_BEHAVIOR_FLUSH 0x00035001
+#define ENGINE_RELEASE_BEHAVIOR_NONE  0x00035002
+
+#define ENGINE_CONNECTED              0x00040001
+#define ENGINE_DISCONNECTED           0x00040002
+
+#define ENGINE_ANY_PLATFORM           0x00060000
+#define ENGINE_PLATFORM_WIN32         0x00060001
+#define ENGINE_PLATFORM_COCOA         0x00060002
+#define ENGINE_PLATFORM_WAYLAND       0x00060003
+#define ENGINE_PLATFORM_X11           0x00060004
+#define ENGINE_PLATFORM_NULL          0x00060005
+
+typedef void* EGLConfig;
+typedef void* EGLContext;
+typedef void* EGLDisplay;
+typedef void* EGLSurface;
+
+typedef void* OSMesaContext;
+typedef void (*OSMESAproc)(void);
+
+typedef void (APIENTRY * PFNGLCLEARPROC)(uint32_t);
+typedef const uint8_t* (APIENTRY * PFNGLGETSTRINGPROC)(uint32_t);
+typedef void (APIENTRY * PFNGLGETINTEGERVPROC)(uint32_t,int32_t*);
+typedef const uint8_t* (APIENTRY * PFNGLGETSTRINGIPROC)(uint32_t,uint32_t);
 
 typedef struct wManagerWindow wManagerWindow;
+
+typedef struct wManagerImage
+{
+    /*! The width, in pixels, of this image.
+     */
+    int width;
+    /*! The height, in pixels, of this image.
+     */
+    int height;
+    /*! The pixel data of this image, arranged left-to-right, top-to-bottom.
+     */
+    unsigned char* pixels;
+} wManagerImage;
+
+// Context structure
+//
+typedef struct _wManagercontext
+{
+    int                 client;
+    int                 source;
+    int                 major, minor, revision;
+    int32_t            forward, debug, noerror;
+    int                 profile;
+    int                 robustness;
+    int                 release;
+
+    PFNGLGETSTRINGIPROC  GetStringi;
+    PFNGLGETINTEGERVPROC GetIntegerv;
+    PFNGLGETSTRINGPROC   GetString;
+
+    void (*makeCurrent)(wManagerWindow*);
+    void (*swapBuffers)(wManagerWindow*);
+    void (*swapInterval)(int);
+    int (*extensionSupported)(const char*);
+    void* (*getProcAddress)(const char*);
+    void (*destroy)(wManagerWindow*);
+
+    struct {
+        EGLConfig       config;
+        EGLContext      handle;
+        EGLSurface      surface;
+        void*           client;
+    } egl;
+
+    struct {
+        OSMesaContext   handle;
+        int             width;
+        int             height;
+        void*           buffer;
+    } osmesa;
+
+} _wManagercontext;
 
 // Initialization configuration
 //
@@ -321,35 +255,12 @@ typedef struct _wManagerwndconfig
     } x11;
     struct {
         int32_t  keymenu;
+        int32_t  showDefault;
     } win32;
     struct {
         char      appId[256];
     } wl;
 } _wManagerwndconfig;
-
-// Context configuration
-//
-// Parameters relating to the creation of the context but not directly related
-// to the framebuffer.  This is used to pass context creation parameters from
-// shared code to the platform API.
-//
-typedef struct _wManagerctxconfig
-{
-    int           client;
-    int           source;
-    int           major;
-    int           minor;
-    int32_t      forward;
-    int32_t      debug;
-    int32_t      noerror;
-    int           profile;
-    int           robustness;
-    int           release;
-    //_GLFWwindow*  share;
-    struct {
-        int32_t  offline;
-    } nsgl;
-} _wManagerctxconfig;
 
 // Framebuffer configuration
 //
@@ -380,6 +291,67 @@ typedef struct _wManagerfbconfig
     uintptr_t   handle;
 } _wManagerfbconfig;
 
+typedef struct wManagerVidmode
+{
+    /*! The width, in screen coordinates, of the video mode.
+     */
+    int width;
+    /*! The height, in screen coordinates, of the video mode.
+     */
+    int height;
+    /*! The bit depth of the red channel of the video mode.
+     */
+    int redBits;
+    /*! The bit depth of the green channel of the video mode.
+     */
+    int greenBits;
+    /*! The bit depth of the blue channel of the video mode.
+     */
+    int blueBits;
+    /*! The refresh rate, in Hz, of the video mode.
+     */
+    int refreshRate;
+} wManagerVidmode;
+
+typedef struct wManagerGammaramp
+{
+    /*! An array of value describing the response of the red channel.
+     */
+    unsigned short* red;
+    /*! An array of value describing the response of the green channel.
+     */
+    unsigned short* green;
+    /*! An array of value describing the response of the blue channel.
+     */
+    unsigned short* blue;
+    /*! The number of elements in each array.
+     */
+    unsigned int size;
+} wManagerGammaramp;
+
+// Monitor structure
+//
+typedef struct _wManagerMonitor
+{
+    char            name[128];
+    void*           userPointer;
+
+    // Physical dimensions in millimeters.
+    int             widthMM, heightMM;
+
+    // The window whose video mode is current on this monitor
+    wManagerWindow*    window;
+
+    wManagerVidmode*    modes;
+    int             modeCount;
+    wManagerVidmode     currentMode;
+
+    wManagerGammaramp   originalRamp;
+    wManagerGammaramp   currentRamp;
+
+    void *MonitorData;
+} _wManagerMonitor;
+
 // Platform API structure
 //
 typedef struct _wManagerPlatform
@@ -408,16 +380,16 @@ typedef struct _wManagerPlatform
     //const char* (*getMappingName)(void);
     //void (*updateGamepadGUID)(char*);
     // monitor
-    /*void (*freeMonitor)(_GLFWmonitor*);
-    void (*getMonitorPos)(_GLFWmonitor*,int*,int*);
-    void (*getMonitorContentScale)(_GLFWmonitor*,float*,float*);
-    void (*getMonitorWorkarea)(_GLFWmonitor*,int*,int*,int*,int*);
-    GLFWvidmode* (*getVideoModes)(_GLFWmonitor*,int*);
-    void (*getVideoMode)(_GLFWmonitor*,GLFWvidmode*);
-    uint32_t (*getGammaRamp)(_GLFWmonitor*,GLFWgammaramp*);
-    void (*setGammaRamp)(_GLFWmonitor*,const GLFWgammaramp*);*/
+    //void (*freeMonitor)(_wManagerMonitor*);
+    //void (*getMonitorPos)(_wManagerMonitor*,int*,int*);
+    //void (*getMonitorContentScale)(_wManagerMonitor*,float*,float*);
+    //void (*getMonitorWorkarea)(_wManagerMonitor*,int*,int*,int*,int*);
+    //wManagerVidmode* (*getVideoModes)(_wManagerMonitor*,int*);
+    //void (*getVideoMode)(_wManagerMonitor*,wManagerVidmode*);
+    //uint32_t (*getGammaRamp)(_wManagerMonitor*,wManagerGammaramp*);
+    //void (*setGammaRamp)(_wManagerMonitor*,const wManagerGammaramp*);
     // window
-    uint32_t (*createWindow)(wManagerWindow*,const _wManagerwndconfig*,const _wManagerctxconfig*,const _wManagerfbconfig*);
+    uint32_t (*createWindow)(wManagerWindow*,const _wManagerwndconfig*,const _wManagerfbconfig*);
     void (*destroyWindow)(wManagerWindow*);
     void (*setWindowTitle)(wManagerWindow*,const char*);
     //void (*setWindowIcon)(wManagerWindow*,int,const GLFWimage*);
@@ -437,7 +409,7 @@ typedef struct _wManagerPlatform
     void (*hideWindow)(wManagerWindow*);
     void (*requestWindowAttention)(wManagerWindow*);
     void (*focusWindow)(wManagerWindow*);
-    //void (*setWindowMonitor)(wManagerWindow*,_GLFWmonitor*,int,int,int,int,int);
+    //void (*setWindowMonitor)(wManagerWindow*,_wManagerMonitor*,int,int,int,int,int);
     uint32_t (*windowFocused)(wManagerWindow*);
     uint32_t (*windowIconified)(wManagerWindow*);
     uint32_t (*windowVisible)(wManagerWindow*);

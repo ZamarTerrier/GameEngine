@@ -262,8 +262,13 @@ extern int32_t _wManagerRawMouseMotionSupportedWin32(void);
 extern const char* _wManagerGetScancodeNameWin32(int scancode);
 extern int _wManagerGetKeyScancodeWin32(int key);
 extern void _wManagerSetClipboardStringWin32(const char* string);
+extern void _wManagerSetWindowMonitorWin32(wManagerWindow* window,
+                                           _wManagerMonitor* monitor,
+                                           int xpos, int ypos,
+                                           int width, int height,
+                                           int refreshRate);
 extern const char* _wManagerGetClipboardStringWin32(void);
-extern int _wManagerCreateWindowWin32(wManagerWindow *window, int width, int height, const char *app_name);
+extern int _wManagerCreateWindowWin32(wManagerWindow *window, const _wManagerwndconfig* wndconfig, const _wManagerfbconfig* fbconfig);
 extern void _wManagerDestroyWindowWin32(wManagerWindow* window);
 extern void _wManagerSetWindowTitleWin32(wManagerWindow* window, const char* title);
 extern void _wManagerSetWindowIconWin32(wManagerWindow* window, int count, void* images);

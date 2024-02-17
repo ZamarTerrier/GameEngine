@@ -581,3 +581,8 @@ void EngineCleanUp(){
     wManagerTerminate();
 
 }
+
+void EngineWaitEvents()
+{
+    wManagerWaitEvents();
+}

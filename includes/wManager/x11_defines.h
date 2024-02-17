@@ -179,6 +179,13 @@
     typedef void (* PFN_XrmInitialize)(void);
     typedef Display* (* PFN_XOpenDisplay)(const char*);
 
+    typedef XcursorImage* (* PFN_XcursorImageCreate)(int,int);
+    typedef void (* PFN_XcursorImageDestroy)(XcursorImage*);
+    typedef Cursor (* PFN_XcursorImageLoadCursor)(Display*,const XcursorImage*);
+    typedef char* (* PFN_XcursorGetTheme)(Display*);
+    typedef int (* PFN_XcursorGetDefaultSize)(Display*);
+    typedef XcursorImage* (* PFN_XcursorLibraryLoadImage)(const char*,const char*,int);
+
     typedef struct wManagerX11{
         Colormap        colormap;
         Window          handle;
@@ -449,6 +456,17 @@
             Window      source;
             Atom        format;
         } xdnd;
+
+
+        struct {
+            void*       handle;
+            PFN_XcursorImageCreate ImageCreate;
+            PFN_XcursorImageDestroy ImageDestroy;
+            PFN_XcursorImageLoadCursor ImageLoadCursor;
+            PFN_XcursorGetTheme GetTheme;
+            PFN_XcursorGetDefaultSize GetDefaultSize;
+            PFN_XcursorLibraryLoadImage LibraryLoadImage;
+        } xcursor;
 
         struct {
             uint32_t    available;

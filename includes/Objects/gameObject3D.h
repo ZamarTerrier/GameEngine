@@ -26,6 +26,7 @@ typedef struct GameObject3D{
     VertexInstance3D instances[MAX_INSTANCES];
     InstanceBuffer buffer;
     uint32_t num_instances;
+    char name[256];
 } GameObject3D;
 
 void GameObject3DDefaultUpdate(GameObject3D* go);

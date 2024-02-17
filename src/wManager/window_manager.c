@@ -28,15 +28,10 @@ extern uint64_t _wManagerPlatformGetTimerFrequency(void);
 
 extern void createKeyTables(void* wData);
 
+extern void _wManagerCenterCursorInContentArea(wManagerWindow* window);
+
 void wManagerDefaultWindowHints(wManagerWindow *window)
 {
-    // The default is OpenGL with minimum version 1.0
-    memset(&window->hints.context, 0, sizeof(window->hints.context));
-    window->hints.context.client = ENGINE_OPENGL_API;
-    window->hints.context.source = ENGINE_NATIVE_CONTEXT_API;
-    window->hints.context.major  = 1;
-    window->hints.context.minor  = 0;
-
     // The default is a focused, visible, resizable window with decorations
     memset(&window->hints.window, 0, sizeof(window->hints.window));
     window->hints.window.resizable    = true;
@@ -100,6 +95,7 @@ void wManagerInit(){
         extern uint32_t _wManagerConnectX11(_wManagerPlatform* platform);
 
         _wManagerConnectX11(&_wMWindow.platform);
+        _wManagerConnectX11(&e_window->platform);
     #elif _WIN_
 
         e_window->WindowData = calloc(1, sizeof(wManagerWin));
@@ -108,7 +104,9 @@ void wManagerInit(){
         extern int32_t _wManagerConnectWin32(_wManagerPlatform* platform);
 
         _wManagerConnectWin32(&_wMWindow.platform);
+        _wManagerConnectWin32(&e_window->platform);
     #endif
+
 
     if (!_wMWindow.platform.init())
     {
@@ -139,14 +137,6 @@ void wManagerSetCharCallback(wManagerWindow *window, wManagerCharacterFunc Engin
 void wManagerSetKeyCallback(wManagerWindow *window, wManagerKeyFunc EngineKeyCallback)
 {
     window->callbacks.key = EngineKeyCallback;
-}
-
-void _wManagerCenterCursorInContentArea(wManagerWindow* window)
-{
-    int width, height;
-
-    /*_GetWindowSizeWin32(window, &width, &height);
-    _SetCursorPosWin32(window, width / 2.0, height / 2.0);*/
 }
 
 void wManagerSetInputMode(wManagerWindow *window, uint32_t mode, uint32_t value)
@@ -316,8 +306,7 @@ void wManagerWaitEvents()
 
 void wManagerTerminate()
 {
-    wManagerWindow *wind = e_window;
-    free(wind->WindowData);
+    free(e_window->WindowData);
     free(_wMWindow.WindowData);
 
     free(e_window);
@@ -423,9 +412,6 @@ void wManagerWindowHint(uint32_t hint, uint32_t value)
         case ENGINE_WIN32_KEYBOARD_MENU:
             _wMWindow.hints.window.win32.keymenu = value ? true : false;
             return;
-        case ENGINE_COCOA_GRAPHICS_SWITCHING:
-            _wMWindow.hints.context.nsgl.offline = value ? true : false;
-            return;
         case ENGINE_SCALE_TO_MONITOR:
             _wMWindow.hints.window.scaleToMonitor = value ? true : false;
             return;
@@ -438,36 +424,6 @@ void wManagerWindowHint(uint32_t hint, uint32_t value)
         case ENGINE_MOUSE_PASSTHROUGH:
             _wMWindow.hints.window.mousePassthrough = value ? true : false;
             return;
-        case ENGINE_CLIENT_API:
-            _wMWindow.hints.context.client = value;
-            return;
-        case ENGINE_CONTEXT_CREATION_API:
-            _wMWindow.hints.context.source = value;
-            return;
-        case ENGINE_CONTEXT_VERSION_MAJOR:
-            _wMWindow.hints.context.major = value;
-            return;
-        case ENGINE_CONTEXT_VERSION_MINOR:
-            _wMWindow.hints.context.minor = value;
-            return;
-        case ENGINE_CONTEXT_ROBUSTNESS:
-            _wMWindow.hints.context.robustness = value;
-            return;
-        case ENGINE_OPENGL_FORWARD_COMPAT:
-            _wMWindow.hints.context.forward = value ? true : false;
-            return;
-        case ENGINE_CONTEXT_DEBUG:
-            _wMWindow.hints.context.debug = value ? true : false;
-            return;
-        case ENGINE_CONTEXT_NO_ERROR:
-            _wMWindow.hints.context.noerror = value ? true : false;
-            return;
-        case ENGINE_OPENGL_PROFILE:
-            _wMWindow.hints.context.profile = value;
-            return;
-        case ENGINE_CONTEXT_RELEASE_BEHAVIOR:
-            _wMWindow.hints.context.release = value;
-            return;
         case ENGINE_REFRESH_RATE:
             _wMWindow.hints.refreshRate = value;
             return;
@@ -476,7 +432,7 @@ void wManagerWindowHint(uint32_t hint, uint32_t value)
     printf("Invalid window hint 0x%08X", hint);
 }
 
-extern uint32_t _wManagerCreateWindowX11(wManagerWindow* window, const _wManagerwndconfig* wndconfig, const _wManagerctxconfig* ctxconfig, const _wManagerfbconfig* fbconfig);
+extern void* _wManagerPlatformGetTls(_wManagertls* tls);
 
 void wManagerDestroyWindow(wManagerWindow* window)
 {
@@ -489,8 +445,8 @@ void wManagerDestroyWindow(wManagerWindow* window)
 
     // The window's context must not be current on another thread when the
     // window is destroyed
-    /*if (window == _glfwPlatformGetTls(&_wMWindow.contextSlot))
-        glfwMakeContextCurrent(NULL);*/
+    /*if (window == _wManagerPlatformGetTls(&_wMWindow.contextSlot))
+        wManagerMakeContextCurrent(NULL);*/
 
     _wMWindow.platform.destroyWindow(window);
 
@@ -508,18 +464,16 @@ void wManagerDestroyWindow(wManagerWindow* window)
 int wManagerCreateWindow(wManagerWindow *window, int width, int height, const char *app_name)
 {
     _wManagerfbconfig  fbconfig;
-    _wManagerctxconfig ctxconfig;
     _wManagerwndconfig wndconfig;
 
     fbconfig = _wMWindow.hints.framebuffer;
-    ctxconfig = _wMWindow.hints.context;
     wndconfig = _wMWindow.hints.window;
 
     wndconfig.width = width;
     wndconfig.height = height;
     wndconfig.title = app_name;
 
-    if (!_wMWindow.platform.createWindow(window, &wndconfig, &ctxconfig, &fbconfig))
+    if (!_wMWindow.platform.createWindow(window, &wndconfig, &fbconfig))
     {
         wManagerDestroyWindow((wManagerWindow*) window);
         return NULL;
@@ -539,11 +493,11 @@ int wManagerCreateWindowSurface(VkInstance instance, wManagerWindow *window, con
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
-    /*if (window->context.client != ENGINE_NO_API)
+    if (window->context.client != ENGINE_NO_API)
     {
         printf("Vulkan: Window surface creation requires the window to have the client API set to ENGINE_NO_API\n");
         return VK_ERROR_NATIVE_WINDOW_IN_USE_KHR;
-    }*/
+    }
 
     return _wMWindow.platform.createWindowSurface(instance, window, allocator, surface);//_wManagerCreateWindowSurfaceWin32(instance, window, allocator, surface);
 }
@@ -611,4 +565,15 @@ void wManagerSetCursorPos(wManagerWindow *window, double xpos, double ypos)
 void wManagerPoolEvents()
 {
     _wMWindow.platform.pollEvents();
+}
+
+void WManagerWaitEventsTimeout(double timeout)
+{
+    if (timeout != timeout || timeout < 0.0)
+    {
+        printf("Invalid time %f\n", timeout);
+        return;
+    }
+
+    _wMWindow.platform.waitEventsTimeout(timeout);
 }

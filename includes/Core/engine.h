@@ -36,6 +36,7 @@ const char *EngineGetClipBoard();
 void EngineSetClipBoardString(const char *string);
 
 void EnginePoolEvents();
+void EngineWaitEvents();
 
 void EngineDeviceWaitIdle();
 

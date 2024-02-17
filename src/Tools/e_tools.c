@@ -46,7 +46,8 @@ int p[512] = {
 const double epsilon = 2.718281828182818281828;
 
 void* beginSingleTimeCommands() {
-    VkCommandBufferAllocateInfo allocInfo = {};
+    VkCommandBufferAllocateInfo allocInfo;
+    memset(&allocInfo, 0, sizeof(VkCommandBufferAllocateInfo));
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandPool = commandPool;
@@ -55,7 +56,8 @@ void* beginSingleTimeCommands() {
     VkCommandBuffer commandBuffer;
     vkAllocateCommandBuffers(e_device, &allocInfo, &commandBuffer);
 
-    VkCommandBufferBeginInfo beginInfo = {};
+    VkCommandBufferBeginInfo beginInfo;
+    memset(&beginInfo, 0, sizeof(VkCommandBufferBeginInfo));
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 

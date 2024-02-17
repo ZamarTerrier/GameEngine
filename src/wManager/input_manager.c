@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+extern wManagerWindow _wMWindow;
+
 // Internal key state used for sticky keys
 #define _ENGINE_STICK 3
 
@@ -17,6 +19,14 @@
                        ENGINE_MOD_ALT | \
                        ENGINE_MOD_SUPER | \
                        ENGINE_MOD_CAPS_LOCK |
+
+void _wManagerCenterCursorInContentArea(wManagerWindow* window)
+{
+    int width, height;
+
+    _wMWindow.platform.getWindowSize(window, &width, &height);
+    _wMWindow.platform.setCursorPos(window, width / 2.0, height / 2.0);
+}
 
 // Notifies shared code of a physical key event
 //
